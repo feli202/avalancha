@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0 y 1 terminados** (proyecto base + núcleo económico). Sigue el hito 2 (pila visual).
+Estado: **hitos 0, 1 y 2a terminados** (proyecto base, núcleo económico, pila visual). Sigue el hito 2b (anillos, textos flotantes y demás efectos de la pila) y el 3 (interfaz).
 
 ## Qué se hizo
 
@@ -61,7 +61,7 @@ La diferencia aparece desde la Compresión 2 (cuando llegan los autocompradores)
 ```bash
 npm install
 npm run dev        # juego + panel de debug en http://localhost:5173
-npm test           # tests unitarios y de balance
+npm test           # tests unitarios, de balance y de la pila
 npm run typecheck  # tsc sobre los .ts (no revisa los .svelte)
 npm run build
 python balance/sim.py             # referencia (en esta máquina es `python`, no `python3`)
@@ -70,11 +70,55 @@ python balance/sim.py --timeline
 
 Para ver los tiempos del bot: `npx vitest run tests/balance.test.ts --reporter=verbose`.
 
-## Qué queda para el hito 2 (pila visual)
+## Hito 2a, la pila visual
 
-- Worker con la pila de 513×513 (`Uint8Array`, pila de celdas inestables, sumidero en el borde) en `src/render/`.
-- WebGL2: textura de alturas + shader con colores, brillo por nivel y destellos de derrumbe.
-- Ritmo `min(F, 3000)` granos por segundo; estado estacionario y etiqueta de escala al pasar la capacidad.
-- Criterio: con G = 10.000, mismo radio, derrumbes totales y proporción de alturas que `balance/pila.c` (hace falta `gcc`).
-- Conectar `punado()` al clic sobre la pila.
-- Pendiente de esta sesión: medir los 60 fps con el panel del navegador visible (estaba oculto y no se pudo medir; un `tick` cuesta ~0,002 ms).
+| Archivo | Contenido |
+| --- | --- |
+| `src/render/pila.ts` | La pila de arena: `Uint8Array` de 513×513, sumidero en el borde, cola de celdas inestables, multi-derrumbe. Pura (sin DOM ni reloj): la usan el worker y el test. |
+| `src/render/pila.worker.ts` | Web Worker. Recibe `{ granos, reiniciar, gen }`; devuelve `{ hechos, tamano, celdas, alturas, radio, perdidos, estable, ms }`: las celdas derrumbadas y el tamaño de la avalancha de ese cuadro. |
+| `src/render/pilaVisual.ts` | `PilaVisual`: reparte los granos, habla con el worker y dibuja con WebGL2 (textura R8 de alturas + textura R32F con el instante del último derrumbe de cada celda + un shader de fragmentos). |
+| `src/ui/Pila.svelte` | El canvas a ventana completa detrás de la interfaz; conecta el estado del núcleo (G, Caudal, niveles de color) y el Puñado (clic, toque, barra espaciadora). |
+| `tests/pila.test.ts` | Criterio del hito y prueba del sumidero. |
+
+Cómo funciona:
+
+- **Granos.** Mientras no cayó ningún grano al sumidero, la pila de pantalla es la real: cada cuadro se manda al worker `floor(G)` menos lo ya mandado (Caudal y Puñados entran solos porque los dos suman a G). Cuando el worker avisa del primer grano perdido, esa cantidad queda como capacidad (medida: **489.700 granos**; la spec dice ~470.000) y se pasa al estado estacionario: `min(F, 3000)` granos por segundo. Si G baja (Compresión), la pila se vacía.
+- **Etiqueta de escala.** "1 grano = 10^k granos" con `k = floor(log10(G / capacidad))`; aparece cuando k ≥ 1, o sea con G diez veces la capacidad.
+- **Avalanchas repartidas entre cuadros.** El worker trabaja hasta 12 ms por pedido y, si la avalancha no terminó, sigue en el pedido siguiente. Así una avalancha grande se ve como una onda que sale del centro y nunca congela la pila (sin esto, una sola avalancha con la pila llena tardaba hasta 300 ms).
+- **Dibujo.** Colores de SPEC 6.1 por altura; "adentro de la pila" = la celda tiene granos o se derrumbó alguna vez, afuera se ve el fondo (azul noche con viñeteado, hecho en el shader). Celdas de un número entero de píxeles reales del dispositivo, pila centrada, encuadre que sigue al radio. `u_brillo` (un valor por altura) sale de `log10(mult. del color)` y satura suave. Destello aditivo que decae en 300 ms; con `prefers-reduced-motion` queda apagado.
+
+### Verificación
+
+**Criterio G = 10.000** (`npx vitest run tests/pila.test.ts --reporter=verbose`): idéntico a la referencia.
+
+```
+visual  N 10000 T 1830917 r 38.6 h0 597 h1 452 h2 1360 h3 2276
+pila.c  N 10000 T 1830917 r 38.6 h0 597 h1 452 h2 1360 h3 2276
+```
+
+**Ojo:** en esta máquina no hay compilador de C (ni gcc, clang, MSVC ni WSL), así que `balance/pila.c` no se compiló. La línea "pila.c" sale de un port literal de su modo `bulk` escrito dentro del test (pila LIFO, todos los granos de una vez), contra la pila del juego (cola FIFO, granos en lotes desparejos, en tandas). Falta correr `gcc -O3 -o pila balance/pila.c -lm && ./pila bulk 10000` y comparar con esa línea.
+
+**Rendimiento** (AMD Radeon integrada, canvas de 1280×960 px reales, pila llena, Caudal 4.096/s):
+
+| Medida | Resultado |
+| --- | --- |
+| fps del panel de debug | **No se pudo medir**: el navegador integrado corre la página a 1 fps cuando la ventana no está a la vista, y no hay Chrome instalado. Falta leerlo con el juego a la vista. |
+| Hilo principal por cuadro (repartir granos, subir texturas, dibujar) | 0,2–0,8 ms |
+| GPU por dibujo (dibujar + `readPixels` para forzar que termine) | 1,7 ms |
+| Granos por segundo sostenidos con la pila llena | ~2.900 de 3.000 (30 muestras de 1 s: entre 2.268 y 3.780) |
+| Worker | 850–1.000 ms de cada segundo: **un núcleo casi entero** (~17.500 derrumbes por grano, ~50 millones de derrumbes por segundo) |
+
+Lo que dicen los números: el dibujo usa ~2,5 ms de los 16,7 ms de un cuadro, así que los 60 fps no deberían depender de la pila; el límite es el worker, que en esta máquina llega justo a los 3.000 granos/s. En una máquina más lenta soltará menos granos por segundo (el ritmo baja solo, sin acumular deuda ni afectar los fps). Si hace falta más margen, el paso siguiente es pasar el bucle de derrumbes a WebAssembly. No está medido el costo de recibir cada respuesta del worker en el hilo principal (un bucle sobre las celdas derrumbadas).
+
+### Decisiones donde la spec no alcanzaba (revisar)
+
+1. **Cola FIFO en vez de pila LIFO** para las celdas inestables. Con LIFO una celda puede esperar mientras sus vecinas se derrumban cientos de veces y pasarse de 255: no entra en un `Uint8Array`. Con FIFO el máximo demostrable es 255. El resultado final es el mismo (la pila es abeliana).
+2. **El panel de debug suma "Caudal +1 nivel"** (para llegar a 3.000 granos/s sin jugar) y las medidas de la pila.
+3. **Una deuda grande de granos se pone al día a toda velocidad** (saltos de debug, velocidad ×50, pestaña oculta): llenar la pila desde cero tarda ~90 s de worker. Para cargar partidas (hito 5) conviene un llenado directo.
+4. **La pantalla mínima del hito 0 quedó arriba a la izquierda** para no tapar la pila.
+
+### Queda afuera (otra sesión)
+
+- Anillos, textos flotantes "Avalancha ×N", animación de alejamiento al saltar de escala, animación de color nuevo.
+- Los colores todavía bloqueados se pintan igual que los desbloqueados.
+- Opción "Reducir destellos" en Ajustes (hoy solo sigue al sistema) y pérdida de contexto WebGL.

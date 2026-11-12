@@ -6,6 +6,8 @@ export const es = {
   granos: 'G (granos en la pila)',
   comprarCaudal: 'Comprar Caudal',
   nivel: 'nivel',
+  pila: 'La pila de arena. Tocala o apretá la barra espaciadora para soltar un puñado de granos.',
+  escala: (k: number) => `1 grano = 10^${k} granos`,
   debug: {
     titulo: 'Debug',
     velocidad: 'Velocidad',
@@ -13,5 +15,12 @@ export const es = {
     saltar: 'Saltar a la Compresión',
     ir: 'Ir',
     exportar: 'Exportar estado (JSON)',
+    caudalMas: 'Caudal +1 nivel',
+    fps: 'fps',
+    peorCuadro: 'peor cuadro (ms)',
+    granosSeg: 'granos/s en la pila',
+    derrumbesSeg: 'derrumbes/s',
+    workerMs: 'worker (ms por segundo)',
+    cuadroMs: 'hilo principal (ms por cuadro)',
   },
 }

@@ -24,6 +24,8 @@
     }
   }
 
+  const formatoMedida = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 })
+
   function exportar() {
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([JSON.stringify(juego.s, null, 2)], { type: 'application/json' }))
@@ -48,6 +50,14 @@
     <button onclick={saltar}>{es.debug.ir}</button>
   </label>
   <button onclick={exportar}>{es.debug.exportar}</button>
+  <button onclick={() => (juego.s = { ...juego.s, caudal: juego.s.caudal + 1 })}>{es.debug.caudalMas}</button>
+  {#if juego.medidas}
+    <dl>
+      {#each ['fps', 'peorCuadro', 'cuadroMs', 'granosSeg', 'derrumbesSeg', 'workerMs'] as const as k}
+        <dt>{es.debug[k]}</dt><dd>{formatoMedida.format(juego.medidas[k])}</dd>
+      {/each}
+    </dl>
+  {/if}
 </aside>
 
 <style>
@@ -56,5 +66,7 @@
     border: 1px solid #ffb547; background: #07080f; font-size: 0.85rem;
   }
   input { width: 3.5rem; }
+  dl { display: grid; grid-template-columns: 1fr auto; gap: 0.1rem 0.75rem; margin: 0; font-variant-numeric: tabular-nums; }
+  dd { margin: 0; text-align: right; }
   button[aria-pressed='true'] { outline: 2px solid #ffb547; }
 </style>

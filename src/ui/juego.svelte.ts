@@ -1,5 +1,6 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
 import { estadoInicial, tick } from '../core'
+import type { Medidas } from '../render/pilaVisual'
 
 const PASO = 0.05 // s: paso fijo de la economía (SPEC 8)
 const MAX_PASOS = 200 // por cuadro
@@ -7,6 +8,8 @@ const MAX_PASOS = 200 // por cuadro
 class Juego {
   s = $state.raw(estadoInicial())
   velocidad = $state(1)
+  /** Rendimiento de la pila visual, una vez por segundo (panel de debug). */
+  medidas = $state.raw<Medidas | null>(null)
 }
 export const juego = new Juego()
 
