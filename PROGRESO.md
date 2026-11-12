@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a y 2b terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila) y **Pulido 1** (estilo Arena). Sigue el hito 3 (interfaz). **Falta medir los 60 fps a la vista** (ver hito 2b).
+Estado: **hitos 0, 1, 2a y 2b terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila) y **Pulido 1** (estilo Arena). Sigue el hito 3 (interfaz).
 
 ## Qué se hizo
 
@@ -167,7 +167,7 @@ Solo `src/render/pilaVisual.ts`, `src/ui/` y `src/strings/es.ts`. No se tocó `s
 - Se vieron en la página: "Anillo 10 · ×1,10" con su círculo, anillos 2 al 17, y "1 grano = 10^1 granos" al pasar 10× la capacidad. svelte-check y tsc sin errores; 30 tests en verde. Móvil (375×812): la casilla entra sin romper nada.
 - Simulación (un grano por vez, umbral 30×, 20.000 granos): 254 avalanchas grandes, ~1 de cada 80 granos.
 - Con la pila llena y 4.096 granos/s: hilo principal 0,4 ms por cuadro (antes 0,2–0,8), worker igual que antes (~2.500–4.000 granos/s, ~950 ms por segundo).
-- **Los 60 fps con 3.000 granos/s siguen sin medirse:** la ventana de la sesión no estaba abierta, el navegador integrado corrió a ~4 cuadros por segundo y después a 0, y no hay Chrome para Playwright. Para medirlo: `npm run dev`, Caudal +1 nivel hasta 12, Pila a 400.000, esperar ~90 s y leer "fps" y "peor cuadro" en el panel de debug.
+- **60 fps estables**, medidos a la vista en esta máquina (AMD Radeon integrada) con el panel de debug: Caudal nivel 12 (4.096/s, la pila suelta hasta 3.000), pila llena, salto de escala y anillos incluidos. No se anotaron peor cuadro ni granos/s de esa corrida.
 
 ### Decisiones donde la spec no alcanzaba (revisar)
 
