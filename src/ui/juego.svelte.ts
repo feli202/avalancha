@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, anillos, estadoInicial, tick, type State } from '../core'
+import { CFG, anillos, estadoInicial, mutacionesDisponibles, tick, type State } from '../core'
 import type { Medidas } from '../render/pilaVisual'
 import { es } from '../strings/es'
 
@@ -23,20 +23,43 @@ class Juego {
   radioPila = $state(0)
   /** La frase de la última aparición. */
   aviso = $state.raw<{ id: number; texto: string } | null>(null)
+  /** Segundos de juego estimados hasta la meta de Compresión (null si no hay ritmo para medir). */
+  eta = $state<number | null>(null)
+  /** La avalancha más grande de la pila visual, en derrumbes. shortcut: no se guarda; va al guardado del hito 5. */
+  record = $state(0)
 }
 export const juego = new Juego()
 
 /** Sismógrafo: derrumbes de cada avalancha de la pila visual que todavía no se dibujó. Sin $state: lo vacía un canvas. */
 export const sismo: number[] = []
 
-/** Compresión: la meta y el progreso hacia ella en escala logarítmica, del umbral anterior (0 para la primera). */
+const log10E = (s: State) => (s.energia.gt(1) ? s.energia.log10() : 0)
+
+/**
+ * Compresión: la meta y el progreso hacia ella en escala logarítmica, del umbral anterior (0 para la primera).
+ * Después de la última Compresión la meta es el Infinito (`final`).
+ */
 export function progresoCompresion(s: State) {
   const u = CFG.compresion.umbrales_log10
-  const meta = u[s.compresiones] as number | undefined
-  if (meta === undefined) return { meta, p: 0 }
+  const final = s.compresiones >= u.length
+  const meta = final ? CFG.infinito_log10 : u[s.compresiones]
   const desde = u[s.compresiones - 1] ?? 0
-  const e = s.energia.gt(1) ? s.energia.log10() : 0
-  return { meta, p: Math.min(1, Math.max(0, (e - desde) / (meta - desde))) }
+  return { meta, final, p: Math.min(1, Math.max(0, (log10E(s) - desde) / (meta - desde))) }
+}
+
+// Tiempo estimado: ritmo de log10(Energía) en los últimos ~30 s de juego (crece exponencial, así que se mide en log).
+const VENTANA_ETA = 30
+const muestras: [number, number][] = [] // [tiempoTotal, log10 E], una por segundo de juego
+let compMuestras = -1
+function medirEta(s: State) {
+  if (s.compresiones !== compMuestras) { muestras.length = 0; compMuestras = s.compresiones } // corrida nueva
+  const ult = muestras.at(-1)
+  if (ult && s.tiempoTotal - ult[0] < 1) return
+  muestras.push([s.tiempoTotal, log10E(s)])
+  if (muestras.length > VENTANA_ETA) muestras.shift()
+  const [t0, e0] = muestras[0]
+  const ritmo = muestras.length >= 3 ? (log10E(s) - e0) / (s.tiempoTotal - t0) : 0
+  juego.eta = ritmo > 0 ? Math.max(0, (progresoCompresion(s).meta - log10E(s)) / ritmo) : null
 }
 
 /** SPEC 5: cuándo aparece cada parte. */
@@ -48,19 +71,29 @@ function condiciones(s: State): Record<string, boolean> {
     color0: e.gte(CFG.revelado.ambar),
     anillos: anillos(s.granos) > 0 || s.compresiones > 0,
     compresion: e.log10() >= CFG.revelado.compresion_log10,
+    cascada: s.compresiones >= CFG.cascada.compresiones_para_desbloquear,
+    mutaciones: mutacionesDisponibles(s),
   }
   for (let i = 1; i < CFG.colores.length; i++) c[`color${i}`] = s.coloresDesbloqueados > i
+  for (const [k, n] of Object.entries(CFG.autocompradores)) c[`auto_${k}`] = s.compresiones >= n
   return c
 }
 
+/** Nombre de lo que compra cada autocomprador (claves de CFG.autocompradores). */
+export const nombreAuto = (k: string) => (k === 'caudal' ? es.caudal : es.colores[CFG.colores.findIndex((c) => c.id === k)])
+
 let avisos = 0
+const AVISOS_JUNTOS = 2
 function revelar(s: State) {
-  let nuevo: string | null = null
-  for (const [k, si] of Object.entries(condiciones(s))) if (si && !juego.vistos[k]) nuevo = k
-  if (!nuevo) return
-  juego.vistos = { ...juego.vistos, ...Object.fromEntries(Object.entries(condiciones(s)).filter(([, si]) => si)) }
-  // Si aparecen varias juntas (saltos de debug) se muestra la última frase.
-  juego.aviso = { id: avisos++, texto: es.revelado[nuevo] }
+  const c = condiciones(s)
+  const nuevos = Object.keys(c).filter((k) => c[k] && !juego.vistos[k])
+  if (!nuevos.length) return
+  juego.vistos = { ...juego.vistos, ...Object.fromEntries(nuevos.map((k) => [k, true])) }
+  // Los autocompradores que llegan juntos van en una sola frase; si aparecen muchas cosas juntas (saltos de debug), las últimas dos.
+  const autos = nuevos.filter((k) => k.startsWith('auto_') && !(k in es.revelado)).map((k) => nombreAuto(k.slice(5)))
+  const frases = nuevos.filter((k) => k in es.revelado).map((k) => es.revelado[k])
+  if (autos.length) frases.push(es.autocompradores(autos))
+  juego.aviso = { id: avisos++, texto: frases.slice(-AVISOS_JUNTOS).join(' ') }
 }
 
 export function arrancar() {
@@ -75,6 +108,7 @@ export function arrancar() {
     if (acum >= PASO) { s = tick(s, acum); acum = 0 }
     juego.s = s
     revelar(s)
+    medirEta(s)
     requestAnimationFrame(cuadro)
   }
   requestAnimationFrame(cuadro)

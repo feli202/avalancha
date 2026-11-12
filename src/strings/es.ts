@@ -38,9 +38,47 @@ export const es = {
 
   // Compresión
   compresion: (n: number) => `Compresión ${n.toLocaleString('es-AR')}`,
-  meta: (e: number) => `1e${e}`,
+  meta: (e: number) => `1e${Math.floor(e)}`,
   comprimir: 'Comprimir',
   progreso: (p: number) => `${Math.floor(p * 100)} %`,
+  eta: (d: string) => `≈ ${d}`,
+  /** Duración: "12 s", "4 min", "1 h 5 min". */
+  duracion: (seg: number) =>
+    seg < 60 ? `${Math.ceil(seg)} s` : seg < 3600 ? `${Math.ceil(seg / 60)} min` : `${Math.floor(seg / 3600)} h ${Math.floor((seg % 3600) / 60)} min`,
+  densidadNueva: (d: string) => `Densidad ^${d}`,
+  haciaInfinito: 'Infinito',
+
+  // Autocompradores (SPEC 4.8)
+  auto: 'auto',
+  autoDe: (nombre: string) => `Autocomprador de ${nombre}`,
+  compresionAuto: 'Comprimir sola al llegar a la meta',
+
+  // Pestañas (SPEC 6.4)
+  pestanas: { tienda: 'Tienda', cascada: 'Cascada', mutaciones: 'Mutaciones' } as Record<string, string>,
+  explicacion: {
+    cascada: 'Las avalanchas grandes rinden más que proporcionalmente: cuantos más granos tiene la pila, más multiplica.',
+    mutaciones: 'Mejoras permanentes: no se pierden al comprimir.',
+  } as Record<string, string>,
+  cascada: 'Cascada',
+  mutaciones: { caudal: 'Caudal', colores: 'Colores', expansion: 'Expansión', cascada: 'Cascada' } as Record<string, string>,
+  efectoMutacion: {
+    caudal: (x: string) => `Caudal ×${x}`,
+    colores: (x: string) => `todo vale ×${x}`,
+    expansion: (x: string) => `cada anillo ×${x}`,
+    cascada: (x: string) => `+${x} a la Cascada`,
+  } as Record<string, (x: string) => string>,
+  nivelMaximo: 'Máximo',
+
+  // Infinito (SPEC 6.6)
+  infinito: '∞',
+  fin: {
+    titulo: 'Llegaste al Infinito',
+    tiempo: 'Tiempo total',
+    compresiones: 'Compresiones',
+    record: 'Avalancha récord',
+    derrumbes: (n: string) => `${n} derrumbes`,
+    adelanto: 'Capa 1: Cristalización — próximamente',
+  },
 
   // SPEC 5: una línea por cada aparición
   revelado: {
@@ -52,7 +90,13 @@ export const es = {
     color3: 'Violeta: las celdas con 1 grano, las más raras, ahora valen más.',
     anillos: 'Anillo: cada vez que la pila duplica sus granos, todo vale un poco más.',
     compresion: 'Compresión: al llegar a la meta vas a poder comprimir la pila.',
+    cascada: 'Cascada: las avalanchas grandes ahora rinden más que proporcionalmente.',
+    mutaciones: 'Mutaciones: mejoras que sobreviven a la Compresión.',
+    auto_compresion_auto: 'Compresión automática: la pila comprime sola al llegar a la meta.',
   } as Record<string, string>,
+  /** Autocompradores que aparecen juntos, en una sola frase. */
+  autocompradores: (nombres: string[]) =>
+    `${nombres.length === 1 ? 'Autocomprador' : 'Autocompradores'} de ${nombres.join(' y ')}: compra${nombres.length === 1 ? '' : 'n'} solo${nombres.length === 1 ? '' : 's'} una vez por segundo.`,
 
   debug: {
     titulo: 'Debug',

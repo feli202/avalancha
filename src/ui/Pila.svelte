@@ -1,9 +1,10 @@
 <script lang="ts">
   // La pila ocupa toda la ventana, detrás de la interfaz. Clic, toque o barra espaciadora = Puñado.
   import { onMount } from 'svelte'
-  import { CFG, anillos, caudal, multAnillos, multColor, punado } from '../core'
+  import { CFG, anillos, caudal, densidad, multAnillos, multColor, punado } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS, PilaVisual, brillo } from '../render/pilaVisual'
   import { es } from '../strings/es'
+  import { formatoMult } from './formato'
   import { juego, progresoCompresion, sismo } from './juego.svelte'
 
   const ANILLO_SEP = 8 // px CSS entre la pila y el anillo de Compresión
@@ -12,7 +13,14 @@
   const comp = $derived(progresoCompresion(juego.s))
   const ra = $derived(juego.radioPila + ANILLO_SEP)
   // Textos flotantes y anillos (SPEC 6.2). Animaciones de CSS (transform y opacidad): no pasan por el hilo principal.
-  type Efecto = { id: number; texto?: string; anillo?: { r: number; color: string }; ola?: { r: number; color: string } }
+  type Efecto = {
+    id: number; texto?: string; anillo?: { r: number; color: string }; ola?: { r: number; color: string }
+    /** SPEC 6.5: la pila implota con una estela de los cuatro colores, destello blanco y la Densidad nueva. */
+    compresion?: { r: number; densidad: string }
+  }
+  /** Durante la implosión la pila de pantalla se queda con los granos de antes de comprimir; al terminar, se vacía. */
+  let implotando = $state(false)
+  const ESTELA = `conic-gradient(${[...COLOR_CSS, COLOR_CSS[0]].join(', ')})`
   let efectos = $state<Efecto[]>([])
   let siguiente = 0
   const efecto = (e: Omit<Efecto, 'id'>) => (efectos = [...efectos.slice(-3), { ...e, id: siguiente++ }])
@@ -33,6 +41,7 @@
     pila.alAvalancha = (n) => efecto({ texto: es.avalancha(n) })
     pila.alTamano = (n) => {
       sismo.push(n)
+      if (n > juego.record) juego.record = n
       if (sismo.length > 1000) sismo.shift() // nadie lo vacía hasta que aparece el sismógrafo
     }
     $effect(() => void (pila.destellos = juego.reducirDestellos))
@@ -40,11 +49,23 @@
     const coloresVistos = () => CFG.colores.filter((_, i) => juego.vistos[`color${i}`]).length
     let coloresAntes = coloresVistos()
     const brillos = [0, 0, 0, 0]
+    let compAntes = juego.s.compresiones
+    let granosAntes = juego.s.granos
     let raf = requestAnimationFrame(function cuadro(ahora) {
       const s = juego.s
-      // juego.nivelColores: nivel simulado desde el panel de debug (0 = el real)
-      s.colores.forEach((nivel, i) => (brillos[ALTURA_DE_COLOR[i]] = brillo(multColor(i, juego.nivelColores || nivel).log10())))
-      pila.cuadro(ahora, s.granos, caudal(s), brillos)
+      // Comprimir (a mano o la automática): implosión. La pila de pantalla se congela con lo que tenía.
+      if (s.compresiones > compAntes) {
+        implotando = true
+        efecto({ compresion: { r: Math.max(pila.radioCss, 48), densidad: formatoMult(densidad(s)) } })
+      }
+      compAntes = s.compresiones
+      if (implotando) pila.cuadro(ahora, granosAntes, 0, brillos)
+      else {
+        // juego.nivelColores: nivel simulado desde el panel de debug (0 = el real)
+        s.colores.forEach((nivel, i) => (brillos[ALTURA_DE_COLOR[i]] = brillo(multColor(i, juego.nivelColores || nivel).log10())))
+        pila.cuadro(ahora, s.granos, caudal(s), brillos)
+        granosAntes = s.granos
+      }
       juego.escalaK = pila.escalaK
       const r = Math.round(pila.radioCss)
       if (r !== juego.radioPila) juego.radioPila = r
@@ -70,7 +91,7 @@
 
 <svelte:window onkeydown={tecla} />
 
-<div class="pila">
+<div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:colapsa={juego.s.infinitos > 0} class:quieto={juego.reducirDestellos}>
   <canvas bind:this={canvas} onpointerdown={soltar} aria-label={es.pila}></canvas>
   <div class="efectos" class:quieto={juego.reducirDestellos} aria-hidden="true">
     {#if juego.vistos.compresion && comp.meta !== undefined}
@@ -80,8 +101,16 @@
         <circle class="arco" r={ra} pathLength="1" stroke-dashoffset={1 - comp.p} />
       </svg>
     {/if}
+    {#if juego.s.infinitos > 0}
+      <!-- SPEC 6.6: la pila se vuelve blanca desde el centro hacia afuera; después colapsa en un punto (.colapsa). -->
+      <div class="blanco" style:--r="{Math.max(juego.radioPila, 48) + ANILLO_SEP}px"></div>
+    {/if}
     {#each efectos as e (e.id)}
-      {#if e.ola}
+      {#if e.compresion}
+        <div class="estela" style:--r="{e.compresion.r}px" style:background={ESTELA} onanimationend={() => (implotando = false)}></div>
+        <div class="destello"></div>
+        <p class="flota densidad" onanimationend={() => quitar(e.id)}>{es.densidadNueva(e.compresion.densidad)}</p>
+      {:else if e.ola}
         <div class="ola" style:--r="{e.ola.r}px" style:--c={e.ola.color} onanimationend={() => quitar(e.id)}></div>
       {:else}
         {#if e.anillo}<div class="anillo" style:--r="{e.anillo.r}px" style:--c={e.anillo.color}></div>{/if}
@@ -134,4 +163,62 @@
   @keyframes desvanecer { from { opacity: 1; } to { opacity: 0; } }
   @keyframes ola { from { transform: scale(0.05); opacity: 0.9; } 70% { opacity: 0.7; } to { transform: scale(1.08); opacity: 0; } }
   @keyframes tenir { from { opacity: 0.25; } to { opacity: 0; } }
+
+  /* SPEC 6.5, Compresión (1,5 s): la pila implota hacia el centro (0,9 s) dentro de un remolino de los cuatro colores,
+     destello blanco que tapa el vaciado, y la Densidad nueva sube. */
+  /* Solo el disco de la pila gira y se achica: sin la máscara se vería el rectángulo del canvas con su fondo. */
+  .implota canvas, .colapsa canvas { mask: radial-gradient(circle calc(var(--rp) + 16px) at 50% 50%, #000 80%, transparent); }
+  .implota canvas { animation: implotar 0.9s cubic-bezier(0.6, 0, 0.9, 0.4) forwards; }
+  .estela {
+    position: absolute; width: calc(2.4 * var(--r)); height: calc(2.4 * var(--r)); translate: -50% -50%; border-radius: 50%;
+    mask: radial-gradient(circle, transparent 30%, #000 55%, transparent 71%); filter: blur(6px); mix-blend-mode: screen;
+    animation: remolino 0.9s cubic-bezier(0.6, 0, 0.9, 0.4) forwards;
+  }
+  .destello {
+    position: fixed; width: 300vmax; height: 300vmax; translate: -50% -50%; opacity: 0;
+    background: radial-gradient(circle, #fff 0, rgb(255 255 255 / 0.9) 4%, rgb(255 255 255 / 0.25) 18%, transparent 45%);
+    animation: destellar 0.7s 0.82s ease-out forwards;
+  }
+  .flota.densidad {
+    font-size: 2.25rem; letter-spacing: -0.02em; opacity: 0; text-shadow: 0 0 1.25rem rgb(255 255 255 / 0.8), 0 0 0.25rem #07080f;
+    animation: densidad 2.6s 0.85s ease-out forwards;
+  }
+  @keyframes implotar {
+    to { transform: scale(0.02) rotate(120deg); filter: brightness(3) saturate(1.6); opacity: 0.6; }
+  }
+  @keyframes remolino {
+    from { transform: scale(1) rotate(0); opacity: 0; }
+    20% { opacity: 1; }
+    to { transform: scale(0.03) rotate(540deg); opacity: 1; }
+  }
+  @keyframes destellar { 0% { opacity: 0; transform: scale(0.2); } 20% { opacity: 1; } 100% { opacity: 0; transform: scale(1); } }
+  @keyframes densidad {
+    0% { opacity: 0; transform: scale(0.6); }
+    15% { opacity: 1; transform: scale(1.08); }
+    25%, 70% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: translateY(-2rem); }
+  }
+  /* Reducir destellos: sin giro ni zoom; la pila se apaga, un destello suave y la Densidad aparece y se va. */
+  .implota.quieto canvas { animation: apagar 0.9s ease-in forwards; }
+  .quieto .estela { display: none; }
+  .quieto .destello { animation-name: destellarSuave; }
+  .quieto .flota.densidad { animation-name: densidadQuieta; }
+  @keyframes apagar { to { opacity: 0; } }
+  @keyframes destellarSuave { 20% { opacity: 0.35; } 100% { opacity: 0; } }
+  @keyframes densidadQuieta { 15%, 70% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* SPEC 6.6, Infinito: blanco desde el centro (2 s), colapso en un punto (0,8 s). App.svelte sigue con el silencio y el final. */
+  .blanco {
+    position: absolute; width: calc(2 * var(--r)); height: calc(2 * var(--r)); translate: -50% -50%; border-radius: 50%;
+    background: radial-gradient(circle, #fff 55%, rgb(255 255 255 / 0.6) 66%, transparent 71%);
+    box-shadow: 0 0 4rem rgb(255 255 255 / 0.4); animation: blanquear 2s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  }
+  .colapsa .compresion { animation: apagar 0.6s forwards; }
+  .colapsa canvas { animation: colapsar 0.8s 2s cubic-bezier(0.7, 0, 0.9, 0.3) forwards; }
+  .colapsa .blanco { animation: blanquear 2s cubic-bezier(0.4, 0, 0.6, 1) forwards, colapsar 0.8s 2s cubic-bezier(0.7, 0, 0.9, 0.3) forwards; }
+  .colapsa.quieto canvas { animation-name: apagar; }
+  .colapsa.quieto .blanco { animation: aparecerBlanco 2s forwards, apagar 0.8s 2s forwards; }
+  @keyframes blanquear { from { transform: scale(0); } to { transform: scale(1); } }
+  @keyframes aparecerBlanco { from { opacity: 0; } }
+  @keyframes colapsar { 90% { transform: scale(0.004); opacity: 1; } to { transform: scale(0); opacity: 0; } }
 </style>

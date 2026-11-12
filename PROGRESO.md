@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a, 2b y 3 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). Sigue el hito 4 (Compresión y sistemas tardíos).
+Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). Sigue el hito 5 (persistencia).
 
 ## Qué se hizo
 
@@ -299,3 +299,41 @@ No se tocó `src/core/` ni `balance/`.
 - **Sismógrafo con escala sola**: con avalanchas todo el tiempo la envolvente quedaba pegada arriba y la línea se veía plana. Ahora el rango va del percentil 5 (ignora ceros sueltos, como los del arranque) al pico de los últimos 20 s, con un alto mínimo de 0,5 décadas para no agrandar ruido cuando todo es parejo, y transición suave. Medido en la página con la pila llena y 4.096 granos/s: la línea recorre de 5 a 40 px de los 60 del canvas (antes, pegada arriba).
 - **Etiqueta de escala con superíndice**: "1 grano = 10³ granos" (`es.escala` convierte los dígitos de k a superíndices).
 
+
+
+## Hito 4, Compresión y sistemas tardíos
+
+No se tocó `src/core/` ni `balance/`: el núcleo ya hacía todo y no le encontré errores. Solo `src/ui/`, `src/strings/es.ts` y `scripts/partida50.mjs` (nuevo).
+
+| Archivo | Cambio |
+| --- | --- |
+| `src/ui/App.svelte` | Comprimir funciona (`comprimir` del núcleo); meta, porcentaje y tiempo estimado. Casilla "Comprimir sola al llegar a la meta" desde la Compresión 6. Después de la 17 el botón pasa a "Infinito" (deshabilitado: llega solo) y el anillo sigue hacia 1e308. Energía → "∞" y pantalla de fin de capa. |
+| `src/ui/Pila.svelte` | Animación de Compresión (SPEC 6.5) y la parte de la pila del Infinito (SPEC 6.6). Récord de avalancha. |
+| `src/ui/Tienda.svelte` | Pestañas Tienda · Cascada · Mutaciones (aparecen solas), cada una con su línea de explicación; interruptor "auto" de cada autocomprador. |
+| `src/ui/juego.svelte.ts` | `progresoCompresion` con meta final = Infinito; tiempo estimado (`juego.eta`); revelado de Cascada, Mutaciones y autocompradores; `juego.record`. |
+| `scripts/partida50.mjs` | Partida completa a ×50 en Edge headless por CDP, con un bot que juega por la interfaz. Sin dependencias. |
+
+- **Barra de Compresión**: sigue siendo el anillo alrededor de la pila más el botón (Pulido 2); escala logarítmica entre umbrales. **Tiempo estimado** = lo que falta en log10 dividido por el ritmo de log10(Energía) de los últimos 30 s de juego (una muestra por segundo, se reinicia en cada Compresión). Está en tiempo de juego: a ×50 dice "≈ 4 min" de algo que tarda 5 s reales.
+- **Animación de Compresión** (1,5 s): el disco de la pila gira 120° y se achica hasta un punto mientras un remolino de los cuatro colores (gradiente cónico, borroso, `screen`) se cierra encima girando 540°; a los 0,82 s un destello blanco radial tapa el vaciado y aparece "Densidad ^1,24" grande, con brillo, que rebota y se va en 2,6 s. Mientras implota, la pila de pantalla se queda con los granos de antes (la economía ya comprimió). Sirve igual para la Compresión a mano y la automática. Con Reducir destellos: sin giro ni zoom, la pila se apaga, destello suave, el texto aparece y se va.
+- **Autocompradores** (SPEC 4.8): un interruptor "auto" abajo a la derecha de la fila de Caudal y de cada color, con el color de la mejora cuando está prendido (`role="switch"`). Aparecen con su Compresión, con una frase ("Autocompradores de Ámbar y Coral: compran solos una vez por segundo.").
+- **Cascada y Mutaciones**: ahí se compra de a un nivel (sin x10 / Máx ni "Comprar todo": son las decisiones). Al llegar al nivel máximo la fila dice "Máximo". Efectos: Cascada muestra su multiplicador actual; Mutaciones, el efecto total (con nivel 2: Caudal ×9, todo vale ×100, cada anillo ×1,14, +0,06 a la Cascada).
+- **Infinito** (SPEC 6.6): 0–2 s un disco blanco crece desde el centro sobre la pila y la Energía pasa a "∞"; 2–2,8 s la pila colapsa en un punto (el resto de la interfaz se apaga); 2,8–3,8 s nada; 3,8 s el final: "Llegaste al Infinito", tiempo total, compresiones, avalancha récord y "Capa 1: Cristalización — próximamente". El estado queda con `infinitos = 1` (lo pone el núcleo).
+
+### Verificación
+
+- svelte-check y tsc sin errores; 32 tests en verde (el de balance igual que antes).
+- **Partida completa a ×50**: llega al Infinito sin errores en la consola ni cuelgues. **Tiempo de juego: 4 h 10 min** (17 compresiones, avalancha récord 3,64e8 derrumbes); unos 5 min reales. Una segunda corrida, después de los últimos arreglos: 4 h 9 min, también sin errores. Corrida en Edge headless a 60 fps con `scripts/partida50.mjs`: el navegador integrado estaba oculto y no avanzaba (0,3–3 cuadros por segundo).
+  - Es más que los 197 min del test de balance porque el bot del script es tonto: "Comprar todo" (siempre lo más barato), Comprimir apenas se puede, y Cascada y Mutaciones en cuanto alcanzan, sin elegir. No mide el balance; mide que la partida se puede jugar entera.
+  - Desde la Compresión 6 comprimió sola (la automática), y la última corrida llegó sola al Infinito.
+- Capturas (escritorio 1280×720 y móvil 375×812): la implosión (disco girando dentro del remolino), "Densidad ^1,12" con la pila vacía, el blanco del Infinito, la pantalla final, pestañas, interruptores.
+- **No medí los 60 fps a la vista** en el navegador integrado (seguía oculto). En Edge headless, con la pila llena y 3.000 granos/s, el panel de debug marcó 60 fps y peor cuadro 16,8 ms durante el final.
+
+### Decisiones donde la spec no alcanzaba (revisar)
+
+1. **El tiempo estimado salta** cuando el jugador gasta (la Energía baja y el ritmo medido también): llegó a decir "≈ 32 min" al 98 %. Con el autocomprador casi no pasa. Si molesta: ventana más larga o no medir durante las compras.
+2. **La Energía ya está en 0 durante la implosión**: la economía comprime en el clic y solo la pila de pantalla espera.
+3. **Avalancha récord** = la avalancha más grande de la pila visual (en derrumbes), no un número del núcleo; no se guarda (hito 5).
+4. **Avisos que llegan juntos**: se muestran hasta dos frases juntas (en la Compresión 2 llegan Cascada y el autocomprador de Caudal).
+5. **"Comprar todo" y la tecla M** compran solo lo de la pestaña Tienda, estés en la pestaña que estés.
+6. **En las filas con "auto"** la línea del efecto deja lugar al interruptor y con la columna angosta (1280 px) "celdas con 3 granos" pasa a dos líneas.
+7. **El final no se puede cerrar** ni reiniciar: no hay a dónde ir hasta la Capa 1. "El guardado queda listo para la Capa 1" depende del hito 5.

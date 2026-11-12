@@ -1,6 +1,6 @@
 <script lang="ts">
   // Interfaz principal (SPEC 6.4). Cada parte aparece recién cuando juego.vistos lo dice (SPEC 5).
-  import { densidad, multAnillos, anillos, produccion, puedeComprimir } from '../core'
+  import { anillos, comprimir, densidad, multAnillos, produccion, puedeComprimir } from '../core'
   import { es } from '../strings/es'
   import Debug from './Debug.svelte'
   import Pila from './Pila.svelte'
@@ -15,6 +15,9 @@
   // Compresión: el anillo alrededor de la pila (Pila.svelte) muestra el progreso; acá, el botón con meta y porcentaje.
   const comp = $derived(progresoCompresion(s))
   const lista = $derived(puedeComprimir(s))
+  const fin = $derived(s.infinitos > 0)
+  const alternarAutoComp = () =>
+    (juego.s = { ...juego.s, auto: { ...juego.s.auto, compresion_auto: !juego.s.auto.compresion_auto } })
 
   // Ajustes: un ícono arriba a la derecha abre el panel; se cierra con Escape o tocando afuera.
   let ajustes = $state(false)
@@ -44,12 +47,12 @@
 <svelte:window onpointerdown={afuera} onkeydown={escape} />
 
 <!-- .lista: se puede comprimir; el botón y el anillo de la pila laten juntos (arrancan en el mismo cuadro). -->
-<div class="juego" class:quieto={juego.reducirDestellos} class:lista>
+<div class="juego" class:quieto={juego.reducirDestellos} class:lista class:fin>
   <Pila />
 
   <header class="izq">
     <span class="etiqueta">{es.energia}</span>
-    <span class="energia num">{formato(s.energia)}</span>
+    {#if fin}<span class="energia infinito">{es.infinito}</span>{:else}<span class="energia num">{formato(s.energia)}</span>{/if}
     {#if v.tienda}<span class="linea num aparece"><b class="ambar">+{formato(produccion(s))}</b> {es.energiaPorSegundo}</span>{/if}
     {#if s.compresiones > 0}
       <span class="linea num aparece">{es.densidad} <b>^{formatoMult(densidad(s))}</b></span>
@@ -104,17 +107,39 @@
       ></button>
       <div class="contenido">
         <Tienda />
-        {#if v.compresion && comp.meta !== undefined}
-          <!-- La Compresión funciona desde el hito 4. -->
-          <button class="comprimir aparece" disabled>
-            <span class="nombre">{es.comprimir}</span>
-            <span class="meta num">{es.compresion(s.compresiones + 1)} · {es.meta(comp.meta)} · <b>{es.progreso(comp.p)}</b></span>
+        {#if v.compresion}
+          <!-- Después de la última Compresión la meta es el Infinito: llega solo. -->
+          <button class="comprimir aparece" disabled={!lista} onclick={() => (juego.s = comprimir(juego.s))}>
+            <span class="nombre">{comp.final ? es.haciaInfinito : es.comprimir}</span>
+            <span class="meta num">
+              {#if !comp.final}{es.compresion(s.compresiones + 1)}{' · '}{/if}{es.meta(comp.meta)} · <b>{es.progreso(comp.p)}</b>
+              {#if !lista && juego.eta !== null} · {es.eta(es.duracion(juego.eta))}{/if}
+            </span>
           </button>
+          {#if v.auto_compresion_auto && !comp.final}
+            <label class="autocomp aparece">
+              <input type="checkbox" checked={s.auto.compresion_auto} onchange={alternarAutoComp} /> {es.compresionAuto}
+            </label>
+          {/if}
         {/if}
       </div>
     </section>
   {/if}
 </div>
+
+{#if fin}
+  <!-- SPEC 6.6: después del blanco, el colapso y un segundo de silencio, el final de la capa. -->
+  <section class="final" aria-label={es.fin.titulo}>
+    <p class="simbolo" aria-hidden="true">{es.infinito}</p>
+    <h1>{es.fin.titulo}</h1>
+    <dl class="num">
+      <dt>{es.fin.tiempo}</dt><dd>{es.duracion(s.tiempoTotal)}</dd>
+      <dt>{es.fin.compresiones}</dt><dd>{s.compresiones}</dd>
+      <dt>{es.fin.record}</dt><dd>{es.fin.derrumbes(formato(juego.record))}</dd>
+    </dl>
+    <p class="adelanto">{es.fin.adelanto}</p>
+  </section>
+{/if}
 
 {#if import.meta.env.DEV}<Debug />{/if}
 
@@ -170,6 +195,28 @@
     0%, 100% { text-shadow: 0 0 0.75rem rgb(232 233 243 / 0.7), 0 0 0.25rem var(--fondo); }
     50% { text-shadow: 0 0 0.25rem rgb(232 233 243 / 0.2), 0 0 0.25rem var(--fondo); opacity: 0.75; }
   }
+
+  .autocomp { display: flex; align-items: center; gap: 0.5rem; min-height: 2.25rem; font-size: 0.8125rem; color: var(--tenue); cursor: pointer; }
+  .autocomp input { margin: 0; accent-color: var(--tinta); }
+
+  /* SPEC 6.6, Infinito. Pila.svelte hace el blanco (0–2 s) y el colapso (2–2,8 s); el número ya es ∞; el resto se apaga,
+     un segundo de silencio y aparece el final (3,8 s). */
+  .infinito { animation: fundido 1.2s ease-out; text-shadow: 0 0 1.5rem rgb(255 255 255 / 0.7); }
+  .juego.fin .der, .fin .sismo, .fin .aviso, .fin .ajustes { pointer-events: none; animation: irse 0.8s 1.2s ease-in forwards; }
+  .fin .izq { animation: irse 0.8s 2.2s ease-in forwards; }
+  @keyframes irse { to { opacity: 0; visibility: hidden; } }
+  .final {
+    position: fixed; inset: 0; z-index: 5; display: grid; place-content: center; justify-items: center; gap: 0.5rem;
+    padding: 2rem; text-align: center; background: radial-gradient(circle, rgb(20 22 40 / 0.6), transparent 70%);
+    opacity: 0; animation: llegar 1.2s 3.8s ease-out forwards;
+  }
+  .simbolo { margin: 0; font-size: clamp(4rem, 12vw, 7rem); font-weight: 300; line-height: 1; text-shadow: 0 0 2rem rgb(255 255 255 / 0.5); }
+  .final h1 { margin: 0 0 1.5rem; font-size: 1.5rem; font-weight: 600; }
+  .final dl { display: grid; grid-template-columns: auto auto; gap: 0.5rem 2rem; margin: 0 0 2rem; text-align: left; }
+  .final dt { color: var(--tenue); }
+  .final dd { margin: 0; font-weight: 600; text-align: right; }
+  .adelanto { margin: 0; font-size: 0.9375rem; color: var(--violeta); letter-spacing: 0.01em; }
+  @keyframes llegar { to { opacity: 1; } }
 
   .ajustes { position: fixed; top: var(--margen); right: calc(var(--margen) - 0.6875rem); z-index: 2; } /* el trazo del ícono, al ras de la lista */
   .icono {
