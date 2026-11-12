@@ -32,20 +32,20 @@ class State:
     # ---------- formulas (SPEC 4) ----------
     def D(s): return 1 + CFG['compresion']['densidad_por_nivel'] * s.tier
     def flow(s):
-        c = CFG['caudal']; return c['granos_base'] * c['mult_por_nivel'] ** s.Lf * 3 ** s.mut['caudal']
+        c = CFG['caudal']; return c['granos_base'] * c['mult_por_nivel'] ** s.Lf * CFG['mutaciones']['caudal']['por_nivel'] ** s.mut['caudal']
     def rings(s):
         g0 = CFG['anillos']['granos_primer_anillo']
         return int(math.floor(math.log2(s.G / g0))) + 1 if s.G >= g0 else 0
     def casc_c(s):
-        k = CFG['cascada']; return s.Lk * k['c_por_nivel'] + (0.03 * s.mut['cascada'] if s.Lk > 0 else 0)
+        k = CFG['cascada']; return s.Lk * k['c_por_nivel'] + (CFG['mutaciones']['cascada']['por_nivel'] * s.mut['cascada'] if s.Lk > 0 else 0)
     def logV(s):
         t = 0.0; h = CFG['hito_colores']
         for i, col in enumerate(CFG['colores']):
             t += s.Lc[i] * l10(col['mult_por_nivel']) + (s.Lc[i] // h['cada']) * l10(h['mult'])
-        t += s.rings() * l10(CFG['anillos']['mult_por_anillo'] + 0.02 * s.mut['expansion'])
+        t += s.rings() * l10(CFG['anillos']['mult_por_anillo'] + CFG['mutaciones']['expansion']['por_nivel'] * s.mut['expansion'])
         if s.G > 1:
             k = CFG['cascada']; t += max(0.0, s.casc_c() * (k['exp_G'] * l10(s.G) - k['exp_penal']))
-        return t + s.mut['colores'] * 1.0                                   # x10 por nivel
+        return t + s.mut['colores'] * l10(CFG['mutaciones']['colores']['por_nivel'])
     def lograte(s):
         if s.G <= 0: return -math.inf
         return l10(s.flow()) + l10(CFG['K_derrumbes_por_grano'] * s.G) + s.D() * s.logV()
