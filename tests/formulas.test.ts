@@ -179,3 +179,18 @@ describe('Puñado', () => {
     expect(punado(tick(s, 0.2)).granos).toBeCloseTo(110.2)
   })
 })
+
+describe('modos de compra (hito 3)', () => {
+  it('comprarN compra n niveles o ninguno', async () => {
+    const { comprarN } = await import('../src/core')
+    const s = con({ energia: new Decimal(60) }) // Caudal 10 + 47 = 57
+    expect(comprarN(s, 'caudal', 2).caudal).toBe(2)
+    expect(comprarN(s, 'caudal', 3)).toBe(s)
+  })
+  it('comprarTodo compra lo más barato primero', async () => {
+    const { comprarTodo } = await import('../src/core')
+    const t = comprarTodo(con({ energia: new Decimal(70) }), ['caudal', 'color0'])
+    // Caudal 10, Ámbar 10, Ámbar 23,4, sobran 26,6 < 47 (Caudal) y < 54,95 (Ámbar 2)
+    expect([t.caudal, t.colores[0]]).toEqual([1, 2])
+  })
+})

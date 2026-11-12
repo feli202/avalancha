@@ -1,17 +1,58 @@
 // Todos los textos de la interfaz. Nunca escribir textos en los componentes.
+const num = (x: number, d = 2) => x.toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d })
+
 export const es = {
   titulo: 'Avalancha',
   energia: 'Energía',
-  energiaPorSegundo: 'Energía/s',
-  granos: 'G (granos en la pila)',
-  comprarCaudal: 'Comprar Caudal',
-  nivel: 'nivel',
+  energiaPorSegundo: 'por segundo',
+  densidad: 'Densidad',
   pila: 'La pila de arena. Tocala o apretá la barra espaciadora para soltar un puñado de granos.',
+  pista: 'Tocá la pila',
   escala: (k: number) => `1 grano = 10^${k} granos`,
   avalancha: (n: number) => `Avalancha ×${n.toLocaleString('es-AR')}`,
-  anillo: (n: number, mult: number) =>
-    `Anillo ${n} · ×${mult.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+  anillo: (n: number, mult: number) => `Anillo ${n} · ×${num(mult)}`,
   reducirDestellos: 'Reducir destellos',
+
+  // Estadísticas al pie de la pila
+  derrumbesPorGrano: 'derrumbes por grano',
+  anillos: (n: number) => (n === 1 ? '1 anillo' : `${n.toLocaleString('es-AR')} anillos`),
+
+  // Tienda
+  tienda: 'Tienda',
+  abrirTienda: 'Abrir la tienda',
+  cerrarTienda: 'Cerrar la tienda',
+  modo: 'Modo de compra',
+  modos: { x1: 'x1', x10: 'x10', max: 'Máx' },
+  comprarTodo: 'Comprar todo',
+  teclaComprarTodo: 'M',
+  nivel: (n: number) => `Nv ${n.toLocaleString('es-AR')}`,
+  comprar: 'Comprar',
+  comprarCuantos: (n: number) => `+${n.toLocaleString('es-AR')}`,
+  caudal: 'Caudal',
+  efectoCaudal: (f: string) => (f === '1' ? '1 grano/s' : `${f} granos/s`),
+  colores: ['Ámbar', 'Coral', 'Jade', 'Violeta'],
+  /** Qué altura de celda mejora cada color (orden de CFG.colores). */
+  alturaColor: ['celdas con 3 granos', 'celdas con 2 granos', 'celdas vacías', 'celdas con 1 grano'],
+  mult: (m: string) => `×${m}`,
+
+  // Compresión
+  compresion: (n: number) => `Compresión ${n.toLocaleString('es-AR')}`,
+  meta: (e: number) => `1e${e}`,
+  comprimir: 'Comprimir',
+  progreso: (p: number) => `${Math.floor(p * 100)} %`,
+
+  // SPEC 5: una línea por cada aparición
+  revelado: {
+    derrumbes: 'Cuando una celda junta 4 granos se derrumba. Cada derrumbe da Energía.',
+    tienda: 'Caudal: más granos por segundo, más derrumbes.',
+    color0: 'Ámbar: las celdas con 3 granos ahora valen más.',
+    color1: 'Coral: las celdas con 2 granos ahora valen más.',
+    color2: 'Jade: las celdas vacías ahora valen más.',
+    color3: 'Violeta: las celdas con 1 grano, las más raras, ahora valen más.',
+    anillos: 'Anillo: cada vez que la pila duplica sus granos, todo vale un poco más.',
+    compresion: 'Compresión: al llegar a la meta vas a poder comprimir la pila.',
+  } as Record<string, string>,
+
   debug: {
     titulo: 'Debug',
     velocidad: 'Velocidad',

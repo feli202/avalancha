@@ -35,8 +35,8 @@
   }
 </script>
 
-<aside>
-  <strong>{es.debug.titulo}</strong>
+<details>
+  <summary>{es.debug.titulo}</summary>
   <div>
     {es.debug.velocidad}
     {#each [1, 10, 50] as v}
@@ -67,12 +67,12 @@
       {/each}
     </dl>
   {/if}
-</aside>
+</details>
 
 <style>
-  aside {
-    position: fixed; right: 0.5rem; bottom: 0.5rem; display: grid; gap: 0.5rem; padding: 0.75rem;
-    border: 1px solid #ffb547; background: #07080f; font-size: 0.85rem;
+  details {
+    position: fixed; left: 0.5rem; top: 50%; translate: 0 -50%; z-index: 10; display: grid; gap: 0.5rem; padding: 0.75rem;
+    border: 1px solid #ffb547; background: #07080f; font-size: 0.85rem; max-height: 90vh; overflow: auto;
   }
   input { width: 3.5rem; }
   dl { display: grid; grid-template-columns: 1fr auto; gap: 0.1rem 0.75rem; margin: 0; font-variant-numeric: tabular-nums; }

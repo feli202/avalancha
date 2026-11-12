@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a y 2b terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila) y **Pulido 1** (estilo Arena). Sigue el hito 3 (interfaz).
+Estado: **hitos 0, 1, 2a, 2b y 3 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal) y **Pulido 1** (estilo Arena). Sigue el hito 4 (Compresión y sistemas tardíos).
 
 ## Qué se hizo
 
@@ -177,3 +177,41 @@ Solo `src/render/pilaVisual.ts`, `src/ui/` y `src/strings/es.ts`. No se tocó `s
 4. **Con "Reducir destellos" no hay alejamiento de cámara** (es un zoom, lo que más molesta con `prefers-reduced-motion`).
 5. **La opción no se guarda**: vuelve a lo que pida el sistema al recargar. Se guarda con los ajustes del hito 5.
 6. El umbral 30× y las duraciones son constantes visuales en `pilaVisual.ts` / `Pila.svelte`, no de balance.
+
+
+## Hito 3, la interfaz principal
+
+Reemplaza la pantalla de prueba del hito 0.
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/ui/App.svelte` | Layout (SPEC 6.4): Energía, Energía/s y Densidad arriba; la pila; estadísticas al pie; barra de Compresión; la tienda a la derecha (en móvil, hoja inferior). |
+| `src/ui/Tienda.svelte` | Caudal y los colores aparecidos. Fila: muestra de color, nombre, nivel, efecto actual, costo y botón. Modos x1 / x10 / Máx; "Comprar todo" (botón y tecla M). |
+| `src/ui/juego.svelte.ts` | Revelado progresivo (`juego.vistos`, `juego.aviso`) y `juego.escalaK`. |
+| `src/ui/Pila.svelte` | La pila ahora ocupa una región (variables `--pila-arriba/-derecha/-abajo`) y se centra sola en ella; la ola del color nuevo. |
+| `src/core/shop.ts` | `comprarN` (x10: compra 10 o nada) y `comprarTodo` (siempre lo más barato que se pueda pagar). Con tests en `formulas.test.ts`. |
+| `src/strings/es.ts` | Todos los textos nuevos, incluidas las frases de cada aparición. |
+| `index.html` | Tokens de color (SPEC 6.1), Space Grotesk (Google Fonts), `.num` = cifras tabulares. |
+
+- **Revelado (SPEC 5).** Al inicio solo la pila, la Energía y "Tocá la pila", con la pila a pantalla completa. Primer derrumbe → derrumbes por grano; 5 de Energía → tienda con Caudal (y la pila se corre a la izquierda con una transición); 8 → Ámbar; Coral / Jade / Violeta cuando el núcleo los desbloquea; primer anillo → anillos; 1e12 → barra de Compresión con la meta. Cada aparición muestra su frase de una línea (una píldora que se desvanece en 6 s, `role="status"`) y entra con un fundido. Cada color nuevo manda una banda de su color del centro al borde de la pila (con "Reducir destellos": un tinte que se apaga, sin moverse).
+- **Barra de Compresión**: logarítmica, del umbral anterior (0 para la primera) a la meta; el botón Comprimir está deshabilitado hasta el hito 4.
+- **Números**: `formato` de SPEC 8; los multiplicadores y la Densidad con `formatoMult` (2 decimales por debajo de 1.000). Cifras tabulares verificadas: "1111" y "8888" miden lo mismo en Space Grotesk.
+- **Móvil (< 768 px)**: Energía fija arriba, la pila en el 55 % de arriba (entre la Energía y la barra), la tienda como hoja inferior: se arrastra la manija (más de 40 px cambia de posición) o se toca para alternar entre media y alta.
+- El panel de debug ahora es un `<details>` plegado a la izquierda para no tapar la tienda.
+
+### Verificación
+
+- svelte-check y tsc sin errores; 32 tests en verde (incluido el de balance); `npm run build` bien.
+- En el navegador integrado: arranque mínimo, Puñado → frase y derrumbes por grano, aparición de la tienda, Ámbar, anillos, Coral/Jade y la barra (79 % con 3e13 hacia 1e17); "Comprar todo" con M (1.000 de Energía → Caudal 3, Ámbar 4, sobran 426: correcto); Máx muestra "+7 · 3,03e12"; escritorio a 800×600 y móvil a 375×812, hoja inferior abierta y cerrada. Sin errores en la consola.
+- **No medí los 60 fps**: el navegador integrado estaba oculto y solo dibuja un cuadro por captura. Tampoco vi la ola de color en movimiento (solo que se dispara). El `backdrop-filter` de los paneles de vidrio sobre la pila es lo primero a revisar si baja de 60 fps.
+
+### Decisiones donde la spec no alcanzaba (revisar)
+
+1. **Umbrales del revelado en `config.json`** (`revelado`: tienda 5, Ámbar 8, Compresión 1e12). No son de balance (el simulador no los usa), pero así no hay números en el código. El primer derrumbe es G ≥ 4 (física de la pila, no balance).
+2. **Energía/s aparece con la tienda y Densidad con la primera Compresión** (la spec no lo dice; con D = 1 no informa nada).
+3. **"Tocá la pila" se va cuando aparece la tienda.**
+4. **x10 compra exactamente 10 niveles o ninguno**; Máx muestra cuántos niveles y cuánto cuestan; con 0, el costo de uno, deshabilitado.
+5. **"Comprar todo" compra siempre lo más barato** de la tienda visible, de a un nivel, hasta que no alcanza. No respeta el modo.
+6. **Lo revelado no se guarda** (se recalcula desde el estado; G ≥ 4 y anillos vuelven a aparecer solos). Va al guardado del hito 5.
+7. **La pila se achica a su región** en vez de quedar detrás de la tienda: el canvas termina donde empieza la tienda (detrás de la tienda se ve el fondo liso). En móvil se nota un corte suave arriba de la pila.
+8. **Queda afuera**: tiempo estimado de la barra de Compresión (hito 4), pestañas (no hay ninguna desbloqueada todavía), fuente local para el empaquetado de Steam.

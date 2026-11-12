@@ -4,8 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Avalancha</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
-      body { margin: 0; background: #07080f; color: #e8e9f3; font-family: system-ui, sans-serif; }
+      /* SPEC 6.1 */
+      :root {
+        --fondo: #07080f; --tinta: #e8e9f3; --tenue: rgb(232 233 243 / 0.6); --apagado: rgb(232 233 243 / 0.32);
+        --vidrio: rgb(14 16 30 / 0.62); --borde: rgb(255 255 255 / 0.1);
+        --ambar: #ffb547; --coral: #ff6b6b; --jade: #2dd4a7; --violeta: #9b7bff;
+        color-scheme: dark;
+      }
+      *, ::before, ::after { box-sizing: border-box; }
+      body {
+        margin: 0; background: var(--fondo); color: var(--tinta); overflow: hidden;
+        font-family: 'Space Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+      }
+      /* Cifras tabulares: los números no bailan al cambiar. */
+      .num { font-variant-numeric: tabular-nums; }
+      :focus-visible { outline: 2px solid var(--ambar); outline-offset: 2px; }
     </style>
   </head>
   <body>

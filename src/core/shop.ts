@@ -62,3 +62,19 @@ export function comprarMax(s: State, id: ItemId): State {
   while (puedeComprar(s, id)) s = comprar(s, id)
   return s
 }
+
+/** Compra exactamente n niveles, o ninguno si no alcanza (modo x10). */
+export function comprarN(s: State, id: ItemId, n: number): State {
+  let t = s
+  for (let i = 0; i < n; i++) t = comprar(t, id)
+  return nivel(t, id) - nivel(s, id) === n ? t : s
+}
+
+/** "Comprar todo": compra siempre lo más barato que se pueda pagar entre `ids`, hasta que no alcance para nada. */
+export function comprarTodo(s: State, ids: ItemId[]): State {
+  for (;;) {
+    const pagables = ids.filter((id) => puedeComprar(s, id))
+    if (!pagables.length) return s
+    s = comprar(s, pagables.reduce((a, b) => (costo(s, b).lt(costo(s, a)) ? b : a)))
+  }
+}
