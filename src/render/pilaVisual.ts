@@ -20,10 +20,10 @@ const ALEJAR_S = 0.8 // animación de alejamiento al saltar de escala
 const COLORES = [0x2dd4a7, 0x9b7bff, 0xff6b6b, 0xffb547]
 /**
  * Colores de la arena por altura, distintos de los de la interfaz: el brillo va al revés de la frecuencia, así se leen
- * las formas del mandala. Ámbar (3 granos, ~59 % de las celdas) es arena en sombra; Coral, intermedio; Jade y sobre todo
+ * las formas del mandala. Ámbar (3 granos, ~59 % de las celdas) es arena al atardecer, sin luz propia; Coral, intermedio; Jade y sobre todo
  * Violeta (el más raro) brillan.
  */
-const COLORES_PILA = [0x3fe0b4, 0xc2a8ff, 0xa4574f, 0x55432f]
+const COLORES_PILA = [0x3fe0b4, 0xc2a8ff, 0xa4574f, 0x8a5320]
 /** Altura de celda de cada color, en el orden de CFG.colores (Ámbar, Coral, Jade, Violeta). */
 export const ALTURA_DE_COLOR = [3, 2, 0, 1]
 /** Color CSS de cada altura de celda. */
@@ -85,6 +85,7 @@ uniform vec2 u_tam;      // tamaño del canvas en px
 uniform float u_escala;  // px por celda
 uniform float u_dpr;
 uniform vec4 u_brillo;
+uniform int u_ss;        // muestras por eje y por píxel (supermuestreo al reducir)
 const float L = ${LADO}.0;
 const vec3 LUZ = vec3(-0.5, 0.55, 0.67); // arriba a la izquierda (sin normalizar)
 
@@ -108,6 +109,38 @@ vec3 hombro(vec3 x) {
   return m > 0.8 ? x * (0.8 + 0.2 * (1.0 - exp(-(m - 0.8) / 0.2))) / m : x;
 }
 
+// La arena en el punto q (en celdas): color ya multiplicado por su cobertura, y la cobertura (0 = fondo).
+vec4 arenaEn(vec2 q) {
+  ivec2 c = ivec2(floor(q));
+  vec2 f = fract(q) - 0.5; // posición dentro de la celda
+  vec4 v = celda(c);
+  if (v.a <= 0.0) return vec4(0.0);
+  float h = v.a * 4.0 - 1.0;
+  float b = u_brillo[int(h + 0.5)];
+  float forma = smoothstep(4.0, 14.0, u_escala / u_dpr); // celdas grandes (en px CSS): relieve dentro de la celda
+  float hl = alt(c - ivec2(1, 0), h), hr = alt(c + ivec2(1, 0), h), hd = alt(c - ivec2(0, 1), h), hu = alt(c + ivec2(0, 1), h);
+  // Celdas chicas: una pendiente por celda (nítida, sin mezclar vecinas).
+  vec2 pend = -vec2(hr - hl, hu - hd) * 0.18;
+  // Celdas grandes: bisel solo en los bordes que bajan hacia una vecina, más un domo leve: volumen con borde definido.
+  vec2 borde = smoothstep(0.3, 0.5, abs(f));
+  vec2 bisel = vec2(f.x > 0.0 ? h - hr : hl - h, f.y > 0.0 ? h - hu : hd - h) * borde * 0.55 + f * 0.35;
+  vec3 N = normalize(vec3(mix(pend, bisel, forma), 1.0));
+  float dif = max(dot(N, normalize(LUZ)), 0.0);
+  // Grano fino de 1 px CSS, más marcado con celdas grandes para no ensuciar el dibujo con celdas de 1 px.
+  float gr = hash(floor(gl_FragCoord.xy / max(1.0, floor(u_dpr))));
+  vec3 alb = dec(v) * (1.0 + (gr - 0.5) * (0.06 + 0.16 * forma));
+  // Con el brillo alto la luz de afuera pesa menos: manda la de adentro.
+  vec3 arena = alb * mix(0.3 + 0.9 * dif, 0.8, 0.3 * b);
+  float mica = u_destello * step(0.994, gr) * (0.5 + 0.5 * sin(u_ahora * 1.7 + hash(gl_FragCoord.yx) * 40.0)) * dif;
+  // Lo que emite la celda, más fuerte en el centro del grano cuando las celdas son grandes.
+  vec3 em = dec(texelFetch(u_luz, c, 0)) * mix(1.0, 0.35 + 1.1 * exp(-dot(f, f) * 6.0), forma);
+  // Contorno limpio: la fila del borde (sobre los lados rectos de la pila es una barra de un solo color) se funde
+  // a medias con el fondo.
+  float afuera = step(celda(c - ivec2(1, 0)).a, 0.0) + step(celda(c + ivec2(1, 0)).a, 0.0) + step(celda(c - ivec2(0, 1)).a, 0.0) + step(celda(c + ivec2(0, 1)).a, 0.0);
+  float w = 1.0 - 0.6 * min(afuera, 1.0);
+  return vec4((arena + em + mica * (0.3 + 0.7 * alb)) * w, w);
+}
+
 void main() {
   vec2 p = gl_FragCoord.xy - 0.5 * u_tam;
   // Fondo azul noche (#07080F): un poco más claro e índigo en el centro, esquinas casi negras.
@@ -115,35 +148,16 @@ void main() {
   vec3 col = mix(vec3(0.0110, 0.0125, 0.0330), vec3(0.0021, 0.0024, 0.0048), smoothstep(0.0, 0.75, r));
   col *= 1.0 - 0.55 * smoothstep(0.6, 1.25, r);
 
+  // Con la pila alejada (menos de ~2,5 px por celda) varias celdas caen en un píxel: se promedian u_ss × u_ss
+  // muestras para que el centro no titile como ruido. Con celdas grandes, una sola: nítida.
+  vec4 a = vec4(0.0);
+  float n = float(u_ss);
+  for (int i = 0; i < u_ss; i++)
+    for (int j = 0; j < u_ss; j++)
+      a += arenaEn((p + (vec2(i, j) + 0.5) / n - 0.5) / u_escala + L * 0.5);
+  a /= n * n;
+  col = col * (1.0 - a.a) + a.rgb;
   vec2 q = p / u_escala + L * 0.5;
-  ivec2 c = ivec2(floor(q));
-  vec2 f = fract(q) - 0.5; // posición dentro de la celda
-  vec4 v = celda(c);
-  if (v.a > 0.0) {
-    float h = v.a * 4.0 - 1.0;
-    float b = u_brillo[int(h + 0.5)];
-    float forma = smoothstep(4.0, 14.0, u_escala / u_dpr); // celdas grandes (en px CSS): relieve dentro de la celda
-    float hl = alt(c - ivec2(1, 0), h), hr = alt(c + ivec2(1, 0), h), hd = alt(c - ivec2(0, 1), h), hu = alt(c + ivec2(0, 1), h);
-    // Celdas chicas: una pendiente por celda (nítida, sin mezclar vecinas).
-    vec2 pend = -vec2(hr - hl, hu - hd) * 0.18;
-    // Celdas grandes: bisel solo en los bordes que bajan hacia una vecina, más un domo leve: volumen con borde definido.
-    vec2 borde = smoothstep(0.3, 0.5, abs(f));
-    vec2 bisel = vec2(f.x > 0.0 ? h - hr : hl - h, f.y > 0.0 ? h - hu : hd - h) * borde * 0.55 + f * 0.35;
-    vec3 N = normalize(vec3(mix(pend, bisel, forma), 1.0));
-    float dif = max(dot(N, normalize(LUZ)), 0.0);
-    // Grano fino de 1 px CSS, más marcado con celdas grandes para no ensuciar el dibujo con celdas de 1 px.
-    float gr = hash(floor(gl_FragCoord.xy / max(1.0, floor(u_dpr))));
-    vec3 alb = dec(v) * (1.0 + (gr - 0.5) * (0.06 + 0.16 * forma));
-    // Con el brillo alto la luz de afuera pesa menos: manda la de adentro.
-    vec3 arena = alb * mix(0.3 + 0.9 * dif, 0.8, 0.3 * b);
-    float mica = u_destello * step(0.994, gr) * (0.5 + 0.5 * sin(u_ahora * 1.7 + hash(gl_FragCoord.yx) * 40.0)) * dif;
-    // Lo que emite la celda, más fuerte en el centro del grano cuando las celdas son grandes.
-    vec3 em = dec(texelFetch(u_luz, c, 0)) * mix(1.0, 0.35 + 1.1 * exp(-dot(f, f) * 6.0), forma);
-    // Contorno limpio: la fila del borde (sobre los lados rectos de la pila es una barra de un solo color) se funde
-    // a medias con el fondo.
-    float afuera = step(celda(c - ivec2(1, 0)).a, 0.0) + step(celda(c + ivec2(1, 0)).a, 0.0) + step(celda(c - ivec2(0, 1)).a, 0.0) + step(celda(c + ivec2(0, 1)).a, 0.0);
-    col = mix(arena + em + mica * (0.3 + 0.7 * alb), col, 0.6 * min(afuera, 1.0));
-  }
   col = hombro(col + halo(q));
   // A sRGB, con un poco de ruido para que el degradado del fondo no haga escalones.
   col = mix(col * 12.92, 1.055 * pow(col, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, col));
@@ -254,7 +268,7 @@ export class PilaVisual {
       return prog
     }
     this.progCeldas = programa(FRAG_CELDAS, ['u_alturas', 'u_derrumbe', 'u_ahora', 'u_destello', 'u_brillo', 'u_color'], this.uniC)
-    this.progPantalla = programa(FRAG_PANTALLA, ['u_celdas', 'u_luz', 'u_tam', 'u_escala', 'u_ahora', 'u_destello', 'u_dpr', 'u_brillo'], this.uniP)
+    this.progPantalla = programa(FRAG_PANTALLA, ['u_celdas', 'u_luz', 'u_tam', 'u_escala', 'u_ahora', 'u_destello', 'u_dpr', 'u_brillo', 'u_ss'], this.uniP)
     gl.bindVertexArray(gl.createVertexArray())
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1) // 513 no es múltiplo de 4
     const textura = (unidad: number, interno: number, niveles = 1) => {
@@ -453,7 +467,9 @@ export class PilaVisual {
     gl.viewport(0, 0, canvas.width, canvas.height)
     gl.useProgram(this.progPantalla)
     gl.uniform2f(uniP.u_tam, canvas.width, canvas.height)
-    gl.uniform1f(uniP.u_escala, this.escala * alejar)
+    const px = this.escala * alejar // px reales por celda
+    gl.uniform1f(uniP.u_escala, px)
+    gl.uniform1i(uniP.u_ss, px < 1 ? 3 : px < 2.5 ? 2 : 1)
     gl.uniform1f(uniP.u_ahora, this.ahora)
     gl.uniform1f(uniP.u_dpr, devicePixelRatio)
     gl.uniform4fv(uniP.u_brillo, brillos)

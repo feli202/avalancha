@@ -55,6 +55,8 @@
     {#each [50_000, 400_000] as n}
       <button onclick={() => (juego.s = { ...juego.s, granos: Math.max(juego.s.granos, n) })}>{es.debug.pilaA(n)}</button>
     {/each}
+    <!-- Más que la capacidad (~463.000) más el relleno del 12 %: la pila llega al círculo y queda redonda. -->
+    <button onclick={() => (juego.s = { ...juego.s, granos: Math.max(juego.s.granos, 600_000) })}>{es.debug.pilaLlena}</button>
   </div>
   <label>
     {es.debug.nivelColores} ({juego.nivelColores})

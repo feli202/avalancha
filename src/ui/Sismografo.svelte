@@ -29,16 +29,16 @@
       const w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr)
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h }
       ctx.clearRect(0, 0, w, h)
-      ctx.lineWidth = 1.25 * dpr
+      ctx.lineWidth = 1.75 * dpr
       ctx.lineJoin = 'round'
-      ctx.strokeStyle = 'rgb(232 233 243 / 0.75)'
+      ctx.strokeStyle = 'rgb(232 233 243 / 0.95)'
+      ctx.shadowColor = 'rgb(232 233 243 / 0.55)'
+      ctx.shadowBlur = 5 * dpr
+      // Línea base plana desde el borde izquierdo: ocupa todo el ancho aunque todavía no haya 20 s de muestras.
+      const base = h - 2 * dpr
       ctx.beginPath()
-      muestras.forEach(([t, m], i) => {
-        const x = w - ((ahora - t) / VENTANA_MS) * w
-        const y = h - dpr - Math.min(m / tope, 1) * (h - 3 * dpr)
-        if (i) ctx.lineTo(x, y)
-        else ctx.moveTo(x, y)
-      })
+      ctx.moveTo(0, base)
+      for (const [t, m] of muestras) ctx.lineTo(w - ((ahora - t) / VENTANA_MS) * w, base - Math.min(m / tope, 1) * (h - 6 * dpr))
       ctx.stroke()
       raf = requestAnimationFrame(dibujar)
     })

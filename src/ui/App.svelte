@@ -171,7 +171,7 @@
     50% { text-shadow: 0 0 0.25rem rgb(232 233 243 / 0.2), 0 0 0.25rem var(--fondo); opacity: 0.75; }
   }
 
-  .ajustes { position: fixed; top: calc(var(--margen) - 0.375rem); right: calc(var(--margen) - 0.5rem); z-index: 2; }
+  .ajustes { position: fixed; top: var(--margen); right: calc(var(--margen) - 0.6875rem); z-index: 2; } /* el trazo del ícono, al ras de la lista */
   .icono {
     display: grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0; border: 0; background: none;
     color: var(--apagado); cursor: pointer; transition: color 0.15s;

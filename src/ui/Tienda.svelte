@@ -49,7 +49,6 @@
 <svelte:window onkeydown={tecla} />
 
 <div class="cabeza">
-  <h2>{es.tienda}</h2>
   <div class="modos" role="radiogroup" aria-label={es.modo}>
     {#each Object.keys(es.modos) as Modo[] as m}
       <button role="radio" aria-checked={modo === m} onclick={() => (modo = m)}>{es.modos[m]}</button>
@@ -85,12 +84,12 @@
 
 <style>
   /* Sin cajas: filas de texto separadas por líneas de 1 px; se compra con un clic en la fila. */
-  /* padding-right: lugar para el ícono de Ajustes, fijo arriba a la derecha (App.svelte). */
-  .cabeza { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; padding: 0 2.5rem 0.5rem 0; }
-  h2 { margin: 0; font-size: 1.25rem; font-weight: 600; }
-  .modos { display: flex; gap: 0.25rem; }
+  /* Sin título: los modos arrancan en el borde izquierdo de la lista; a la derecha, el ícono de Ajustes
+     (fijo, App.svelte), alineado con el borde derecho. */
+  .cabeza { display: flex; align-items: center; padding: 0 2.5rem 0.25rem 0; }
+  .modos { display: flex; gap: 1rem; }
   .modos button {
-    min-width: 2.25rem; min-height: 2.25rem; padding: 0 0.25rem; border: 0; background: none;
+    min-height: 2.25rem; padding: 0; border: 0; background: none;
     color: var(--apagado); font: inherit; font-size: 0.875rem; cursor: pointer; transition: color 0.15s;
   }
   .modos button:hover { color: var(--tenue); }
@@ -124,6 +123,7 @@
   .todo:hover { color: var(--tinta); }
   kbd { font: inherit; font-size: 0.8125rem; color: var(--apagado); }
 
+  @media (max-width: 767px) { .cabeza { padding-right: 0; } } /* en móvil Ajustes queda arriba de la pantalla */
   @keyframes entrar { from { opacity: 0; transform: translateY(6px); } }
   :global(.quieto) li { animation-name: fundido; }
   @keyframes fundido { from { opacity: 0; } }

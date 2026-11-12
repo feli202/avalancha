@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a, 2b y 3 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal), **Pulido 1** (estilo Arena) y **Pulido 2 y 3** (rediseño de la interfaz, borde circular, paleta invertida de la pila). Sigue el hito 4 (Compresión y sistemas tardíos).
+Estado: **hitos 0, 1, 2a, 2b y 3 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). Sigue el hito 4 (Compresión y sistemas tardíos).
 
 ## Qué se hizo
 
@@ -274,4 +274,22 @@ No se tocó `src/core/` ni `balance/`. `SPEC.md` 6.1 y 6.3 actualizados (colores
 1. Con celdas fraccionarias (menos de 3 px reales) los anchos de celda alternan entre 1 y 2 px: a esa densidad no se nota a simple vista, pero si aparece moiré, la salida es supermuestrear la pasada a pantalla.
 2. El "antes" del Pulido 2 decía que el sismógrafo dibujaba rayas: quedó reemplazado por la línea continua.
 3. Ajustes no se guarda (igual que antes: va al guardado del hito 5).
+
+
+## Pulido 4, Ámbar, pila redonda verificada, sismógrafo y supermuestreo
+
+No se tocó `src/core/` ni `balance/`.
+
+- **Ámbar**: se probaron tres variantes con la pila llena (destellos apagados para comparar), cambiando el uniforme en vivo: A #8A5320 (brasa), B #A3631F (atardecer), C #B87A2C (miel). Quedó **A**: dorado anaranjado profundo, sin luz propia; B ya empieza a competir con Jade y C con los dos. Para cambiarla es `COLORES_PILA[3]` en `pilaVisual.ts` (y SPEC 6.1).
+- **Sin título en la tienda**: arriba de la lista quedan x1 / x10 / Máx (desde el borde izquierdo de la lista) y el ícono de Ajustes (al ras del borde derecho). `es.tienda` queda solo como `aria-label` del panel.
+- **Pila llena redonda, verificada.** El sumidero circular está en `pila.ts`, que es lo que corre el worker (Pulido 2), y el relleno del 12 % del Pulido 3 completa los lados que la pila natural deja planos al primer grano perdido. Lo que se veía cuadrado era la pila **antes** de su capacidad (con "Pila a 400.000" o en una corrida con pocos granos): ahí la pila de pantalla es la real (SPEC 6.3) y su forma natural es un octógono con lados rectos. Panel de debug: botón nuevo **"Pila llena (redonda)"** (600.000 granos: capacidad más relleno); con Caudal 1 se llenó en ~2 min y quedó redonda (captura en la sesión).
+- **Sismógrafo**: línea base plana desde el borde izquierdo (ocupa todo el ancho desde el arranque), trazo de 1,75 px al 95 % con un halo suave (`shadowBlur`), corre de derecha a izquierda.
+- **Supermuestreo al reducir**: la pasada a pantalla promedia `u_ss × u_ss` muestras por píxel (3×3 con menos de 1 px real por celda, 2×2 con menos de 2,5 px, 1 desde ahí): el centro ya no titila como ruido con la pila alejada y con celdas grandes sigue siendo nítida. El sombreado de una celda pasó a una función `arenaEn(q)` que devuelve color y cobertura.
+- Se sacó el `window.pila` de prueba.
+
+### Verificación
+
+- svelte-check y tsc sin errores, 32 tests en verde.
+- Navegador integrado (1280×720 y 375×812): pila llena redonda desde cero con "Pila llena (redonda)" y Caudal 1; centro suave; sismógrafo; cabecera de la tienda alineada; móvil sin roturas. Sin errores en la consola.
+- **No medí los 60 fps ni vi el titileo en movimiento** (el navegador integrado seguía oculto, 1–3 fps). Costo nuevo: con 1–2,5 px por celda la pasada a pantalla hace 4 muestras por píxel (antes 1; medida antes en 0,9 ms a 1600×900, así que ~3–4 ms en GPU integrada); en pantallas chicas, 9 muestras pero sobre pocos píxeles. Si baja de 60 fps, lo primero es pasar a 2×2 en vez de 3×3 o compartir las vecinas entre muestras.
 

@@ -19,7 +19,7 @@ export const es = {
   anillos: (n: number) => (n === 1 ? '1 anillo' : `${n.toLocaleString('es-AR')} anillos`),
 
   // Tienda
-  tienda: 'Tienda',
+  tienda: 'Tienda', // solo para lectores de pantalla: el panel ya no lleva título
   abrirTienda: 'Abrir la tienda',
   cerrarTienda: 'Cerrar la tienda',
   modo: 'Modo de compra',
@@ -63,6 +63,7 @@ export const es = {
     exportar: 'Exportar estado (JSON)',
     caudalMas: 'Caudal +1 nivel',
     pilaA: (n: number) => `Pila a ${n.toLocaleString('es-AR')}`,
+    pilaLlena: 'Pila llena (redonda)',
     nivelColores: 'Nivel de los colores (0 = real)',
     fps: 'fps',
     peorCuadro: 'peor cuadro (ms)',
