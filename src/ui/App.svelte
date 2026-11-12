@@ -1,13 +1,15 @@
 <script lang="ts">
   // Interfaz principal (SPEC 6.4). Cada parte aparece recién cuando juego.vistos lo dice (SPEC 5).
-  import { CFG, anillos, comprimir, densidad, multAnillos, produccion, puedeComprimir } from '../core'
+  import { anillos, comprimir, densidad, multAnillos, produccion, puedeComprimir } from '../core'
   import { es } from '../strings/es'
+  import { ajustes } from './ajustes.svelte'
   import Debug from './Debug.svelte'
+  import Paneles from './Paneles.svelte'
   import Pila from './Pila.svelte'
   import Sismografo from './Sismografo.svelte'
   import Tienda from './Tienda.svelte'
   import { formato, formatoMult } from './formato'
-  import { juego, progresoCompresion } from './juego.svelte'
+  import { hayPanel, juego, progresoCompresion } from './juego.svelte'
 
   const v = $derived(juego.vistos)
   const s = $derived(juego.s)
@@ -19,12 +21,13 @@
   const alternarAutoComp = () =>
     (juego.s = { ...juego.s, auto: { ...juego.s.auto, compresion_auto: !juego.s.auto.compresion_auto } })
 
-  // Ajustes: un ícono arriba a la derecha abre el panel; se cierra con Escape o tocando afuera.
-  let ajustes = $state(false)
-  let panel: HTMLElement | undefined = $state()
-  const afuera = (e: PointerEvent) => ajustes && panel && !panel.contains(e.target as Node) && (ajustes = false)
-  const escape = (e: KeyboardEvent) => e.key === 'Escape' && ((ajustes = false), (juego.ausencia = null))
-  const enfocar = (el: HTMLElement) => el.focus()
+  const comprimirYa = () => (juego.s = comprimir(juego.s))
+  // C comprime (Espacio y M viven en Pila y Tienda).
+  function tecla(e: KeyboardEvent) {
+    if (e.code !== 'KeyC' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || hayPanel()) return
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+    if (juego.vistos.compresion && lista) comprimirYa()
+  }
 
   // Móvil: la tienda es una hoja inferior; se arrastra o se toca la manija.
   let alta = $state(false)
@@ -45,10 +48,11 @@
   }
 </script>
 
-<svelte:window onpointerdown={afuera} onkeydown={escape} />
+<svelte:window onkeydown={tecla} />
 
 <!-- .lista: se puede comprimir; el botón y el anillo de la pila laten juntos (arrancan en el mismo cuadro). -->
-<div class="juego" class:quieto={juego.reducirDestellos} class:lista class:fin>
+<!-- inert con un panel encima: el foco y los clics quedan en el panel. -->
+<div class="juego" class:quieto={ajustes.reducirDestellos} class:lista class:fin inert={hayPanel()}>
   <Pila />
 
   <header class="izq">
@@ -60,17 +64,12 @@
     {/if}
   </header>
 
-  <div class="ajustes" bind:this={panel}>
-    <button class="icono" aria-label={es.ajustes} aria-expanded={ajustes} onclick={() => (ajustes = !ajustes)}>
+  <div class="ajustes">
+    <button class="icono" aria-label={es.menu.abrir} aria-haspopup="dialog" onclick={() => (juego.panel = 'ajustes')}>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
         <path d="M2 5h8M14 5h2M2 13h2M8 13h8" /><circle cx="12" cy="5" r="2" /><circle cx="6" cy="13" r="2" />
       </svg>
     </button>
-    {#if ajustes}
-      <div class="panel" role="dialog" aria-label={es.ajustes}>
-        <label><input type="checkbox" bind:checked={juego.reducirDestellos} /> {es.reducirDestellos}</label>
-      </div>
-    {/if}
   </div>
 
   {#if juego.aviso}
@@ -110,7 +109,7 @@
         <Tienda />
         {#if v.compresion}
           <!-- Después de la última Compresión la meta es el Infinito: llega solo. -->
-          <button class="comprimir aparece" disabled={!lista} onclick={() => (juego.s = comprimir(juego.s))}>
+          <button class="comprimir aparece" disabled={!lista} onclick={comprimirYa} aria-keyshortcuts="C">
             <span class="nombre">{comp.final ? es.haciaInfinito : es.comprimir}</span>
             <span class="meta num">
               {#if !comp.final}{es.compresion(s.compresiones + 1)}{' · '}{/if}{es.meta(comp.meta)} · <b>{es.progreso(comp.p)}</b>
@@ -142,33 +141,7 @@
   </section>
 {/if}
 
-{#if juego.guardadoRoto}
-  <!-- No se cierra con Escape ni tocando afuera: hasta aceptar, no se guarda nada. -->
-  <div class="velo">
-    <div class="cartel" role="alertdialog" aria-modal="true" aria-labelledby="roto-t" aria-describedby="roto-d">
-      <h2 id="roto-t">{es.guardadoRoto.titulo}</h2>
-      <p id="roto-d">{es.guardadoRoto.texto}</p>
-      <button use:enfocar onclick={() => (juego.guardadoRoto = false)}>{es.guardadoRoto.empezar}</button>
-    </div>
-  </div>
-{:else if juego.ausencia}
-  {@const a = juego.ausencia}
-  <div class="velo" role="presentation" onclick={(e) => e.target === e.currentTarget && (juego.ausencia = null)}>
-    <div class="cartel" role="dialog" aria-modal="true" aria-labelledby="ausencia-t">
-      <h2 id="ausencia-t">{es.ausencia.titulo}</h2>
-      <p>
-        {a.segundos >= CFG.fuera_de_linea.tope_horas * 3600
-          ? es.ausencia.tope(CFG.fuera_de_linea.tope_horas)
-          : es.ausencia.tiempo(es.duracion(a.segundos))}
-      </p>
-      <dl class="num">
-        <dt>{es.ausencia.energia}</dt><dd>+{formato(a.energia)}</dd>
-        {#if a.compresiones > 0}<dt>{es.ausencia.compresiones}</dt><dd>+{a.compresiones}</dd>{/if}
-      </dl>
-      <button use:enfocar onclick={() => (juego.ausencia = null)}>{es.ausencia.seguir}</button>
-    </div>
-  </div>
-{/if}
+<Paneles />
 
 {#if import.meta.env.DEV}<Debug />{/if}
 
@@ -247,33 +220,13 @@
   .adelanto { margin: 0; font-size: 0.9375rem; color: var(--violeta); letter-spacing: 0.01em; }
   @keyframes llegar { to { opacity: 1; } }
 
-  /* "Mientras no estabas" y el aviso de guardado dañado. */
-  .velo { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; padding: 1rem; background: rgb(7 8 15 / 0.6); animation: fundido 0.3s ease-out; }
-  .cartel { width: min(22rem, 100%); padding: 1.5rem; border: 1px solid var(--borde); background: rgb(7 8 15 / 0.94); }
-  .cartel h2 { margin: 0 0 0.5rem; font-size: 1.25rem; font-weight: 600; }
-  .cartel p { margin: 0 0 1rem; font-size: 0.9375rem; color: var(--tenue); text-wrap: pretty; }
-  .cartel dl { display: grid; grid-template-columns: 1fr auto; gap: 0.375rem 1.5rem; margin: 0 0 1.25rem; }
-  .cartel dt { color: var(--tenue); }
-  .cartel dd { margin: 0; font-weight: 600; text-align: right; }
-  .cartel button {
-    width: 100%; min-height: 2.75rem; border: 1px solid var(--borde); background: none; color: var(--tinta);
-    font: inherit; font-weight: 600; cursor: pointer;
-  }
-  .cartel button:hover, .cartel button:focus-visible { border-color: var(--tinta); }
-
   .ajustes { position: fixed; top: var(--margen); right: calc(var(--margen) - 0.6875rem); z-index: 2; } /* el trazo del ícono, al ras de la lista */
   .icono {
     display: grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0; border: 0; background: none;
     color: var(--apagado); cursor: pointer; transition: color 0.15s;
   }
-  .icono:hover, .icono[aria-expanded='true'] { color: var(--tinta); }
+  .icono:hover { color: var(--tinta); }
   .icono svg { fill: var(--fondo); stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
-  .panel {
-    position: absolute; top: 100%; right: 0.5rem; width: max-content; padding: 0.25rem 1rem;
-    border: 1px solid var(--borde); background: rgb(7 8 15 / 0.94);
-  }
-  .panel label { display: flex; align-items: center; gap: 0.625rem; min-height: 2.75rem; font-size: 0.875rem; cursor: pointer; }
-  .panel input { margin: 0; accent-color: var(--tinta); }
 
   .aparece { animation: aparecer 0.6s ease-out; }
   .der.aparece { animation-name: fundido; } /* sin transform: en móvil la hoja usa el suyo */

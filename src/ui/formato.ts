@@ -1,12 +1,18 @@
 import Decimal from 'break_infinity.js'
+import { ajustes } from './ajustes.svelte'
 
-/** SPEC 8: hasta 999.999 con separador de miles; después científica con 2 decimales (1,23e45). */
+/**
+ * SPEC 8: hasta 999.999 con separador de miles; después científica con 2 decimales (1,23e45),
+ * o de ingeniería si lo piden los ajustes (exponente múltiplo de 3: 12,30e45).
+ */
 export function formato(x: Decimal | number): string {
   const d = new Decimal(x)
   if (d.lt(1e6)) return Math.floor(d.toNumber()).toLocaleString('es-AR')
-  let m = d.mantissa.toFixed(2)
-  let e = d.exponent
-  if (m === '10.00') { m = '1.00'; e++ }
+  const paso = ajustes.notacion === 'ingenieria' ? 3 : 1
+  const r = ((d.exponent % paso) + paso) % paso
+  let e = d.exponent - r
+  let m = (d.mantissa * 10 ** r).toFixed(2)
+  if (Number(m) >= 10 ** paso) { m = (Number(m) / 10 ** paso).toFixed(2); e += paso } // 9,999 → 10,00 → 1,00
   return `${m.replace('.', ',')}e${e}`
 }
 

@@ -3,7 +3,7 @@
   import Decimal from 'break_infinity.js'
   import { CFG, estadoInicial } from '../core'
   import { es } from '../strings/es'
-  import { juego } from './juego.svelte'
+  import { borrarPartida, juego } from './juego.svelte'
 
   const umbrales = CFG.compresion.umbrales_log10
   let n = $state(1)
@@ -50,6 +50,8 @@
     <button onclick={saltar}>{es.debug.ir}</button>
   </label>
   <button onclick={exportar}>{es.debug.exportar}</button>
+  <!-- Sin confirmación: es una herramienta de desarrollo (en Ajustes lleva doble confirmación). -->
+  <button onclick={borrarPartida}>{es.debug.borrar}</button>
   <button onclick={() => (juego.s = { ...juego.s, caudal: juego.s.caudal + 1 })}>{es.debug.caudalMas}</button>
   <div>
     {#each [50_000, 400_000] as n}

@@ -18,10 +18,12 @@ export function autocomprar(s: State): State {
 export function tick(s: State, dt: number): State {
   if (s.infinitos > 0) return s // SPEC 4.9: economía congelada
   const energia = s.energia.add(produccion(s).mul(dt))
+  const granos = caudal(s) * dt
   let n: State = {
     ...s,
     energia,
-    granos: s.granos + caudal(s) * dt,
+    granos: s.granos + granos,
+    granosTotales: s.granosTotales + granos,
     tiempoCorrida: s.tiempoCorrida + dt,
     tiempoTotal: s.tiempoTotal + dt,
     maxEnergia: Decimal.max(s.maxEnergia, energia),
@@ -50,6 +52,7 @@ export function punado(s: State): State {
     energia,
     maxEnergia: Decimal.max(s.maxEnergia, energia),
     granos: s.granos + CFG.punado.granos,
+    granosTotales: s.granosTotales + CFG.punado.granos,
     enfriamientoPunado: 1 / CFG.punado.max_por_segundo,
   }
 }

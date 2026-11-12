@@ -1,0 +1,395 @@
+<script lang="ts">
+  // Todo lo que flota sobre la pila: "Mientras no estabas", guardado dañado, y el panel de Estadísticas · Logros ·
+  // Ajustes. Un solo lenguaje: velo oscuro translúcido, sin cajas, jerarquía por tamaño, números con cifras tabulares.
+  import { untrack } from 'svelte'
+  import { CFG } from '../core'
+  import { exportar, importar, type Partida } from '../guardado/guardado'
+  import { es } from '../strings/es'
+  import { ajustes } from './ajustes.svelte'
+  import { formato } from './formato'
+  import { borrarPartida, guardarYa, juego, partidaActual, reemplazarPartida } from './juego.svelte'
+  import { LOGROS, UMBRAL } from './logros'
+
+  const s = $derived(juego.s)
+  const PESTANAS = ['estadisticas', 'logros', 'ajustes'] as const
+
+  // Al cerrar cualquier panel, el foco vuelve a donde estaba (el ícono, casi siempre).
+  const abierto = $derived(juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto)
+  let previo: HTMLElement | null = null
+  // Se anota antes de que el panel tome el foco, y se devuelve después de que el juego deja de estar inert.
+  $effect.pre(() => void (abierto && untrack(() => (previo ??= document.activeElement as HTMLElement | null))))
+  $effect(() => {
+    if (abierto) return
+    untrack(() => { previo?.focus(); previo = null })
+  })
+  const enfocar = (el: HTMLElement, si = true) => void (si && el.focus())
+
+  function cerrar() {
+    juego.panel = null
+    juego.ausencia = null
+    reiniciarPasos()
+  }
+  const teclaVentana = (e: KeyboardEvent) => e.key === 'Escape' && !juego.guardadoRoto && abierto && cerrar()
+  const afuera = (e: MouseEvent) => e.target === e.currentTarget && cerrar()
+
+  // Pestañas con flechas (patrón de ARIA).
+  function flechas(e: KeyboardEvent) {
+    const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
+    if (!d || !juego.panel) return
+    juego.panel = PESTANAS[(PESTANAS.indexOf(juego.panel) + d + PESTANAS.length) % PESTANAS.length]
+    ;(e.currentTarget as HTMLElement).querySelector<HTMLElement>(`#tab-${juego.panel}`)?.focus()
+  }
+
+  // Logros: nombre y descripción con su número.
+  const conNumero = (t: string | ((n: string) => string), k: string) =>
+    typeof t === 'string' ? t : t(UMBRAL[k]?.toLocaleString('es-AR') ?? '')
+  const nombreLogro = (k: string) => conNumero(es.logros.lista[k][0], k)
+  const claves = Object.keys(LOGROS)
+  const conseguidos = $derived(claves.filter((k) => juego.logros[k]).length)
+
+  // Ajustes: guardar, exportar, importar y borrar, cada uno con su mensaje o su paso de confirmación.
+  let guardadoOk = $state(false)
+  let exportado = $state<{ texto: string; copiado: boolean } | null>(null)
+  let importando = $state(false)
+  let pegado = $state('')
+  let importarMal = $state(false)
+  let aImportar = $state.raw<Partida | null>(null)
+  let borrar = $state(0) // 0, 1 o 2: doble confirmación
+
+  function reiniciarPasos() {
+    exportado = null
+    importando = false
+    pegado = ''
+    importarMal = false
+    aImportar = null
+    borrar = 0
+  }
+
+  let reloj: ReturnType<typeof setTimeout>
+  function guardarAhora() {
+    guardadoOk = guardarYa()
+    clearTimeout(reloj)
+    reloj = setTimeout(() => (guardadoOk = false), 2500)
+  }
+
+  async function alExportar() {
+    const texto = exportar(partidaActual())
+    exportado = { texto, copiado: false }
+    try {
+      await navigator.clipboard.writeText(texto)
+      exportado = { texto, copiado: true }
+    } catch { /* sin permiso de portapapeles: queda el texto para copiar a mano */ }
+  }
+
+  function alImportar() {
+    try {
+      aImportar = importar(pegado)
+      importarMal = false
+    } catch {
+      importarMal = true
+    }
+  }
+</script>
+
+<svelte:window onkeydown={teclaVentana} />
+
+<!-- Con el menú abierto o el guardado dañado no se muestra (en móvil taparía el panel); queda en la lista de Logros. -->
+{#if juego.logro && !juego.panel && !juego.guardadoRoto}
+  {#key juego.logro.id}
+    <p class="logro-nuevo" role="status">
+      <span class="punto" aria-hidden="true"></span>{es.logros.nuevo(juego.logro.claves.slice(-2).map(nombreLogro))}
+    </p>
+  {/key}
+{/if}
+
+{#if juego.guardadoRoto}
+  <!-- No se cierra con Escape ni tocando afuera: hasta aceptar, no se guarda nada. -->
+  <div class="velo" class:quieto={ajustes.reducirDestellos}>
+    <div class="centro" role="alertdialog" aria-modal="true" aria-labelledby="roto-t" aria-describedby="roto-d">
+      <h2 id="roto-t" class="titulo">{es.guardadoRoto.titulo}</h2>
+      <p id="roto-d" class="texto">{es.guardadoRoto.texto}</p>
+      <button class="accion" use:enfocar onclick={() => (juego.guardadoRoto = false)}>{es.guardadoRoto.empezar}</button>
+    </div>
+  </div>
+{:else if juego.ausencia}
+  {@const a = juego.ausencia}
+  <div class="velo" class:quieto={ajustes.reducirDestellos} role="presentation" onclick={afuera}>
+    <div class="centro recompensa" role="dialog" aria-modal="true" aria-labelledby="ausencia-t" aria-describedby="ausencia-d">
+      <p id="ausencia-t" class="rotulo">{es.ausencia.titulo}</p>
+      <p id="ausencia-d" class="grande">
+        <span class="cifra num">+{formato(a.energia)}</span>
+        <span class="unidad">{es.ausencia.energia}</span>
+      </p>
+      <p class="detalle num">
+        {a.segundos >= CFG.fuera_de_linea.tope_horas * 3600
+          ? es.ausencia.tope(CFG.fuera_de_linea.tope_horas)
+          : es.ausencia.tiempo(es.duracion(a.segundos))}
+        {#if a.compresiones > 0}<span class="sep">·</span>{es.ausencia.compresiones(a.compresiones)}{/if}
+      </p>
+      <button class="accion" use:enfocar onclick={cerrar}>{es.ausencia.seguir}</button>
+    </div>
+  </div>
+{:else if juego.panel}
+  <div class="velo" class:quieto={ajustes.reducirDestellos} role="presentation" onclick={afuera}>
+    <div class="hoja" role="dialog" aria-modal="true" aria-label={es.menu.abrir}>
+      <div class="cabeza">
+        <div class="pestanas" role="tablist" tabindex="-1" onkeydown={flechas}>
+          {#each PESTANAS as p (p)}
+            <button
+              role="tab" id="tab-{p}" aria-selected={juego.panel === p} aria-controls="hoja-cuerpo"
+              tabindex={juego.panel === p ? 0 : -1} onclick={() => (juego.panel = p)}
+              use:enfocar={juego.panel === p}
+            >{es.menu.pestanas[p]}</button>
+          {/each}
+        </div>
+        <button class="cerrar" aria-label={es.menu.cerrar} onclick={cerrar}>
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" /></svg>
+        </button>
+      </div>
+
+      <div id="hoja-cuerpo" class="cuerpo" role="tabpanel" aria-labelledby="tab-{juego.panel}">
+        {#if juego.panel === 'estadisticas'}
+          <dl class="stats">
+            <div class="destacada"><dt>{es.estadisticas.tiempoTotal}</dt><dd class="num">{es.duracion(s.tiempoTotal)}</dd></div>
+            <div><dt>{es.estadisticas.tiempoCorrida}</dt><dd class="num">{es.duracion(s.tiempoCorrida)}</dd></div>
+            <div><dt>{es.estadisticas.mejorCorrida}</dt>
+              <dd class="num">{s.mejorCorrida > 0 ? es.duracion(s.mejorCorrida) : es.estadisticas.ninguna}</dd></div>
+            <div><dt>{es.estadisticas.granosTotales}</dt><dd class="num">{formato(s.granosTotales)}</dd></div>
+            <div><dt>{es.estadisticas.compresiones}</dt><dd class="num">{s.compresiones}</dd></div>
+            <div><dt>{es.estadisticas.record}</dt>
+              <dd class="num">{formato(juego.record)} <small>{es.estadisticas.derrumbes}</small></dd></div>
+          </dl>
+        {:else if juego.panel === 'logros'}
+          <p class="cuenta num"><b>{conseguidos}</b> {es.logros.deTotal(claves.length)}</p>
+          <ol class="logros">
+            {#each claves as k (k)}
+              {@const si = !!juego.logros[k]}
+              <li class:si>
+                <span class="punto" aria-hidden="true"></span>
+                <span class="nombre">{nombreLogro(k)}</span>
+                <span class="desc">{conNumero(es.logros.lista[k][1], k)}</span>
+                <span class="sr">{si ? '✓' : ''}</span>
+              </li>
+            {/each}
+          </ol>
+        {:else}
+          <section class="opciones">
+            <div class="fila">
+              <span id="notacion-t">{es.opciones.notacion}</span>
+              <div class="segmentos" role="radiogroup" aria-labelledby="notacion-t">
+                {#each ['cientifica', 'ingenieria'] as const as n}
+                  <button role="radio" aria-checked={ajustes.notacion === n} onclick={() => (ajustes.notacion = n)}>
+                    {es.opciones[n]}
+                  </button>
+                {/each}
+              </div>
+            </div>
+            <label class="fila">
+              <span>{es.opciones.volumen} <small>{es.opciones.sinSonido}</small></span>
+              <input type="range" min="0" max="1" step="0.05" bind:value={ajustes.volumen} />
+            </label>
+            <label class="fila"><span>{es.reducirDestellos}</span><input type="checkbox" bind:checked={ajustes.reducirDestellos} /></label>
+            <label class="fila"><span>{es.opciones.daltonismo}</span><input type="checkbox" bind:checked={ajustes.daltonismo} /></label>
+          </section>
+
+          <section class="opciones">
+            <h3>{es.opciones.partida}</h3>
+            <div class="acciones">
+              <button class="accion chica" onclick={guardarAhora}>{es.opciones.guardarAhora}</button>
+              <button class="accion chica" onclick={alExportar}>{es.opciones.exportar}</button>
+              <button class="accion chica" aria-expanded={importando} onclick={() => ((importando = !importando), (aImportar = null))}>
+                {es.opciones.importar}
+              </button>
+            </div>
+            {#if guardadoOk}<p class="nota" role="status">{es.opciones.guardado}</p>{/if}
+            {#if exportado}
+              <p class="nota" role="status">{exportado.copiado ? es.opciones.exportado : es.opciones.exportadoSinCopiar}</p>
+              <textarea class="codigo" readonly rows="3" aria-label={es.opciones.exportar} onfocus={(e) => e.currentTarget.select()}
+                >{exportado.texto}</textarea>
+            {/if}
+            {#if importando}
+              {#if aImportar}
+                <p class="aviso-fuerte" role="alert">
+                  {es.opciones.importarConfirma(es.opciones.descPartida(aImportar.estado.compresiones, es.duracion(aImportar.estado.tiempoTotal)))}
+                </p>
+                <div class="acciones">
+                  <button class="accion chica peligro" use:enfocar onclick={() => aImportar && reemplazarPartida(aImportar)}>
+                    {es.opciones.reemplazar}
+                  </button>
+                  <button class="secundario" onclick={() => (aImportar = null)}>{es.opciones.cancelar}</button>
+                </div>
+              {:else}
+                <textarea class="codigo" rows="3" aria-label={es.opciones.pegar} placeholder={es.opciones.pegar} use:enfocar
+                  bind:value={pegado} oninput={() => (importarMal = false)}></textarea>
+                {#if importarMal}<p class="nota mal" role="alert">{es.opciones.importarMal}</p>{/if}
+                <div class="acciones">
+                  <button class="accion chica" disabled={!pegado.trim()} onclick={alImportar}>{es.opciones.importar}</button>
+                </div>
+              {/if}
+            {/if}
+
+            {#if borrar === 0}
+              <button class="secundario borrar" onclick={() => (borrar = 1)}>{es.opciones.borrar}</button>
+            {:else}
+              <p class="aviso-fuerte" role="alert">{borrar === 1 ? es.opciones.borrarConfirma : es.opciones.borrarConfirma2}</p>
+              <div class="acciones">
+                {#key borrar}
+                  <button class="accion chica peligro" use:enfocar onclick={() => (borrar === 1 ? (borrar = 2) : borrarPartida())}>
+                    {borrar === 1 ? es.opciones.borrarSi : es.opciones.borrarDefinitivo}
+                  </button>
+                {/key}
+                <button class="secundario" onclick={() => (borrar = 0)}>{es.opciones.cancelar}</button>
+              </div>
+            {/if}
+          </section>
+
+          <section class="opciones">
+            <h3>{es.opciones.teclado}</h3>
+            <dl class="teclas">
+              {#each es.opciones.teclas as [k, que]}<dt><kbd>{k}</kbd></dt><dd>{que}</dd>{/each}
+            </dl>
+          </section>
+        {/if}
+      </div>
+    </div>
+  </div>
+{/if}
+
+<style>
+  /* El velo: oscuro y translúcido, la pila se intuye detrás. Nada de bordes ni cajas encima. */
+  .velo {
+    position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; padding: 1.5rem 1rem;
+    background: radial-gradient(ellipse at center, rgb(7 8 15 / 0.7), rgb(7 8 15 / 0.9) 70%);
+    overflow-y: auto; animation: fundido 0.35s ease-out;
+  }
+  .centro { display: grid; justify-items: center; gap: 0; width: min(30rem, 100%); text-align: center; }
+
+  .rotulo { margin: 0; font-size: 1rem; color: var(--tenue); }
+  .titulo { margin: 0 0 0.75rem; font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 600; letter-spacing: -0.02em; text-wrap: balance; }
+  .texto { margin: 0 0 2rem; font-size: 1rem; line-height: 1.5; color: var(--tenue); text-wrap: pretty; }
+
+  /* "Mientras no estabas": la Energía es el premio. */
+  .grande { display: grid; justify-items: center; margin: 0.5rem 0 1rem; }
+  .cifra {
+    font-size: clamp(3.25rem, 11vw, 6.5rem); font-weight: 600; line-height: 1; letter-spacing: -0.04em;
+    text-shadow: 0 0 2.5rem color-mix(in srgb, var(--ambar) 45%, transparent), 0 0 0.75rem color-mix(in srgb, var(--ambar) 25%, transparent);
+  }
+  .unidad { margin-top: 0.375rem; font-size: 1.125rem; color: var(--ambar); }
+  .detalle { margin: 0 0 2.5rem; font-size: 1rem; color: var(--tenue); }
+  .sep { margin: 0 0.5rem; color: var(--apagado); }
+  .recompensa .rotulo { animation: subir 0.5s 0.05s ease-out backwards; }
+  .recompensa .grande { animation: premio 0.9s 0.15s cubic-bezier(0.2, 0.9, 0.25, 1.15) backwards; }
+  .recompensa .detalle { animation: subir 0.5s 0.45s ease-out backwards; }
+  .recompensa .accion { animation: subir 0.5s 0.6s ease-out backwards; }
+  @keyframes premio { from { opacity: 0; transform: scale(0.92); filter: blur(6px); } }
+  @keyframes subir { from { opacity: 0; transform: translateY(6px); } }
+  .quieto .recompensa * { animation-name: fundido !important; }
+
+  /* Botones: texto con una línea de 1 px, como el resto de la interfaz. */
+  .accion {
+    min-height: 2.75rem; min-width: 11rem; padding: 0 1.5rem; border: 1px solid var(--borde); background: none;
+    color: var(--tinta); font: inherit; font-size: 1.0625rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  }
+  .accion:hover, .accion:focus-visible { border-color: var(--tinta); background: rgb(232 233 243 / 0.04); }
+  .accion:disabled { color: var(--apagado); border-color: var(--borde); background: none; cursor: default; }
+  .accion.chica { min-width: 0; min-height: 2.5rem; padding: 0 1rem; font-size: 0.9375rem; }
+  .accion.peligro { color: var(--coral); }
+  .accion.peligro:hover, .accion.peligro:focus-visible { border-color: var(--coral); }
+  .secundario {
+    min-height: 2.5rem; padding: 0; border: 0; background: none; color: var(--tenue); font: inherit; font-size: 0.9375rem; cursor: pointer;
+  }
+  .secundario:hover { color: var(--tinta); }
+
+  /* Estadísticas · Logros · Ajustes */
+  .hoja { width: min(34rem, 100%); max-height: calc(100dvh - 3rem); display: flex; flex-direction: column; }
+  .cabeza { display: flex; align-items: center; justify-content: space-between; flex: none; padding-bottom: 1.25rem; }
+  .pestanas { display: flex; gap: 1.5rem; }
+  .pestanas button {
+    min-height: 2.75rem; padding: 0; border: 0; border-bottom: 1px solid transparent; background: none;
+    color: var(--apagado); font: inherit; font-size: 1.125rem; font-weight: 600; cursor: pointer; transition: color 0.15s;
+  }
+  .pestanas button:hover { color: var(--tenue); }
+  .pestanas button[aria-selected='true'] { color: var(--tinta); border-bottom-color: var(--tinta); }
+  .cerrar {
+    display: grid; place-items: center; width: 2.75rem; height: 2.75rem; margin-right: -0.75rem; padding: 0; border: 0;
+    background: none; color: var(--apagado); cursor: pointer;
+  }
+  .cerrar:hover { color: var(--tinta); }
+  .cerrar svg { stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+  .cuerpo { padding-bottom: 0.25rem; overflow-y: auto; /* el padding absorbe los subpíxeles que dejaban una barra sin contenido */ overscroll-behavior: contain; scrollbar-width: thin; animation: fundido 0.25s ease-out; }
+
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1.75rem 2rem; margin: 0; }
+  .stats div { display: grid; gap: 0.25rem; }
+  .stats .destacada { grid-column: 1 / -1; }
+  .stats dt { font-size: 0.875rem; color: var(--tenue); }
+  .stats dd { margin: 0; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+  .stats .destacada dd { font-size: clamp(2.5rem, 7vw, 3.5rem); letter-spacing: -0.03em; }
+  .stats small { font-size: 0.875rem; font-weight: 400; color: var(--tenue); letter-spacing: 0; }
+
+  .cuenta { margin: 0 0 1rem; font-size: 1rem; color: var(--tenue); }
+  .cuenta b { font-size: 2.5rem; font-weight: 600; color: var(--tinta); letter-spacing: -0.03em; margin-right: 0.25rem; }
+  .logros { list-style: none; margin: 0; padding: 0; }
+  .logros li {
+    display: grid; grid-template-columns: 0.5rem 1fr; grid-template-areas: 'p n' '. d'; column-gap: 0.875rem;
+    align-items: baseline; padding: 0.625rem 0; border-top: 1px solid var(--borde);
+  }
+  .logros .punto { grid-area: p; align-self: center; }
+  .logros .nombre { grid-area: n; font-size: 1rem; font-weight: 600; color: var(--apagado); }
+  .logros .desc { grid-area: d; font-size: 0.8125rem; color: var(--apagado); }
+  .logros .si .nombre { color: var(--tinta); }
+  .logros .si .desc { color: var(--tenue); }
+  .punto { display: inline-block; width: 0.5rem; height: 0.5rem; border: 1px solid var(--apagado); border-radius: 50%; }
+  .si .punto { border-color: var(--ambar); background: var(--ambar); box-shadow: 0 0 0.5rem var(--ambar); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+  .opciones { display: grid; gap: 0.25rem; margin-bottom: 2rem; }
+  .opciones h3 { margin: 0 0 0.5rem; font-size: 0.875rem; font-weight: 400; color: var(--tenue); }
+  .fila {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 3rem;
+    border-top: 1px solid var(--borde); font-size: 1rem; cursor: pointer;
+  }
+  .fila small { display: block; font-size: 0.75rem; color: var(--apagado); }
+  .fila input[type='checkbox'] { width: 1.125rem; height: 1.125rem; margin: 0; accent-color: var(--tinta); cursor: pointer; }
+  .fila input[type='range'] { width: 10rem; accent-color: var(--tinta); cursor: pointer; }
+  .segmentos { display: flex; gap: 1rem; }
+  .segmentos button {
+    min-height: 2.75rem; padding: 0; border: 0; background: none; color: var(--apagado); font: inherit; font-size: 0.9375rem; cursor: pointer;
+  }
+  .segmentos button:hover { color: var(--tenue); }
+  .segmentos button[aria-checked='true'] { color: var(--tinta); font-weight: 600; }
+  .acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; margin: 0.5rem 0; }
+  .nota { margin: 0.25rem 0; font-size: 0.875rem; color: var(--tenue); }
+  .nota.mal { color: var(--coral); }
+  .aviso-fuerte { margin: 1rem 0 0.25rem; font-size: 0.9375rem; text-wrap: pretty; }
+  .codigo {
+    width: 100%; margin: 0.25rem 0; padding: 0.5rem 0.625rem; border: 1px solid var(--borde); background: rgb(7 8 15 / 0.6);
+    color: var(--tenue); font: 0.75rem/1.4 ui-monospace, monospace; word-break: break-all; resize: vertical;
+  }
+  .codigo:focus { border-color: var(--tenue); outline: none; }
+  .borrar { justify-self: start; margin-top: 1rem; color: var(--apagado); }
+  .borrar:hover { color: var(--coral); }
+  .teclas { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1.25rem; margin: 0; font-size: 0.9375rem; }
+  .teclas dt { text-align: right; }
+  .teclas dd { margin: 0; color: var(--tenue); }
+  kbd { font: inherit; font-size: 0.8125rem; font-weight: 600; }
+
+  /* Notificación de logro: abajo al centro, discreta, se va sola. */
+  .logro-nuevo {
+    position: fixed; left: 50%; bottom: 2rem; translate: -50% 0; z-index: 7; display: flex; align-items: center; gap: 0.625rem;
+    width: max-content; max-width: calc(100% - 2rem); margin: 0; font-size: 0.9375rem; pointer-events: none;
+    text-shadow: 0 0 0.75rem var(--fondo), 0 0 0.25rem var(--fondo); animation: notificar 5s ease-out forwards;
+  }
+  .logro-nuevo .punto { flex: none; border-color: var(--ambar); background: var(--ambar); box-shadow: 0 0 0.5rem var(--ambar); }
+  @keyframes notificar { 0% { opacity: 0; } 8%, 80% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes fundido { from { opacity: 0; } }
+
+  @media (max-width: 767px) {
+    .velo { background: rgb(7 8 15 / 0.88); } /* la tienda en hoja queda detrás del texto: más oscuro */
+    .logro-nuevo { top: 9rem; bottom: auto; /* debajo de Energía, Energía/s y Densidad */ font-size: 0.8125rem; } /* abajo está la hoja y el aviso; arriba, aire */
+    .stats { gap: 1.25rem 1.5rem; }
+    .stats dd { font-size: 1.375rem; }
+    .pestanas { gap: 1.25rem; }
+    .pestanas button { font-size: 1rem; }
+    .hoja { max-height: calc(100dvh - 2rem); }
+  }
+</style>

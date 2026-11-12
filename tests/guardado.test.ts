@@ -1,10 +1,13 @@
 // Hito 5a: progreso fuera de línea y guardado, con el núcleo real.
 import { describe, expect, it } from 'vitest'
-import { CFG, comprarTodo, disponibles, estadoInicial, fueraDeLinea, tick, type State } from '../src/core'
+import { CFG, comprar, comprarTodo, comprimir, disponibles, estadoInicial, fueraDeLinea, tick, type State } from '../src/core'
 import type { Almacen } from '../src/guardado/almacen'
-import { CLAVE, RESPALDO, cargar, deserializar, guardar, serializar, type Partida } from '../src/guardado/guardado'
+import {
+  CLAVE, RESPALDO, VERSION, cargar, deserializar, exportar, guardar, importar, serializar, type Partida,
+} from '../src/guardado/guardado'
 
-const partida = (estado: State): Partida => ({ estado, guardadoEn: 1.7e12, vistos: { tienda: true }, record: 12345 })
+const partida = (estado: State): Partida =>
+  ({ estado, guardadoEn: 1.7e12, vistos: { tienda: true }, record: 12345, logros: { derrumbe: true } })
 
 /** Un jugador que compra todo lo que puede cada 15 s, con pasos de 50 ms como el juego. */
 function jugar(s: State, segundos: number): State {
@@ -92,9 +95,10 @@ describe('guardado', () => {
     'no es JSON': 'hola',
     vacío: '',
     'JSON cortado': bueno.slice(0, bueno.length / 2),
-    'otra cosa': '{"version":1}',
+    'otra cosa': `{"version":${VERSION}}`,
+    'versión 1 sin estado': '{"version":1}',
     null: 'null',
-    'versión del futuro': bueno.replace('"version":1', '"version":99'),
+    'versión del futuro': bueno.replace(`"version":${VERSION}`, '"version":99'),
     'un campo con otro tipo': bueno.replace(/"caudal":\d+/, '"caudal":"mucho"'),
     'falta un campo': bueno.replace(/"granos":[^,]+,/, ''),
     'un número que no es número': bueno.replace(/"granos":[^,]+,/, '"granos":null,'),
@@ -111,4 +115,53 @@ describe('guardado', () => {
       expect(cargar(a)).toEqual(partida(estadoInicial()))
     })
   }
+})
+
+describe('versión 1 → 2 (hito 5b)', () => {
+  it('un guardado de la versión 1 carga, con estadísticas en cero y sin logros', () => {
+    const s = jugar(estadoInicial(), 60)
+    const { granosTotales, mejorCorrida, compresionesSinAmbar, ...viejo } = s
+    const v1 = JSON.parse(serializar(partida(s)))
+    v1.version = 1
+    v1.estado = { ...v1.estado }
+    for (const k of ['granosTotales', 'mejorCorrida', 'compresionesSinAmbar']) delete v1.estado[k]
+    delete v1.logros
+    const p = deserializar(JSON.stringify(v1))
+    expect(p.estado).toEqual({ ...viejo, granosTotales: s.granos, mejorCorrida: 0, compresionesSinAmbar: 0, energia: s.energia, maxEnergia: s.maxEnergia })
+    expect(p.logros).toEqual({})
+  })
+})
+
+describe('exportar / importar', () => {
+  it('ida y vuelta por base64', () => {
+    const p = partida(jugar(estadoInicial(), 120))
+    const texto = exportar(p)
+    expect(texto).toMatch(/^[A-Za-z0-9+/]+=*$/)
+    expect(importar(texto)).toEqual(p)
+    expect(importar(`  ${texto.slice(0, 20)}
+${texto.slice(20)} `)).toEqual(p) // con espacios y saltos al pegar
+  })
+  for (const malo of ['', 'hola!', btoa('{"version":2}'), exportar(partida(estadoInicial())).slice(0, 40)])
+    it(`un texto que no es partida tira error: ${JSON.stringify(malo.slice(0, 12))}`, () => expect(() => importar(malo)).toThrow())
+})
+
+describe('estadísticas del núcleo', () => {
+  it('granos totales, corrida más rápida y compresiones sin Ámbar', () => {
+    let s: State = { ...estadoInicial(), energia: estadoInicial().energia.add(1e20), tiempoCorrida: 500, granos: 10, granosTotales: 10 }
+    s = tick(s, 1)
+    expect(s.granosTotales).toBe(s.granos)
+    s = comprimir(s)
+    expect(s.compresiones).toBe(1)
+    expect(s.mejorCorrida).toBe(501)
+    expect(s.compresionesSinAmbar).toBe(1)
+    // Segunda corrida, más lenta y con Ámbar: la mejor no cambia, sin Ámbar tampoco; los granos totales siguen.
+    s = comprar({ ...s, energia: s.energia.add(1e40), tiempoCorrida: 900 }, 'color0')
+    expect(s.colores[0]).toBe(1)
+    const g = s.granosTotales
+    s = comprimir(s)
+    expect(s.mejorCorrida).toBe(501)
+    expect(s.compresionesSinAmbar).toBe(1)
+    expect(s.granos).toBe(0)
+    expect(s.granosTotales).toBe(g)
+  })
 })

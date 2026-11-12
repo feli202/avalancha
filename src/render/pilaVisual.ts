@@ -18,18 +18,21 @@ const AVALANCHA_GRANDE = 30
 const AVALANCHAS_PARA_PROMEDIO = 20 // avalanchas antes de confiar en el promedio
 const ALEJAR_S = 0.8 // animación de alejamiento al saltar de escala
 
-// SPEC 6.1, por altura de celda: 0 = Jade, 1 = Violeta, 2 = Coral, 3 = Ámbar.
-const COLORES = [0x2dd4a7, 0x9b7bff, 0xff6b6b, 0xffb547]
 /**
  * Colores de la arena por altura, distintos de los de la interfaz: el brillo va al revés de la frecuencia, así se leen
  * las formas del mandala. Ámbar (3 granos, ~59 % de las celdas) es arena al atardecer, sin luz propia; Coral, intermedio; Jade y sobre todo
  * Violeta (el más raro) brillan.
  */
 const COLORES_PILA = [0x3fe0b4, 0xc2a8ff, 0xa4574f, 0x8a5320]
+/**
+ * SPEC 6.8, paleta para daltonismo (tonos de Okabe-Ito): azul, bermellón, amarillo y rosa pálido, que además se
+ * separan por brillo en el mismo orden que la normal (Ámbar oscuro, Violeta el más claro). Los de la interfaz, en index.html.
+ */
+const COLORES_DALTONISMO = [0xf0e442, 0xf6c6e6, 0xd55e00, 0x1f5c99]
 /** Altura de celda de cada color, en el orden de CFG.colores (Ámbar, Coral, Jade, Violeta). */
 export const ALTURA_DE_COLOR = [3, 2, 0, 1]
-/** Color CSS de cada altura de celda. */
-export const COLOR_CSS = COLORES.map((c) => '#' + c.toString(16).padStart(6, '0'))
+/** Color CSS de cada altura de celda (SPEC 6.1; las variables cambian con la paleta para daltonismo). */
+export const COLOR_CSS = ['var(--jade)', 'var(--violeta)', 'var(--coral)', 'var(--ambar)']
 
 /** SPEC 6.2: brillo 0..1 a partir del log10 del multiplicador del color, saturando suave. */
 export const brillo = (log10Mult: number) => log10Mult / (log10Mult + 4)
@@ -313,13 +316,23 @@ export class PilaVisual {
     gl.useProgram(this.progCeldas)
     gl.uniform1i(this.uniC.u_alturas, 0)
     gl.uniform1i(this.uniC.u_derrumbe, 1)
-    // Los colores de SPEC 6.1 son sRGB; el shader trabaja en lineal y convierte al final.
-    gl.uniform3fv(this.uniC.u_color, COLORES_PILA.flatMap((c) => [c >> 16, (c >> 8) & 255, c & 255].map((v) => (v / 255) ** 2.2)))
     gl.useProgram(this.progPantalla)
     gl.uniform1i(this.uniP.u_celdas, 2)
     gl.uniform1i(this.uniP.u_luz, 3)
     gl.uniform1i(this.uniP.u_viejo, 4)
     this.destellos = !this.destello
+    this.daltonismo = this.paleta === COLORES_DALTONISMO
+  }
+
+  private paleta = COLORES_PILA
+  /** SPEC 6.8: paleta alternativa para daltonismo. */
+  set daltonismo(si: boolean) {
+    this.paleta = si ? COLORES_DALTONISMO : COLORES_PILA
+    const { gl } = this
+    if (!gl) return
+    gl.useProgram(this.progCeldas)
+    // Los colores son sRGB; el shader trabaja en lineal y convierte al final.
+    gl.uniform3fv(this.uniC.u_color, this.paleta.flatMap((c) => [c >> 16, (c >> 8) & 255, c & 255].map((v) => (v / 255) ** 2.2)))
   }
 
   /** SPEC 6.8 "Reducir destellos": apaga destellos de derrumbe, mica y el alejamiento de cámara. */

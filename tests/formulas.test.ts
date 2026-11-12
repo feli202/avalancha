@@ -163,6 +163,7 @@ describe('Compresión', () => {
     const s = comprimir(antes)
     expect(s).toEqual({
       ...antes, compresiones: 2, energia: new Decimal(0), granos: 0, caudal: 0, colores: [0, 0, 0, 0], tiempoCorrida: 0,
+      mejorCorrida: 600, // estadística: la corrida más corta hasta ahora
     })
     const sinLlegar = con({ energia: new Decimal(1e10) })
     expect(comprimir(sinLlegar)).toBe(sinLlegar)

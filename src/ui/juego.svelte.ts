@@ -1,9 +1,10 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
 import { CFG, anillos, estadoInicial, fueraDeLinea, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
 import { almacenLocal } from '../guardado/almacen'
-import { cargar, guardar } from '../guardado/guardado'
+import { cargar, guardar, type Partida } from '../guardado/guardado'
 import type { Medidas } from '../render/pilaVisual'
 import { es } from '../strings/es'
+import { nuevosLogros } from './logros'
 
 const PASO = 0.05 // s: paso fijo de la economía (SPEC 8)
 const MAX_PASOS = 200 // por cuadro; con más tiempo acumulado (pestaña oculta, carga) va la simulación fuera de línea
@@ -17,8 +18,6 @@ class Juego {
   nivelColores = $state(0)
   /** Rendimiento de la pila visual, una vez por segundo (panel de debug). */
   medidas = $state.raw<Medidas | null>(null)
-  /** SPEC 6.8: arranca como pida el sistema. shortcut: no se guarda; el hito 5 la pasa a los ajustes. */
-  reducirDestellos = $state(matchMedia('(prefers-reduced-motion: reduce)').matches)
   /** Etiqueta de escala de la pila (la escribe Pila.svelte). */
   escalaK = $state(0)
   /** SPEC 5: partes de la interfaz que ya aparecieron. Nunca se esconden. */
@@ -35,6 +34,12 @@ class Juego {
   ausencia = $state.raw<Ausencia | null>(null)
   /** El guardado no se pudo leer: no se guarda nada hasta que el jugador acepta empezar de nuevo. */
   guardadoRoto = $state(false)
+  /** SPEC 7: logros conseguidos. */
+  logros = $state.raw<Record<string, boolean>>({})
+  /** El último aviso de logro (notificación discreta). */
+  logro = $state.raw<{ id: number; claves: string[] } | null>(null)
+  /** Panel abierto sobre la pila: Estadísticas, Logros o Ajustes. */
+  panel = $state<'estadisticas' | 'logros' | 'ajustes' | null>(null)
   /** Sube con cada salto fuera de línea: Pila.svelte no anima lo que pasó en la ausencia. */
   saltos = 0
 }
@@ -106,14 +111,42 @@ function revelar(s: State) {
   juego.aviso = { id: avisos++, texto: frases.slice(-AVISOS_JUNTOS).join(' ') }
 }
 
-function guardarYa() {
-  if (juego.guardadoRoto) return
+let logrosAvisados = 0
+function revisarLogros(s: State) {
+  const nuevos = nuevosLogros(s, juego.record, juego.logros)
+  if (!nuevos.length) return
+  juego.logros = { ...juego.logros, ...Object.fromEntries(nuevos.map((k) => [k, true])) }
+  juego.logro = { id: logrosAvisados++, claves: nuevos }
+}
+
+/** Hay un cartel o panel encima: las teclas del juego (Espacio, M, C) no hacen nada. */
+export const hayPanel = () => juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto
+
+export const partidaActual = (): Partida =>
+  ({ estado: juego.s, guardadoEn: Date.now(), vistos: juego.vistos, record: juego.record, logros: juego.logros })
+
+let reemplazando = false
+/** true si se guardó. */
+export function guardarYa() {
+  if (juego.guardadoRoto || reemplazando) return false
   try {
-    guardar(almacenLocal, { estado: juego.s, guardadoEn: Date.now(), vistos: juego.vistos, record: juego.record })
+    guardar(almacenLocal, partidaActual())
+    return true
   } catch (e) {
     console.warn(e) // sin lugar o sin permiso: el juego sigue
+    return false
   }
 }
+
+/** Importar o borrar: escribe la partida y recarga, así entra por el mismo camino que una carga (fuera de línea, fotos de la pila). */
+export function reemplazarPartida(p: Partida) {
+  reemplazando = true // que el pagehide no la pise con la de ahora
+  try { guardar(almacenLocal, p) } catch (e) { console.warn(e) }
+  location.reload()
+}
+
+export const borrarPartida = () =>
+  reemplazarPartida({ estado: estadoInicial(), guardadoEn: Date.now(), vistos: {}, record: 0, logros: {} })
 
 /** Carga la partida y arranca el bucle. Llamar antes de montar la interfaz: Pila.svelte lee el estado al montarse. */
 export function arrancar() {
@@ -127,6 +160,7 @@ export function arrancar() {
     juego.s = p.estado
     juego.vistos = p.vistos
     juego.record = p.record
+    juego.logros = p.logros
     antes = p.guardadoEn // el primer cuadro simula lo que pasó desde el guardado
   }
   setInterval(guardarYa, GUARDAR_CADA)
@@ -147,6 +181,7 @@ export function arrancar() {
     } else for (; acum >= PASO; acum -= PASO) s = tick(s, PASO)
     juego.s = s
     revelar(s)
+    revisarLogros(s)
     medirEta(s)
     requestAnimationFrame(cuadro)
   }

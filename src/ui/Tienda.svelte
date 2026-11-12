@@ -9,7 +9,7 @@
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
   import { es } from '../strings/es'
   import { formato, formatoMult } from './formato'
-  import { juego, nombreAuto } from './juego.svelte'
+  import { hayPanel, juego, nombreAuto } from './juego.svelte'
 
   type Modo = keyof typeof es.modos
   let modo = $state<Modo>('x1')
@@ -71,7 +71,7 @@
   const todo = () => (juego.s = comprarTodo(juego.s, items))
 
   function tecla(e: KeyboardEvent) {
-    if (e.code !== 'KeyM' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.target instanceof HTMLInputElement) return
+    if (e.code !== 'KeyM' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || hayPanel() || e.target instanceof HTMLInputElement) return
     todo()
   }
 

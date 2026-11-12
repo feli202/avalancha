@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5a** (guardado base y progreso fuera de línea) terminado. Sigue el resto del hito 5: exportar/importar, ajustes, estadísticas y logros.
+Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). Sigue el hito 6 (pulido: sonido, accesibilidad, rendimiento).
 
 ## Qué se hizo
 
@@ -423,4 +423,44 @@ En las corridas tardías la pila se veía como un punto: la de pantalla arrancab
 - **No medí los 60 fps** (el navegador integrado estaba oculto). Por cuadro no hay nada nuevo; el guardado serializa un estado chico cada 10 s.
 - La vuelta a una pestaña que estuvo oculta no la probé aparte: usa el mismo camino que la carga (más de 10 s acumulados).
 - No probé en un móvil real ni el guardado al cerrar en iOS (`pagehide`).
-- El panel de debug no tiene "borrar partida": para empezar de cero hay que borrar `avalancha.guardado` desde las herramientas del navegador.
+- ~~El panel de debug no tiene "borrar partida"~~ (hito 5b).
+
+
+## Hito 5b, exportar/importar, ajustes, estadísticas y logros
+
+| Archivo | Cambio |
+| --- | --- |
+| `src/ui/Paneles.svelte` | Nuevo. Todo lo que flota sobre la pila: "Mientras no estabas", guardado dañado, el panel Estadísticas · Logros · Ajustes y la notificación de logro. Reemplaza los carteles del hito 5a y el panel chico de Ajustes del Pulido 3. |
+| `src/ui/ajustes.svelte.ts` | Nuevo. Notación, volumen, Reducir destellos y paleta para daltonismo; se guardan solos en cada cambio (`avalancha.ajustes`, aparte de la partida). |
+| `src/ui/logros.ts` | Nuevo. Los 16 logros de SPEC 7 como condiciones sobre el estado y el récord. |
+| `src/core/state.ts`, `tick.ts`, `compress.ts` | Tres contadores: `granosTotales`, `mejorCorrida` (0 = ninguna), `compresionesSinAmbar`. Van en el núcleo porque la Compresión automática y el fuera de línea comprimen dentro de `tick`. No cambian la economía. |
+| `src/guardado/guardado.ts` | Versión 2: `logros` en la partida y los tres contadores. `migrar` lleva la 1 a la 2 (granos totales = los de la corrida actual). `exportar` / `importar`: el mismo JSON en base64 (por bytes UTF-8). Constante `AJUSTES`. |
+| `src/ui/formato.ts` | Notación de ingeniería (exponente múltiplo de 3: `12,34e6`). |
+| `src/render/pilaVisual.ts` | `daltonismo` cambia los colores de la arena. `COLOR_CSS` ahora son variables CSS, así la interfaz y los efectos siguen la paleta. |
+| `balance/config.json` | `logros`: umbrales de SPEC 7 (100 granos, 1.000 derrumbes, anillo 10/50, Densidad 2, récord 1e6, 2 h). No son de balance; `sim.py` no los usa y su salida no cambió. |
+| `src/ui/App.svelte`, `Pila.svelte`, `Tienda.svelte`, `Debug.svelte` | El ícono abre el panel; tecla C comprime; `inert` en el juego con un panel encima (las teclas Espacio, M y C no hacen nada). Debug: "Borrar partida" sin confirmación. |
+
+- **Estilo de los paneles**: velo oscuro translúcido sobre la pila (degradado radial, más opaco en móvil), sin bordes ni cajas; jerarquía solo por tamaño y peso; cifras tabulares. "Mientras no estabas": rótulo chico, la Energía ganada grande con brillo del color Ámbar, "de Energía", debajo el tiempo y las compresiones, y "Seguir"; entra escalonado (con Reducir destellos, solo fundidos).
+- **Panel**: pestañas Estadísticas · Logros · Ajustes (flechas izquierda/derecha entre pestañas), se cierra con Esc, la ×, o tocando afuera; el foco vuelve a donde estaba.
+- **Estadísticas**: tiempo total (grande), esta corrida, corrida más rápida, granos soltados, compresiones, avalancha récord.
+- **Logros**: "N de 16" y la lista; los conseguidos con un punto encendido, los demás en gris con su descripción. Al conseguir uno, una línea abajo al centro ("Logro: Anillo 10") que se va en 5 s (en móvil, arriba, debajo de la Energía).
+- **Ajustes**: notación, volumen, Reducir destellos, paleta para daltonismo, Guardar ahora, Exportar (copia al portapapeles; si no hay permiso, deja el texto seleccionable), Importar (pegar → validar → "Esto reemplaza tu partida actual por la importada (6 compresiones, 8 h 0 min de juego)" → Reemplazar), Borrar partida (dos confirmaciones; los ajustes quedan), y la lista de teclas.
+- **Importar y borrar** escriben la partida y recargan la página: entran por el mismo camino que una carga (fuera de línea desde `guardadoEn`, fotos de la pila). Mientras tanto no se guarda nada (si no, el `pagehide` pisaba lo importado).
+- **Daltonismo**: tonos de Okabe-Ito. En la pila, por altura: 3 granos azul oscuro #1F5C99, 2 bermellón #D55E00, vacías amarillo #F0E442, 1 grano rosa pálido #F6C6E6: además del tono, el brillo sube en el mismo orden que la paleta normal. En la interfaz, `:root.daltonismo` en `index.html`.
+
+### Verificación
+
+- `npm test`: 60 tests en verde (50 de antes + migración 1 → 2, exportar/importar con espacios y 4 textos inválidos, contadores del núcleo, notación de ingeniería en `tests/formato.test.ts`). tsc y svelte-check sin errores; `npm run build` bien; `python balance/sim.py` igual que antes (194 / 229 / 376 min).
+- En el navegador integrado (1280×720 y 375×812, sin errores en la consola): exportar → cambiar `guardadoEn` 8 h atrás → importar (texto inválido rechazado; confirmación; recarga) → "Mientras no estabas" con +1,22e98, "8 h 0 min afuera · 2 compresiones" y el foco en Seguir; estadísticas; logros; ingeniería ("86,21e96") y daltonismo en la pila y la tienda, guardados al recargar; guardado dañado en móvil; borrar con teclado (Enter en cada paso: las dos confirmaciones, recarga en cero, ajustes intactos); C comprime; abrir el panel con Enter desde el ícono, flechas entre pestañas, Esc devuelve el foco al ícono.
+- **No medí los 60 fps** (el navegador integrado sigue oculto, 1–3 fps). Por cuadro se suma revisar 16 condiciones de logros; los paneles no tienen `backdrop-filter`.
+
+### Decisiones (revisar)
+
+1. **Estadísticas, Logros y Ajustes son un panel flotante con pestañas**, abierto desde el ícono, no pestañas de la tienda (SPEC 6.4 las lista junto a Tienda · Cascada · Mutaciones). Las tres existen desde el arranque.
+2. **El volumen se guarda pero no hace nada**: todavía no hay sonido (hito 6). El panel lo dice.
+3. **"Avalancha de 1.000.000" sale apenas se llena la pila**: con flujo continuo una "avalancha" de la pila visual junta muchos granos (decisión 3 del hito 4; la partida a ×50 dio récord 3,64e8). Si tiene que costar más, hay que medir avalanchas por grano en el worker.
+4. **"Los cuatro colores"** = los cuatro con al menos un nivel (no solo aparecidos). **"Compresión sin comprar Ámbar"** = comprimir con Ámbar en nivel 0 (el autocomprador también cuenta como compra).
+5. **Granos totales de partidas viejas** arrancan con los de la corrida actual (lo de antes no se guardaba). Los logros que se pueden deducir del estado aparecen solos al cargar un guardado viejo; los de una corrida pasada (Anillo 10, 100 granos…) no.
+6. **Importar respeta la fecha del exportado**: lo que pasó desde entonces se simula como fuera de línea (tope 24 h).
+7. **La notificación de logro no se muestra** con el menú abierto ni con el guardado dañado (en móvil tapaba el panel); el logro queda en la lista.
+8. **Teclas**: Espacio (puñado), M (comprar todo), C (comprimir), Tab, Esc, flechas en las pestañas. Las filas de la tienda que no se pueden pagar están deshabilitadas y Tab las salta (como antes).

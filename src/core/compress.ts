@@ -10,7 +10,12 @@ export const puedeComprimir = (s: State) => s.infinitos === 0 && s.energia.log10
 export function comprimir(s: State): State {
   if (!puedeComprimir(s)) return s
   const { energia, granos, caudal, colores, cascada, tiempoCorrida } = estadoInicial()
-  return { ...s, energia, granos, caudal, colores, cascada, tiempoCorrida, compresiones: s.compresiones + 1 }
+  return {
+    ...s, energia, granos, caudal, colores, cascada, tiempoCorrida,
+    compresiones: s.compresiones + 1,
+    mejorCorrida: s.mejorCorrida > 0 ? Math.min(s.mejorCorrida, s.tiempoCorrida) : s.tiempoCorrida,
+    compresionesSinAmbar: s.compresionesSinAmbar + (s.colores[0] === 0 ? 1 : 0),
+  }
 }
 
 export const autoActivo = (s: State, clave: string) => s.compresiones >= CFG.autocompradores[clave] && s.auto[clave]

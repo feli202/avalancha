@@ -5,7 +5,8 @@
   import { ALTURA_DE_COLOR, COLOR_CSS, PilaVisual, brillo } from '../render/pilaVisual'
   import { es } from '../strings/es'
   import { formatoMult } from './formato'
-  import { juego, progresoCompresion, sismo } from './juego.svelte'
+  import { ajustes } from './ajustes.svelte'
+  import { hayPanel, juego, progresoCompresion, sismo } from './juego.svelte'
 
   const ANILLO_SEP = 8 // px CSS entre la pila y el anillo de Compresión
   const IMPLOSION_MS = 900 // lo que dura la animación implotar del CSS
@@ -33,7 +34,7 @@
 
   function tecla(e: KeyboardEvent) {
     // En un botón o un campo, la barra hace lo suyo.
-    if (e.code !== 'Space' || e.target instanceof HTMLButtonElement || e.target instanceof HTMLInputElement) return
+    if (e.code !== 'Space' || hayPanel() || e.target instanceof HTMLButtonElement || e.target instanceof HTMLInputElement) return
     e.preventDefault()
     soltar()
   }
@@ -47,7 +48,8 @@
       if (n > juego.record) juego.record = n
       if (sismo.length > 1000) sismo.shift() // nadie lo vacía hasta que aparece el sismógrafo
     }
-    $effect(() => void (pila.destellos = juego.reducirDestellos))
+    $effect(() => void (pila.destellos = ajustes.reducirDestellos))
+    $effect(() => void (pila.daltonismo = ajustes.daltonismo))
     let anillosAntes = anillos(juego.s.granos)
     const coloresVistos = () => CFG.colores.filter((_, i) => juego.vistos[`color${i}`]).length
     let coloresAntes = coloresVistos()
@@ -104,9 +106,9 @@
 
 <svelte:window onkeydown={tecla} />
 
-<div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:colapsa={juego.s.infinitos > 0} class:quieto={juego.reducirDestellos}>
+<div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:colapsa={juego.s.infinitos > 0} class:quieto={ajustes.reducirDestellos}>
   <canvas bind:this={canvas} onpointerdown={soltar} aria-label={es.pila}></canvas>
-  <div class="efectos" class:quieto={juego.reducirDestellos} aria-hidden="true">
+  <div class="efectos" class:quieto={ajustes.reducirDestellos} aria-hidden="true">
     {#if juego.vistos.compresion && comp.meta !== undefined}
       <!-- Compresión: el anillo se cierra con el progreso (escala logarítmica); al 100 % brilla. -->
       <svg class="compresion aparece" width={2 * ra + 8} height={2 * ra + 8} viewBox="{-ra - 4} {-ra - 4} {2 * ra + 8} {2 * ra + 8}">

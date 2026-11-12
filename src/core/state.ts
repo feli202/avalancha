@@ -20,6 +20,13 @@ export interface State {
   auto: Record<string, boolean>
   infinitos: number
   tiempoTotal: number
+  // --- estadísticas (SPEC 7: logros que pasan dentro del tick, también fuera de línea) ---
+  /** Granos soltados en toda la partida (Caudal y Puñados). */
+  granosTotales: number
+  /** La corrida más corta que terminó en Compresión, en s (0 = ninguna todavía). */
+  mejorCorrida: number
+  /** Compresiones hechas con Ámbar en nivel 0. */
+  compresionesSinAmbar: number
   // --- relojes internos ---
   relojAuto: number
   enfriamientoPunado: number
@@ -39,6 +46,9 @@ export const estadoInicial = (): State => ({
   auto: Object.fromEntries(Object.keys(CFG.autocompradores).map((k) => [k, true])),
   infinitos: 0,
   tiempoTotal: 0,
+  granosTotales: 0,
+  mejorCorrida: 0,
+  compresionesSinAmbar: 0,
   relojAuto: 0,
   enfriamientoPunado: 0,
 })

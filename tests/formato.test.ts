@@ -1,0 +1,23 @@
+// Hito 5b: notación científica y de ingeniería (SPEC 8).
+import { describe, expect, it, vi } from 'vitest'
+
+const ajustes = vi.hoisted(() => ({ notacion: 'cientifica' }))
+vi.mock('../src/ui/ajustes.svelte', () => ({ ajustes }))
+const { formato } = await import('../src/ui/formato')
+
+describe('formato', () => {
+  it('científica', () => {
+    ajustes.notacion = 'cientifica'
+    expect(formato(999_999)).toBe('999.999')
+    expect(formato(1.234e45)).toBe('1,23e45')
+    expect(formato(9.999e45)).toBe('1,00e46')
+  })
+  it('ingeniería: exponente múltiplo de 3', () => {
+    ajustes.notacion = 'ingenieria'
+    expect(formato(999_999)).toBe('999.999')
+    expect(formato(1.234e6)).toBe('1,23e6')
+    expect(formato(1.234e7)).toBe('12,34e6')
+    expect(formato(1.234e47)).toBe('123,40e45')
+    expect(formato(9.99999e47)).toBe('1,00e48')
+  })
+})
