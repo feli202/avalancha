@@ -24,7 +24,8 @@
     const brillos = [0, 0, 0, 0]
     let raf = requestAnimationFrame(function cuadro(ahora) {
       const s = juego.s
-      s.colores.forEach((nivel, i) => (brillos[ALTURA_DE_COLOR[i]] = brillo(multColor(i, nivel).log10())))
+      // juego.nivelColores: nivel simulado desde el panel de debug (0 = el real)
+      s.colores.forEach((nivel, i) => (brillos[ALTURA_DE_COLOR[i]] = brillo(multColor(i, juego.nivelColores || nivel).log10())))
       pila.cuadro(ahora, s.granos, caudal(s), brillos)
       escalaK = pila.escalaK
       raf = requestAnimationFrame(cuadro)

@@ -51,6 +51,15 @@
   </label>
   <button onclick={exportar}>{es.debug.exportar}</button>
   <button onclick={() => (juego.s = { ...juego.s, caudal: juego.s.caudal + 1 })}>{es.debug.caudalMas}</button>
+  <div>
+    {#each [50_000, 400_000] as n}
+      <button onclick={() => (juego.s = { ...juego.s, granos: Math.max(juego.s.granos, n) })}>{es.debug.pilaA(n)}</button>
+    {/each}
+  </div>
+  <label>
+    {es.debug.nivelColores} ({juego.nivelColores})
+    <input type="range" min="0" max="200" step="5" bind:value={juego.nivelColores} />
+  </label>
   {#if juego.medidas}
     <dl>
       {#each ['fps', 'peorCuadro', 'cuadroMs', 'granosSeg', 'derrumbesSeg', 'workerMs'] as const as k}

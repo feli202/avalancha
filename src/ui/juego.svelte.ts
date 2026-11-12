@@ -8,6 +8,8 @@ const MAX_PASOS = 200 // por cuadro
 class Juego {
   s = $state.raw(estadoInicial())
   velocidad = $state(1)
+  /** Debug: nivel simulado de todos los colores para ver el brillo de la pila (0 = el real). */
+  nivelColores = $state(0)
   /** Rendimiento de la pila visual, una vez por segundo (panel de debug). */
   medidas = $state.raw<Medidas | null>(null)
 }

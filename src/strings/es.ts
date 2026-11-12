@@ -16,6 +16,8 @@ export const es = {
     ir: 'Ir',
     exportar: 'Exportar estado (JSON)',
     caudalMas: 'Caudal +1 nivel',
+    pilaA: (n: number) => `Pila a ${n.toLocaleString('es-AR')}`,
+    nivelColores: 'Nivel de los colores (0 = real)',
     fps: 'fps',
     peorCuadro: 'peor cuadro (ms)',
     granosSeg: 'granos/s en la pila',
