@@ -359,7 +359,7 @@ En las corridas tardías la pila se veía como un punto: la de pantalla arrancab
 ### Verificación
 
 - tsc sin errores; 32 tests en verde; `vite build` incluye `pilas-*.bin` (25,9 KB).
-- **Compresión 12 con Compresión automática, ×50, Edge headless 1280×720** (bot de `partida50.mjs`): 5 compresiones seguidas hasta el Infinito. Después de cada una, la pila de pantalla quedó llena (> 518.892 granos) en menos de 4 s y siguió goteando unos 3.000 granos/s; 60 fps todo el tiempo (peor cuadro 17 ms, un pico de 67–83 ms en la corrida de la Compresión 14, que ya estaba antes). Ráfaga de capturas cada ~0,3 s después de una Compresión: implosión → punto → pila llena con fundido, sin cortes.
+- **Compresión 12 con Compresión automática, ×50, Edge headless 1280×720** (bot de `partida50.mjs`): 5 compresiones seguidas hasta el Infinito. Después de cada una, la pila de pantalla quedó llena (> 518.892 granos) en menos de 4 s y siguió goteando unos 3.000 granos/s; 60 fps todo el tiempo (peor cuadro 17 ms; un pico de 67–83 ms al 92 % de la corrida de la Compresión 14, en las dos corridas, sin coincidir con una foto: no lo investigué). Ráfaga de capturas cada ~0,3 s después de una Compresión: implosión → punto → pila llena con fundido, sin cortes.
 - Corridas tempranas: con G chico el camino es el de antes (cada grano); las fotos solo entran si la pila queda más de 3.000 granos atrás.
 
 ### Arreglos que salieron en la verificación
