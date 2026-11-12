@@ -8,7 +8,7 @@ export const es = {
   densidad: 'Densidad',
   pila: 'La pila de arena. Tocala o apretá la barra espaciadora para soltar un puñado de granos.',
   pista: 'Tocá la pila',
-  escala: (k: number) => `1 grano = 10^${k} granos`,
+  escala: (k: number) => `1 grano = 10${[...String(k)].map((d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[+d]).join('')} granos`,
   avalancha: (n: number) => `Avalancha ×${n.toLocaleString('es-AR')}`,
   anillo: (n: number, mult: number) => `Anillo ${n} · ×${num(mult)}`,
   reducirDestellos: 'Reducir destellos',

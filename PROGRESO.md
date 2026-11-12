@@ -293,3 +293,9 @@ No se tocó `src/core/` ni `balance/`.
 - Navegador integrado (1280×720 y 375×812): pila llena redonda desde cero con "Pila llena (redonda)" y Caudal 1; centro suave; sismógrafo; cabecera de la tienda alineada; móvil sin roturas. Sin errores en la consola.
 - **No medí los 60 fps ni vi el titileo en movimiento** (el navegador integrado seguía oculto, 1–3 fps). Costo nuevo: con 1–2,5 px por celda la pasada a pantalla hace 4 muestras por píxel (antes 1; medida antes en 0,9 ms a 1600×900, así que ~3–4 ms en GPU integrada); en pantallas chicas, 9 muestras pero sobre pocos píxeles. Si baja de 60 fps, lo primero es pasar a 2×2 en vez de 3×3 o compartir las vecinas entre muestras.
 
+### Ajustes después del Pulido 4
+
+- **Ámbar**: confirmada la variante A (#8A5320).
+- **Sismógrafo con escala sola**: con avalanchas todo el tiempo la envolvente quedaba pegada arriba y la línea se veía plana. Ahora el rango va del percentil 5 (ignora ceros sueltos, como los del arranque) al pico de los últimos 20 s, con un alto mínimo de 0,5 décadas para no agrandar ruido cuando todo es parejo, y transición suave. Medido en la página con la pila llena y 4.096 granos/s: la línea recorre de 5 a 40 px de los 60 del canvas (antes, pegada arriba).
+- **Etiqueta de escala con superíndice**: "1 grano = 10³ granos" (`es.escala` convierte los dígitos de k a superíndices).
+
