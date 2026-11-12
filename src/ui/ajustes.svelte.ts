@@ -9,6 +9,10 @@ const base = {
   /** SPEC 6.8: arranca como pida el sistema. */
   reducirDestellos: matchMedia('(prefers-reduced-motion: reduce)').matches,
   daltonismo: false,
+  /** Cosméticos de los logros (paletas.ts); si el elegido no está desbloqueado, se usa el primero (logros.ts, elegido). */
+  paleta: 'arena',
+  efecto: 'normal',
+  marco: 'ninguno',
 }
 
 /** Lo guardado, campo por campo: lo que falta o tiene otro tipo queda como en `base`. */

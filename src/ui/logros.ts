@@ -1,5 +1,6 @@
-// SPEC 7: los 16 logros, en orden. Se miran en cada cuadro; una vez conseguido, queda en el guardado.
+// SPEC 7: los 24 logros de la Capa 0, en el orden de la pantalla. Se miran en cada cuadro; una vez conseguido, queda en el guardado.
 import { CFG, MUTACIONES, anillos, densidad, type State } from '../core'
+import FOTOS from '../assets/pilas.json'
 
 const L = CFG.logros
 
@@ -10,14 +11,22 @@ export const LOGROS: Record<string, (s: State, record: number) => boolean> = {
   colores: (s) => s.colores.every((n) => n > 0),
   hito: (s) => s.colores.some((n) => n >= CFG.hito_colores.cada),
   anillo: (s) => anillos(s.granos) >= L.anillo,
+  llena: (s) => s.granos >= FOTOS.capacidad, // la pila de pantalla toca el borde circular
+  alud: (_, r) => r >= L.alud,
   compresion: (s) => s.compresiones > 0,
   sinAmbar: (s) => s.compresionesSinAmbar > 0,
+  anilloMedio: (s) => anillos(s.granos) >= L.anillo_medio,
+  mandala: (s) => s.colores.every((n) => n >= CFG.hito_colores.cada),
   cascada: (s) => s.cascada >= CFG.cascada.nivel_max,
+  diez: (s) => s.compresiones >= L.compresiones,
+  relampago: (s) => s.mejorCorrida > 0 && s.mejorCorrida < L.corrida_rapida_min * 60,
+  piloto: (s) => Object.entries(CFG.autocompradores).every(([k, n]) => s.compresiones >= n && s.auto[k]),
   mutacion: (s) => MUTACIONES.some((m) => s.mutaciones[m] > 0),
-  mutaciones: (s) => MUTACIONES.every((m) => s.mutaciones[m] >= CFG.mutaciones.nivel_max),
   densidad: (s) => densidad(s) >= L.densidad,
   anilloGrande: (s) => anillos(s.granos) >= L.anillo_grande,
   record: (_, r) => r >= L.avalancha_record,
+  mutaciones: (s) => MUTACIONES.every((m) => s.mutaciones[m] >= CFG.mutaciones.nivel_max),
+  densidadAlta: (s) => densidad(s) >= L.densidad_alta,
   infinito: (s) => s.infinitos > 0,
   infinitoRapido: (s) => s.infinitos > 0 && s.tiempoTotal < L.infinito_rapido_horas * 3600,
 }
@@ -30,4 +39,34 @@ export const nuevosLogros = (s: State, record: number, tiene: Record<string, boo
 export const UMBRAL: Record<string, number> = {
   granos: L.granos_pila, avalancha: L.avalancha, hito: CFG.hito_colores.cada, anillo: L.anillo, densidad: L.densidad,
   anilloGrande: L.anillo_grande, record: L.avalancha_record, infinitoRapido: L.infinito_rapido_horas,
+  alud: L.alud, anilloMedio: L.anillo_medio, mandala: CFG.hito_colores.cada, diez: L.compresiones,
+  relampago: L.corrida_rapida_min, densidadAlta: L.densidad_alta,
 }
+
+export type Cosmetico = 'paleta' | 'efecto' | 'marco'
+/** Recompensa de cada logro: solo cosmética (paletas.ts), sin efecto en el balance. */
+export const RECOMPENSA: Record<string, [Cosmetico, string]> = {
+  derrumbe: ['efecto', 'blanco'], granos: ['paleta', 'brasa'], avalancha: ['efecto', 'estela'], colores: ['paleta', 'aurora'],
+  hito: ['marco', 'fino'], anillo: ['marco', 'anillos'], llena: ['paleta', 'glaciar'], alud: ['efecto', 'chispas'],
+  compresion: ['marco', 'doble'], sinAmbar: ['paleta', 'ceniza'], anilloMedio: ['marco', 'orbitas'], mandala: ['paleta', 'musgo'],
+  cascada: ['efecto', 'cascada'], diez: ['marco', 'muescas'], relampago: ['efecto', 'relampago'], piloto: ['paleta', 'tinta'],
+  mutacion: ['efecto', 'mutante'], densidad: ['marco', 'denso'], anilloGrande: ['marco', 'rosa'], record: ['efecto', 'arcoiris'],
+  mutaciones: ['paleta', 'negativo'], densidadAlta: ['efecto', 'oro'], infinito: ['marco', 'infinito'], infinitoRapido: ['paleta', 'oroViejo'],
+}
+
+/** Los cosméticos de un tipo que ya se pueden usar: el de siempre (el primero de la lista) y los de los logros conseguidos. */
+export const desbloqueados = (tipo: Cosmetico, todos: string[], tiene: Record<string, boolean>) =>
+  todos.filter((id, i) => i === 0 || Object.entries(RECOMPENSA).some(([k, [t, r]]) => t === tipo && r === id && tiene[k]))
+
+/** El cosmético elegido si está desbloqueado; si no, el de siempre. */
+export const elegido = (tipo: Cosmetico, todos: string[], id: string, tiene: Record<string, boolean>) =>
+  desbloqueados(tipo, todos, tiene).includes(id) ? id : todos[0]
+
+/**
+ * Capas de la pantalla de logros. Solo la 0 tiene logros; las siguientes aparecen bloqueadas hasta su condición.
+ * shortcut: la Capa 1 todavía no existe; cuando exista, sumar sus logros acá y su condición real.
+ */
+export const CAPAS: { id: string; logros: string[]; abierta: (s: State) => boolean }[] = [
+  { id: 'pila', logros: Object.keys(LOGROS), abierta: () => true },
+  { id: 'cristalizacion', logros: [], abierta: () => false },
+]

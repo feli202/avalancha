@@ -7,11 +7,13 @@
   import { es } from '../strings/es'
   import { ajustes } from './ajustes.svelte'
   import { formato } from './formato'
-  import { borrarPartida, guardarYa, juego, partidaActual, reemplazarPartida } from './juego.svelte'
-  import { LOGROS, UMBRAL } from './logros'
+  import { COLORES_DALTONISMO, EFECTOS, MARCOS, PALETAS, css } from '../render/paletas'
+  import { sacarFoto } from '../render/marcos'
+  import { borrarPartida, camara, guardarYa, juego, partidaActual, reemplazarPartida } from './juego.svelte'
+  import { desbloqueados, elegido } from './logros'
 
   const s = $derived(juego.s)
-  const PESTANAS = ['estadisticas', 'logros', 'ajustes'] as const
+  const PESTANAS = ['estadisticas', 'ajustes'] as const
 
   // Al cerrar cualquier panel, el foco vuelve a donde estaba (el ícono, casi siempre).
   const abierto = $derived(juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto)
@@ -35,17 +37,21 @@
   // Pestañas con flechas (patrón de ARIA).
   function flechas(e: KeyboardEvent) {
     const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
-    if (!d || !juego.panel) return
+    if (!d || (juego.panel !== 'estadisticas' && juego.panel !== 'ajustes')) return
     juego.panel = PESTANAS[(PESTANAS.indexOf(juego.panel) + d + PESTANAS.length) % PESTANAS.length]
     ;(e.currentTarget as HTMLElement).querySelector<HTMLElement>(`#tab-${juego.panel}`)?.focus()
   }
 
-  // Logros: nombre y descripción con su número.
-  const conNumero = (t: string | ((n: string) => string), k: string) =>
-    typeof t === 'string' ? t : t(UMBRAL[k]?.toLocaleString('es-AR') ?? '')
-  const nombreLogro = (k: string) => conNumero(es.logros.lista[k][0], k)
-  const claves = Object.keys(LOGROS)
-  const conseguidos = $derived(claves.filter((k) => juego.logros[k]).length)
+  // Aspecto: lo desbloqueado con logros.
+  const paletas = $derived(desbloqueados('paleta', Object.keys(PALETAS), juego.logros))
+  const efectos = $derived(desbloqueados('efecto', EFECTOS, juego.logros))
+  const marcos = $derived(desbloqueados('marco', MARCOS, juego.logros))
+  const paletaActual = $derived(elegido('paleta', Object.keys(PALETAS), ajustes.paleta, juego.logros))
+  function foto() {
+    const f = camara.foto?.()
+    const colores = ajustes.daltonismo ? COLORES_DALTONISMO : PALETAS[paletaActual]
+    if (f) sacarFoto(f, elegido('marco', MARCOS, ajustes.marco, juego.logros), colores, es.opciones.archivoFoto)
+  }
 
   // Ajustes: guardar, exportar, importar y borrar, cada uno con su mensaje o su paso de confirmación.
   let guardadoOk = $state(false)
@@ -93,15 +99,6 @@
 
 <svelte:window onkeydown={teclaVentana} />
 
-<!-- Con el menú abierto o el guardado dañado no se muestra (en móvil taparía el panel); queda en la lista de Logros. -->
-{#if juego.logro && !juego.panel && !juego.guardadoRoto}
-  {#key juego.logro.id}
-    <p class="logro-nuevo" role="status">
-      <span class="punto" aria-hidden="true"></span>{es.logros.nuevo(juego.logro.claves.slice(-2).map(nombreLogro))}
-    </p>
-  {/key}
-{/if}
-
 {#if juego.guardadoRoto}
   <!-- No se cierra con Escape ni tocando afuera: hasta aceptar, no se guarda nada. -->
   <div class="velo" class:quieto={ajustes.reducirDestellos}>
@@ -129,7 +126,7 @@
       <button class="accion" use:enfocar onclick={cerrar}>{es.ausencia.seguir}</button>
     </div>
   </div>
-{:else if juego.panel}
+{:else if juego.panel && juego.panel !== 'logros'}
   <div class="velo" class:quieto={ajustes.reducirDestellos} role="presentation" onclick={afuera}>
     <div class="hoja" role="dialog" aria-modal="true" aria-label={es.menu.abrir}>
       <div class="cabeza">
@@ -159,20 +156,41 @@
             <div><dt>{es.estadisticas.record}</dt>
               <dd class="num">{formato(juego.record)} <small>{es.estadisticas.derrumbes}</small></dd></div>
           </dl>
-        {:else if juego.panel === 'logros'}
-          <p class="cuenta num"><b>{conseguidos}</b> {es.logros.deTotal(claves.length)}</p>
-          <ol class="logros">
-            {#each claves as k (k)}
-              {@const si = !!juego.logros[k]}
-              <li class:si>
-                <span class="punto" aria-hidden="true"></span>
-                <span class="nombre">{nombreLogro(k)}</span>
-                <span class="desc">{conNumero(es.logros.lista[k][1], k)}</span>
-                <span class="sr">{si ? '✓' : ''}</span>
-              </li>
-            {/each}
-          </ol>
         {:else}
+          <section class="opciones">
+            <h3>{es.opciones.aspecto}</h3>
+            <div class="fila">
+              <span id="paleta-t">{es.opciones.paleta}</span>
+              <div class="paletas" role="radiogroup" aria-labelledby="paleta-t">
+                {#each paletas as id (id)}
+                  <button role="radio" aria-checked={paletaActual === id} title={es.cosmeticos.paleta[id]}
+                    aria-label={es.cosmeticos.paleta[id]} onclick={() => (ajustes.paleta = id)}>
+                    {#each PALETAS[id] as c}<i style:background={css(c)}></i>{/each}
+                  </button>
+                {/each}
+              </div>
+            </div>
+            {#if ajustes.daltonismo}<p class="nota">{es.opciones.daltonismoManda}</p>{/if}
+            <label class="fila">
+              <span>{es.opciones.efecto}</span>
+              <select value={elegido('efecto', EFECTOS, ajustes.efecto, juego.logros)} onchange={(e) => (ajustes.efecto = e.currentTarget.value)}>
+                {#each efectos as id (id)}<option value={id}>{es.cosmeticos.efecto[id]}</option>{/each}
+              </select>
+            </label>
+            <div class="fila">
+              <label for="marco-s">{es.opciones.marco}</label>
+              <div class="acciones">
+                <select id="marco-s" value={elegido('marco', MARCOS, ajustes.marco, juego.logros)} onchange={(e) => (ajustes.marco = e.currentTarget.value)}>
+                  {#each marcos as id (id)}<option value={id}>{es.cosmeticos.marco[id]}</option>{/each}
+                </select>
+                <button class="accion chica" onclick={foto}>{es.opciones.foto}</button>
+              </div>
+            </div>
+            {#if paletas.length + efectos.length + marcos.length < Object.keys(PALETAS).length + EFECTOS.length + MARCOS.length}
+              <p class="nota">{es.opciones.masConLogros}</p>
+            {/if}
+          </section>
+
           <section class="opciones">
             <div class="fila">
               <span id="notacion-t">{es.opciones.notacion}</span>
@@ -326,21 +344,6 @@
   .stats .destacada dd { font-size: clamp(2.5rem, 7vw, 3.5rem); letter-spacing: -0.03em; }
   .stats small { font-size: 0.875rem; font-weight: 400; color: var(--tenue); letter-spacing: 0; }
 
-  .cuenta { margin: 0 0 1rem; font-size: 1rem; color: var(--tenue); }
-  .cuenta b { font-size: 2.5rem; font-weight: 600; color: var(--tinta); letter-spacing: -0.03em; margin-right: 0.25rem; }
-  .logros { list-style: none; margin: 0; padding: 0; }
-  .logros li {
-    display: grid; grid-template-columns: 0.5rem 1fr; grid-template-areas: 'p n' '. d'; column-gap: 0.875rem;
-    align-items: baseline; padding: 0.625rem 0; border-top: 1px solid var(--borde);
-  }
-  .logros .punto { grid-area: p; align-self: center; }
-  .logros .nombre { grid-area: n; font-size: 1rem; font-weight: 600; color: var(--apagado); }
-  .logros .desc { grid-area: d; font-size: 0.8125rem; color: var(--apagado); }
-  .logros .si .nombre { color: var(--tinta); }
-  .logros .si .desc { color: var(--tenue); }
-  .punto { display: inline-block; width: 0.5rem; height: 0.5rem; border: 1px solid var(--apagado); border-radius: 50%; }
-  .si .punto { border-color: var(--ambar); background: var(--ambar); box-shadow: 0 0 0.5rem var(--ambar); }
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
   .opciones { display: grid; gap: 0.25rem; margin-bottom: 2rem; }
   .opciones h3 { margin: 0 0 0.5rem; font-size: 0.875rem; font-weight: 400; color: var(--tenue); }
@@ -357,6 +360,18 @@
   }
   .segmentos button:hover { color: var(--tenue); }
   .segmentos button[aria-checked='true'] { color: var(--tinta); font-weight: 600; }
+  .paletas { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.25rem; }
+  .paletas button {
+    display: flex; align-items: center; min-height: 2.75rem; padding: 0 0.5rem; border: 1px solid transparent; border-radius: 999px;
+    background: none; cursor: pointer;
+  }
+  .paletas button[aria-checked='true'] { border-color: var(--tinta); }
+  .paletas i { width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: -0.1875rem; box-shadow: 0 0 0 1.5px var(--fondo); }
+  select {
+    min-height: 2.5rem; padding: 0 0.5rem; border: 1px solid var(--borde); background: var(--fondo); color: var(--tinta);
+    font: inherit; font-size: 0.9375rem; cursor: pointer;
+  }
+  .fila .acciones { margin: 0; }
   .acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; margin: 0.5rem 0; }
   .nota { margin: 0.25rem 0; font-size: 0.875rem; color: var(--tenue); }
   .nota.mal { color: var(--coral); }
@@ -373,19 +388,10 @@
   .teclas dd { margin: 0; color: var(--tenue); }
   kbd { font: inherit; font-size: 0.8125rem; font-weight: 600; }
 
-  /* Notificación de logro: abajo al centro, discreta, se va sola. */
-  .logro-nuevo {
-    position: fixed; left: 50%; bottom: 2rem; translate: -50% 0; z-index: 7; display: flex; align-items: center; gap: 0.625rem;
-    width: max-content; max-width: calc(100% - 2rem); margin: 0; font-size: 0.9375rem; pointer-events: none;
-    text-shadow: 0 0 0.75rem var(--fondo), 0 0 0.25rem var(--fondo); animation: notificar 5s ease-out forwards;
-  }
-  .logro-nuevo .punto { flex: none; border-color: var(--ambar); background: var(--ambar); box-shadow: 0 0 0.5rem var(--ambar); }
-  @keyframes notificar { 0% { opacity: 0; } 8%, 80% { opacity: 1; } 100% { opacity: 0; } }
   @keyframes fundido { from { opacity: 0; } }
 
   @media (max-width: 767px) {
     .velo { background: rgb(7 8 15 / 0.88); } /* la tienda en hoja queda detrás del texto: más oscuro */
-    .logro-nuevo { top: 9rem; bottom: auto; /* debajo de Energía, Energía/s y Densidad */ font-size: 0.8125rem; } /* abajo está la hoja y el aviso; arriba, aire */
     .stats { gap: 1.25rem 1.5rem; }
     .stats dd { font-size: 1.375rem; }
     .pestanas { gap: 1.25rem; }

@@ -43,7 +43,8 @@
 
   "_logros": "SPEC 7: umbrales de los logros. No afectan el balance.",
   "logros": { "granos_pila": 100, "avalancha": 1000, "anillo": 10, "densidad": 2, "anillo_grande": 50,
-              "avalancha_record": 1000000, "infinito_rapido_horas": 2 },
+              "avalancha_record": 1000000, "infinito_rapido_horas": 2,
+              "alud": 10000, "anillo_medio": 25, "compresiones": 10, "corrida_rapida_min": 8, "densidad_alta": 3 },
 
   "objetivo_minutos": { "jugador_activo_revisa_cada_15s": 193, "revisa_cada_60s": 226, "revisa_cada_5min": 397 }
 }

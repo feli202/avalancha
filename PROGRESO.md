@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). Sigue el hito 6 (pulido: sonido, accesibilidad, rendimiento).
+Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros**: pantalla completa con 24 logros, mini pilas y recompensas cosméticas (Estadísticas pasa a pantalla completa en la próxima sesión). Sigue el hito 6 (pulido: sonido, accesibilidad, rendimiento).
 
 ## Qué se hizo
 
@@ -464,3 +464,38 @@ En las corridas tardías la pila se veía como un punto: la de pantalla arrancab
 6. **Importar respeta la fecha del exportado**: lo que pasó desde entonces se simula como fuera de línea (tope 24 h).
 7. **La notificación de logro no se muestra** con el menú abierto ni con el guardado dañado (en móvil tapaba el panel); el logro queda en la lista.
 8. **Teclas**: Espacio (puñado), M (comprar todo), C (comprimir), Tab, Esc, flechas en las pestañas. Las filas de la tienda que no se pueden pagar están deshabilitadas y Tab las salta (como antes).
+
+## Rediseño de Logros: pantalla completa
+
+Logros deja de ser una pestaña translúcida sobre la pila y pasa a ser una pantalla completa con fondo propio. Ajustes y Estadísticas siguen en el panel; Estadísticas pasa a pantalla completa en la próxima sesión.
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/render/lienzo.ts` | Nuevo. El dibujo WebGL2 de la pila (shaders, texturas, dos pasadas) sacado de `pilaVisual.ts`, sin worker ni economía. Lo usan la pila del juego y las mini pilas. Suma `u_efecto` (efectos de avalancha). |
+| `src/render/paletas.ts` | Nuevo. Paleta de siempre, la de daltonismo, las 8 paletas, 8 efectos y 8 marcos de recompensa. |
+| `src/render/miniPilas.ts` | Nuevo. La imagen de cada logro: una mini pila (las fotos de `pilas.bin`, o 4 y 100 granos calculados con `Pila`) dibujada con `Lienzo` en una escena propia: brillo, paleta, ondas de destellos, anillos, implosión, el blanco del Infinito. Se generan una vez y quedan en memoria (`ImageBitmap`). Acción `miniPila` para los `<canvas>`. |
+| `src/render/marcos.ts` | Nuevo. Foto del mandala: recorta la pila del juego, le pone el marco y la descarga como PNG de 1080×1080. |
+| `src/ui/Logros.svelte` | Nuevo. La pantalla (pestañas por capa, contador "15 / 24" con barra fina, grilla 6×4) y la notificación (la tarjeta en miniatura entra por la esquina y se va sola a los 5 s). |
+| `src/ui/logros.ts` | 24 logros, `RECOMPENSA`, `desbloqueados`, `elegido` y `CAPAS` (la Capa 1 aparece bloqueada). |
+| `src/ui/App.svelte` | Ícono de trofeo y tecla L. Con Logros abierta, la pila se aleja (escala 0,82, desenfoque y fundido; con Reducir destellos, solo fundido). |
+| `src/ui/Paneles.svelte` | Sin la pestaña Logros ni la notificación vieja. Ajustes suma "Aspecto de la pila": paleta, efecto de avalancha, marco y "Sacar foto del mandala". |
+| `balance/config.json` | `logros`: `alud`, `anillo_medio`, `compresiones`, `corrida_rapida_min`, `densidad_alta` (cosméticos: `sim.py` da lo mismo). |
+| `tests/logros.test.ts` | 24 logros con textos, escena y recompensa; 8 de cada tipo, sin repetir; desbloqueo. |
+
+Los 8 nuevos (SPEC 7): Hasta el borde, Alud, Anillo 25, Mandala pleno, 10 Compresiones, Corrida relámpago, Piloto automático, Densidad ^3.
+
+### Verificación
+
+- `npm test`: 64 tests en verde (incluido el de balance). `tsc` y `vite build` sin errores ni avisos.
+- En el navegador integrado: la grilla, las pestañas de capa, el contador, tarjetas conseguidas y sin conseguir, la notificación, el cambio de paleta (Brasa) en la pila del juego, la foto con el marco Doble (PNG de 1080×1080) y el diseño en móvil (375 px, 2 columnas). Esc y la cruz vuelven al juego.
+- La animación al pasar el mouse la comprobé reemplazando `requestAnimationFrame` por un temporizador (los cuadros cambian): con el panel oculto el navegador no da cuadros. **Los 60 fps no se midieron**, por el mismo motivo que en los hitos anteriores. Mientras la pantalla está abierta la pila del juego se sigue dibujando detrás. Cada cuadro de la animación es una pasada de 513×513 más una de 360×240.
+
+### Decisiones (revisar)
+
+1. **Las imágenes se rehacen en cada carga de la página** (en memoria, no en disco): las 24 tardan menos de un segundo. Se generan recién al abrir Logros o al llegar la primera notificación.
+2. **Las pilas grandes se recortan** en la tarjeta (mínimo 2,4 px por celda), para que se lea el mandala. Hasta el borde y Anillo 10 muestran la pila entera.
+3. **Paleta para daltonismo**: si está activada, la pila y las mini pilas la usan aunque haya otra paleta elegida.
+4. **Piloto automático**: los autocompradores arrancan encendidos, así que en la práctica sale con la 6.ª Compresión, salvo que el jugador apague alguno.
+5. **La foto del mandala no existía**: la sumé como botón en Ajustes, porque los marcos la necesitan.
+6. **Capa 1**: `CAPAS` tiene la pestaña con `abierta: () => false` y sin logros. Cuando exista, hay que sumar sus logros y su condición real.
+

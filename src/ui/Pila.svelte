@@ -6,7 +6,9 @@
   import { es } from '../strings/es'
   import { formatoMult } from './formato'
   import { ajustes } from './ajustes.svelte'
-  import { hayPanel, juego, progresoCompresion, sismo } from './juego.svelte'
+  import { COLORES_DALTONISMO, EFECTOS, PALETAS } from '../render/paletas'
+  import { camara, hayPanel, juego, progresoCompresion, sismo } from './juego.svelte'
+  import { elegido } from './logros'
 
   const ANILLO_SEP = 8 // px CSS entre la pila y el anillo de Compresión
   const IMPLOSION_MS = 900 // lo que dura la animación implotar del CSS
@@ -49,7 +51,11 @@
       if (sismo.length > 1000) sismo.shift() // nadie lo vacía hasta que aparece el sismógrafo
     }
     $effect(() => void (pila.destellos = ajustes.reducirDestellos))
-    $effect(() => void (pila.daltonismo = ajustes.daltonismo))
+    $effect(() => void (pila.paleta = ajustes.daltonismo
+      ? COLORES_DALTONISMO
+      : PALETAS[elegido('paleta', Object.keys(PALETAS), ajustes.paleta, juego.logros)]))
+    $effect(() => void (pila.efecto = EFECTOS.indexOf(elegido('efecto', EFECTOS, ajustes.efecto, juego.logros))))
+    camara.foto = () => pila.foto()
     let anillosAntes = anillos(juego.s.granos)
     const coloresVistos = () => CFG.colores.filter((_, i) => juego.vistos[`color${i}`]).length
     let coloresAntes = coloresVistos()

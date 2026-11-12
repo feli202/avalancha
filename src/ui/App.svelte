@@ -4,6 +4,7 @@
   import { es } from '../strings/es'
   import { ajustes } from './ajustes.svelte'
   import Debug from './Debug.svelte'
+  import Logros from './Logros.svelte'
   import Paneles from './Paneles.svelte'
   import Pila from './Pila.svelte'
   import Sismografo from './Sismografo.svelte'
@@ -24,6 +25,8 @@
   const comprimirYa = () => (juego.s = comprimir(juego.s))
   // C comprime (Espacio y M viven en Pila y Tienda).
   function tecla(e: KeyboardEvent) {
+    if (e.code === 'KeyL' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !hayPanel() &&
+      !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) juego.panel = 'logros'
     if (e.code !== 'KeyC' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || hayPanel()) return
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
     if (juego.vistos.compresion && lista) comprimirYa()
@@ -52,7 +55,7 @@
 
 <!-- .lista: se puede comprimir; el botón y el anillo de la pila laten juntos (arrancan en el mismo cuadro). -->
 <!-- inert con un panel encima: el foco y los clics quedan en el panel. -->
-<div class="juego" class:quieto={ajustes.reducirDestellos} class:lista class:fin inert={hayPanel()}>
+<div class="juego" class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel === 'logros'} inert={hayPanel()}>
   <Pila />
 
   <header class="izq">
@@ -65,6 +68,11 @@
   </header>
 
   <div class="ajustes">
+    <button class="icono" aria-label={es.menu.logros} aria-haspopup="dialog" aria-keyshortcuts="L" onclick={() => (juego.panel = 'logros')}>
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <path d="M5 2.5h8v4a4 4 0 0 1-8 0zM9 10.5v3M6 15.5h6M5 4H2.5a2.5 2.5 0 0 0 2.6 3M13 4h2.5a2.5 2.5 0 0 1-2.6 3" />
+      </svg>
+    </button>
     <button class="icono" aria-label={es.menu.abrir} aria-haspopup="dialog" onclick={() => (juego.panel = 'ajustes')}>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
         <path d="M2 5h8M14 5h2M2 13h2M8 13h8" /><circle cx="12" cy="5" r="2" /><circle cx="6" cy="13" r="2" />
@@ -142,6 +150,7 @@
 {/if}
 
 <Paneles />
+<Logros />
 
 {#if import.meta.env.DEV}<Debug />{/if}
 
@@ -220,7 +229,11 @@
   .adelanto { margin: 0; font-size: 0.9375rem; color: var(--violeta); letter-spacing: 0.01em; }
   @keyframes llegar { to { opacity: 1; } }
 
-  .ajustes { position: fixed; top: var(--margen); right: calc(var(--margen) - 0.6875rem); z-index: 2; } /* el trazo del ícono, al ras de la lista */
+  /* Logros: la pila se aleja y se apaga mientras entra la pantalla (Logros.svelte). */
+  .juego { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s, filter 0.6s; }
+  .juego.alejado { transform: scale(0.82); opacity: 0; filter: blur(6px); }
+  .juego.quieto.alejado { transform: none; filter: none; }
+  .ajustes { position: fixed; top: var(--margen); right: calc(var(--margen) - 0.6875rem); z-index: 2; display: flex; gap: 0.25rem; } /* el trazo del ícono, al ras de la lista */
   .icono {
     display: grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0; border: 0; background: none;
     color: var(--apagado); cursor: pointer; transition: color 0.15s;

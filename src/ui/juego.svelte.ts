@@ -48,6 +48,9 @@ export const juego = new Juego()
 /** Sismógrafo: derrumbes de cada avalancha de la pila visual que todavía no se dibujó. Sin $state: lo vacía un canvas. */
 export const sismo: number[] = []
 
+/** La pila del juego para la foto del mandala (la pone Pila.svelte). */
+export const camara: { foto: (() => { canvas: HTMLCanvasElement; r: number }) | null } = { foto: null }
+
 const log10E = (s: State) => (s.energia.gt(1) ? s.energia.log10() : 0)
 
 /**

@@ -278,22 +278,32 @@ La pila se vuelve blanca desde el centro hacia afuera, el número de Energía se
 
 ## 7. Logros (sin efecto en el balance, listos para Steam)
 
+24 logros en la Capa 0, en este orden (grilla de 6×4). Cada uno da una recompensa cosmética: una paleta de la pila, un efecto de avalancha o un marco para la foto del mandala (8 de cada uno). Umbrales en `config.json → logros`.
+
 1. Primer derrumbe
 2. 100 granos en la pila
 3. Avalancha de 1.000 derrumbes
 4. Los cuatro colores
 5. Primer hito ×4 de un color
 6. Anillo 10
-7. Primera Compresión
-8. Compresión sin comprar Ámbar
-9. Cascada al máximo
-10. Primera Mutación
-11. Todas las Mutaciones al máximo
-12. Densidad ^2
-13. Anillo 50
-14. Avalancha de 1e6 derrumbes en la pila visual (récord)
-15. Infinito
-16. Infinito en menos de 2 horas
+7. Hasta el borde: la pila de pantalla llega a su capacidad (toca el borde circular)
+8. Alud: avalancha de 10.000 derrumbes
+9. Primera Compresión
+10. Compresión sin comprar Ámbar
+11. Anillo 25
+12. Mandala pleno: los cuatro colores en nivel 25 a la vez
+13. Cascada al máximo
+14. 10 Compresiones
+15. Corrida relámpago: Compresión en menos de 8 min de corrida
+16. Piloto automático: todos los autocompradores desbloqueados y encendidos
+17. Primera Mutación
+18. Densidad ^2
+19. Anillo 50
+20. Avalancha de 1e6 derrumbes en la pila visual (récord)
+21. Todas las Mutaciones al máximo
+22. Densidad ^3
+23. Infinito
+24. Infinito en menos de 2 horas
 
 ---
 

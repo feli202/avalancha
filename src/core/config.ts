@@ -32,6 +32,7 @@ export interface Config {
   logros: {
     granos_pila: number; avalancha: number; anillo: number; densidad: number; anillo_grande: number
     avalancha_record: number; infinito_rapido_horas: number
+    alud: number; anillo_medio: number; compresiones: number; corrida_rapida_min: number; densidad_alta: number
   }
   objetivo_minutos: Record<string, number>
 }

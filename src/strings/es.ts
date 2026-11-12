@@ -97,9 +97,10 @@ export const es = {
 
   // Estadísticas, logros y ajustes (SPEC 6.4: pestañas; acá flotan sobre la pila)
   menu: {
-    abrir: 'Estadísticas, logros y ajustes',
+    abrir: 'Estadísticas y ajustes',
     cerrar: 'Cerrar',
     pestanas: { estadisticas: 'Estadísticas', logros: 'Logros', ajustes: 'Ajustes' } as Record<string, string>,
+    logros: 'Logros',
   },
   estadisticas: {
     tiempoTotal: 'Tiempo total',
@@ -114,7 +115,17 @@ export const es = {
   logros: {
     /** Va después del número de conseguidos, en grande: "7 de 16". */
     deTotal: (total: number) => `de ${total}`,
-    nuevo: (nombres: string[]) => `${nombres.length === 1 ? 'Logro' : 'Logros'}: ${nombres.join(' · ')}`,
+    titulo: 'Logros',
+    /** Pestañas de la pantalla de logros, una por capa (CAPAS en logros.ts). */
+    capas: { pila: 'Capa 0 · Pila', cristalizacion: 'Capa 1 · Cristalización' } as Record<string, string>,
+    bloqueada: 'Llegá al Infinito',
+    cuenta: (n: number, total: number) => `${n} / ${total}`,
+    volver: 'Volver a la pila',
+    conseguido: 'Conseguido',
+    pendiente: 'Sin conseguir',
+    /** La notificación al conseguir uno. */
+    nuevo: 'Logro conseguido',
+    recompensa: { paleta: 'Paleta', efecto: 'Efecto', marco: 'Marco' } as Record<string, string>,
     /** Nombre y descripción; n es el número del logro (logros.ts, UMBRAL), ya con formato. */
     lista: {
       derrumbe: ['Primer derrumbe', () => 'Una celda junta 4 granos y se derrumba.'],
@@ -133,9 +144,40 @@ export const es = {
       record: [(n) => `Avalancha de ${n}`, (n) => `Una avalancha de ${n} derrumbes en la pila.`],
       infinito: ['Infinito', () => 'Llegar al Infinito.'],
       infinitoRapido: ['Infinito veloz', (n) => `Llegar al Infinito en menos de ${n} horas de juego.`],
+      llena: ['Hasta el borde', () => 'Llenar la pila hasta que toque el borde.'],
+      alud: ['Alud', (n) => `Una avalancha de ${n} derrumbes.`],
+      anilloMedio: [(n) => `Anillo ${n}`, (n) => `Llegar a ${n} anillos en una corrida.`],
+      mandala: ['Mandala pleno', (n) => `Los cuatro colores en nivel ${n} a la vez.`],
+      diez: [(n) => `${n} Compresiones`, (n) => `Comprimir la pila ${n} veces.`],
+      relampago: ['Corrida relámpago', (n) => `Comprimir en menos de ${n} minutos de corrida.`],
+      piloto: ['Piloto automático', () => 'Todos los autocompradores desbloqueados y encendidos a la vez.'],
+      densidadAlta: [(n) => `Densidad ^${n}`, (n) => `Llegar a Densidad ^${n}.`],
     } as Record<string, [string | ((n: string) => string), (n: string) => string]>,
   },
+  /** Nombres de las recompensas de los logros (paletas.ts). */
+  cosmeticos: {
+    paleta: {
+      arena: 'Arena', brasa: 'Brasa', aurora: 'Aurora', glaciar: 'Glaciar', ceniza: 'Ceniza', musgo: 'Musgo',
+      tinta: 'Tinta', negativo: 'Negativo', oroViejo: 'Oro viejo',
+    },
+    efecto: {
+      normal: 'Del color de la celda', blanco: 'Destello blanco', estela: 'Estela larga', chispas: 'Chispas',
+      cascada: 'Onda doble', relampago: 'Relámpago', mutante: 'Mutante', arcoiris: 'Arcoíris', oro: 'Oro',
+    },
+    marco: {
+      ninguno: 'Sin marco', fino: 'Fino', doble: 'Doble', anillos: 'Anillos', orbitas: 'Órbitas', muescas: 'Muescas',
+      denso: 'Denso', rosa: 'Rosa de los vientos', infinito: 'Infinito',
+    },
+  } as Record<string, Record<string, string>>,
   opciones: {
+    aspecto: 'Aspecto de la pila',
+    paleta: 'Paleta',
+    efecto: 'Efecto de avalancha',
+    marco: 'Marco de la foto',
+    foto: 'Sacar foto del mandala',
+    archivoFoto: 'avalancha-mandala.png',
+    masConLogros: 'Los logros desbloquean más paletas, efectos y marcos.',
+    daltonismoManda: 'Con la paleta para daltonismo activada, la pila usa esa.',
     notacion: 'Notación',
     cientifica: 'Científica',
     ingenieria: 'Ingeniería',
@@ -167,7 +209,8 @@ export const es = {
       ['M', 'comprar todo'],
       ['C', 'comprimir'],
       ['Tab', 'moverse por la interfaz'],
-      ['Esc', 'cerrar este panel'],
+      ['L', 'ver los logros'],
+      ['Esc', 'cerrar este panel o los logros'],
     ],
   },
 
