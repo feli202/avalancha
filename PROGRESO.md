@@ -337,3 +337,37 @@ No se tocó `src/core/` ni `balance/`: el núcleo ya hacía todo y no le encontr
 5. **"Comprar todo" y la tecla M** compran solo lo de la pestaña Tienda, estés en la pestaña que estés.
 6. **En las filas con "auto"** la línea del efecto deja lugar al interruptor y con la columna angosta (1280 px) "celdas con 3 granos" pasa a dos líneas.
 7. **El final no se puede cerrar** ni reiniciar: no hay a dónde ir hasta la Capa 1. "El guardado queda listo para la Capa 1" depende del hito 5.
+
+
+
+## Arreglo: la pila de pantalla sigue a la real (fotos de la pila)
+
+En las corridas tardías la pila se veía como un punto: la de pantalla arrancaba de cero en cada Compresión y soltando grano por grano tardaba 90–160 s en llenarse, más que la corrida. No se tocó `src/core/` ni `balance/`.
+
+| Archivo | Cambio |
+| --- | --- |
+| `scripts/snapshots.mjs` | Nuevo. Con la misma `Pila` del worker suelta granos y guarda fotos de la pila estable con 1.000, 3.000, 10.000, 30.000, 100.000 y 300.000 granos, y la llena (capacidad 463.296 + 12 % = 518.892). Uso: `node scripts/snapshots.mjs` (~1 min; Node 23.6+ importa el `.ts` directo). |
+| `src/assets/pilas.bin` | Las 7 fotos, gzip: **25,9 KB**. Por foto, un cuadrante de 257×257 bytes (la pila es simétrica; el script lo comprueba); 4 = celda de adentro con 0 granos. |
+| `src/assets/pilas.json` | Capacidad, granos y radio de cada foto. |
+| `src/render/pila.worker.ts` | Descomprime las fotos al arrancar (`DecompressionStream`). Pedido con `foto ≥ 0`: arma la pila espejando el cuadrante y la devuelve. |
+| `src/render/pilaVisual.ts` | Cada cuadro, objetivo = min(G, pila llena). Si la pila de pantalla quedó más de `RITMO_MAX` (lo que alcanza en ~1 s) atrás, carga la foto más grande que no pase el objetivo y sigue soltando desde ahí. Fundido de 200 ms entre lo que se veía y la foto (copia del cuadro a una textura y `mix` en el shader). La capacidad ya no se mide en vivo: viene del JSON. `RELLENO` pasó al script. |
+
+- **Después de una Compresión**: la implosión de siempre (Hito 4) y la pila arranca vacía; en las corridas tempranas crece grano por grano, en las tardías salta foto por foto (como mucho una cada 200 ms, el fundido) y queda llena en pocos segundos.
+- **Al cargar una partida** (hito 5, todavía no hay guardado) va a andar sola: el primer cuadro ve G grande y salta a la foto.
+- Las celdas de adentro con 0 granos se marcan con un derrumbe en t = 0 (sin destello): `inicio` arranca 1 s antes para que t = 0 ya sea pasado.
+
+### Verificación
+
+- tsc sin errores; 32 tests en verde; `vite build` incluye `pilas-*.bin` (25,9 KB).
+- **Compresión 12 con Compresión automática, ×50, Edge headless 1280×720** (bot de `partida50.mjs`): 5 compresiones seguidas hasta el Infinito. Después de cada una, la pila de pantalla quedó llena (> 518.892 granos) en menos de 4 s y siguió goteando unos 3.000 granos/s; 60 fps todo el tiempo (peor cuadro 17 ms, un pico de 67–83 ms en la corrida de la Compresión 14, que ya estaba antes). Ráfaga de capturas cada ~0,3 s después de una Compresión: implosión → punto → pila llena con fundido, sin cortes.
+- Corridas tempranas: con G chico el camino es el de antes (cada grano); las fotos solo entran si la pila queda más de 3.000 granos atrás.
+
+### Arreglos que salieron en la verificación
+
+1. **La implosión no terminaba nunca** (bug del Hito 4, y probablemente parte del "punto"): `implotando` se apagaba con el `animationend` de la estela, pero la estela puede salir de `efectos` antes de terminar (`slice(-3)`, cuando llegan textos de anillos) y con Reducir destellos tiene `display: none`. La pila de pantalla quedaba congelada y achicada al 2 % para siempre. Ahora se apaga con un reloj de 0,9 s (`IMPLOSION_MS` en `Pila.svelte`, igual a la animación del CSS).
+2. Al cargar una foto la cámara se encuadra de golpe (si no, la pila grande aparecía muy ampliada y se alejaba), y el salto de escala ("1 grano = 10^k") no anima la cámara si viene de una foto: el fundido ya cubre el cambio.
+
+### Pendiente / no verificado
+
+- No lo miré en móvil real ni con el navegador integrado (estaba oculto); solo Edge headless, también a 375×812.
+- La carga de partida no existe todavía (hito 5); el mecanismo ya la cubre.

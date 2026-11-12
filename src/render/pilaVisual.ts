@@ -1,14 +1,16 @@
 // La pila en pantalla (SPEC 6.1–6.3): habla con el worker y dibuja con WebGL2.
 // No conoce la economía: recibe G, el Caudal y el brillo de cada altura.
 import { LADO } from './pila'
+import FOTOS from '../assets/pilas.json'
 import type { Pedido, Respuesta } from './pila.worker'
 
 /** SPEC 6.3: tope de granos por segundo de la simulación visual. */
 export const RITMO_MAX = 3000
 const DESTELLO_S = 0.3
 const ENTERO_DESDE = 3 // px reales por celda desde los que se redondea a un entero
-/** Al llenarse, la pila natural tiene lados planos (7 celdas cortos en los ejes); con un 12 % más de granos llena el círculo. */
-const RELLENO = 1.12
+/** Granos de la pila llena y redonda (la última foto: capacidad + 12 %, ver scripts/snapshots.mjs). */
+const LLENA = FOTOS.granos[FOTOS.granos.length - 1]
+const FUNDIDO_S = 0.2 // fundido al saltar a una foto
 const PX_MAX = 28 // tamaño máximo de una celda, en px CSS (para que el primer grano no ocupe la pantalla)
 const NIVELES = Math.floor(Math.log2(LADO)) + 1 // mipmaps de la grilla (el bloom)
 /** SPEC 6.2: una avalancha es "grande" si supera esta cantidad de veces el promedio. */
@@ -86,6 +88,8 @@ uniform float u_escala;  // px por celda
 uniform float u_dpr;
 uniform vec4 u_brillo;
 uniform int u_ss;        // muestras por eje y por píxel (supermuestreo al reducir)
+uniform sampler2D u_viejo; // el cuadro de antes de saltar a una foto (sRGB)
+uniform float u_fundido;   // 1 → 0 durante el fundido
 const float L = ${LADO}.0;
 const vec3 LUZ = vec3(-0.5, 0.55, 0.67); // arriba a la izquierda (sin normalizar)
 
@@ -161,7 +165,9 @@ void main() {
   col = hombro(col + halo(q));
   // A sRGB, con un poco de ruido para que el degradado del fondo no haga escalones.
   col = mix(col * 12.92, 1.055 * pow(col, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, col));
-  o = vec4(col + (hash(gl_FragCoord.xy + fract(u_ahora) * 97.0) - 0.5) / 255.0, 1.0);
+  col += (hash(gl_FragCoord.xy + fract(u_ahora) * 97.0) - 0.5) / 255.0;
+  if (u_fundido > 0.0) col = mix(col, texelFetch(u_viejo, ivec2(gl_FragCoord.xy), 0).rgb, u_fundido);
+  o = vec4(col, 1.0);
 }`
 
 export interface Medidas {
@@ -198,15 +204,20 @@ export class PilaVisual {
   private uniC: Uniformes = {}
   private uniP: Uniformes = {}
   private fbo: WebGLFramebuffer | null = null
+  private viejo: WebGLTexture | null = null
 
   private alturas: Uint8Array | null = new Uint8Array(LADO * LADO)
   private tDerrumbe = new Float32Array(LADO * LADO).fill(-1)
   private sucio = true
   private radio = 0
   private escala = 0
+  private px = 0
   private ultimas: Uint8Array = new Uint8Array(LADO * LADO)
   private destello = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1
   private alejarDesde = -1
+  /** Llegó una foto: el próximo cuadro guarda lo que se veía antes de subirla, para fundir. */
+  private fundir = false
+  private fundidoDesde = -1
 
   // --- avalanchas: una avalancha = pedidos seguidos hasta que la pila queda estable ---
   private avTamano = 0
@@ -222,15 +233,15 @@ export class PilaVisual {
   private estable = true
   /** Granos que faltan soltar. */
   private pendientes = 0
-  /** Parte entera de G ya pasada a `pendientes` (mientras la pila es la real). */
-  private contados = 0
   private gAntes = 0
+  /** min(G, pila llena): hasta dónde tiene que llegar la pila de pantalla. */
+  private objetivo = 0
   private soltados = 0
-  /** Granos soltados cuando el primero cayó al sumidero; 0 = todavía entra todo. */
-  private capacidad = 0
+  /** Granos que entran hasta que el primero cae al sumidero. */
+  private capacidad = FOTOS.capacidad
 
   // --- tiempo y medidas ---
-  private inicio = performance.now()
+  private inicio = performance.now() - 1000 // ahora ≥ 1 s: un derrumbe en t = 0 ya no destella (las fotos lo usan)
   private ahora = 0
   private m: Medidas = { fps: 0, peorCuadro: 0, granosSeg: 0, derrumbesSeg: 0, workerMs: 0, cuadroMs: 0 }
   private mDesde = 0
@@ -268,7 +279,7 @@ export class PilaVisual {
       return prog
     }
     this.progCeldas = programa(FRAG_CELDAS, ['u_alturas', 'u_derrumbe', 'u_ahora', 'u_destello', 'u_brillo', 'u_color'], this.uniC)
-    this.progPantalla = programa(FRAG_PANTALLA, ['u_celdas', 'u_luz', 'u_tam', 'u_escala', 'u_ahora', 'u_destello', 'u_dpr', 'u_brillo', 'u_ss'], this.uniP)
+    this.progPantalla = programa(FRAG_PANTALLA, ['u_celdas', 'u_luz', 'u_tam', 'u_escala', 'u_ahora', 'u_destello', 'u_dpr', 'u_brillo', 'u_ss', 'u_viejo', 'u_fundido'], this.uniP)
     gl.bindVertexArray(gl.createVertexArray())
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1) // 513 no es múltiplo de 4
     const textura = (unidad: number, interno: number, niveles = 1) => {
@@ -292,6 +303,12 @@ export class PilaVisual {
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, luz, 0)
     gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1])
     gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+    this.viejo = gl.createTexture()
+    gl.activeTexture(gl.TEXTURE4)
+    gl.bindTexture(gl.TEXTURE_2D, this.viejo)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, null)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 
     gl.useProgram(this.progCeldas)
     gl.uniform1i(this.uniC.u_alturas, 0)
@@ -301,6 +318,7 @@ export class PilaVisual {
     gl.useProgram(this.progPantalla)
     gl.uniform1i(this.uniP.u_celdas, 2)
     gl.uniform1i(this.uniP.u_luz, 3)
+    gl.uniform1i(this.uniP.u_viejo, 4)
     this.destellos = !this.destello
   }
 
@@ -344,18 +362,17 @@ export class PilaVisual {
 
     if (granos < this.gAntes) this.vaciar() // Compresión: la pila arranca de cero
     this.gAntes = granos
-    if (!this.capacidad) {
-      // SPEC 6.3: mientras entra, la pila de pantalla es la real: se suelta cada grano.
-      const g = Math.floor(granos)
-      this.pendientes += g - this.contados
-      this.contados = g
-    } else {
-      // Estado estacionario: sigue cayendo arena al ritmo visual; si el worker no da abasto, no se acumula.
-      // Hasta llenar el círculo cae al ritmo máximo, aunque el Caudal sea bajo; después, al del Caudal.
-      const ritmo = this.soltados < this.capacidad * RELLENO ? RITMO_MAX : Math.min(caudal, RITMO_MAX)
-      this.pendientes = Math.min(this.pendientes + ritmo * real, RITMO_MAX)
+    // La pila de pantalla sigue a la real hasta llenarse (SPEC 6.3: mientras entra, cada grano). Si queda muy atrás,
+    // pedir() salta a la foto más grande que no se pase.
+    this.objetivo = Math.min(granos, LLENA)
+    const falta = Math.floor(this.objetivo - this.soltados)
+    if (falta >= 1 || this.soltados < this.capacidad) this.pendientes = Math.max(falta, 0)
+    else {
+      // Estado estacionario: sigue cayendo arena al ritmo del Caudal; si el worker no da abasto, no se acumula.
+      this.pendientes = Math.min(this.pendientes + Math.min(caudal, RITMO_MAX) * real, RITMO_MAX)
       const k = Math.max(0, Math.floor(Math.log10(granos / this.capacidad)))
-      if (k > this.escalaK && this.destello) this.alejarDesde = ahora
+      // Con una foto recién cargada el salto no es de escala sino de la pila entera: ya lo cubre el fundido.
+      if (k > this.escalaK && this.destello && !this.fundir && this.fundidoDesde < 0) this.alejarDesde = ahora
       this.escalaK = k
     }
     this.pedir()
@@ -372,7 +389,7 @@ export class PilaVisual {
     this.gen++
     this.reiniciar = true
     this.estable = true
-    this.pendientes = this.contados = this.soltados = this.capacidad = this.escalaK = this.radio = this.avalancha = 0
+    this.pendientes = this.soltados = this.escalaK = this.radio = this.avalancha = 0
     this.avTamano = this.avGranos = this.avPromedio = this.avCuenta = 0
     this.ultimas = new Uint8Array(LADO * LADO)
     this.alturas = new Uint8Array(LADO * LADO)
@@ -381,25 +398,42 @@ export class PilaVisual {
   }
 
   private pedir() {
-    if (this.ocupado || (this.pendientes < 1 && this.estable && !this.reiniciar)) return
-    const p: Pedido = { granos: Math.floor(this.pendientes), reiniciar: this.reiniciar, gen: this.gen }
+    if (this.ocupado) return
+    const foto = this.fotoQueConviene()
+    if (foto < 0 && this.pendientes < 1 && this.estable && !this.reiniciar) return
+    const p: Pedido = { granos: Math.floor(this.pendientes), reiniciar: this.reiniciar, gen: this.gen, foto }
     this.worker.postMessage(p)
     this.reiniciar = false
     this.ocupado = true
   }
 
+  /** La foto más grande que no pasa el objetivo, si la pila quedó más atrás de lo que alcanza en ~1 s; si no, -1. */
+  private fotoQueConviene() {
+    if (this.fundir || this.fundidoDesde >= 0 || this.objetivo - this.soltados <= RITMO_MAX) return -1
+    let i = FOTOS.granos.length - 1
+    while (i >= 0 && FOTOS.granos[i] > this.objetivo) i--
+    return i >= 0 && FOTOS.granos[i] > this.soltados ? i : -1
+  }
+
   private recibir(r: Respuesta) {
     this.ocupado = false
-    if (r.gen === this.gen) {
+    if (r.gen === this.gen && r.foto >= 0) {
+      this.soltados = FOTOS.granos[r.foto]
+      this.pendientes = 0
+      this.estable = true
+      this.radio = r.radio
+      this.tDerrumbe.fill(-1)
+      for (const i of r.celdas) this.tDerrumbe[i] = 0 // adentro, sin destello
+      this.alturas = this.ultimas = r.alturas
+      this.avTamano = this.avGranos = 0
+      this.fundir = this.sucio = true
+      this.escala = 0 // encuadre de golpe: el fundido ya se ve con la escala nueva
+    } else if (r.gen === this.gen) {
       this.pendientes -= r.hechos
       this.soltados += r.hechos
       this.estable = r.estable
       this.avalancha = r.tamano
       this.radio = r.radio
-      if (r.perdidos > 0 && !this.capacidad) {
-        this.capacidad = this.soltados
-        this.pendientes = 0
-      }
       for (const i of r.celdas) this.tDerrumbe[i] = this.ahora
       this.alturas = this.ultimas = r.alturas
       this.contarAvalancha(r)
@@ -428,8 +462,18 @@ export class PilaVisual {
   }
 
   private dibujar(dt: number, brillos: number[]) {
-    const { gl, canvas, uniC, uniP } = this
+    const { gl, canvas } = this
     if (!gl) return
+    const pxAntes = this.px
+    const px = (this.px = this.encuadre(dt)) // px reales por celda
+    if (this.fundir) {
+      // Lo que se veía hasta ahora (texturas y escala viejas) queda en u_viejo y se funde con la foto nueva.
+      this.fundir = false
+      this.pintar(pxAntes || px, brillos, 0)
+      gl.activeTexture(gl.TEXTURE4)
+      gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGB, 0, 0, canvas.width, canvas.height, 0)
+      this.fundidoDesde = this.ahora
+    }
     if (this.sucio) {
       this.sucio = false
       if (this.alturas) {
@@ -440,6 +484,17 @@ export class PilaVisual {
       gl.activeTexture(gl.TEXTURE1)
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, LADO, LADO, gl.RED, gl.FLOAT, this.tDerrumbe)
     }
+    let f = 0
+    if (this.fundidoDesde >= 0) {
+      f = 1 - (this.ahora - this.fundidoDesde) / FUNDIDO_S
+      if (f <= 0) (this.fundidoDesde = -1), (f = 0)
+    }
+    this.pintar(px, brillos, f)
+  }
+
+  /** Acerca la escala a la que corresponde (la pila en el 80 % del lado corto) y devuelve los px reales por celda. */
+  private encuadre(dt: number) {
+    const { canvas } = this
     // Encuadre: la pila entera en el 80 % del lado corto, con celdas de un número entero de píxeles (cuadradas y nítidas).
     const lado = Math.min(canvas.width, canvas.height)
     const entra = (0.8 * lado) / (2 * Math.min(this.radio + 2, LADO / 2) + 1)
@@ -451,7 +506,12 @@ export class PilaVisual {
     const t = this.alejarDesde < 0 ? 1 : (this.ahora - this.alejarDesde) / ALEJAR_S
     if (t >= 1) this.alejarDesde = -1
     const alejar = 1 + 0.6 * (1 - Math.min(t, 1)) ** 3
+    return this.escala * alejar
+  }
 
+  private pintar(px: number, brillos: number[], fundido: number) {
+    const { gl, canvas, uniC, uniP } = this
+    if (!gl) return
     // Pasada 1: color y luz de cada celda a la grilla, y los mipmaps de la luz para el bloom.
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
     gl.viewport(0, 0, LADO, LADO)
@@ -467,8 +527,8 @@ export class PilaVisual {
     gl.viewport(0, 0, canvas.width, canvas.height)
     gl.useProgram(this.progPantalla)
     gl.uniform2f(uniP.u_tam, canvas.width, canvas.height)
-    const px = this.escala * alejar // px reales por celda
     gl.uniform1f(uniP.u_escala, px)
+    gl.uniform1f(uniP.u_fundido, fundido)
     gl.uniform1i(uniP.u_ss, px < 1 ? 3 : px < 2.5 ? 2 : 1)
     gl.uniform1f(uniP.u_ahora, this.ahora)
     gl.uniform1f(uniP.u_dpr, devicePixelRatio)

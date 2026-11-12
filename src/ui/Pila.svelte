@@ -8,6 +8,7 @@
   import { juego, progresoCompresion, sismo } from './juego.svelte'
 
   const ANILLO_SEP = 8 // px CSS entre la pila y el anillo de Compresión
+  const IMPLOSION_MS = 900 // lo que dura la animación implotar del CSS
 
   let canvas: HTMLCanvasElement
   const comp = $derived(progresoCompresion(juego.s))
@@ -20,6 +21,8 @@
   }
   /** Durante la implosión la pila de pantalla se queda con los granos de antes de comprimir; al terminar, se vacía. */
   let implotando = $state(false)
+  // Con un reloj y no con animationend: la estela puede no animar (Reducir destellos) o salir de `efectos` antes de terminar.
+  let implotaHasta = 0
   const ESTELA = `conic-gradient(${[...COLOR_CSS, COLOR_CSS[0]].join(', ')})`
   let efectos = $state<Efecto[]>([])
   let siguiente = 0
@@ -56,9 +59,11 @@
       // Comprimir (a mano o la automática): implosión. La pila de pantalla se congela con lo que tenía.
       if (s.compresiones > compAntes) {
         implotando = true
+        implotaHasta = ahora + IMPLOSION_MS
         efecto({ compresion: { r: Math.max(pila.radioCss, 48), densidad: formatoMult(densidad(s)) } })
       }
       compAntes = s.compresiones
+      if (implotando && ahora >= implotaHasta) implotando = false
       if (implotando) pila.cuadro(ahora, granosAntes, 0, brillos)
       else {
         // juego.nivelColores: nivel simulado desde el panel de debug (0 = el real)
@@ -107,7 +112,7 @@
     {/if}
     {#each efectos as e (e.id)}
       {#if e.compresion}
-        <div class="estela" style:--r="{e.compresion.r}px" style:background={ESTELA} onanimationend={() => (implotando = false)}></div>
+        <div class="estela" style:--r="{e.compresion.r}px" style:background={ESTELA}></div>
         <div class="destello"></div>
         <p class="flota densidad" onanimationend={() => quitar(e.id)}>{es.densidadNueva(e.compresion.densidad)}</p>
       {:else if e.ola}
