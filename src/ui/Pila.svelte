@@ -54,8 +54,16 @@
     const brillos = [0, 0, 0, 0]
     let compAntes = juego.s.compresiones
     let granosAntes = juego.s.granos
+    let saltosAntes = juego.saltos
     let raf = requestAnimationFrame(function cuadro(ahora) {
       const s = juego.s
+      // Vuelta de una ausencia: lo que pasó afuera (compresiones, anillos, colores) no se anima; la pila salta a su foto.
+      if (juego.saltos !== saltosAntes) {
+        saltosAntes = juego.saltos
+        compAntes = s.compresiones
+        anillosAntes = anillos(s.granos)
+        coloresAntes = coloresVistos()
+      }
       // Comprimir (a mano o la automática): implosión. La pila de pantalla se congela con lo que tenía.
       if (s.compresiones > compAntes) {
         implotando = true

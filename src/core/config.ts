@@ -27,6 +27,7 @@ export interface Config {
   /** SPEC 5: Energía máxima a la que aparece cada parte de la interfaz. */
   revelado: { tienda: number; ambar: number; compresion_log10: number }
   punado: { granos: number; max_por_segundo: number }
+  fuera_de_linea: { paso_s: number; max_pasos: number; tope_horas: number }
   objetivo_minutos: Record<string, number>
 }
 

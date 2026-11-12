@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). Sigue el hito 5 (persistencia).
+Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5a** (guardado base y progreso fuera de línea) terminado. Sigue el resto del hito 5: exportar/importar, ajustes, estadísticas y logros.
 
 ## Qué se hizo
 
@@ -371,3 +371,55 @@ En las corridas tardías la pila se veía como un punto: la de pantalla arrancab
 
 - No lo miré en móvil real ni con el navegador integrado (estaba oculto); solo Edge headless, también a 375×812.
 - La carga de partida no existe todavía (hito 5); el mecanismo ya la cubre.
+
+
+## Hito 5a, guardado base y progreso fuera de línea
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/core/offline.ts` | `fueraDeLinea(s, segundos)`: el tiempo ausente con el mismo `tick`. Devuelve el estado, los segundos simulados, la Energía producida y las compresiones. Pura. |
+| `src/guardado/almacen.ts` | Interfaz `Almacen` (`leer`, `escribir`) y `almacenLocal` sobre `localStorage`. Es el único archivo que toca el almacenamiento del navegador. |
+| `src/guardado/guardado.ts` | `serializar` / `deserializar` (con `version` y `migrar`), `guardar` y `cargar` sobre un `Almacen`. |
+| `src/ui/juego.svelte.ts` | Carga al arrancar, guarda cada 10 s y al cerrar u ocultar la pestaña (`pagehide`, `visibilitychange`). El bucle usa `Date.now()`. |
+| `src/ui/App.svelte` | Cartel "Mientras no estabas" y cartel de guardado dañado. |
+| `tests/guardado.test.ts` | 18 tests: fuera de línea, ida y vuelta del guardado, guardados corruptos. |
+| `balance/config.json` | `fuera_de_linea`: `paso_s` 1, `max_pasos` 10.000, `tope_horas` 24 (los valores de SPEC 8; `sim.py` no los usa y su salida no cambió). |
+
+- **Guardado** (clave `avalancha.guardado`): `{ version: 1, estado, guardadoEn, vistos, record }`. Los `Decimal` van como `[mantisa, exponente]` (dos doubles: JSON no pierde ningún dígito). Además del estado del núcleo se guardan lo revelado (`vistos`) y la avalancha récord, que estaban pendientes desde los hitos 3 y 4. "Reducir destellos" sigue sin guardarse (ajustes: otra sesión).
+- **Migración**: `migrar()` existe y hoy no hace nada (solo hay versión 1). Un guardado de una versión más nueva que el juego se trata como dañado.
+- **Fuera de línea**: un solo camino para cargar la partida y para volver a la pestaña. Si el bucle acumula más de 10 s (lo que antes iba en un paso largo), llama a `fueraDeLinea`: pasos de 1 s hasta 10.000; con más tiempo, 10.000 pasos más largos (8 h = 2,88 s; 24 h = 8,64 s). Tope de 24 h. Los autocompradores y la Compresión automática salen del `tick`, sin código aparte.
+- **"Mientras no estabas"**: aparece si la ausencia fue de 60 s o más (y no se está en el Infinito). Muestra el tiempo, la Energía **producida** (la suma de lo producido en cada paso, no la diferencia: las compras y las compresiones la gastan) y las compresiones. Se cierra con el botón, Escape o tocando afuera.
+- **Guardado dañado**: `cargar` copia el texto tal cual a `avalancha.respaldo` y no toca el guardado. El juego muestra "No pudimos leer tu partida" con el botón "Empezar de nuevo"; hasta aceptarlo no se guarda nada. Después el guardado nuevo pisa el dañado, pero el respaldo queda.
+- **La pila al cargar o al volver**: salta a la foto que corresponde (el sistema de fotos ya lo hacía con G grande). Lo nuevo: `juego.saltos` le avisa a `Pila.svelte` que hubo una ausencia, y las compresiones, anillos y colores ganados afuera no se animan (sin esto, al volver se veía una implosión).
+
+### Verificación
+
+- `npm test`: 50 tests en verde (32 de antes + 18). tsc y svelte-check sin errores; `npm run build` bien; `python balance/sim.py` igual que antes.
+- **8 h fuera de línea contra 8 h de tick de 1 s** (10.000 pasos de 2,88 s contra 28.800 de 1 s):
+
+| Desde | Normal | Fuera de línea | Diferencia |
+| --- | --- | --- | --- |
+| Compresión 0 (sin autocompradores) | 1e7,517 · G 2,880e4 | 1e7,517 · G 2,880e4 | < 1 % en Energía |
+| Compresión 3 (autocompradores) | 1e25,895 · G 6,534e8 | 1e25,894 · G 6,530e8 | < 1 % en Energía |
+| Compresión 6 (Compresión automática) | 1e97,848 · G 2,720e13 · 8 compresiones | 1e97,670 · G 2,612e13 · 8 compresiones | **34 % en Energía**, 4 % en granos; 0,18 % en log10 |
+
+  **El ±1 % en Energía no se cumple con Compresión automática.** Las compresiones salen las mismas, pero cada una se atrasa (la 8 a los 23.538 s en vez de 23.449 s, 0,4 %), y después de una Compresión la Energía sube unas 2 décadas por hora, así que ese atraso son 0,18 décadas. El test de ese caso mide el ±1 % en log10. Hasta 10.000 s (2 h 47 min) el resultado es idéntico al tick normal (hay un test). Para que 8 h den exacto alcanza con subir `max_pasos` a 28.800 en `config.json` (28.800 ticks tardan ~0,2 s en esta máquina); no lo cambié porque SPEC 8 dice 10.000.
+- **Guardar y cargar**: 10 min de juego con compras, guardar, cargar: estado idéntico, y 5 min más desde lo cargado dan exactamente lo mismo que sin guardar.
+- **Corruptos** (9 casos: no es JSON, vacío, cortado, otra cosa, `null`, versión del futuro, tipo cambiado, campo que falta, número nulo): `cargar` devuelve `'corrupto'`, el texto queda en el respaldo y el guardado nuevo no lo borra.
+- **En el navegador integrado** (1280×720 y 375×812, sin errores en la consola): un guardado de la Compresión 6 con fecha de 8 h atrás carga con el cartel ("Pasaron 8 h 0 min", +9,77e97, +2 compresiones), el foco en "Seguir", y la pila llena desde el primer momento, sin implosión; recargar conserva Energía y niveles y no muestra cartel; un guardado cortado muestra el cartel de dañado, el respaldo queda igual después de "Empezar de nuevo" y del guardado siguiente.
+
+### Decisiones (revisar)
+
+1. **Umbral de 60 s para el cartel** (constante de interfaz en `juego.svelte.ts`). Entre 10 y 60 s se simula igual, sin cartel.
+2. **El tiempo fuera de línea se multiplica por la velocidad de debug**, como todo el bucle.
+3. **Un guardado al que le falta un campo del estado actual se rechaza** (va al respaldo). Si `config.json` suma un color o un autocomprador, hace falta una migración.
+4. **Un solo respaldo**: un segundo guardado dañado pisa al primero.
+5. **Sin almacenamiento** (navegador que lo bloquea) el juego anda sin guardar y avisa por consola, no en pantalla.
+6. Si se carga una partida ya en el Infinito, la animación del final se ve de nuevo.
+
+### Pendiente / no verificado
+
+- **No medí los 60 fps** (el navegador integrado estaba oculto). Por cuadro no hay nada nuevo; el guardado serializa un estado chico cada 10 s.
+- La vuelta a una pestaña que estuvo oculta no la probé aparte: usa el mismo camino que la carga (más de 10 s acumulados).
+- No probé en un móvil real ni el guardado al cerrar en iOS (`pagehide`).
+- El panel de debug no tiene "borrar partida": para empezar de cero hay que borrar `avalancha.guardado` desde las herramientas del navegador.

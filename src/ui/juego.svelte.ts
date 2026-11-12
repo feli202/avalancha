@@ -1,10 +1,14 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, anillos, estadoInicial, mutacionesDisponibles, tick, type State } from '../core'
+import { CFG, anillos, estadoInicial, fueraDeLinea, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
+import { almacenLocal } from '../guardado/almacen'
+import { cargar, guardar } from '../guardado/guardado'
 import type { Medidas } from '../render/pilaVisual'
 import { es } from '../strings/es'
 
 const PASO = 0.05 // s: paso fijo de la economía (SPEC 8)
-const MAX_PASOS = 200 // por cuadro
+const MAX_PASOS = 200 // por cuadro; con más tiempo acumulado (pestaña oculta, carga) va la simulación fuera de línea
+const GUARDAR_CADA = 10_000 // ms (SPEC 8)
+const AVISAR_DESDE = 60 // s de ausencia para mostrar "Mientras no estabas"
 
 class Juego {
   s = $state.raw(estadoInicial())
@@ -17,7 +21,7 @@ class Juego {
   reducirDestellos = $state(matchMedia('(prefers-reduced-motion: reduce)').matches)
   /** Etiqueta de escala de la pila (la escribe Pila.svelte). */
   escalaK = $state(0)
-  /** SPEC 5: partes de la interfaz que ya aparecieron. Nunca se esconden. shortcut: no se guarda; va al guardado del hito 5. */
+  /** SPEC 5: partes de la interfaz que ya aparecieron. Nunca se esconden. */
   vistos = $state.raw<Record<string, boolean>>({})
   /** Radio de la pila en px CSS (lo escribe Pila.svelte; el anillo de Compresión lo rodea). */
   radioPila = $state(0)
@@ -25,8 +29,14 @@ class Juego {
   aviso = $state.raw<{ id: number; texto: string } | null>(null)
   /** Segundos de juego estimados hasta la meta de Compresión (null si no hay ritmo para medir). */
   eta = $state<number | null>(null)
-  /** La avalancha más grande de la pila visual, en derrumbes. shortcut: no se guarda; va al guardado del hito 5. */
+  /** La avalancha más grande de la pila visual, en derrumbes. */
   record = $state(0)
+  /** "Mientras no estabas": lo que pasó en la última ausencia, hasta que se cierra. */
+  ausencia = $state.raw<Ausencia | null>(null)
+  /** El guardado no se pudo leer: no se guarda nada hasta que el jugador acepta empezar de nuevo. */
+  guardadoRoto = $state(false)
+  /** Sube con cada salto fuera de línea: Pila.svelte no anima lo que pasó en la ausencia. */
+  saltos = 0
 }
 export const juego = new Juego()
 
@@ -96,16 +106,45 @@ function revelar(s: State) {
   juego.aviso = { id: avisos++, texto: frases.slice(-AVISOS_JUNTOS).join(' ') }
 }
 
+function guardarYa() {
+  if (juego.guardadoRoto) return
+  try {
+    guardar(almacenLocal, { estado: juego.s, guardadoEn: Date.now(), vistos: juego.vistos, record: juego.record })
+  } catch (e) {
+    console.warn(e) // sin lugar o sin permiso: el juego sigue
+  }
+}
+
+/** Carga la partida y arranca el bucle. Llamar antes de montar la interfaz: Pila.svelte lee el estado al montarse. */
 export function arrancar() {
-  let antes = performance.now()
+  // Date.now y no el reloj del cuadro: sigue corriendo con la máquina suspendida y es el que queda en el guardado.
+  let antes = Date.now()
   let acum = 0
-  const cuadro = (ahora: number) => {
-    acum += ((ahora - antes) / 1000) * juego.velocidad
+  let p: ReturnType<typeof cargar> = null
+  try { p = cargar(almacenLocal) } catch (e) { console.warn(e) } // sin almacenamiento: se juega sin guardar
+  if (p === 'corrupto') juego.guardadoRoto = true
+  else if (p) {
+    juego.s = p.estado
+    juego.vistos = p.vistos
+    juego.record = p.record
+    antes = p.guardadoEn // el primer cuadro simula lo que pasó desde el guardado
+  }
+  setInterval(guardarYa, GUARDAR_CADA)
+  addEventListener('pagehide', guardarYa)
+  document.addEventListener('visibilitychange', () => document.hidden && guardarYa())
+
+  const cuadro = () => {
+    const ahora = Date.now()
+    acum += (Math.max(0, ahora - antes) / 1000) * juego.velocidad
     antes = ahora
     let s = juego.s
-    for (let i = 0; acum >= PASO && i < MAX_PASOS; i++, acum -= PASO) s = tick(s, PASO)
-    // shortcut: el tiempo que sobra (pestaña oculta) va en un solo paso largo; el hito 5 lo cambia por la simulación fuera de línea
-    if (acum >= PASO) { s = tick(s, acum); acum = 0 }
+    if (acum > MAX_PASOS * PASO) {
+      const a = fueraDeLinea(s, acum)
+      if (a.segundos >= AVISAR_DESDE && s.infinitos === 0 && a.s.infinitos === 0) juego.ausencia = a
+      juego.saltos++
+      s = a.s
+      acum = 0
+    } else for (; acum >= PASO; acum -= PASO) s = tick(s, PASO)
     juego.s = s
     revelar(s)
     medirEta(s)

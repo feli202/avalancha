@@ -80,6 +80,21 @@ export const es = {
     adelanto: 'Capa 1: Cristalización — próximamente',
   },
 
+  // Fuera de línea y guardado (SPEC 8)
+  ausencia: {
+    titulo: 'Mientras no estabas',
+    tiempo: (d: string) => `Pasaron ${d}.`,
+    tope: (horas: number) => `Pasaron más de ${horas} h: la pila trabajó ${horas} h sin vos.`,
+    energia: 'Energía producida',
+    compresiones: 'Compresiones',
+    seguir: 'Seguir',
+  },
+  guardadoRoto: {
+    titulo: 'No pudimos leer tu partida',
+    texto: 'El guardado está dañado. Queda una copia de respaldo en este navegador y no la vamos a borrar.',
+    empezar: 'Empezar de nuevo',
+  },
+
   // SPEC 5: una línea por cada aparición
   revelado: {
     derrumbes: 'Cuando una celda junta 4 granos se derrumba. Cada derrumbe da Energía.',

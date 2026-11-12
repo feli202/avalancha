@@ -1,6 +1,6 @@
 <script lang="ts">
   // Interfaz principal (SPEC 6.4). Cada parte aparece recién cuando juego.vistos lo dice (SPEC 5).
-  import { anillos, comprimir, densidad, multAnillos, produccion, puedeComprimir } from '../core'
+  import { CFG, anillos, comprimir, densidad, multAnillos, produccion, puedeComprimir } from '../core'
   import { es } from '../strings/es'
   import Debug from './Debug.svelte'
   import Pila from './Pila.svelte'
@@ -23,7 +23,8 @@
   let ajustes = $state(false)
   let panel: HTMLElement | undefined = $state()
   const afuera = (e: PointerEvent) => ajustes && panel && !panel.contains(e.target as Node) && (ajustes = false)
-  const escape = (e: KeyboardEvent) => e.key === 'Escape' && (ajustes = false)
+  const escape = (e: KeyboardEvent) => e.key === 'Escape' && ((ajustes = false), (juego.ausencia = null))
+  const enfocar = (el: HTMLElement) => el.focus()
 
   // Móvil: la tienda es una hoja inferior; se arrastra o se toca la manija.
   let alta = $state(false)
@@ -141,6 +142,34 @@
   </section>
 {/if}
 
+{#if juego.guardadoRoto}
+  <!-- No se cierra con Escape ni tocando afuera: hasta aceptar, no se guarda nada. -->
+  <div class="velo">
+    <div class="cartel" role="alertdialog" aria-modal="true" aria-labelledby="roto-t" aria-describedby="roto-d">
+      <h2 id="roto-t">{es.guardadoRoto.titulo}</h2>
+      <p id="roto-d">{es.guardadoRoto.texto}</p>
+      <button use:enfocar onclick={() => (juego.guardadoRoto = false)}>{es.guardadoRoto.empezar}</button>
+    </div>
+  </div>
+{:else if juego.ausencia}
+  {@const a = juego.ausencia}
+  <div class="velo" role="presentation" onclick={(e) => e.target === e.currentTarget && (juego.ausencia = null)}>
+    <div class="cartel" role="dialog" aria-modal="true" aria-labelledby="ausencia-t">
+      <h2 id="ausencia-t">{es.ausencia.titulo}</h2>
+      <p>
+        {a.segundos >= CFG.fuera_de_linea.tope_horas * 3600
+          ? es.ausencia.tope(CFG.fuera_de_linea.tope_horas)
+          : es.ausencia.tiempo(es.duracion(a.segundos))}
+      </p>
+      <dl class="num">
+        <dt>{es.ausencia.energia}</dt><dd>+{formato(a.energia)}</dd>
+        {#if a.compresiones > 0}<dt>{es.ausencia.compresiones}</dt><dd>+{a.compresiones}</dd>{/if}
+      </dl>
+      <button use:enfocar onclick={() => (juego.ausencia = null)}>{es.ausencia.seguir}</button>
+    </div>
+  </div>
+{/if}
+
 {#if import.meta.env.DEV}<Debug />{/if}
 
 <style>
@@ -217,6 +246,20 @@
   .final dd { margin: 0; font-weight: 600; text-align: right; }
   .adelanto { margin: 0; font-size: 0.9375rem; color: var(--violeta); letter-spacing: 0.01em; }
   @keyframes llegar { to { opacity: 1; } }
+
+  /* "Mientras no estabas" y el aviso de guardado dañado. */
+  .velo { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; padding: 1rem; background: rgb(7 8 15 / 0.6); animation: fundido 0.3s ease-out; }
+  .cartel { width: min(22rem, 100%); padding: 1.5rem; border: 1px solid var(--borde); background: rgb(7 8 15 / 0.94); }
+  .cartel h2 { margin: 0 0 0.5rem; font-size: 1.25rem; font-weight: 600; }
+  .cartel p { margin: 0 0 1rem; font-size: 0.9375rem; color: var(--tenue); text-wrap: pretty; }
+  .cartel dl { display: grid; grid-template-columns: 1fr auto; gap: 0.375rem 1.5rem; margin: 0 0 1.25rem; }
+  .cartel dt { color: var(--tenue); }
+  .cartel dd { margin: 0; font-weight: 600; text-align: right; }
+  .cartel button {
+    width: 100%; min-height: 2.75rem; border: 1px solid var(--borde); background: none; color: var(--tinta);
+    font: inherit; font-weight: 600; cursor: pointer;
+  }
+  .cartel button:hover, .cartel button:focus-visible { border-color: var(--tinta); }
 
   .ajustes { position: fixed; top: var(--margen); right: calc(var(--margen) - 0.6875rem); z-index: 2; } /* el trazo del ícono, al ras de la lista */
   .icono {
