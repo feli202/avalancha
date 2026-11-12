@@ -8,11 +8,17 @@ export const RITMO_MAX = 3000
 const DESTELLO_S = 0.3
 const PX_MAX = 28 // tamaño máximo de una celda, en px CSS (para que el primer grano no ocupe la pantalla)
 const NIVELES = Math.floor(Math.log2(LADO)) + 1 // mipmaps de la grilla (el bloom)
+/** SPEC 6.2: una avalancha es "grande" si supera esta cantidad de veces el promedio. */
+const AVALANCHA_GRANDE = 30
+const AVALANCHAS_PARA_PROMEDIO = 20 // avalanchas antes de confiar en el promedio
+const ALEJAR_S = 0.8 // animación de alejamiento al saltar de escala
 
 // SPEC 6.1, por altura de celda: 0 = Jade, 1 = Violeta, 2 = Coral, 3 = Ámbar.
 const COLORES = [0x2dd4a7, 0x9b7bff, 0xff6b6b, 0xffb547]
 /** Altura de celda de cada color, en el orden de CFG.colores (Ámbar, Coral, Jade, Violeta). */
 export const ALTURA_DE_COLOR = [3, 2, 0, 1]
+/** Color CSS de cada altura de celda. */
+export const COLOR_CSS = COLORES.map((c) => '#' + c.toString(16).padStart(6, '0'))
 
 /** SPEC 6.2: brillo 0..1 a partir del log10 del multiplicador del color, saturando suave. */
 export const brillo = (log10Mult: number) => log10Mult / (log10Mult + 4)
@@ -155,6 +161,8 @@ export class PilaVisual {
   /** SPEC 6.3: k de "1 grano = 10^k granos"; 0 mientras la pila de pantalla es la real. */
   escalaK = 0
   alMedir?: (m: Medidas) => void
+  /** SPEC 6.2: avalancha de más de 30× el promedio; recibe cuántas veces el promedio. */
+  alAvalancha?: (veces: number) => void
 
   private gl: WebGL2RenderingContext | null
   private worker = new Worker(new URL('./pila.worker.ts', import.meta.url), { type: 'module' })
@@ -170,6 +178,16 @@ export class PilaVisual {
   private sucio = true
   private radio = 0
   private escala = 0
+  private ultimas: Uint8Array = new Uint8Array(LADO * LADO)
+  private destello = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1
+  private alejarDesde = -1
+
+  // --- avalanchas: una avalancha = pedidos seguidos hasta que la pila queda estable ---
+  private avTamano = 0
+  private avGranos = 0
+  /** Promedio móvil de derrumbes por grano. */
+  private avPromedio = 0
+  private avCuenta = 0
 
   // --- granos ---
   private gen = 0
@@ -249,17 +267,39 @@ export class PilaVisual {
     gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1])
     gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 
-    const destello = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1
     gl.useProgram(this.progCeldas)
     gl.uniform1i(this.uniC.u_alturas, 0)
     gl.uniform1i(this.uniC.u_derrumbe, 1)
-    gl.uniform1f(this.uniC.u_destello, destello)
     // Los colores de SPEC 6.1 son sRGB; el shader trabaja en lineal y convierte al final.
     gl.uniform3fv(this.uniC.u_color, COLORES.flatMap((c) => [c >> 16, (c >> 8) & 255, c & 255].map((v) => (v / 255) ** 2.2)))
     gl.useProgram(this.progPantalla)
     gl.uniform1i(this.uniP.u_celdas, 2)
     gl.uniform1i(this.uniP.u_luz, 3)
-    gl.uniform1f(this.uniP.u_destello, destello)
+    this.destellos = !this.destello
+  }
+
+  /** SPEC 6.8 "Reducir destellos": apaga destellos de derrumbe, mica y el alejamiento de cámara. */
+  set destellos(reducir: boolean) {
+    this.destello = reducir ? 0 : 1
+    const { gl } = this
+    if (!gl) return
+    gl.useProgram(this.progCeldas)
+    gl.uniform1f(this.uniC.u_destello, this.destello)
+    gl.useProgram(this.progPantalla)
+    gl.uniform1f(this.uniP.u_destello, this.destello)
+  }
+
+  /** Radio de la pila en pantalla, en px CSS. */
+  get radioCss() {
+    return ((this.radio + 0.5) * this.escala) / devicePixelRatio
+  }
+
+  /** Color CSS de la altura más frecuente dentro de la pila. */
+  colorDominante() {
+    const n = [0, 0, 0, 0]
+    const a = this.ultimas
+    for (let i = 0; i < a.length; i++) if (a[i] || this.tDerrumbe[i] >= 0) n[Math.min(a[i], 3)]++
+    return COLOR_CSS[n.indexOf(Math.max(...n))]
   }
 
   /**
@@ -285,7 +325,9 @@ export class PilaVisual {
     } else {
       // Estado estacionario: sigue cayendo arena al ritmo visual; si el worker no da abasto, no se acumula.
       this.pendientes = Math.min(this.pendientes + Math.min(caudal, RITMO_MAX) * real, RITMO_MAX)
-      this.escalaK = Math.max(0, Math.floor(Math.log10(granos / this.capacidad)))
+      const k = Math.max(0, Math.floor(Math.log10(granos / this.capacidad)))
+      if (k > this.escalaK && this.destello) this.alejarDesde = ahora
+      this.escalaK = k
     }
     this.pedir()
     this.dibujar(dt, brillos)
@@ -302,6 +344,8 @@ export class PilaVisual {
     this.reiniciar = true
     this.estable = true
     this.pendientes = this.contados = this.soltados = this.capacidad = this.escalaK = this.radio = this.avalancha = 0
+    this.avTamano = this.avGranos = this.avPromedio = this.avCuenta = 0
+    this.ultimas = new Uint8Array(LADO * LADO)
     this.alturas = new Uint8Array(LADO * LADO)
     this.tDerrumbe.fill(-1)
     this.sucio = true
@@ -328,13 +372,29 @@ export class PilaVisual {
         this.pendientes = 0
       }
       for (const i of r.celdas) this.tDerrumbe[i] = this.ahora
-      this.alturas = r.alturas
+      this.alturas = this.ultimas = r.alturas
+      this.contarAvalancha(r)
       this.sucio = true
       this.m.granosSeg += r.hechos
       this.m.derrumbesSeg += r.tamano
       this.m.workerMs += r.ms
     }
     this.pedir() // si quedó trabajo, que el worker no espere al próximo cuadro
+  }
+
+  // shortcut: el worker suelta los granos en lotes y no separa avalanchas; con flujo continuo (estado estacionario)
+  // se comparan derrumbes por grano de cada tanda, así que "Avalancha ×N" sale sobre todo con pocos granos por segundo.
+  // Para separarlas de verdad, el worker tendría que medir cada grano.
+  private contarAvalancha(r: Respuesta) {
+    this.avTamano += r.tamano
+    this.avGranos += r.hechos
+    if (!r.estable || !this.avGranos) return
+    const porGrano = this.avTamano / this.avGranos
+    const veces = this.avPromedio ? porGrano / this.avPromedio : 0
+    if (this.avCuenta >= AVALANCHAS_PARA_PROMEDIO && veces > AVALANCHA_GRANDE) this.alAvalancha?.(Math.round(veces))
+    // Promedio móvil: sigue al crecimiento de la pila (las avalanchas promedio crecen con el radio).
+    this.avPromedio += (porGrano - this.avPromedio) / Math.min(++this.avCuenta, 200)
+    this.avTamano = this.avGranos = 0
   }
 
   private dibujar(dt: number, brillos: number[]) {
@@ -356,6 +416,10 @@ export class PilaVisual {
     const objetivo = entra >= 1 ? Math.min(Math.floor(entra), Math.round(PX_MAX * devicePixelRatio)) : entra
     this.escala = this.escala ? this.escala + (objetivo - this.escala) * (1 - Math.exp(-dt * 6)) : objetivo
     if (Math.abs(objetivo - this.escala) < 0.02) this.escala = objetivo
+    // Salto de escala (SPEC 6.3): la cámara arranca cerca y se aleja.
+    const t = this.alejarDesde < 0 ? 1 : (this.ahora - this.alejarDesde) / ALEJAR_S
+    if (t >= 1) this.alejarDesde = -1
+    const alejar = 1 + 0.6 * (1 - Math.min(t, 1)) ** 3
 
     // Pasada 1: color y luz de cada celda a la grilla, y los mipmaps de la luz para el bloom.
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
@@ -372,7 +436,7 @@ export class PilaVisual {
     gl.viewport(0, 0, canvas.width, canvas.height)
     gl.useProgram(this.progPantalla)
     gl.uniform2f(uniP.u_tam, canvas.width, canvas.height)
-    gl.uniform1f(uniP.u_escala, this.escala)
+    gl.uniform1f(uniP.u_escala, this.escala * alejar)
     gl.uniform1f(uniP.u_ahora, this.ahora)
     gl.uniform1f(uniP.u_dpr, devicePixelRatio)
     gl.uniform4fv(uniP.u_brillo, brillos)

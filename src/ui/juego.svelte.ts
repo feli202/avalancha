@@ -12,6 +12,8 @@ class Juego {
   nivelColores = $state(0)
   /** Rendimiento de la pila visual, una vez por segundo (panel de debug). */
   medidas = $state.raw<Medidas | null>(null)
+  /** SPEC 6.8: arranca como pida el sistema. shortcut: no se guarda; el hito 5 la pasa a los ajustes. */
+  reducirDestellos = $state(matchMedia('(prefers-reduced-motion: reduce)').matches)
 }
 export const juego = new Juego()
 

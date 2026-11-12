@@ -20,6 +20,7 @@
   <button disabled={!puedeComprar(juego.s, 'caudal')} onclick={() => (juego.s = comprar(juego.s, 'caudal'))}>
     {es.comprarCaudal} · {formato(costo(juego.s, 'caudal'))} ({es.nivel} {nivel(juego.s, 'caudal')})
   </button>
+  <label><input type="checkbox" bind:checked={juego.reducirDestellos} /> {es.reducirDestellos}</label>
 </main>
 
 {#if import.meta.env.DEV}<Debug />{/if}
@@ -31,4 +32,5 @@
   dl { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem 1rem; font-variant-numeric: tabular-nums; }
   dd { margin: 0; text-align: right; }
   button { width: 100%; min-height: 44px; font: inherit; }
+  label { display: flex; align-items: center; gap: 0.5rem; min-height: 44px; }
 </style>

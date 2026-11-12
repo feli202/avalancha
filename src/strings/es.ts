@@ -8,6 +8,10 @@ export const es = {
   nivel: 'nivel',
   pila: 'La pila de arena. Tocala o apretá la barra espaciadora para soltar un puñado de granos.',
   escala: (k: number) => `1 grano = 10^${k} granos`,
+  avalancha: (n: number) => `Avalancha ×${n.toLocaleString('es-AR')}`,
+  anillo: (n: number, mult: number) =>
+    `Anillo ${n} · ×${mult.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+  reducirDestellos: 'Reducir destellos',
   debug: {
     titulo: 'Debug',
     velocidad: 'Velocidad',

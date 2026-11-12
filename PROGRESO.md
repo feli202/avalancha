@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1 y 2a terminados** (proyecto base, núcleo económico, pila visual) y **Pulido 1** (aspecto de la pila: estilo Arena). Sigue el hito 2b (anillos, textos flotantes y demás efectos de la pila) y el 3 (interfaz).
+Estado: **hitos 0, 1, 2a y 2b terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila) y **Pulido 1** (estilo Arena). Sigue el hito 3 (interfaz). **Falta medir los 60 fps a la vista** (ver hito 2b).
 
 ## Qué se hizo
 
@@ -119,9 +119,9 @@ Lo que dicen los números: el dibujo usa ~2,5 ms de los 16,7 ms de un cuadro, as
 
 ### Queda afuera (otra sesión)
 
-- Anillos, textos flotantes "Avalancha ×N", animación de alejamiento al saltar de escala, animación de color nuevo.
+- ~~Anillos, textos flotantes, alejamiento al saltar de escala~~ (hito 2b). Animación de color nuevo.
 - Los colores todavía bloqueados se pintan igual que los desbloqueados.
-- Opción "Reducir destellos" en Ajustes (hoy solo sigue al sistema) y pérdida de contexto WebGL.
+- ~~Opción "Reducir destellos"~~ (hito 2b, sin guardar). Pérdida de contexto WebGL.
 
 ## Pulido 1, el aspecto de la pila (estilo Arena)
 
@@ -151,3 +151,29 @@ Panel de debug: botones "Pila a 50.000" y "Pila a 400.000", y un control "Nivel 
 - "Reducir destellos" se revisó en el código (el mismo uniforme `u_destello` en las dos pasadas), no se probó con el sistema en modo reducido.
 - Se miró la pila chica (~200–700 granos), a 50.000 y a 400.000, con nivel 0 y 200, y en móvil (375×812). Sin errores en la consola.
 
+
+## Hito 2b, efectos de la pila
+
+Solo `src/render/pilaVisual.ts`, `src/ui/` y `src/strings/es.ts`. No se tocó `src/core/`, `balance/` ni el worker.
+
+- **Avalancha ×N** (SPEC 6.2). `PilaVisual` arma cada avalancha con los pedidos seguidos al worker hasta que la pila queda estable, y lleva un promedio móvil de derrumbes por grano (últimas ~200 avalanchas; arranca después de 20). Si una supera 30× el promedio llama a `alAvalancha(N)` y `Pila.svelte` muestra "Avalancha ×N" que sube 4 rem y se desvanece en 1,6 s.
+- **Anillos.** `Pila.svelte` compara `anillos(G)` cuadro a cuadro; al subir, un círculo de 1,5 px del color de la altura más frecuente de la pila (`colorDominante()`) sale del radio de la pila, crece a ×1,5 y se desvanece, con "Anillo 12 · ×1,10" debajo del centro. El ×1,10 sale de `multAnillos(s)^(1/anillos)` (incluye la Mutación Expansión sin repetir la fórmula). Si se ganan varios en un cuadro (saltos de debug), se muestra uno solo, el último.
+- **Escala.** La etiqueta aparece con un fundido en cada salto, y la cámara arranca 1,6× más cerca y se aleja en 0,8 s (`u_escala` en el shader).
+- **Reducir destellos** (SPEC 6.8): casilla en la pantalla mínima, arranca con `prefers-reduced-motion`. Apaga destellos de derrumbe y mica, y el alejamiento de cámara; los textos y el anillo solo aparecen y se desvanecen, sin moverse ni crecer.
+- Textos y anillos son HTML con animaciones de CSS (`transform` y `opacity`, las compone la GPU); como mucho 4 a la vez.
+
+### Verificación
+
+- Se vieron en la página: "Anillo 10 · ×1,10" con su círculo, anillos 2 al 17, y "1 grano = 10^1 granos" al pasar 10× la capacidad. svelte-check y tsc sin errores; 30 tests en verde. Móvil (375×812): la casilla entra sin romper nada.
+- Simulación (un grano por vez, umbral 30×, 20.000 granos): 254 avalanchas grandes, ~1 de cada 80 granos.
+- Con la pila llena y 4.096 granos/s: hilo principal 0,4 ms por cuadro (antes 0,2–0,8), worker igual que antes (~2.500–4.000 granos/s, ~950 ms por segundo).
+- **Los 60 fps con 3.000 granos/s siguen sin medirse:** la ventana de la sesión no estaba abierta, el navegador integrado corrió a ~4 cuadros por segundo y después a 0, y no hay Chrome para Playwright. Para medirlo: `npm run dev`, Caudal +1 nivel hasta 12, Pila a 400.000, esperar ~90 s y leer "fps" y "peor cuadro" en el panel de debug.
+
+### Decisiones donde la spec no alcanzaba (revisar)
+
+1. **Qué es "una avalancha".** El worker suelta los granos en lotes y no separa avalanchas (no se podía tocar). Con flujo continuo (estado estacionario, 3.000 granos/s) cada avalancha mezcla decenas de granos y se compara por grano, así que **"Avalancha ×N" casi no sale en estado estacionario**; sale sobre todo con pocos granos por segundo. Para separarlas de verdad, el worker tendría que medir cada grano.
+2. **N** es cuántas veces el promedio por grano (redondeado).
+3. **Color dominante** = la altura más frecuente entre las celdas de la pila.
+4. **Con "Reducir destellos" no hay alejamiento de cámara** (es un zoom, lo que más molesta con `prefers-reduced-motion`).
+5. **La opción no se guarda**: vuelve a lo que pida el sistema al recargar. Se guarda con los ajustes del hito 5.
+6. El umbral 30× y las duraciones son constantes visuales en `pilaVisual.ts` / `Pila.svelte`, no de balance.
