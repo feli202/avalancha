@@ -1,0 +1,16 @@
+import { CFG } from './config'
+import { estadoInicial, type State } from './state'
+
+/** log10 del umbral de la próxima Compresión (Infinity si ya no quedan). */
+export const umbralLog10 = (s: State) => CFG.compresion.umbrales_log10[s.compresiones] ?? Infinity
+
+export const puedeComprimir = (s: State) => s.infinitos === 0 && s.energia.log10() >= umbralLog10(s)
+
+/** SPEC 4.7: reinicia la corrida y sube la Densidad; si no se llegó al umbral, devuelve el mismo estado. */
+export function comprimir(s: State): State {
+  if (!puedeComprimir(s)) return s
+  const { energia, granos, caudal, colores, cascada, tiempoCorrida } = estadoInicial()
+  return { ...s, energia, granos, caudal, colores, cascada, tiempoCorrida, compresiones: s.compresiones + 1 }
+}
+
+export const autoActivo = (s: State, clave: string) => s.compresiones >= CFG.autocompradores[clave] && s.auto[clave]
