@@ -46,18 +46,18 @@ test('G = 10.000: radio, derrumbes y alturas iguales a pila.c bulk', () => {
   expect(Math.abs(pila.radio - ref.r)).toBeLessThanOrEqual(1.5)
 })
 
-test('sumidero: una pila llena pierde granos por el borde, queda estable y ningún byte se desborda', () => {
+test('sumidero circular: una pila llena pierde granos fuera del círculo, queda estable y ningún byte se desborda', () => {
   const pila = new Pila()
   pila.h.fill(3) // todo al límite: el lote siguiente dispara la avalancha más grande posible
-  const antes = 3 * (LADO - 2) ** 2 // los restos del borde no cuentan: son del sumidero
   pila.soltar(LOTE)
   const d = pila.estabilizar()
   const suma = pila.h.reduce((a, b) => a + b, 0)
-  const borde = pila.h.subarray(0, LADO).reduce((a, b) => a + b, 0)
+  const c = LADO >> 1
   console.log(`pila llena + ${LOTE} granos: ${d} derrumbes, ${pila.perdidos} granos al sumidero`)
   expect(pila.estable).toBe(true)
   expect(pila.h.every((v) => v <= 3)).toBe(true)
-  expect(borde).toBe(0)
+  expect(pila.h[c * LADO]).toBe(0) // (0, c): sumidero, toca el círculo
+  expect(pila.h[0]).toBe(3) // la esquina queda fuera de todo: nunca le llega un grano
   // Conservación: si una celda hubiera pasado de 255 se habrían perdido granos sin contar.
-  expect(suma + pila.perdidos - 3 * (4 * LADO - 4)).toBe(antes + LOTE)
-})
+  expect(suma + pila.perdidos).toBe(3 * LADO * LADO + LOTE)
+}, 30_000) // la avalancha más grande posible: ~140 millones de derrumbes

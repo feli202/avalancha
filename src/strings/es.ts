@@ -12,9 +12,10 @@ export const es = {
   avalancha: (n: number) => `Avalancha ×${n.toLocaleString('es-AR')}`,
   anillo: (n: number, mult: number) => `Anillo ${n} · ×${num(mult)}`,
   reducirDestellos: 'Reducir destellos',
+  ajustes: 'Ajustes',
 
-  // Estadísticas al pie de la pila
-  derrumbesPorGrano: 'derrumbes por grano',
+  // Abajo a la izquierda
+  sismografo: 'Sismógrafo: el tamaño de cada avalancha de la pila en los últimos 20 segundos',
   anillos: (n: number) => (n === 1 ? '1 anillo' : `${n.toLocaleString('es-AR')} anillos`),
 
   // Tienda

@@ -19,10 +19,25 @@ class Juego {
   escalaK = $state(0)
   /** SPEC 5: partes de la interfaz que ya aparecieron. Nunca se esconden. shortcut: no se guarda; va al guardado del hito 5. */
   vistos = $state.raw<Record<string, boolean>>({})
+  /** Radio de la pila en px CSS (lo escribe Pila.svelte; el anillo de Compresión lo rodea). */
+  radioPila = $state(0)
   /** La frase de la última aparición. */
   aviso = $state.raw<{ id: number; texto: string } | null>(null)
 }
 export const juego = new Juego()
+
+/** Sismógrafo: derrumbes de cada avalancha de la pila visual que todavía no se dibujó. Sin $state: lo vacía un canvas. */
+export const sismo: number[] = []
+
+/** Compresión: la meta y el progreso hacia ella en escala logarítmica, del umbral anterior (0 para la primera). */
+export function progresoCompresion(s: State) {
+  const u = CFG.compresion.umbrales_log10
+  const meta = u[s.compresiones] as number | undefined
+  if (meta === undefined) return { meta, p: 0 }
+  const desde = u[s.compresiones - 1] ?? 0
+  const e = s.energia.gt(1) ? s.energia.log10() : 0
+  return { meta, p: Math.min(1, Math.max(0, (e - desde) / (meta - desde))) }
+}
 
 /** SPEC 5: cuándo aparece cada parte. */
 function condiciones(s: State): Record<string, boolean> {

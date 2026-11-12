@@ -6,6 +6,9 @@ import type { Pedido, Respuesta } from './pila.worker'
 /** SPEC 6.3: tope de granos por segundo de la simulación visual. */
 export const RITMO_MAX = 3000
 const DESTELLO_S = 0.3
+const ENTERO_DESDE = 3 // px reales por celda desde los que se redondea a un entero
+/** Al llenarse, la pila natural tiene lados planos (7 celdas cortos en los ejes); con un 12 % más de granos llena el círculo. */
+const RELLENO = 1.12
 const PX_MAX = 28 // tamaño máximo de una celda, en px CSS (para que el primer grano no ocupe la pantalla)
 const NIVELES = Math.floor(Math.log2(LADO)) + 1 // mipmaps de la grilla (el bloom)
 /** SPEC 6.2: una avalancha es "grande" si supera esta cantidad de veces el promedio. */
@@ -15,6 +18,12 @@ const ALEJAR_S = 0.8 // animación de alejamiento al saltar de escala
 
 // SPEC 6.1, por altura de celda: 0 = Jade, 1 = Violeta, 2 = Coral, 3 = Ámbar.
 const COLORES = [0x2dd4a7, 0x9b7bff, 0xff6b6b, 0xffb547]
+/**
+ * Colores de la arena por altura, distintos de los de la interfaz: el brillo va al revés de la frecuencia, así se leen
+ * las formas del mandala. Ámbar (3 granos, ~59 % de las celdas) es arena en sombra; Coral, intermedio; Jade y sobre todo
+ * Violeta (el más raro) brillan.
+ */
+const COLORES_PILA = [0x3fe0b4, 0xc2a8ff, 0xa4574f, 0x55432f]
 /** Altura de celda de cada color, en el orden de CFG.colores (Ámbar, Coral, Jade, Violeta). */
 export const ALTURA_DE_COLOR = [3, 2, 0, 1]
 /** Color CSS de cada altura de celda. */
@@ -44,6 +53,7 @@ uniform sampler2D u_alturas;  // R8: granos de la celda
 uniform sampler2D u_derrumbe; // R32F: segundo del último derrumbe (negativo = nunca)
 uniform vec4 u_brillo;        // 0..1 por altura
 uniform vec3 u_color[4];      // lineales
+const vec4 PROPIA = vec4(0.3, 0.55, 0.05, 0.0); // luz propia base por altura: los raros brillan, el común no
 void main() {
   ivec2 c = ivec2(gl_FragCoord.xy);
   int h = min(int(texelFetch(u_alturas, c, 0).r * 255.0 + 0.5), 3);
@@ -56,12 +66,9 @@ void main() {
   float vida = 1.0 + 0.05 * sin(u_ahora * (0.5 + 0.4 * r) + r * 6.283) + 0.04 * sin(u_ahora * 0.9 - length(vec2(c) - ${LADO >> 1}.0) * 0.07);
   vec3 col = u_color[h];
   // Luz propia: crece con el nivel del color hasta que la arena parece iluminada desde adentro.
-  vec3 em = u_color[h] * 0.4 * b * b * vida;
-  if (h == 1) {
-    // Violeta, el más raro: más profundo que el plano y con brillo propio que late despacio.
-    col *= vec3(0.55, 0.4, 0.55);
-    em += u_color[1] * vec3(1.0, 0.7, 0.8) * (0.14 + 0.3 * b) * (0.8 + 0.2 * sin(u_ahora * 1.3 + r * 6.283));
-  }
+  vec3 em = u_color[h] * (0.4 * b * b + PROPIA[h]) * vida;
+  // Violeta, el más raro: el más luminoso, con un brillo que late despacio.
+  if (h == 1) em += u_color[1] * (0.12 + 0.3 * b) * (0.8 + 0.2 * sin(u_ahora * 1.3 + r * 6.283));
   // Destello de derrumbe (SPEC 6.2): aditivo, intenso y del color de la celda.
   float f = clamp(1.0 - (u_ahora - t) / ${DESTELLO_S}, 0.0, 1.0);
   em += u_destello * f * f * (u_color[h] * 1.4 + 0.04);
@@ -88,8 +95,11 @@ float alt(ivec2 c, float propia) { float a = celda(c).a; return a > 0.0 ? a * 4.
 // Bloom: mips de la luz. Cerca: el resplandor de cada celda que brilla; lejos: un velo suave.
 vec3 halo(vec2 q) {
   vec2 uv = q / L;
-  return 0.22 * (dec(textureLod(u_luz, uv, 1.0)) + dec(textureLod(u_luz, uv, 2.0)))
-       + 0.07 * (dec(textureLod(u_luz, uv, 3.5)) + dec(textureLod(u_luz, uv, 5.0)));
+  // Fuera de la grilla, CLAMP_TO_EDGE estiraba la luz de la fila del borde en una cruz sobre el fondo: se apaga.
+  vec2 fuera = max(-uv, uv - 1.0);
+  float dentro = 1.0 - smoothstep(0.0, 0.01, max(fuera.x, fuera.y));
+  return dentro * 0.22 * (dec(textureLod(u_luz, uv, 1.0)) + dec(textureLod(u_luz, uv, 2.0)))
+       + dentro * 0.07 * (dec(textureLod(u_luz, uv, 3.5)) + dec(textureLod(u_luz, uv, 5.0)));
 }
 // Comprime suave lo que pasa de 0,8 según el canal más alto, sin cambiar el tono: por canal, un ámbar brillante
 // se iba a amarillo y un coral a rosa (lo "pastel").
@@ -163,6 +173,8 @@ export class PilaVisual {
   alMedir?: (m: Medidas) => void
   /** SPEC 6.2: avalancha de más de 30× el promedio; recibe cuántas veces el promedio. */
   alAvalancha?: (veces: number) => void
+  /** Cada avalancha terminada, con sus derrumbes (el sismógrafo). */
+  alTamano?: (derrumbes: number) => void
 
   private gl: WebGL2RenderingContext | null
   private worker = new Worker(new URL('./pila.worker.ts', import.meta.url), { type: 'module' })
@@ -271,7 +283,7 @@ export class PilaVisual {
     gl.uniform1i(this.uniC.u_alturas, 0)
     gl.uniform1i(this.uniC.u_derrumbe, 1)
     // Los colores de SPEC 6.1 son sRGB; el shader trabaja en lineal y convierte al final.
-    gl.uniform3fv(this.uniC.u_color, COLORES.flatMap((c) => [c >> 16, (c >> 8) & 255, c & 255].map((v) => (v / 255) ** 2.2)))
+    gl.uniform3fv(this.uniC.u_color, COLORES_PILA.flatMap((c) => [c >> 16, (c >> 8) & 255, c & 255].map((v) => (v / 255) ** 2.2)))
     gl.useProgram(this.progPantalla)
     gl.uniform1i(this.uniP.u_celdas, 2)
     gl.uniform1i(this.uniP.u_luz, 3)
@@ -291,7 +303,8 @@ export class PilaVisual {
 
   /** Radio de la pila en pantalla, en px CSS. */
   get radioCss() {
-    return ((this.radio + 0.5) * this.escala) / devicePixelRatio
+    // Por el tamaño real del canvas y no devicePixelRatio: con zoom o emulación no siempre coinciden.
+    return ((this.radio + 0.5) * this.escala * this.canvas.clientWidth) / (this.canvas.width || 1)
   }
 
   /** Color CSS de la altura más frecuente dentro de la pila. */
@@ -324,7 +337,9 @@ export class PilaVisual {
       this.contados = g
     } else {
       // Estado estacionario: sigue cayendo arena al ritmo visual; si el worker no da abasto, no se acumula.
-      this.pendientes = Math.min(this.pendientes + Math.min(caudal, RITMO_MAX) * real, RITMO_MAX)
+      // Hasta llenar el círculo cae al ritmo máximo, aunque el Caudal sea bajo; después, al del Caudal.
+      const ritmo = this.soltados < this.capacidad * RELLENO ? RITMO_MAX : Math.min(caudal, RITMO_MAX)
+      this.pendientes = Math.min(this.pendientes + ritmo * real, RITMO_MAX)
       const k = Math.max(0, Math.floor(Math.log10(granos / this.capacidad)))
       if (k > this.escalaK && this.destello) this.alejarDesde = ahora
       this.escalaK = k
@@ -389,6 +404,7 @@ export class PilaVisual {
     this.avTamano += r.tamano
     this.avGranos += r.hechos
     if (!r.estable || !this.avGranos) return
+    this.alTamano?.(this.avTamano)
     const porGrano = this.avTamano / this.avGranos
     const veces = this.avPromedio ? porGrano / this.avPromedio : 0
     if (this.avCuenta >= AVALANCHAS_PARA_PROMEDIO && veces > AVALANCHA_GRANDE) this.alAvalancha?.(Math.round(veces))
@@ -410,10 +426,11 @@ export class PilaVisual {
       gl.activeTexture(gl.TEXTURE1)
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, LADO, LADO, gl.RED, gl.FLOAT, this.tDerrumbe)
     }
-    // Encuadre: la pila entera, con celdas de un número entero de píxeles (cuadradas y nítidas).
+    // Encuadre: la pila entera en el 80 % del lado corto, con celdas de un número entero de píxeles (cuadradas y nítidas).
     const lado = Math.min(canvas.width, canvas.height)
-    const entra = (0.94 * lado) / (2 * Math.min(this.radio + 2, LADO / 2) + 1)
-    const objetivo = entra >= 1 ? Math.min(Math.floor(entra), Math.round(PX_MAX * devicePixelRatio)) : entra
+    const entra = (0.8 * lado) / (2 * Math.min(this.radio + 2, LADO / 2) + 1)
+    // Celdas de menos de ENTERO_DESDE px: tamaño fraccionario (la pila en el 80 % aunque no entren 2 px por celda).
+    const objetivo = entra >= ENTERO_DESDE ? Math.min(Math.floor(entra), Math.round(PX_MAX * devicePixelRatio)) : entra
     this.escala = this.escala ? this.escala + (objetivo - this.escala) * (1 - Math.exp(-dt * 6)) : objetivo
     if (Math.abs(objetivo - this.escala) < 0.02) this.escala = objetivo
     // Salto de escala (SPEC 6.3): la cámara arranca cerca y se aleja.

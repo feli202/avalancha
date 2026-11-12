@@ -13,7 +13,7 @@ export class Pila {
   readonly h = new Uint8Array(TAM)
   /** Derrumbes acumulados. */
   derrumbes = 0
-  /** Granos que cayeron al sumidero del borde. */
+  /** Granos que cayeron al sumidero (fuera del círculo inscrito). */
   perdidos = 0
   /** Distancia al centro de la celda más lejana que se derrumbó. */
   radio = 0
@@ -22,13 +22,20 @@ export class Pila {
   private cola = new Int32Array(MASCARA + 1)
   private ini = 0
   private fin = 0
-  /** Por celda: TOCADA (se derrumbó desde el último tomarCeldas) | BORDE (sumidero). */
+  /** Por celda: TOCADA (se derrumbó desde el último tomarCeldas) | BORDE (sumidero, fuera del círculo). */
   private meta = new Uint8Array(TAM)
   private celdas = new Int32Array(TAM)
   private sumidero: number[] = []
 
   constructor() {
-    for (let k = 0; k < LADO; k++) this.sumidero.push(k, TAM - 1 - k, k * LADO, k * LADO + LADO - 1)
+    // Borde circular: sumidero = las celdas fuera del círculo inscrito que tocan una de adentro
+    // (a las demás nunca llega un grano). Así la pila es siempre redonda, sin lados planos.
+    const c = LADO >> 1, R2 = c * c
+    const dentro = (x: number, y: number) => (x - c) ** 2 + (y - c) ** 2 < R2
+    for (let y = 0; y < LADO; y++)
+      for (let x = 0; x < LADO; x++)
+        if (!dentro(x, y) && (dentro(x + 1, y) || dentro(x - 1, y) || dentro(x, y + 1) || dentro(x, y - 1)))
+          this.sumidero.push(y * LADO + x)
     for (const b of this.sumidero) this.meta[b] = BORDE
   }
 
@@ -91,7 +98,7 @@ export class Pila {
     let n = 0, r2 = 0
     for (let y = 1; y < LADO - 1; y++)
       for (let x = 1, i = y * LADO + 1; x < LADO - 1; x++, i++)
-        if (meta[i]) {
+        if (meta[i] === TOCADA) {
           meta[i] = 0
           celdas[n++] = i
           r2 = Math.max(r2, (x - c) * (x - c) + (y - c) * (y - c))

@@ -1,24 +1,26 @@
 <script lang="ts">
   // Interfaz principal (SPEC 6.4). Cada parte aparece recién cuando juego.vistos lo dice (SPEC 5).
-  import { CFG, densidad, multAnillos, anillos, produccion } from '../core'
+  import { densidad, multAnillos, anillos, produccion, puedeComprimir } from '../core'
   import { es } from '../strings/es'
   import Debug from './Debug.svelte'
   import Pila from './Pila.svelte'
+  import Sismografo from './Sismografo.svelte'
   import Tienda from './Tienda.svelte'
   import { formato, formatoMult } from './formato'
-  import { juego } from './juego.svelte'
+  import { juego, progresoCompresion } from './juego.svelte'
 
   const v = $derived(juego.vistos)
   const s = $derived(juego.s)
 
-  // Barra de Compresión: escala logarítmica, del umbral anterior al siguiente (SPEC 6.4).
-  const umbrales = CFG.compresion.umbrales_log10
-  const meta = $derived(umbrales[s.compresiones])
-  const progreso = $derived.by(() => {
-    const desde = umbrales[s.compresiones - 1] ?? 0
-    const e = s.energia.gt(1) ? s.energia.log10() : 0
-    return Math.min(1, Math.max(0, (e - desde) / (meta - desde)))
-  })
+  // Compresión: el anillo alrededor de la pila (Pila.svelte) muestra el progreso; acá, el botón con meta y porcentaje.
+  const comp = $derived(progresoCompresion(s))
+  const lista = $derived(puedeComprimir(s))
+
+  // Ajustes: un ícono arriba a la derecha abre el panel; se cierra con Escape o tocando afuera.
+  let ajustes = $state(false)
+  let panel: HTMLElement | undefined = $state()
+  const afuera = (e: PointerEvent) => ajustes && panel && !panel.contains(e.target as Node) && (ajustes = false)
+  const escape = (e: KeyboardEvent) => e.key === 'Escape' && (ajustes = false)
 
   // Móvil: la tienda es una hoja inferior; se arrastra o se toca la manija.
   let alta = $state(false)
@@ -39,22 +41,33 @@
   }
 </script>
 
-<div class="juego" class:quieto={juego.reducirDestellos} class:sin-tienda={!v.tienda}>
+<svelte:window onpointerdown={afuera} onkeydown={escape} />
+
+<!-- .lista: se puede comprimir; el botón y el anillo de la pila laten juntos (arrancan en el mismo cuadro). -->
+<div class="juego" class:quieto={juego.reducirDestellos} class:lista>
   <Pila />
 
-  <header class="arriba">
-    <div class="energia">
-      <span class="etiqueta">{es.energia}</span>
-      <span class="valor num">{formato(s.energia)}</span>
-      {#if v.tienda}<span class="porseg num aparece">+{formato(produccion(s))} <span class="tenue">{es.energiaPorSegundo}</span></span>{/if}
-    </div>
+  <header class="izq">
+    <span class="etiqueta">{es.energia}</span>
+    <span class="energia num">{formato(s.energia)}</span>
+    {#if v.tienda}<span class="linea num aparece"><b class="ambar">+{formato(produccion(s))}</b> {es.energiaPorSegundo}</span>{/if}
     {#if s.compresiones > 0}
-      <div class="densidad aparece">
-        <span class="etiqueta">{es.densidad}</span>
-        <span class="valor chico num">^{formatoMult(densidad(s))}</span>
-      </div>
+      <span class="linea num aparece">{es.densidad} <b>^{formatoMult(densidad(s))}</b></span>
     {/if}
   </header>
+
+  <div class="ajustes" bind:this={panel}>
+    <button class="icono" aria-label={es.ajustes} aria-expanded={ajustes} onclick={() => (ajustes = !ajustes)}>
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <path d="M2 5h8M14 5h2M2 13h2M8 13h8" /><circle cx="12" cy="5" r="2" /><circle cx="6" cy="13" r="2" />
+      </svg>
+    </button>
+    {#if ajustes}
+      <div class="panel" role="dialog" aria-label={es.ajustes}>
+        <label><input type="checkbox" bind:checked={juego.reducirDestellos} /> {es.reducirDestellos}</label>
+      </div>
+    {/if}
+  </div>
 
   {#if juego.aviso}
     {#key juego.aviso.id}<p class="aviso" role="status">{juego.aviso.texto}</p>{/key}
@@ -62,33 +75,19 @@
 
   {#if !v.tienda}<p class="pista">{es.pista}</p>{/if}
 
-  <footer class="abajo">
-    <p class="stats num">
-      {#if v.derrumbes}
-        <span class="aparece"><b>{formatoMult(CFG.K_derrumbes_por_grano * s.granos)}</b> {es.derrumbesPorGrano}</span>
-      {/if}
-      {#if v.anillos}
-        <span class="aparece">{es.anillos(anillos(s.granos))} <b>{es.mult(formatoMult(multAnillos(s)))}</b></span>
-      {/if}
-      {#if juego.escalaK > 0}{#key juego.escalaK}<span class="aparece">{es.escala(juego.escalaK)}</span>{/key}{/if}
-    </p>
-
-    {#if v.compresion && meta !== undefined}
-      <div class="compresion vidrio aparece">
-        <span class="titulo">{es.compresion(s.compresiones + 1)} <span class="tenue">▸</span> <span class="num">{es.meta(meta)}</span></span>
-        <div class="barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.floor(progreso * 100)} aria-label={es.compresion(s.compresiones + 1)}>
-          <div class="relleno" style:transform="scaleX({progreso})"></div>
-        </div>
-        <span class="pct num">{es.progreso(progreso)}</span>
-        <!-- La Compresión funciona desde el hito 4. -->
-        <button class="comprimir" disabled>{es.comprimir}</button>
-      </div>
-    {/if}
-  </footer>
+  {#if v.derrumbes}
+    <footer class="sismo aparece">
+      <Sismografo />
+      <p class="chico num">
+        {#if v.anillos}<span class="aparece">{es.anillos(anillos(s.granos))} <b>{es.mult(formatoMult(multAnillos(s)))}</b></span>{/if}
+        {#if juego.escalaK > 0}{#key juego.escalaK}<span class="aparece">{es.escala(juego.escalaK)}</span>{/key}{/if}
+      </p>
+    </footer>
+  {/if}
 
   {#if v.tienda}
     <section
-      class="tienda vidrio aparece"
+      class="der aparece"
       class:alta
       class:arrastrando={arrastre !== null}
       style:--arrastre="{arrastre ?? 0}px"
@@ -103,7 +102,16 @@
         onpointerup={soltar}
         onpointercancel={soltar}
       ></button>
-      <div class="contenido"><Tienda /></div>
+      <div class="contenido">
+        <Tienda />
+        {#if v.compresion && comp.meta !== undefined}
+          <!-- La Compresión funciona desde el hito 4. -->
+          <button class="comprimir aparece" disabled>
+            <span class="nombre">{es.comprimir}</span>
+            <span class="meta num">{es.compresion(s.compresiones + 1)} · {es.meta(comp.meta)} · <b>{es.progreso(comp.p)}</b></span>
+          </button>
+        {/if}
+      </div>
     </section>
   {/if}
 </div>
@@ -111,104 +119,106 @@
 {#if import.meta.env.DEV}<Debug />{/if}
 
 <style>
-  /* Medidas del layout: escritorio = pila a la izquierda, tienda a la derecha. */
-  .juego {
-    --tienda-ancho: clamp(20rem, 26vw, 24rem);
-    --margen: 1.25rem;
-    --pila-derecha: calc(var(--tienda-ancho) + 2 * var(--margen));
-    --pila-abajo: 0px;
-  }
-  /* SPEC 5: antes de la tienda, la pila ocupa toda la pantalla. */
-  .juego.sin-tienda { --pila-arriba: 0px; --pila-derecha: 0px; --pila-abajo: 0px; }
+  /* Escritorio: el canvas ocupa la ventana y la pila queda en el centro exacto. La interfaz flota encima, sin cajas,
+     en dos columnas del mismo ancho (simetría alrededor de la pila). */
+  .juego { --col: clamp(16rem, 21vw, 21rem); --margen: 2rem; }
 
-  .vidrio {
-    border: 1px solid var(--borde); border-radius: 16px;
-    background: var(--vidrio); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  }
-  .tenue { color: var(--tenue); }
-  .etiqueta { display: block; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--tenue); }
+  .izq, .sismo, .der, .aviso, .pista { text-shadow: 0 0 0.75rem var(--fondo), 0 0 0.25rem var(--fondo); }
+  b { font-weight: 600; color: var(--tinta); }
+  .ambar { color: var(--ambar); }
 
-  .arriba {
-    position: fixed; top: var(--margen); left: var(--margen); right: var(--pila-derecha);
-    display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; pointer-events: none;
+  .izq {
+    position: fixed; top: var(--margen); left: var(--margen); width: var(--col);
+    display: grid; justify-items: start; pointer-events: none;
   }
-  /* Legibles sobre la pila llena, sin caja. */
-  .arriba, .stats, .pista { text-shadow: 0 0 0.75rem var(--fondo), 0 0 0.25rem var(--fondo); }
-  .valor { display: block; font-size: clamp(2rem, 3.4vw, 3rem); font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; }
-  .valor.chico { font-size: clamp(1.25rem, 2vw, 1.75rem); }
-  .densidad { text-align: right; }
-  .porseg { display: block; margin-top: 0.25rem; font-size: 0.95rem; color: var(--ambar); }
+  .etiqueta { font-size: 0.875rem; color: var(--tenue); }
+  .energia { font-size: clamp(2.5rem, 4vw, 3.75rem); font-weight: 600; line-height: 1; letter-spacing: -0.03em; margin: 0.125rem 0 0.5rem; }
+  .linea { font-size: 1rem; color: var(--tenue); line-height: 1.6; }
 
   .aviso {
-    position: fixed; top: 6.5rem; left: 0; right: var(--pila-derecha); margin: 0 auto; width: max-content; max-width: calc(100% - 2rem);
-    padding: 0.5rem 1rem; border: 1px solid var(--borde); border-radius: 999px; background: var(--vidrio);
-    font-size: 0.9rem; text-align: center; pointer-events: none; animation: aviso 6s ease-out forwards;
+    position: fixed; top: var(--margen); left: 50%; translate: -50% 0; width: max-content;
+    max-width: min(28rem, calc(100% - 2 * var(--col) - 4 * var(--margen)));
+    margin: 0; font-size: 0.9375rem; text-align: center; text-wrap: balance; pointer-events: none; animation: aviso 6s ease-out forwards;
   }
   .pista {
-    position: fixed; left: 0; right: var(--pila-derecha); top: calc(50% + 4.5rem); margin: 0; text-align: center;
+    position: fixed; left: 0; right: 0; top: calc(50% + 4.5rem); margin: 0; text-align: center;
     font-size: 1.1rem; color: var(--tenue); pointer-events: none; animation: latir 2.4s ease-in-out infinite;
   }
 
-  .abajo {
-    position: fixed; left: var(--margen); right: var(--pila-derecha); bottom: var(--margen);
-    display: grid; gap: 0.75rem; justify-items: center; pointer-events: none;
-  }
-  .stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.25rem 1.5rem; margin: 0; font-size: 0.875rem; color: var(--tenue); }
-  .stats b { font-weight: 600; color: var(--tinta); }
+  .sismo { position: fixed; left: var(--margen); bottom: var(--margen); width: var(--col); pointer-events: none; }
+  .chico { display: flex; flex-wrap: wrap; gap: 0 1rem; margin: 0.5rem 0 0; font-size: 0.8125rem; color: var(--tenue); }
 
-  .compresion {
-    display: grid; grid-template-columns: auto minmax(2rem, 1fr) auto auto; align-items: center; gap: 1rem;
-    width: 100%; padding: 0.625rem 0.625rem 0.625rem 1rem; pointer-events: auto;
+  .der {
+    position: fixed; top: var(--margen); right: var(--margen); bottom: var(--margen); width: var(--col);
+    display: flex; flex-direction: column;
   }
-  .titulo { font-weight: 600; white-space: nowrap; }
-  .barra { height: 6px; border-radius: 3px; background: rgb(255 255 255 / 0.08); overflow: hidden; }
-  .relleno {
-    height: 100%; transform-origin: left; transition: transform 0.3s linear;
-    background: linear-gradient(90deg, var(--ambar), var(--coral), var(--jade), var(--violeta));
-  }
-  .pct { min-width: 3.5rem; text-align: right; color: var(--tenue); }
-  .comprimir {
-    min-height: 2.75rem; padding: 0 1.25rem; border: 1px solid var(--borde); border-radius: 10px; background: none;
-    color: var(--apagado); font: inherit; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
-  }
-
-  .tienda {
-    position: fixed; top: var(--margen); right: var(--margen); bottom: var(--margen); width: var(--tienda-ancho);
-    display: flex; flex-direction: column; padding: 1rem;
-  }
-  .contenido { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .contenido { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
   .manija { display: none; }
 
+  .comprimir {
+    display: grid; gap: 0.125rem; width: 100%; margin-top: 1.5rem; padding: 0.75rem 0; border: 0; border-top: 1px solid var(--borde);
+    background: none; color: var(--tinta); font: inherit; text-align: left; cursor: pointer;
+  }
+  .comprimir .nombre { font-size: 1.25rem; font-weight: 600; }
+  .comprimir .meta { font-size: 0.875rem; color: var(--tenue); }
+  .comprimir:disabled { cursor: default; }
+  .comprimir .nombre { color: var(--apagado); transition: color 0.6s; }
+  /* Se puede comprimir: el texto se enciende y late, a la vez que el anillo (Pila.svelte). */
+  .lista .comprimir .nombre { color: var(--tinta); animation: latido 2.4s ease-in-out infinite; }
+  .quieto .comprimir .nombre { animation: none; text-shadow: 0 0 0.75rem rgb(232 233 243 / 0.6); }
+  @keyframes latido {
+    0%, 100% { text-shadow: 0 0 0.75rem rgb(232 233 243 / 0.7), 0 0 0.25rem var(--fondo); }
+    50% { text-shadow: 0 0 0.25rem rgb(232 233 243 / 0.2), 0 0 0.25rem var(--fondo); opacity: 0.75; }
+  }
+
+  .ajustes { position: fixed; top: calc(var(--margen) - 0.375rem); right: calc(var(--margen) - 0.5rem); z-index: 2; }
+  .icono {
+    display: grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0; border: 0; background: none;
+    color: var(--apagado); cursor: pointer; transition: color 0.15s;
+  }
+  .icono:hover, .icono[aria-expanded='true'] { color: var(--tinta); }
+  .icono svg { fill: var(--fondo); stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+  .panel {
+    position: absolute; top: 100%; right: 0.5rem; width: max-content; padding: 0.25rem 1rem;
+    border: 1px solid var(--borde); background: rgb(7 8 15 / 0.94);
+  }
+  .panel label { display: flex; align-items: center; gap: 0.625rem; min-height: 2.75rem; font-size: 0.875rem; cursor: pointer; }
+  .panel input { margin: 0; accent-color: var(--tinta); }
+
   .aparece { animation: aparecer 0.6s ease-out; }
-  .tienda.aparece { animation-name: fundido; } /* sin transform: en móvil la hoja usa el suyo */
+  .der.aparece { animation-name: fundido; } /* sin transform: en móvil la hoja usa el suyo */
   @keyframes fundido { from { opacity: 0; } }
   :global(.quieto) .pista { animation: none; }
   @keyframes aparecer { from { opacity: 0; transform: translateY(4px); } }
   @keyframes aviso { 0% { opacity: 0; } 8%, 80% { opacity: 1; } 100% { opacity: 0; } }
   @keyframes latir { 50% { opacity: 0.45; } }
 
-  /* Móvil (vertical): pila arriba en el 55 %, Energía fija arriba, tienda como hoja inferior deslizable. */
+  /* Móvil (vertical): pila arriba centrada, Energía arriba, tienda como hoja inferior deslizable. */
   @media (max-width: 767px) {
-    .juego { --margen: 1rem; --pila-arriba: 5.5rem; --pila-derecha: 0px; --pila-abajo: calc(45dvh + 4.5rem); --hoja: 88dvh; }
-    .arriba { right: var(--margen); }
-    .aviso { top: 5.25rem; font-size: 0.8rem; white-space: normal; }
-    .pista { top: calc(50% + 3.5rem); }
-    .abajo { bottom: calc(45dvh + 0.5rem); gap: 0.5rem; right: var(--margen); }
-    .stats { font-size: 0.75rem; gap: 0.1rem 1rem; }
-    .compresion { grid-template-columns: auto 1fr auto; gap: 0.625rem; padding: 0.5rem 0.75rem; font-size: 0.8rem; }
-    .comprimir { display: none; }
-    .tienda {
+    .juego { --margen: 1rem; --col: auto; --pila-arriba: 7rem; --pila-abajo: calc(45dvh + 3.5rem); --hoja: 88dvh; }
+    .izq { right: var(--margen); }
+    .energia { font-size: 2.25rem; margin-bottom: 0.25rem; }
+    .linea { font-size: 0.875rem; line-height: 1.4; }
+    .aviso { top: auto; bottom: calc(45dvh + 4rem); max-width: calc(100% - 2rem); font-size: 0.8125rem; }
+    .pista { top: calc(50% - 2rem); }
+    .sismo {
+      right: var(--margen); bottom: calc(45dvh + 0.5rem);
+      display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 1rem;
+    }
+    .sismo :global(canvas) { height: 2rem; }
+    .chico { flex-direction: column; align-items: end; margin: 0; font-size: 0.75rem; }
+    .der {
       top: auto; left: 0; right: 0; bottom: 0; width: auto; height: var(--hoja); padding: 0 1rem 1rem;
-      border-radius: 20px 20px 0 0; border-bottom: 0;
+      border-top: 1px solid var(--borde); background: rgb(7 8 15 / 0.94); text-shadow: none;
       transform: translateY(calc(var(--hoja) - 45dvh + var(--arrastre)));
       transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
-    .tienda.alta { transform: translateY(max(0px, var(--arrastre))); }
-    .tienda.arrastrando { transition: none; }
+    .der.alta { transform: translateY(max(0px, var(--arrastre))); }
+    .der.arrastrando { transition: none; }
     .manija { display: block; flex: none; width: 100%; height: 1.75rem; border: 0; background: none; cursor: grab; touch-action: none; }
-    .manija::before { content: ''; display: block; width: 2.5rem; height: 4px; margin: 0 auto; border-radius: 2px; background: var(--tenue); }
+    .manija::before { content: ''; display: block; width: 2.5rem; height: 3px; margin: 0 auto; border-radius: 2px; background: var(--apagado); }
     .contenido { flex: 1; }
-    .tienda:not(.alta) .contenido { flex: none; max-height: calc(45dvh - 2.75rem); }
+    .der:not(.alta) .contenido { flex: none; max-height: calc(45dvh - 2.75rem); }
   }
-  @media (max-width: 767px) and (prefers-reduced-motion: reduce) { .tienda { transition: none; } }
+  @media (max-width: 767px) and (prefers-reduced-motion: reduce) { .der { transition: none; } }
 </style>

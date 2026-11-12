@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a, 2b y 3 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal) y **Pulido 1** (estilo Arena). Sigue el hito 4 (Compresión y sistemas tardíos).
+Estado: **hitos 0, 1, 2a, 2b y 3 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal), **Pulido 1** (estilo Arena) y **Pulido 2 y 3** (rediseño de la interfaz, borde circular, paleta invertida de la pila). Sigue el hito 4 (Compresión y sistemas tardíos).
 
 ## Qué se hizo
 
@@ -82,7 +82,7 @@ Para ver los tiempos del bot: `npx vitest run tests/balance.test.ts --reporter=v
 
 Cómo funciona:
 
-- **Granos.** Mientras no cayó ningún grano al sumidero, la pila de pantalla es la real: cada cuadro se manda al worker `floor(G)` menos lo ya mandado (Caudal y Puñados entran solos porque los dos suman a G). Cuando el worker avisa del primer grano perdido, esa cantidad queda como capacidad (medida: **489.700 granos**; la spec dice ~470.000) y se pasa al estado estacionario: `min(F, 3000)` granos por segundo. Si G baja (Compresión), la pila se vacía.
+- **Granos.** Mientras no cayó ningún grano al sumidero, la pila de pantalla es la real: cada cuadro se manda al worker `floor(G)` menos lo ya mandado (Caudal y Puñados entran solos porque los dos suman a G). Cuando el worker avisa del primer grano perdido, esa cantidad queda como capacidad (medida: **463.250 granos** con el borde circular del Pulido 2; con el borde cuadrado eran 489.700; la spec dice ~470.000) y se pasa al estado estacionario: `min(F, 3000)` granos por segundo. Si G baja (Compresión), la pila se vacía.
 - **Etiqueta de escala.** "1 grano = 10^k granos" con `k = floor(log10(G / capacidad))`; aparece cuando k ≥ 1, o sea con G diez veces la capacidad.
 - **Avalanchas repartidas entre cuadros.** El worker trabaja hasta 12 ms por pedido y, si la avalancha no terminó, sigue en el pedido siguiente. Así una avalancha grande se ve como una onda que sale del centro y nunca congela la pila (sin esto, una sola avalancha con la pila llena tardaba hasta 300 ms).
 - **Dibujo.** Colores de SPEC 6.1 por altura; "adentro de la pila" = la celda tiene granos o se derrumbó alguna vez, afuera se ve el fondo (azul noche con viñeteado, hecho en el shader). Celdas de un número entero de píxeles reales del dispositivo, pila centrada, encuadre que sigue al radio. `u_brillo` (un valor por altura) sale de `log10(mult. del color)` y satura suave. Destello aditivo que decae en 300 ms; con `prefers-reduced-motion` queda apagado.
@@ -215,3 +215,63 @@ Reemplaza la pantalla de prueba del hito 0.
 6. **Lo revelado no se guarda** (se recalcula desde el estado; G ≥ 4 y anillos vuelven a aparecer solos). Va al guardado del hito 5.
 7. **La pila se achica a su región** en vez de quedar detrás de la tienda: el canvas termina donde empieza la tienda (detrás de la tienda se ve el fondo liso). En móvil se nota un corte suave arriba de la pila.
 8. **Queda afuera**: tiempo estimado de la barra de Compresión (hito 4), pestañas (no hay ninguna desbloqueada todavía), fuente local para el empaquetado de Steam.
+
+
+## Pulido 2, rediseño de la interfaz
+
+La interfaz del hito 3 funcionaba pero se veía genérica (cajas dentro de cajas, píldoras, títulos en mayúsculas espaciadas, botones teñidos, barra arcoíris). No se tocó `src/core/` ni `balance/`.
+
+| Archivo | Cambio |
+| --- | --- |
+| `src/render/pila.ts` | **Borde circular**: el sumidero son las celdas fuera del círculo inscrito (radio 256) que tocan una de adentro; a las demás nunca llega un grano. La pila llena es redonda, sin lados planos. `tomarCeldas` ya no recorre solo el interior del cuadrado: salta las celdas del sumidero por su marca. |
+| `src/render/pilaVisual.ts` | Encuadre: la pila en el 80 % del lado corto (antes 94 %). `alTamano(derrumbes)` por cada avalancha terminada (el sismógrafo). `radioCss` sale del tamaño real del canvas, no de `devicePixelRatio` (con emulación o zoom no siempre coinciden y el anillo quedaba corrido). |
+| `src/ui/App.svelte` | El canvas ocupa toda la ventana y la pila queda en el centro exacto. Interfaz flotante sin paneles ni bordes: izquierda Energía (grande), Energía/s y Densidad; derecha la tienda y debajo Comprimir (meta y porcentaje); las dos columnas con el mismo ancho. Abajo a la izquierda el sismógrafo, con anillos y escala en texto chico. El aviso de cada aparición es texto suelto arriba al centro (ya no una píldora). |
+| `src/ui/Tienda.svelte` | Cada mejora es una fila de texto (muestra de color de 8 px, nombre, nivel, efecto, costo) separada por líneas de 1 px; se compra con un clic en la fila. Costo apagado si no alcanza, del color de la mejora si alcanza. x1 / x10 / Máx como texto (el activo en blanco y negrita). |
+| `src/ui/Pila.svelte` | **Anillo de Compresión**: un círculo fino (SVG, 1,5 px) a 14 px del borde de la pila que se cierra con el progreso (misma escala logarítmica que la barra que reemplaza); al 100 % brilla y late suave (con Reducir destellos, brilla quieto). Publica `juego.radioPila` y alimenta el sismógrafo. |
+| `src/ui/Sismografo.svelte` | Nuevo. Canvas 2D: una raya vertical por avalancha, alto = log10(derrumbes), escalado al pico de los últimos 20 s (mínimo 10²). Reemplaza "derrumbes por grano". |
+| `src/ui/juego.svelte.ts` | `progresoCompresion(s)` (lo usan el anillo y el botón), `sismo` (buffer de avalanchas, sin `$state`), `radioPila`. |
+
+- Jerarquía solo por tamaño y peso: nada en mayúsculas. Revelado progresivo y Reducir destellos igual que antes.
+- **Móvil (< 768 px)**: Energía arriba, la pila arriba centrada (a 7 rem del borde), el sismógrafo con los anillos a su derecha justo encima de la hoja, la tienda como hoja inferior con el mismo estilo de filas (fondo casi opaco y una línea de 1 px arriba, sin esquinas redondeadas).
+
+### Verificación
+
+- svelte-check y tsc sin errores; 32 tests en verde (el del sumidero ahora prueba el círculo: la esquina de la grilla nunca recibe granos, el punto (0, 256) sí es sumidero, y se conserva cada grano). `npm run build` bien.
+- **Capacidad con el borde circular: 463.250 granos** (lotes de 50, como el worker con ~3.000/s; 3.770 millones de derrumbes). Con la pila llena el radio por el eje llega a 249 y por la diagonal a 256: redonda.
+- En el navegador integrado (1600×900 y 375×812): la pila centrada en la ventana, el anillo rodeándola con el hueco del 11 % que falta, la tienda y el sismógrafo sin tapar la pila, la hoja inferior en móvil. Sin errores en la consola.
+- **No medí los 60 fps**: el navegador integrado estaba oculto (1–3 fps). Lo nuevo por cuadro es un canvas 2D chico (el sismógrafo, unos cientos de líneas) y un atributo del SVG; el `backdrop-filter` de los paneles se fue, así que debería ir igual o mejor que el hito 3. Falta mirarlo a la vista.
+
+### Decisiones (revisar)
+
+1. ~~El sismógrafo dibuja rayas~~ (Pulido 3: línea continua con picos que decaen).
+2. **En estado estacionario "una avalancha" sigue siendo una tanda del worker** (ver hito 2b): el sismógrafo muestra tandas, no granos sueltos.
+3. **Antes de llenarse, la pila tiene su forma natural** (un octógono con lados casi rectos); el borde circular solo se nota cuando llega al círculo. El anillo rodea la celda más lejana, así que mientras crece queda separado de los lados.
+4. **El test de redondez de la pila llena tarda 200 s**, así que no quedó en la suite: los números de arriba son de una corrida a mano.
+5. Comprimir sigue deshabilitado hasta el hito 4.
+
+
+## Pulido 3, última vuelta de la interfaz
+
+No se tocó `src/core/` ni `balance/`. `SPEC.md` 6.1 y 6.3 actualizados (colores de la pila, sumidero circular, capacidad).
+
+- **Pila al 80 % del alto.** Con celdas de un número entero de píxeles, 517 celdas en 1.125 px reales daban 1 px por celda: la pila quedaba en ~46 %. Ahora por debajo de 3 px reales por celda (`ENTERO_DESDE`) el tamaño es fraccionario; desde 3 px se sigue redondeando a enteros. El anillo de Compresión queda a 8 px de la pila (antes 14).
+- **Paleta invertida en la pila** (`COLORES_PILA` en `pilaVisual.ts`, aparte de los colores de la interfaz): Ámbar #55432F (arena en sombra, sin luz propia), Coral #A4574F, Jade #3FE0B4 y Violeta #C2A8FF con luz propia base (`PROPIA` = 0,3 / 0,55 / 0,05 / 0 por altura; Violeta además late). Se sacó el oscurecimiento que tenía Violeta desde el Pulido 1. El brillo por nivel (SPEC 6.2) sigue igual encima. La interfaz (muestras, costos) mantiene los colores de SPEC 6.1.
+- **Pila llena redonda.** El borde circular ya estaba desde el Pulido 2, pero medido en 360 direcciones (script aparte, lotes de 50): al primer grano perdido la pila llega al círculo (256) en las diagonales y se queda en 249 en los ejes, o sea 4 lados planos de 7 celdas; con 50.000 granos más el contorno queda entre 255 y 256 en todas las direcciones, y sigue así con +100.000. Ahora, desde la capacidad hasta un 12 % más (`RELLENO`), la pila de pantalla recibe granos al ritmo máximo (3.000/s) aunque el Caudal sea bajo; después, al del Caudal. Antes de llegar a la capacidad la pila es la real y tiene su forma natural (octógono): eso no cambia.
+- **Cruz de luz sobre el fondo.** El bloom muestreaba la textura de luz fuera de la grilla con `CLAMP_TO_EDGE` y estiraba la fila del borde en dos bandas (se notaba más con la pila llegando al borde en los ejes). Ahora se apaga fuera de la grilla.
+- **Sismógrafo**: línea continua que corre de derecha a izquierda (20 s). Cada avalancha la levanta a log10(derrumbes) y cae con constante de tiempo de 0,35 s; la escala sigue al pico de la ventana (mínimo 10²) con transición suave. `sismo` ahora es una cola que vacía el sismógrafo.
+- **Comprimir**: con `puedeComprimir` (núcleo) la raíz lleva `.lista`: el texto se enciende y late, y el anillo brilla y late con el mismo ritmo (2,4 s, arrancan en el mismo cuadro). Con Reducir destellos, encendidos y quietos. **El botón sigue deshabilitado** hasta el hito 4.
+- **Ajustes**: ícono chico arriba a la derecha (en la fila del título de la tienda) que abre un panel con "Reducir destellos"; se cierra con Escape o tocando afuera. Está desde el arranque, antes de que aparezca la tienda.
+- Las filas de la tienda tienen `aria-label` ("Comprar Ámbar · 10").
+
+### Verificación
+
+- svelte-check y tsc sin errores, 32 tests en verde.
+- En el navegador integrado: antes/después de la paleta con la misma pila; la pila ocupa ~81 % del alto; Comprimir y el anillo encendidos al 100 %; el sismógrafo como línea; el panel de Ajustes. Sin errores en la consola.
+- **No medí los 60 fps** (el navegador integrado seguía oculto). Lo nuevo por cuadro: el sismógrafo dibuja ~1.200 puntos (antes unas decenas de rayas) y la pasada de la pila hace 1 cálculo más por píxel en el bloom.
+
+### Decisiones (revisar)
+
+1. Con celdas fraccionarias (menos de 3 px reales) los anchos de celda alternan entre 1 y 2 px: a esa densidad no se nota a simple vista, pero si aparece moiré, la salida es supermuestrear la pasada a pantalla.
+2. El "antes" del Pulido 2 decía que el sismógrafo dibujaba rayas: quedó reemplazado por la línea continua.
+3. Ajustes no se guarda (igual que antes: va al guardado del hito 5).
+

@@ -208,6 +208,7 @@ Cada aparición tiene una frase corta de una línea, sin ventanas modales. Ejemp
 
 - Fondo azul noche casi negro (#07080F) con un viñeteado suave.
 - Colores de celda con brillo propio: Ámbar #FFB547, Coral #FF6B6B, Jade #2DD4A7, Violeta #9B7BFF. Las celdas vacías fuera de la pila: transparentes.
+- En la pila el brillo va al revés de la frecuencia, para que se lean las formas: Ámbar (celdas con 3 granos, ~59 %) es arena en sombra #55432F, Coral intermedio #A4574F, Jade #3FE0B4 y Violeta #C2A8FF brillan con luz propia (Violeta, el más raro, la que más). Los colores de arriba quedan para la interfaz.
 - Tipografía geométrica (Sora o Space Grotesk) y números con cifras tabulares (JetBrains Mono o la variante tabular de la principal) para que no "bailen".
 - Nada de sombras pesadas ni degradados de botón. Paneles de vidrio translúcido con borde de 1 px.
 
@@ -222,7 +223,7 @@ Cada aparición tiene una frase corta de una línea, sin ventanas modales. Ejemp
 ### 6.3 Escala de la pila
 
 - Mientras G ≤ capacidad de la grilla visual, la pila de la pantalla es **exactamente** la pila real: se suelta cada grano.
-- Grilla visual: 513 × 513 celdas con sumidero en el borde (los granos que caen del borde desaparecen). Capacidad: el radio llega al borde con unos 470.000 granos.
+- Grilla visual: 513 × 513 celdas con sumidero fuera del círculo inscrito (los granos que lo cruzan desaparecen), así la pila llena es redonda. Capacidad: el radio llega al borde con unos 463.000 granos.
 - Cuando G supera la capacidad, la pila visual queda en estado crítico estacionario (sigue cayendo arena y sigue habiendo avalanchas para siempre) y aparece la etiqueta de escala "1 grano = 10^k granos", que sube cada vez que G se multiplica por 10. Cada salto de escala hace una animación corta de alejamiento de cámara.
 - Ritmo de la simulación visual: `min(F, 3000)` granos por segundo, repartidos por frame. Nunca debe bajar de 60 fps.
 

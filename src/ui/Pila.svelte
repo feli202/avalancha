@@ -4,9 +4,13 @@
   import { CFG, anillos, caudal, multAnillos, multColor, punado } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS, PilaVisual, brillo } from '../render/pilaVisual'
   import { es } from '../strings/es'
-  import { juego } from './juego.svelte'
+  import { juego, progresoCompresion, sismo } from './juego.svelte'
+
+  const ANILLO_SEP = 8 // px CSS entre la pila y el anillo de Compresión
 
   let canvas: HTMLCanvasElement
+  const comp = $derived(progresoCompresion(juego.s))
+  const ra = $derived(juego.radioPila + ANILLO_SEP)
   // Textos flotantes y anillos (SPEC 6.2). Animaciones de CSS (transform y opacidad): no pasan por el hilo principal.
   type Efecto = { id: number; texto?: string; anillo?: { r: number; color: string }; ola?: { r: number; color: string } }
   let efectos = $state<Efecto[]>([])
@@ -27,6 +31,10 @@
     const pila = new PilaVisual(canvas)
     pila.alMedir = (m) => (juego.medidas = m)
     pila.alAvalancha = (n) => efecto({ texto: es.avalancha(n) })
+    pila.alTamano = (n) => {
+      sismo.push(n)
+      if (sismo.length > 1000) sismo.shift() // nadie lo vacía hasta que aparece el sismógrafo
+    }
     $effect(() => void (pila.destellos = juego.reducirDestellos))
     let anillosAntes = anillos(juego.s.granos)
     const coloresVistos = () => CFG.colores.filter((_, i) => juego.vistos[`color${i}`]).length
@@ -38,6 +46,8 @@
       s.colores.forEach((nivel, i) => (brillos[ALTURA_DE_COLOR[i]] = brillo(multColor(i, juego.nivelColores || nivel).log10())))
       pila.cuadro(ahora, s.granos, caudal(s), brillos)
       juego.escalaK = pila.escalaK
+      const r = Math.round(pila.radioCss)
+      if (r !== juego.radioPila) juego.radioPila = r
       // SPEC 5: el color nuevo recorre la pila, del centro al borde.
       const c = coloresVistos()
       if (c > coloresAntes) efecto({ ola: { r: Math.max(pila.radioCss, 48), color: COLOR_CSS[ALTURA_DE_COLOR[c - 1]] } })
@@ -63,6 +73,13 @@
 <div class="pila">
   <canvas bind:this={canvas} onpointerdown={soltar} aria-label={es.pila}></canvas>
   <div class="efectos" class:quieto={juego.reducirDestellos} aria-hidden="true">
+    {#if juego.vistos.compresion && comp.meta !== undefined}
+      <!-- Compresión: el anillo se cierra con el progreso (escala logarítmica); al 100 % brilla. -->
+      <svg class="compresion aparece" width={2 * ra + 8} height={2 * ra + 8} viewBox="{-ra - 4} {-ra - 4} {2 * ra + 8} {2 * ra + 8}">
+        <circle class="via" r={ra} />
+        <circle class="arco" r={ra} pathLength="1" stroke-dashoffset={1 - comp.p} />
+      </svg>
+    {/if}
     {#each efectos as e (e.id)}
       {#if e.ola}
         <div class="ola" style:--r="{e.ola.r}px" style:--c={e.ola.color} onanimationend={() => quitar(e.id)}></div>
@@ -81,6 +98,18 @@
   canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: manipulation; }
   p { margin: 0; font-variant-numeric: tabular-nums; pointer-events: none; white-space: nowrap; }
   .efectos { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+  .compresion { position: absolute; translate: -50% -50%; overflow: visible; transition: width 0.6s, height 0.6s; }
+  circle { fill: none; stroke-width: 1.5; }
+  .via { stroke: rgb(232 233 243 / 0.06); }
+  .arco {
+    stroke: rgb(232 233 243 / 0.7); stroke-dasharray: 1; rotate: -90deg; stroke-linecap: round;
+    transition: stroke-dashoffset 0.3s linear, stroke 0.6s;
+  }
+  /* Se puede comprimir (.lista en App.svelte): brilla y late a la vez que el botón. */
+  :global(.lista) .arco { stroke: var(--tinta); filter: drop-shadow(0 0 5px rgb(232 233 243 / 0.8)); animation: brillar 2.4s ease-in-out infinite; }
+  .quieto .arco { animation: none; }
+  .aparece { animation: desvanecer 0.8s ease-out reverse; }
+  @keyframes brillar { 50% { opacity: 0.55; } }
   .flota {
     position: absolute; translate: -50% -50%; font-size: 1.5rem; font-weight: 600; text-shadow: 0 0 0.6rem #07080f;
     animation: subir 1.6s ease-out forwards; will-change: transform, opacity;
