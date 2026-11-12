@@ -20,12 +20,8 @@ describe('fuera de línea', () => {
   // Con todos los autocompradores y la Compresión automática: lo que más puede divergir.
   const desde = (compresiones: number) => ({ ...estadoInicial(), compresiones })
 
-  // 8 h son 10.000 pasos de 2,88 s contra 28.800 de 1 s. Sin Compresión automática la Energía coincide al ±1 %.
-  // Con ella (desde la 6) las compresiones se atrasan ~0,4 % en tiempo y, como después de cada una la Energía sube
-  // ~2 décadas por hora, eso es hasta ~35 % de Energía: ahí el ±1 % se mide en log10, la escala del juego.
   for (const c of [0, 3, CFG.autocompradores.compresion_auto]) {
-    const lineal = c < CFG.autocompradores.compresion_auto
-    it(`8 h fuera de línea = 8 h de tick normal (±1 %${lineal ? '' : ' en log10'}), desde la Compresión ${c}`, () => {
+    it(`8 h fuera de línea = 8 h de tick normal (±1 %), desde la Compresión ${c}`, () => {
       let normal = desde(c)
       for (let i = 0; i < HORAS8; i++) normal = tick(normal, 1)
       const a = fueraDeLinea(desde(c), HORAS8)
@@ -38,15 +34,13 @@ describe('fuera de línea', () => {
       expect(a.s.compresiones).toBe(normal.compresiones)
       expect(a.s.caudal).toBe(normal.caudal)
       expect(a.s.colores).toEqual(normal.colores)
-      const error = lineal
-        ? [a.s.energia.div(normal.energia).toNumber() - 1, a.s.granos / normal.granos - 1]
-        : [a.s.energia.log10() / normal.energia.log10() - 1, Math.log10(a.s.granos) / Math.log10(normal.granos) - 1]
-      for (const e of error) expect(Math.abs(e)).toBeLessThanOrEqual(0.01)
+      expect(Math.abs(a.s.energia.div(normal.energia).toNumber() - 1)).toBeLessThanOrEqual(0.01)
+      expect(Math.abs(a.s.granos / normal.granos - 1)).toBeLessThanOrEqual(0.01)
       expect(a.s.tiempoTotal).toBeCloseTo(normal.tiempoTotal, 6)
     })
   }
 
-  it('hasta 10.000 s usa pasos de 1 s: idéntico al tick normal', () => {
+  it('hasta max_pasos usa pasos de 1 s: idéntico al tick normal', () => {
     let normal = desde(3)
     for (let i = 0; i < 5000; i++) normal = tick(normal, 1)
     expect(serializar(partida(fueraDeLinea(desde(3), 5000).s))).toBe(serializar(partida(normal)))

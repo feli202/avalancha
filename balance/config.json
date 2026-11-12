@@ -39,7 +39,7 @@
   "punado": { "granos": 5, "max_por_segundo": 8 },
 
   "_fuera_de_linea": "SPEC 8: pasos de paso_s hasta max_pasos; con más tiempo, pasos más largos. Tope en horas.",
-  "fuera_de_linea": { "paso_s": 1, "max_pasos": 10000, "tope_horas": 24 },
+  "fuera_de_linea": { "paso_s": 1, "max_pasos": 28800, "tope_horas": 24 },
 
   "objetivo_minutos": { "jugador_activo_revisa_cada_15s": 193, "revisa_cada_60s": 226, "revisa_cada_5min": 397 }
 }

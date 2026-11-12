@@ -305,7 +305,7 @@ La pila se vuelve blanca desde el centro hacia afuera, el número de Energía se
 - **Bucle:** economía en paso fijo de 50 ms con acumulador; render a la tasa de la pantalla. Si la pestaña está oculta, se calcula el tiempo transcurrido al volver.
 - **Pila visual (worker):** `Uint8Array` de 513×513, pila de celdas inestables, envía al hilo principal cada frame la lista de celdas derrumbadas y el tamaño de la avalancha. Independiente de la economía (la economía usa la fórmula de 4.1).
 - **Guardado:** `localStorage` cada 10 s y al cerrar; exportar/importar como texto base64; versión de guardado en el JSON para migraciones. Abstraer el almacenamiento en una interfaz para poder usar el sistema de archivos al empaquetar para Steam.
-- **Progreso fuera de línea:** al cargar, simular el tiempo ausente con el mismo `tick` en pasos de 1 s (hasta 10.000 pasos; si hay más tiempo, pasos más largos), aplicando autocompradores y compresión automática si están desbloqueados. Tope de 24 h. Mostrar un resumen "Mientras no estabas: +1e40 de Energía, 2 compresiones".
+- **Progreso fuera de línea:** al cargar, simular el tiempo ausente con el mismo `tick` en pasos de 1 s (hasta 28.800 pasos, o sea 8 h exactas; si hay más tiempo, pasos más largos), aplicando autocompradores y compresión automática si están desbloqueados. Tope de 24 h. Mostrar un resumen "Mientras no estabas: +1e40 de Energía, 2 compresiones".
 - **Formato de números:** hasta 999.999 con separador de miles; después notación científica con 2 decimales (`1,23e45`). Ajuste para notación de ingeniería.
 - **Empaquetado para Steam:** fuera de alcance de la Capa 0, pero no usar APIs exclusivas del navegador fuera de la capa de almacenamiento.
 
