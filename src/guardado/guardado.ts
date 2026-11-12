@@ -41,6 +41,8 @@ function migrar(d: any): any {
     d.logros = {}
     d.version = 2
   }
+  // Guardados del desarrollo del hito 5b (código a medio recargar): versión 2 sin logros.
+  if (d?.version === 2 && typeof d === 'object' && d.logros === undefined) d.logros = {}
   return d
 }
 

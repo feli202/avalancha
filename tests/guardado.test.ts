@@ -132,6 +132,15 @@ describe('versión 1 → 2 (hito 5b)', () => {
   })
 })
 
+describe('versión 2 sin logros', () => {
+  it('carga, con los logros vacíos', () => {
+    const p = partida(jugar(estadoInicial(), 60))
+    const d = JSON.parse(serializar(p))
+    delete d.logros
+    expect(deserializar(JSON.stringify(d))).toEqual({ ...p, logros: {} })
+  })
+})
+
 describe('exportar / importar', () => {
   it('ida y vuelta por base64', () => {
     const p = partida(jugar(estadoInicial(), 120))
