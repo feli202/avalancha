@@ -36,6 +36,8 @@ class Juego {
   ausencia = $state.raw<Ausencia | null>(null)
   /** El guardado no se pudo leer: no se guarda nada hasta que el jugador acepta empezar de nuevo. */
   guardadoRoto = $state(false)
+  /** I1: el juego está abierto en otra pestaña (tiene el candado): esta no simula ni guarda. */
+  otraPestana = $state(false)
   /** SPEC 7: logros conseguidos. */
   logros = $state.raw<Record<string, boolean>>({})
   /** El último aviso de logro (notificación discreta). */
@@ -155,7 +157,7 @@ export function comprimirYa() {
 export const invitaTocar = () => !juego.vistos.punado && !juego.vistos.tienda
 
 /** Hay un cartel o panel encima: las teclas del juego (Espacio, M, C) no hacen nada. */
-export const hayPanel = (): boolean => juego.titulo || juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto
+export const hayPanel = (): boolean => juego.titulo || juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto || juego.otraPestana
 
 /** Reloj real (ms) hasta el que llegó la simulación. El guardado lleva esta fecha y no Date.now(): con la pestaña oculta
  * no hay cuadros, juego.s queda quieto y el guardado tiene que seguir diciendo de cuándo es (si no, se pierde la ausencia). */
@@ -167,7 +169,7 @@ export const partidaActual = (): Partida =>
 let reemplazando = false
 /** true si se guardó. */
 export function guardarYa() {
-  if (juego.guardadoRoto || reemplazando) return false
+  if (juego.guardadoRoto || juego.otraPestana || reemplazando) return false
   try {
     guardar(almacenLocal, partidaActual())
     return true
@@ -186,6 +188,19 @@ export function reemplazarPartida(p: Partida) {
 
 export const borrarPartida = () =>
   reemplazarPartida({ estado: estadoInicial(), guardadoEn: Date.now(), vistos: {}, record: 0, logros: {}, historial: historialVacio(Date.now()) })
+
+const CANDADO = 'avalancha'
+/** I1: una sola pestaña juega. `robar`: "Jugar acá" en la otra; la que lo pierde guarda una vez y queda quieta. */
+export function tomarCandado(robar = false) {
+  if (!navigator.locks) return // sin Web Locks (navegadores viejos): como antes
+  navigator.locks
+    .request(CANDADO, robar ? { steal: true } : { ifAvailable: true }, (l) => {
+      if (!l) { juego.otraPestana = true; return }
+      if (robar) location.reload() // carga lo último que guardó la otra
+      return new Promise<void>(() => {}) // se tiene mientras viva la pestaña
+    })
+    .catch(() => { guardarYa(); juego.otraPestana = true }) // otra pestaña lo robó
+}
 
 /** Carga la partida y arranca el bucle. Llamar antes de montar la interfaz: Pila.svelte lee el estado al montarse. */
 export function arrancar() {
@@ -207,13 +222,14 @@ export function arrancar() {
   // Sin partida o sin tiempo jugado (recién borrada, o se recargó en el título): partida nueva.
   if (p !== 'corrupto' && (!p || p.estado.tiempoTotal === 0)) juego.titulo = true
   previo = juego.s
+  tomarCandado()
   setInterval(guardarYa, GUARDAR_CADA)
   addEventListener('pagehide', guardarYa)
   document.addEventListener('visibilitychange', () => document.hidden && guardarYa())
 
   const cuadro = () => {
     const ahora = Date.now()
-    acum += (Math.max(0, ahora - antes) / 1000) * (juego.titulo ? 0 : juego.velocidad)
+    acum += (Math.max(0, ahora - antes) / 1000) * (juego.titulo || juego.otraPestana ? 0 : juego.velocidad)
     antes = ahora
     let s = juego.s
     if (acum > MAX_PASOS * PASO) {

@@ -94,6 +94,11 @@ export const es = {
     compresiones: (n: number) => (n === 1 ? '1 compresión' : `${n.toLocaleString('es-AR')} compresiones`),
     seguir: 'Seguir',
   },
+  otraPestana: {
+    titulo: 'El juego está abierto en otra pestaña',
+    texto: 'Para no pisar tu partida, solo una pestaña juega y guarda.',
+    jugarAca: 'Jugar en esta pestaña',
+  },
   guardadoRoto: {
     titulo: 'No pudimos leer tu partida',
     texto: 'El guardado está dañado. Queda una copia de respaldo en este navegador y no la vamos a borrar.',

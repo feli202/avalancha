@@ -67,7 +67,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 
 ## Importante
 
-### I1. Dos pestañas del juego se pisan el guardado
+### I1. Dos pestañas del juego se pisan el guardado — ✅ resuelto
+
+- **Resuelto:** `navigator.locks`: la pestaña que no consigue el candado no simula ni guarda y muestra "El juego está abierto en otra pestaña" con "Jugar en esta pestaña" (roba el candado y recarga; la otra guarda una vez y queda quieta). Test en `tests/juego.test.ts`.
 
 - **Dónde:** `src/ui/juego.svelte.ts:165-174, 205-207`; no hay evento `storage`, `BroadcastChannel` ni `navigator.locks` en todo `src/`.
 - **Qué pasa:** cada pestaña guarda su copia cada 10 s en la misma clave. La de atrás, congelada (B1), le pisa el guardado a la que se está jugando; al recargar gana la última que escribió.

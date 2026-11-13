@@ -88,6 +88,11 @@ export const en: typeof es = {
     compresiones: (n: number) => `${n0(n)} ${s(n, 'compression', 'compressions')}`,
     seguir: 'Continue',
   },
+  otraPestana: {
+    titulo: 'The game is open in another tab',
+    texto: 'To keep your save safe, only one tab plays and saves.',
+    jugarAca: 'Play in this tab',
+  },
   guardadoRoto: {
     titulo: "We couldn't load your save",
     texto: "The save is corrupted. A backup copy stays in this browser and we won't delete it.",

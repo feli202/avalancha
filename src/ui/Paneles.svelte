@@ -6,11 +6,11 @@
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import { formato } from './formato'
-  import { juego } from './juego.svelte'
+  import { juego, tomarCandado } from './juego.svelte'
 
 
   // Al cerrar cualquier panel, el foco vuelve a donde estaba (el ícono, casi siempre).
-  const abierto = $derived(juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto)
+  const abierto = $derived(juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto || juego.otraPestana)
   let previo: HTMLElement | null = null
   // Se anota antes de que el panel tome el foco, y se devuelve después de que el juego deja de estar inert.
   $effect.pre(() => void (abierto && untrack(() => (previo ??= document.activeElement as HTMLElement | null))))
@@ -24,14 +24,22 @@
     juego.panel = null
     juego.ausencia = null
   }
-  const teclaVentana = (e: KeyboardEvent) => e.key === 'Escape' && !juego.guardadoRoto && abierto && cerrar()
+  const teclaVentana = (e: KeyboardEvent) => e.key === 'Escape' && !juego.guardadoRoto && !juego.otraPestana && abierto && cerrar()
   const afuera = (e: MouseEvent) => e.target === e.currentTarget && cerrar()
 
 </script>
 
 <svelte:window onkeydown={teclaVentana} />
 
-{#if juego.guardadoRoto}
+{#if juego.otraPestana}
+  <div class="velo" class:quieto={ajustes.reducirDestellos}>
+    <div class="centro" role="alertdialog" aria-modal="true" aria-labelledby="otra-t" aria-describedby="otra-d">
+      <h2 id="otra-t" class="titulo">{txt.otraPestana.titulo}</h2>
+      <p id="otra-d" class="texto">{txt.otraPestana.texto}</p>
+      <button class="accion" use:enfocar onclick={() => tomarCandado(true)}>{txt.otraPestana.jugarAca}</button>
+    </div>
+  </div>
+{:else if juego.guardadoRoto}
   <!-- No se cierra con Escape ni tocando afuera: hasta aceptar, no se guarda nada. -->
   <div class="velo" class:quieto={ajustes.reducirDestellos}>
     <div class="centro" role="alertdialog" aria-modal="true" aria-labelledby="roto-t" aria-describedby="roto-d">
