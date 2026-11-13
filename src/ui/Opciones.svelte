@@ -281,24 +281,22 @@
   .cabeza-grupo { display: flex; align-items: baseline; gap: 0.75rem; }
   h3 { margin: 0 0 0.25rem; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; }
   .cuenta { font-size: 0.875rem; color: var(--apagado); }
-  .tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: 0.875rem; }
+  /* Sin tarjetas: la vista previa sola, el nombre y el estado debajo; el elegido, por el color y el peso del texto. */
+  .tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: 1.5rem 1.25rem; }
   .tarjeta {
-    display: flex; flex-direction: column; overflow: hidden; padding: 0; border: 1px solid var(--borde); border-radius: 0.5rem;
-    background: rgb(14 16 30 / 0.7); color: var(--tinta); font: inherit; text-align: left; cursor: not-allowed;
-    animation: subir 0.45s calc(var(--i) * 0.03s) ease-out backwards; transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    display: flex; flex-direction: column; padding: 0; border: 0; background: none; color: var(--tinta); font: inherit;
+    text-align: left; cursor: not-allowed; animation: subir 0.45s calc(var(--i) * 0.03s) ease-out backwards;
   }
   .tarjeta.libre { cursor: pointer; }
-  .tarjeta.libre:hover { transform: translateY(-2px); border-color: rgb(255 255 255 / 0.22); }
-  .tarjeta[aria-checked='true'] {
-    border-color: color-mix(in srgb, var(--ambar) 70%, transparent);
-    box-shadow: 0 0 1.25rem -0.25rem color-mix(in srgb, var(--ambar) 40%, transparent);
-  }
+  .tarjeta .nombre { color: var(--tenue); font-weight: 500; transition: color 0.15s; }
+  .tarjeta.libre:hover .nombre { color: var(--tinta); }
+  .tarjeta[aria-checked='true'] .nombre { color: var(--ambar); font-weight: 600; }
   .tarjeta:not(.libre) .vista { filter: grayscale(1) brightness(0.45); }
-  .vista { display: block; width: 100%; aspect-ratio: 3 / 2; height: auto; background: var(--fondo); }
+  .vista { display: block; width: 100%; aspect-ratio: 3 / 2; height: auto; mask: radial-gradient(closest-side, #000 75%, transparent); } /* sin recuadro */
   .vista.cuadrada { aspect-ratio: 1; }
-  .pie { display: grid; gap: 0.25rem; padding: 0.625rem 0.75rem 0.75rem; }
+  .pie { display: grid; gap: 0.25rem; padding: 0.5rem 0 0; }
   .nombre { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9375rem; font-weight: 600; }
-  .tarjeta:not(.libre) .nombre { color: var(--tenue); }
+  .tarjeta:not(.libre) .nombre { color: var(--apagado); }
   .muestras { display: flex; flex: none; }
   .muestras i { width: 0.625rem; height: 0.625rem; border-radius: 50%; margin-right: -0.1875rem; box-shadow: 0 0 0 1.5px rgb(14 16 30); }
   .en-uso { font-size: 0.75rem; color: var(--ambar); }
@@ -319,13 +317,15 @@
   .fila input[type='checkbox'] { flex: none; width: 1.25rem; height: 1.25rem; margin: 0; accent-color: var(--ambar); cursor: pointer; }
   .fila input[type='range'] { flex: none; width: 12rem; height: 2.75rem; margin: 0; accent-color: var(--ambar); cursor: pointer; }
   .fila.sub { padding-left: 1.25rem; }
-  .segmentos { display: flex; gap: 0.5rem; flex: none; }
+  /* Opciones como los modos de la tienda: texto; la elegida, con una línea de 1 px debajo. */
+  .segmentos { display: flex; gap: 1.25rem; flex: none; }
   .segmentos button {
-    display: grid; gap: 0.125rem; justify-items: start; min-height: 3rem; padding: 0.375rem 0.875rem; border: 1px solid var(--borde);
-    border-radius: 0.375rem; background: none; color: var(--tenue); font: inherit; font-size: 0.9375rem; cursor: pointer;
+    display: grid; gap: 0.125rem; justify-items: start; min-height: 3rem; padding: 0.375rem 0; border: 0; border-bottom: 1px solid transparent;
+    background: none; color: var(--apagado); font: inherit; font-size: 0.9375rem; cursor: pointer; transition: color 0.15s;
   }
+  .segmentos button:hover { color: var(--tenue); }
   .segmentos small { font-size: 0.75rem; color: var(--apagado); }
-  .segmentos button[aria-checked='true'] { color: var(--tinta); font-weight: 600; border-color: color-mix(in srgb, var(--ambar) 60%, transparent); }
+  .segmentos button[aria-checked='true'] { color: var(--tinta); font-weight: 600; border-bottom-color: var(--tinta); }
   .resumen { padding-bottom: 1.5rem; }
   .grande { margin: 0; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
   .bloque { border-top: 1px solid var(--borde); padding-bottom: 0.5rem; }
@@ -346,7 +346,7 @@
   .nota.mal { color: var(--coral); }
   .aviso-fuerte { margin: 0.5rem 0 0.25rem; font-size: 0.9375rem; text-wrap: pretty; }
   .codigo {
-    width: 100%; margin: 0.25rem 0; padding: 0.5rem 0.625rem; border: 1px solid var(--borde); background: rgb(7 8 15 / 0.6);
+    width: 100%; margin: 0.25rem 0; padding: 0.5rem 0; border: 0; border-bottom: 1px solid var(--borde); background: none;
     color: var(--tenue); font: 0.75rem/1.4 ui-monospace, monospace; word-break: break-all; resize: vertical;
   }
   .codigo:focus { border-color: var(--tenue); outline: none; }
@@ -354,10 +354,7 @@
   .teclas { display: grid; grid-template-columns: auto 1fr; gap: 1rem 1.5rem; max-width: 30rem; margin: 0; font-size: 1.0625rem; }
   .teclas dt { text-align: right; }
   .teclas dd { margin: 0; align-self: center; color: var(--tenue); }
-  kbd {
-    display: inline-block; min-width: 2.25rem; padding: 0.25rem 0.5rem; border: 1px solid var(--borde); border-bottom-width: 2px;
-    border-radius: 0.375rem; font: inherit; font-size: 0.875rem; font-weight: 600; text-align: center;
-  }
+  kbd { font: inherit; font-weight: 600; } /* la tecla es texto, no el dibujo de una tecla */
 
   @keyframes subir { from { opacity: 0; transform: translateY(6px); } }
   :global(.quieto) .tarjeta { animation: none; }

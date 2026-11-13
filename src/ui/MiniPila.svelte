@@ -108,7 +108,7 @@
   .cuenta p { margin: 0; }
   .cuenta b { font-weight: 600; color: var(--tinta); }
   .reiniciar {
-    justify-self: start; min-height: 2.75rem; margin-top: 0.5rem; padding: 0 1rem; border: 1px solid var(--borde); border-radius: 999px;
+    justify-self: start; min-height: 2.75rem; margin-top: 0.5rem; padding: 0; border: 0; border-bottom: 1px solid var(--borde);
     background: none; color: var(--tenue); font: inherit; font-size: 0.875rem; cursor: pointer; transition: color 0.15s, border-color 0.15s;
   }
   .reiniciar:hover { color: var(--tinta); border-color: var(--tinta); }

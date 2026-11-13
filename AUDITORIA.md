@@ -200,7 +200,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Cómo reproducirlo:** arrastrar el mouse desde "Caudal" hasta "Ámbar" en la tienda.
 - **Arreglo propuesto:** en `index.html`, `body { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }` y volver a permitirlo donde sí hay que copiar: `textarea, input, .seleccionable { user-select: text; }` (el texto exportado en Ajustes → Partida y las fórmulas de "Cómo funciona").
 
-### M2. Menús con patrones genéricos (`PENDIENTES.md` 3)
+### M2. Menús con patrones genéricos (`PENDIENTES.md` 3) — ✅ resuelto
+
+- **Resuelto:** una sola familia, la de la tienda: pestañas de texto con línea de 1 px (`Pantalla.svelte`); Logros y Ajustes → Aspecto sin tarjetas (la mini pila suelta con el borde difuminado, nombre y estado debajo, el conseguido o elegido por color y peso); la notificación de logro es una línea de texto con la mini pila al lado; las opciones de Ajustes como los modos de la tienda; área de texto y teclas sin cajas; los botones del título, del mandala y de reiniciar en MiniPila son texto con línea, sin píldoras ni vidrio. Mirado en Edge headless a 1280×720 y 375×812.
 
 - **Dónde y qué**, contra la regla de la interfaz principal (sin cajas, jerarquía por tipografía):
   - `src/ui/Pantalla.svelte:75-79`: pestañas como píldoras con borde y fondo teñido. La tienda usa texto con una línea debajo.
@@ -323,6 +325,8 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - `src/ui/sonido.ts:112-128`: `arenita` crea los nodos de audio aunque ya no haya voces libres; conviene preguntar antes de crearlos.
 
 ### M17. `PROGRESO.md` dice que `pila.c` nunca se compiló
+
+- **Sin resolver:** sigue sin haber compilador de C en esta máquina (busqué gcc, cc, clang y tcc). Hace falta correrlo en otra.
 
 - **Dónde:** `PROGRESO.md` (hito 2a). No hay compilador de C en esta máquina, así que tampoco lo pude correr. El criterio del hito 2 de SPEC 9 sigue verificado solo contra un port del mismo algoritmo.
 - **Arreglo propuesto:** correr una vez `gcc -O3 -o pila balance/pila.c -lm && ./pila bulk 10000` en una máquina con gcc y pegar la línea en `PROGRESO.md`.

@@ -323,12 +323,11 @@
   .adelanto { margin: 0; font-size: 0.9375rem; color: var(--violeta); letter-spacing: 0.01em; }
   @keyframes llegar { to { opacity: 1; } }
   .mandala {
-    display: flex; align-items: center; gap: 0.625rem; margin-top: 2rem; min-height: 2.75rem; padding: 0.75rem 1.5rem;
-    border: 1px solid rgb(232 233 243 / 0.5); border-radius: 999px; background: rgb(232 233 243 / 0.08); color: var(--tinta);
-    font: inherit; font-size: 1.0625rem; font-weight: 600; cursor: pointer; box-shadow: 0 0 1.5rem rgb(255 255 255 / 0.15);
-    transition: background 0.15s, box-shadow 0.15s;
+    display: flex; align-items: center; gap: 0.625rem; margin-top: 2rem; min-height: 2.75rem; padding: 0 0.25rem;
+    border: 0; border-bottom: 1px solid var(--apagado); background: none; color: var(--tinta);
+    font: inherit; font-size: 1.0625rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s;
   }
-  .mandala:hover { background: rgb(232 233 243 / 0.16); box-shadow: 0 0 2rem rgb(255 255 255 / 0.3); }
+  .mandala:hover, .mandala:focus-visible { border-color: var(--tinta); }
   .mandala svg { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
 
   /* Salidas del final: texto con una línea de 1 px. */
@@ -348,8 +347,8 @@
   @keyframes destello { 8% { opacity: 0.45; } }
   @keyframes destelloSuave { 30% { opacity: 0.12; } }
   .guardada {
-    position: fixed; left: 50%; bottom: 2rem; translate: -50% 0; z-index: 20; margin: 0; padding: 0.5rem 1rem;
-    border-radius: 999px; background: rgb(7 8 15 / 0.75); font-size: 0.9375rem; pointer-events: none;
+    position: fixed; left: 50%; bottom: 2rem; translate: -50% 0; z-index: 20; margin: 0;
+    text-shadow: 0 0 0.75rem var(--fondo), 0 0 0.25rem var(--fondo); font-size: 0.9375rem; pointer-events: none;
     animation: aviso 2.8s ease-out forwards;
   }
 

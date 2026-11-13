@@ -69,15 +69,16 @@
     position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 1.5rem;
     padding: 1.25rem 2rem; background: linear-gradient(var(--fondo) 70%, transparent);
   }
-  .pestanas { display: flex; gap: 0.5rem; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  /* Pestañas como las de la tienda: texto, la elegida con una línea de 1 px debajo. */
+  .pestanas { display: flex; gap: 1.5rem; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
   .pestanas button {
-    display: flex; align-items: center; gap: 0.5rem; flex: none; min-height: 2.75rem; padding: 0 1rem;
-    border: 1px solid var(--borde); border-radius: 999px; background: none; color: var(--tenue);
-    font: inherit; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s;
+    display: flex; align-items: center; gap: 0.5rem; flex: none; min-height: 2.75rem; padding: 0;
+    border: 0; border-bottom: 1px solid transparent; background: none; color: var(--apagado);
+    font: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; transition: color 0.15s;
   }
-  .pestanas button:hover { color: var(--tinta); }
-  .pestanas button[aria-selected='true'] { color: var(--tinta); border-color: color-mix(in srgb, var(--ambar) 55%, transparent); background: rgb(255 181 71 / 0.06); }
-  .pestanas button[aria-disabled='true'] { color: var(--apagado); cursor: not-allowed; border-style: dashed; }
+  .pestanas button:hover { color: var(--tenue); }
+  .pestanas button[aria-selected='true'] { color: var(--tinta); border-bottom-color: var(--tinta); }
+  .pestanas button[aria-disabled='true'] { color: var(--apagado); opacity: 0.6; cursor: not-allowed; }
   .pestanas small { font-size: 0.75rem; font-weight: 400; }
   .pestanas svg, .cerrar svg { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
 

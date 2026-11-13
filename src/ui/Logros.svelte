@@ -90,28 +90,18 @@
 
   .grilla {
     list-style: none; margin: 0 auto; padding: 0.5rem 2rem 3rem; width: 100%; max-width: 96rem;
-    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1rem;
+    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2rem 1.5rem; /* sin tarjetas: separadas por espacio */
   }
   .tarjeta {
-    position: relative; display: flex; flex-direction: column; overflow: hidden;
-    border: 1px solid var(--borde); border-radius: 0.5rem; background: rgb(14 16 30 / 0.7);
+    position: relative; display: flex; flex-direction: column;
     animation: subir 0.5s calc(0.2s + var(--i) * 0.025s) ease-out backwards;
-    transition: transform 0.2s, border-color 0.2s;
   }
-  .tarjeta:hover { transform: translateY(-2px); }
-  .tarjeta.si {
-    border-color: color-mix(in srgb, var(--ambar) 45%, transparent);
-    box-shadow: 0 0 1.25rem -0.25rem color-mix(in srgb, var(--ambar) 30%, transparent), inset 0 0 0 1px rgb(255 181 71 / 0.06);
-  }
-  .tarjeta.si:hover { border-color: color-mix(in srgb, var(--ambar) 75%, transparent); }
-  .imagen { display: block; width: 100%; aspect-ratio: 3 / 2; height: auto; background: var(--fondo); }
-  .texto { flex: 1; padding: 0.75rem 0.875rem 0.875rem; }
+  .imagen { display: block; width: 100%; aspect-ratio: 3 / 2; height: auto; mask: radial-gradient(closest-side, #000 75%, transparent); } /* sin recuadro: la pila suelta */
+  .texto { flex: 1; padding: 0.5rem 0 0.25rem; }
+  .tarjeta.si h3 { color: var(--ambar); }
   h3 { margin: 0 0 0.25rem; font-size: 0.9375rem; font-weight: 600; line-height: 1.25; }
   .texto p { margin: 0; font-size: 0.8125rem; line-height: 1.4; color: var(--tenue); text-wrap: pretty; }
-  .premio {
-    display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.875rem; font-size: 0.75rem; color: var(--tinta);
-    border-top: 1px solid var(--borde); background: rgb(255 181 71 / 0.07);
-  }
+  .premio { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--tenue); }
   .tipo { color: var(--ambar); }
   .muestras { display: flex; flex: none; }
   .muestras i { width: 0.625rem; height: 0.625rem; border-radius: 50%; margin-right: -0.1875rem; box-shadow: 0 0 0 1.5px rgb(14 16 30); }
@@ -121,20 +111,19 @@
   .tarjeta:not(.si) .imagen, .tarjeta:not(.si) .premio { filter: grayscale(1) brightness(0.5); }
   .tarjeta:not(.si) h3 { color: var(--tenue); }
   .tarjeta:not(.si) .texto p { color: var(--apagado); }
-  .tarjeta:not(.si) .premio { background: none; }
   .oculto .imagen { opacity: 0.25; }
 
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
   /* Notificación: la tarjeta en miniatura entra por la esquina y se va sola. */
   .avisos { position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 7; display: grid; gap: 0.5rem; pointer-events: none; }
+  /* Una línea de texto con la mini pila al lado, como los avisos. */
   .aviso {
-    display: flex; align-items: center; gap: 0.75rem; width: 17rem; padding: 0.5rem 0.875rem 0.5rem 0.5rem;
-    border: 1px solid color-mix(in srgb, var(--ambar) 45%, transparent); border-radius: 0.5rem; background: rgb(14 16 30 / 0.94);
-    box-shadow: 0 0.5rem 2rem rgb(0 0 0 / 0.5), 0 0 1.25rem -0.25rem color-mix(in srgb, var(--ambar) 35%, transparent);
+    display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; text-align: right;
+    text-shadow: 0 0 0.75rem var(--fondo), 0 0 0.25rem var(--fondo);
     animation: notificar 5s calc(var(--i) * 0.15s) cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
-  .mini { flex: none; width: 4.5rem; height: 3rem; border-radius: 0.25rem; }
+  .mini { flex: none; order: 2; width: 4.5rem; height: 3rem; }
   .aviso p { margin: 0; }
   .aviso .rotulo { font-size: 0.75rem; color: var(--ambar); }
   .aviso .nombre { font-size: 0.9375rem; font-weight: 600; }
@@ -154,9 +143,7 @@
   @media (max-width: 767px) {
     .cuenta { justify-items: start; flex: 1; }
     .grilla { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.625rem; padding: 0.25rem 1rem 2rem; }
-    .texto { padding: 0.5rem 0.625rem 0.625rem; }
-    .premio { padding: 0.375rem 0.625rem; font-size: 0.6875rem; }
+    .premio { font-size: 0.6875rem; }
     .avisos { right: 1rem; top: 9rem; bottom: auto; }
-    .aviso { width: 15rem; }
   }
 </style>
