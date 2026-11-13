@@ -154,7 +154,10 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Cómo reproducirlo:** saltar a la Compresión 17 con el debug, apagar los autocompradores, elegir Máx y dejar acumular Energía (o "Dar Energía" varias veces); mirar los fps del panel de debug.
 - **Arreglo propuesto:** en `comprarMax`, revisar `disponibles` una vez y comparar la Energía contra el costo dentro del bucle (el costo depende solo del nivel). Si no alcanza, calcular el nivel máximo con la fórmula cerrada del costo cuadrático. Como la economía no cambia, el test de balance tiene que dar igual.
 
-### I9. Los logros de avalancha y el récord cuentan tandas, no avalanchas
+### I9. Los logros de avalancha y el récord cuentan tandas, no avalanchas — ✅ resuelto
+
+- **Resuelto:** `juego.record` (y con él los logros Avalancha, Alud y Récord y la cifra de la pantalla final) sale de las muestras de un grano solo (`alMuestra`); las tandas quedan para el sismógrafo y el sonido. Medido en Node con la pila real a 90 % de su capacidad: de 60.000 granos sueltos, 1.528 pasan 1.000 derrumbes, 782 pasan 10.000 y 163 pasan 1e6 (máximo 1,6e7). O sea: los tres se consiguen con avalanchas de verdad, pero recién con la pila grande.
+- **Para decidir (balance, no lo toqué):** con la pila llena el logro de 1e6 sale en segundos. Si se quiere más raro, hay que subir `logros.avalancha_record` en `config.json`. Las partidas guardadas conservan el récord inflado de antes (no se puede recalcular).
 
 - **Dónde:** `src/render/pilaVisual.ts:252-263`, `src/ui/Pila.svelte:61-73` (`juego.record`), `src/ui/logros.ts:14, 19, 31`.
 - **Qué pasa:** con flujo continuo, una "avalancha" es todo lo que se derrumbó hasta que la pila quedó estable, con decenas o miles de granos adentro. Los logros 3 (1.000 derrumbes), 8 (10.000) y 20 (1e6, "récord") salen solos apenas se llena la pila, y la "avalancha récord" de la pantalla final es una suma de tandas (3,64e8 en la partida a ×50 del hito 4). Estaba anotado como decisión en `PROGRESO.md`; contra SPEC 7 es un defecto.

@@ -63,7 +63,11 @@
       efecto({ texto: txt.avalancha(n) })
       sonido.avalancha(n)
     }
-    pila.alMuestra = (n) => muestraAvalancha(historial, n)
+    // I9: el récord (y sus logros) es la avalancha de un grano solo; las tandas suman muchas y no cuentan.
+    pila.alMuestra = (n) => {
+      muestraAvalancha(historial, n)
+      if (n > juego.record) juego.record = n
+    }
     pila.alTamano = (n) => {
       if (primera && juego.vistos.punado) {
         primera = false
@@ -73,7 +77,6 @@
       }
       sismo.push(n)
       sonido.derrumbe(n)
-      if (n > juego.record) juego.record = n
       contarAvalancha(historial, n)
       if (sismo.length > 1000) sismo.shift() // nadie lo vacía hasta que aparece el sismógrafo
     }
