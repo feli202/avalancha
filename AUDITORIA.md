@@ -4,6 +4,12 @@ Fecha: 13/11/2026 · commit auditado: `395d3aa` · no se cambió código.
 
 ## Resumen
 
+> **Estado al 13/11/2026 (después de la auditoría):** resueltos el bloqueante, los 11 importantes y 14 de los 17 menores (M15 sale con I5). Quedan tres, que no podía cerrar solo:
+> - **M8**: actualizar `objetivo_minutos` en `balance/config.json` (no cambia la economía, pero es el archivo de balance).
+> - **M13**: servir la fuente desde el proyecto (hay que agregar `@fontsource/space-grotesk` o los `.woff2`).
+> - **M17**: compilar `balance/pila.c` (no hay compilador de C en esta máquina).
+> Decisiones abiertas: la pila en móvil (I4, contra SPEC 6.4) y si el logro de avalancha récord se vuelve más raro (I9, balance).
+
 - **1 bloqueante**: con la pestaña en segundo plano el guardado automático pisa la partida con un estado viejo y fecha nueva; al recargar se pierde todo lo que pasó en segundo plano (B1, reproducido).
 - **11 importantes**: dos pestañas que se pisan, guardados que se dan por dañados, fallos de guardado sin aviso, la pila descentrada, el inicio, dos formas de que la pila quede congelada o negra para siempre, caída de fps con el modo Máx, logros de avalancha regalados, cosas que se muestran antes de tiempo y el uso de CPU en sesiones largas.
 - **17 menores**, entre ellos el texto de los botones que se selecciona al arrastrar y los menús con patrones genéricos.

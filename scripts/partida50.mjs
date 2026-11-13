@@ -40,6 +40,8 @@ await cdp('Runtime.enable'); await cdp('Page.enable')
 await cdp('Emulation.setDeviceMetricsOverride', { width: +W, height: +H, deviceScaleFactor: 1, mobile: +W < 768 })
 await cdp('Page.navigate', { url })
 await espera(3000)
+await ev(`document.querySelector('.titulo button')?.click()`) // el título sale siempre (I5)
+await espera(2000)
 console.log('fps', await ev(`new Promise(r=>{let n=0;const t=performance.now();(function f(){n++;performance.now()-t<2000?requestAnimationFrame(f):r(n/2)})()})`))
 
 // Bot: "Comprar todo" (M), Comprimir apenas se puede, y en Cascada/Mutaciones compra lo que alcance.

@@ -698,3 +698,42 @@ Textos en `src/strings/{es,en}.ts`, bloque `guia`. Ningún número de balance es
 1. **Las secciones bloqueadas muestran el nombre** (apagado, con candado) pero no el texto. Si "sin spoilers" significa también esconder el nombre, cambiarlo es una línea en `ComoFunciona.svelte`.
 2. **"La pila de arena" está abierta desde el inicio**: es el juego mismo.
 3. Si aparecen muchos sistemas juntos (saltos de debug), solo se muestran los dos últimos indicadores, igual que las frases de aviso.
+
+## Arreglos de la auditoría y `PENDIENTES.md`
+
+Cada punto de `AUDITORIA.md` tiene su commit y su marca "✅ resuelto" con el detalle. Resumen:
+
+| Punto | Qué cambió | Cubierto por |
+| --- | --- | --- |
+| B1 | El guardado lleva la fecha hasta la que se simuló (`simuladoHasta`), no `Date.now()`. | `tests/juego.test.ts` |
+| I1 | `navigator.locks`: una sola pestaña juega y guarda; la otra muestra "El juego está abierto en otra pestaña" y puede robar el candado. | `tests/juego.test.ts` |
+| I2 | Un guardado con campos de menos se completa con `estadoInicial()`; respaldos con fecha que no se pisan; "Copiar la partida dañada". | `tests/guardado.test.ts` |
+| I3 | Aviso fijo tras dos guardados fallidos; importar o borrar no recarga si no pudo escribir. | `tests/juego.test.ts` |
+| I4 | La pila siempre en el centro de la ventana en escritorio; se achica (`radioMax`) en vez de correrse. | Edge headless, 4 tamaños: 0 px |
+| I5, M15 | Título siempre (Jugar / Continuar) como velo sobre la pila del juego, quieta y lejos (`PilaVisual.zoom`). Al entrar: acercamiento, primer grano y la interfaz en orden. El fuera de línea se simula al entrar. | Edge headless |
+| I6, M12 | Sin `pilas.bin` el worker contesta `sinFotos` y la pila sigue; las mini pilas atrapan el fallo. | Edge headless con la red fallando |
+| I7 | Pérdida y recuperación del contexto WebGL; aviso sin WebGL2. | Edge headless con `WEBGL_lose_context` |
+| I8 | `comprarMax` sin `disponibles` por nivel: 70 → 5 ms en el peor caso. | `tests/tienda.test.ts` (equivale a comprar de a uno) |
+| I9 | Récord y logros de avalancha con las muestras de un grano solo. | medido con la pila real |
+| I10 | Íconos, logros ("???"), factores de Producción, tooltip, teclado y Cómo funciona respetan `vistos`. | `tests/logros.test.ts`, Edge headless |
+| I11 | Con la pila llena, un pedido al worker por cuadro; ajuste "Ahorrar batería" (4 ms); buffers de alturas reusados. | worker 59 % (44 % con ahorro), 60 fps |
+| M1 | `user-select: none` salvo campos y fórmulas. | — |
+| M2 | Menús con la familia de la tienda (sin tarjetas, píldoras, vidrio ni teclas dibujadas). | capturas 1280×720 y 375×812 |
+| M3 | Compresión en ausencia anotada con el umbral. | `tests/estadisticas.test.ts` |
+| M4 | `puedeComprimir` con `gte`; costos redondeados para arriba. | `tests/formato.test.ts` |
+| M5–M7 | Rangos al importar; la importada arranca ahora; exportar en trozos. | `tests/guardado.test.ts` |
+| M9–M11, M14, M16 | Listener del tooltip, sismógrafo 4 veces por segundo, cartel de ausencia por tiempo real, salidas en la pantalla final (y final ya visto directo), bitmaps y voces de audio. | Edge headless (M14) |
+
+Además: el test de 8 h fuera de línea tiene timeout de 30 s (estaba al borde de los 5 s y fallaba a veces en paralelo), y `scripts/partida50.mjs` toca el botón del título.
+
+### Sin resolver (necesitan una decisión o permiso)
+
+1. **M8** — `objetivo_minutos` de `balance/config.json` sigue en 193 / 226 / 397; debería ser 194 / 228 / 376. No toqué el archivo de balance.
+2. **M13** — la fuente sigue viniendo de Google Fonts: falta agregar `@fontsource/space-grotesk` (o los `.woff2` en `public/`).
+3. **M17** — `balance/pila.c` sigue sin compilar: no hay compilador de C en esta máquina.
+4. **Pila en móvil (I4)** — SPEC 6.4 dice "pila arriba (55 %)" y `PENDIENTES.md` pedía el centro exacto. Quedó como la spec.
+5. **Logro de avalancha récord (I9)** — con avalanchas reales, 1e6 derrumbes sale en segundos con la pila llena. Si se quiere más raro, subir `logros.avalancha_record` (balance).
+
+### Verificación
+
+- `npm test`: 138 tests en verde. `npm run typecheck` y `npm run build` bien. `python balance/sim.py`: 187 / 194 / 228 / 376 min, sin cambios.
