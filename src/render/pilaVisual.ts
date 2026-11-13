@@ -4,6 +4,8 @@ import { LADO } from './pila'
 import FOTOS from '../assets/pilas.json'
 import type { Pedido, Respuesta } from './pila.worker'
 import { Lienzo } from './lienzo'
+import type { Toma } from './marcos'
+import { COLORES_PILA } from './paletas'
 
 /** SPEC 6.3: tope de granos por segundo de la simulación visual. */
 export const RITMO_MAX = 3000
@@ -115,11 +117,13 @@ export class PilaVisual {
 
   /** Colores de cada altura (paletas.ts). */
   set paleta(p: number[]) {
+    this.colores = p
     this.lz.colores = p
   }
 
   /** Efecto de avalancha (índice en EFECTOS). */
   set efecto(n: number) {
+    this.efectoN = n
     this.lz.efecto = n
   }
 
@@ -285,10 +289,14 @@ export class PilaVisual {
   }
 
   private ultimosBrillos = [0, 0, 0, 0]
-  /** Foto del mandala: dibuja el cuadro de nuevo y devuelve el canvas (leerlo en la misma tarea), el centro y el radio en px reales. */
-  foto() {
-    this.lz.pintar(this.px, this.ultimosBrillos, 0, this.ahora, devicePixelRatio)
-    return { canvas: this.canvas, r: (this.radio + 0.5) * this.px }
+  private colores = COLORES_PILA
+  private efectoN = 0
+  /** Foto del mandala: lo necesario para dibujar la pila de nuevo a otra resolución (marcos.ts). */
+  foto(): Toma {
+    return {
+      alturas: this.ultimas, tDerrumbe: this.tDerrumbe, radio: this.radio, brillos: this.ultimosBrillos, ahora: this.ahora,
+      colores: this.colores, efecto: this.efectoN, destello: this.destello, cssPorCelda: this.px / devicePixelRatio,
+    }
   }
 
   /** Acerca la escala a la que corresponde (la pila en el 80 % del lado corto) y devuelve los px reales por celda. */

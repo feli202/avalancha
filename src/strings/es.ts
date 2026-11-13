@@ -107,6 +107,12 @@ export const es = {
     cerrar: 'Cerrar',
     pestanas: { estadisticas: 'Estadísticas', logros: 'Logros', ajustes: 'Ajustes' } as Record<string, string>,
     logros: 'Logros',
+    guardarImagen: 'Guardar imagen',
+  },
+  foto: {
+    guardada: 'Imagen guardada',
+    mandala: 'Guardá tu mandala',
+    pie: (energia: string, densidad: string, anillos: string) => `Energía ${energia}  ·  Densidad ^${densidad}  ·  ${anillos}`,
   },
   estadisticas: {
     titulo: 'Estadísticas',
@@ -294,6 +300,7 @@ export const es = {
       ['L', 'ver los logros'],
       ['E', 'ver las estadísticas'],
       ['A', 'abrir los ajustes'],
+      ['P', 'guardar una imagen de la pila'],
       ['Esc', 'volver a la pila'],
     ],
   },

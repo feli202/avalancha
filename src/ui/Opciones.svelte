@@ -2,14 +2,15 @@
   // Pantalla de Ajustes (Pantalla.svelte): Aspecto (paletas, efectos y marcos con su vista previa), Juego, Partida y Teclado.
   import { flushSync } from 'svelte'
   import { exportar, importar, type Partida } from '../guardado/guardado'
-  import { marco, sacarFoto } from '../render/marcos'
+  import { marco } from '../render/marcos'
   import { ALTO, ANCHO, RADIO_ENTERA, imagen, miniPila } from '../render/miniPilas'
   import { COLORES_DALTONISMO, EFECTOS, MARCOS, PALETAS, css } from '../render/paletas'
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
-  import { borrarPartida, camara, guardarYa, juego, partidaActual, reemplazarPartida } from './juego.svelte'
+  import { borrarPartida, guardarYa, juego, partidaActual, reemplazarPartida } from './juego.svelte'
   import { desbloqueados, elegido, logroDe, nombreLogro, type Cosmetico } from './logros'
   import Pantalla from './Pantalla.svelte'
+  import { guardarImagen } from './foto.svelte'
 
   const PESTANAS = ['aspecto', 'juego', 'partida', 'teclado'] as const
   let activa = $state(0)
@@ -51,11 +52,6 @@
     })
     pintar()
     return { update(n: typeof p) { p = n; pintar() } }
-  }
-
-  function foto() {
-    const f = camara.foto?.()
-    if (f) sacarFoto(f, actual.marco, coloresActuales, txt.opciones.archivoFoto)
   }
 
   // ---------- Partida: guardar, exportar, importar y borrar, cada uno con su mensaje o su paso de confirmación ----------
@@ -139,7 +135,7 @@
         {@render cosmeticos('efecto', txt.opciones.efecto, txt.opciones.efectoDesc)}
         {@render cosmeticos('marco', txt.opciones.marco, txt.opciones.marcoDesc)}
         <div class="foto">
-          <button class="accion" onclick={foto}>{txt.opciones.foto}</button>
+          <button class="accion" onclick={guardarImagen}>{txt.opciones.foto}</button>
           <p class="desc">{txt.opciones.fotoDesc}</p>
         </div>
 

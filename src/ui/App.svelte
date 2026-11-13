@@ -15,6 +15,7 @@
   import { formato, formatoMult, hablado } from './formato'
   import { fade } from 'svelte/transition'
   import { comprimirYa, hayPanel, invitaTocar, juego, progresoCompresion } from './juego.svelte'
+  import { foto, guardarImagen } from './foto.svelte'
 
   const v = $derived(juego.vistos)
   const s = $derived(juego.s)
@@ -26,13 +27,14 @@
   const alternarAutoComp = () =>
     (juego.s = { ...juego.s, auto: { ...juego.s.auto, compresion_auto: !juego.s.auto.compresion_auto } })
 
-  // C comprime (Espacio y M viven en Pila y Tienda).
+  // C comprime, P guarda la imagen (Espacio y M viven en Pila y Tienda).
   function tecla(e: KeyboardEvent) {
     const libre = !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !hayPanel() &&
       !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
     if (libre && e.code === 'KeyL') juego.panel = 'logros'
     if (libre && e.code === 'KeyE') juego.panel = 'estadisticas'
     if (libre && e.code === 'KeyA') juego.panel = 'ajustes'
+    if (libre && e.code === 'KeyP') guardarImagen()
     if (e.code !== 'KeyC' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || hayPanel()) return
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
     if (juego.vistos.compresion && lista) comprimirYa()
@@ -74,6 +76,11 @@
   </header>
 
   <div class="ajustes">
+    <button class="icono" aria-label={txt.menu.guardarImagen} title={txt.menu.guardarImagen} aria-keyshortcuts="P" onclick={guardarImagen}>
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <path d="M1.5 6a1.5 1.5 0 0 1 1.5-1.5h2.2L6.7 2.5h4.6l1.5 2H15A1.5 1.5 0 0 1 16.5 6v8a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 14z" /><circle cx="9" cy="9.75" r="3" />
+      </svg>
+    </button>
     <button class="icono" aria-label={txt.menu.logros} aria-haspopup="dialog" aria-keyshortcuts="L" onclick={() => (juego.panel = 'logros')}>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
         <path d="M5 2.5h8v4a4 4 0 0 1-8 0zM9 10.5v3M6 15.5h6M5 4H2.5a2.5 2.5 0 0 0 2.6 3M13 4h2.5a2.5 2.5 0 0 1-2.6 3" />
@@ -155,8 +162,18 @@
       <dt>{txt.fin.record}</dt><dd>{txt.fin.derrumbes(formato(juego.record))}</dd>
     </dl>
     <p class="adelanto">{txt.fin.adelanto}</p>
+    <button class="mandala" onclick={guardarImagen} aria-keyshortcuts="P">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <path d="M1.5 6a1.5 1.5 0 0 1 1.5-1.5h2.2L6.7 2.5h4.6l1.5 2H15A1.5 1.5 0 0 1 16.5 6v8a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 14z" /><circle cx="9" cy="9.75" r="3" />
+      </svg>
+      {txt.foto.mandala}
+    </button>
   </section>
 {/if}
+
+<!-- La foto: un destello suave al tocar y el aviso al terminar. -->
+{#key foto.destello}{#if foto.destello}<div class="destello" class:quieto={ajustes.reducirDestellos} aria-hidden="true"></div>{/if}{/key}
+{#key foto.guardada}{#if foto.guardada}<p class="guardada" role="status">{txt.foto.guardada}</p>{/if}{/key}
 
 {#if juego.titulo}<Titulo />{/if}
 
@@ -202,8 +219,9 @@
   .sismo { position: fixed; left: var(--margen); bottom: var(--margen); width: var(--col); pointer-events: none; }
   .chico { display: flex; flex-wrap: wrap; gap: 0 1rem; margin: 0.5rem 0 0; font-size: 0.8125rem; color: var(--tenue); }
 
+  /* La tienda arranca debajo de la fila de íconos (.ajustes): con cuatro no entran al lado de los modos. */
   .der {
-    position: fixed; top: var(--margen); right: var(--margen); bottom: var(--margen); width: var(--col);
+    position: fixed; top: calc(var(--margen) + 2.75rem); right: var(--margen); bottom: var(--margen); width: var(--col);
     display: flex; flex-direction: column;
   }
   .contenido { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
@@ -246,6 +264,24 @@
   .final dd { margin: 0; font-weight: 600; text-align: right; }
   .adelanto { margin: 0; font-size: 0.9375rem; color: var(--violeta); letter-spacing: 0.01em; }
   @keyframes llegar { to { opacity: 1; } }
+  .mandala {
+    display: flex; align-items: center; gap: 0.625rem; margin-top: 2rem; min-height: 2.75rem; padding: 0.75rem 1.5rem;
+    border: 1px solid rgb(232 233 243 / 0.5); border-radius: 999px; background: rgb(232 233 243 / 0.08); color: var(--tinta);
+    font: inherit; font-size: 1.0625rem; font-weight: 600; cursor: pointer; box-shadow: 0 0 1.5rem rgb(255 255 255 / 0.15);
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  .mandala:hover { background: rgb(232 233 243 / 0.16); box-shadow: 0 0 2rem rgb(255 255 255 / 0.3); }
+  .mandala svg { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+
+  .destello { position: fixed; inset: 0; z-index: 20; background: #fff; pointer-events: none; opacity: 0; animation: destello 0.6s ease-out; }
+  .destello.quieto { animation-duration: 0.9s; animation-name: destelloSuave; }
+  @keyframes destello { 8% { opacity: 0.45; } }
+  @keyframes destelloSuave { 30% { opacity: 0.12; } }
+  .guardada {
+    position: fixed; left: 50%; bottom: 2rem; translate: -50% 0; z-index: 20; margin: 0; padding: 0.5rem 1rem;
+    border-radius: 999px; background: rgb(7 8 15 / 0.75); font-size: 0.9375rem; pointer-events: none;
+    animation: aviso 2.8s ease-out forwards;
+  }
 
   /* Logros: la pila se aleja y se apaga mientras entra la pantalla (Logros.svelte). */
   .juego { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s, filter 0.6s; }

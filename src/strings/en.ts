@@ -100,6 +100,12 @@ export const en: typeof es = {
     cerrar: 'Close',
     pestanas: { estadisticas: 'Stats', logros: 'Achievements', ajustes: 'Settings' },
     logros: 'Achievements',
+    guardarImagen: 'Save image',
+  },
+  foto: {
+    guardada: 'Image saved',
+    mandala: 'Save your mandala',
+    pie: (energia: string, densidad: string, anillos: string) => `Energy ${energia}  ·  Density ^${densidad}  ·  ${anillos}`,
   },
   estadisticas: {
     titulo: 'Stats',
@@ -274,6 +280,7 @@ export const en: typeof es = {
       ['L', 'achievements'],
       ['E', 'stats'],
       ['A', 'settings'],
+      ['P', 'save an image of the pile'],
       ['Esc', 'back to the pile'],
     ],
   },

@@ -3,6 +3,7 @@ import { CFG, anillos, comprimir, estadoInicial, fueraDeLinea, mutacionesDisponi
 import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
+import type { Toma } from '../render/marcos'
 import type { Medidas } from '../render/pilaVisual'
 import { txt } from '../strings'
 import { nuevosLogros, primerDerrumbe } from './logros'
@@ -59,7 +60,7 @@ export let historial = historialVacio(Date.now())
 export const sismo: number[] = []
 
 /** La pila del juego para la foto del mandala (la pone Pila.svelte). */
-export const camara: { foto: (() => { canvas: HTMLCanvasElement; r: number }) | null } = { foto: null }
+export const camara: { foto: (() => Toma) | null } = { foto: null }
 
 const log10E = (s: State) => (s.energia.gt(1) ? s.energia.log10() : 0)
 

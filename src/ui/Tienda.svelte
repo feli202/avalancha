@@ -135,9 +135,8 @@
 
 <style>
   /* Sin cajas: filas de texto separadas por líneas de 1 px; se compra con un clic en la fila. */
-  /* Sin título: los modos arrancan en el borde izquierdo de la lista; a la derecha, el ícono de Ajustes
-     (fijo, App.svelte), alineado con el borde derecho. */
-  .cabeza { display: flex; align-items: center; padding: 0 2.5rem 0.25rem 0; }
+  /* Sin título: los modos arrancan en el borde izquierdo de la lista (los íconos de App.svelte van en la fila de arriba). */
+  .cabeza { display: flex; align-items: center; padding: 0 0 0.25rem; }
   .modos { display: flex; }
   .modos button {
     min-width: 2.75rem; min-height: 2.75rem; padding: 0; text-align: left; border: 0; background: none;
@@ -146,7 +145,7 @@
   .modos button:hover { color: var(--tenue); }
   .modos button[aria-checked='true'] { color: var(--tinta); font-weight: 600; }
 
-  .pestanas { display: flex; gap: 1rem; padding: 0 2.5rem 0.25rem 0; }
+  .pestanas { display: flex; gap: 1rem; padding: 0 0 0.25rem; }
   .pestanas button {
     min-height: 2.75rem; padding: 0; border: 0; border-bottom: 1px solid transparent; background: none;
     color: var(--apagado); font: inherit; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: color 0.15s;
