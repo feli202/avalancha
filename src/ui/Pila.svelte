@@ -8,7 +8,7 @@
   import { ajustes } from './ajustes.svelte'
   import { COLORES_DALTONISMO, EFECTOS, PALETAS } from '../render/paletas'
   import { contarAvalancha, muestraAvalancha } from '../guardado/historial'
-  import { camara, hayPanel, historial, juego, progresoCompresion, sismo } from './juego.svelte'
+  import { camara, hayPanel, historial, invitaTocar, juego, progresoCompresion, sismo } from './juego.svelte'
   import { elegido } from './logros'
   import * as sonido from './sonido'
 
@@ -23,6 +23,8 @@
     id: number; texto?: string; anillo?: { r: number; color: string }; ola?: { r: number; color: string }
     /** SPEC 6.5: la pila implota con una estela de los cuatro colores, destello blanco y la Densidad nueva. */
     compresion?: { r: number; densidad: string }
+    /** La primera avalancha después del primer toque: un destello que sale de la pila. */
+    chispa?: { r: number }
   }
   /** Durante la implosión la pila de pantalla se queda con los granos de antes de comprimir; al terminar, se vacía. */
   let implotando = $state(false)
@@ -34,7 +36,10 @@
   const efecto = (e: Omit<Efecto, 'id'>) => (efectos = [...efectos.slice(-3), { ...e, id: siguiente++ }])
   const quitar = (id: number) => (efectos = efectos.filter((e) => e.id !== id))
 
-  const soltar = () => (juego.s = punado(juego.s))
+  function soltar() {
+    juego.s = punado(juego.s)
+    if (!juego.vistos.punado) juego.vistos = { ...juego.vistos, punado: true }
+  }
 
   function tecla(e: KeyboardEvent) {
     // En un botón o un campo, la barra hace lo suyo.
@@ -45,10 +50,18 @@
 
   onMount(() => {
     const pila = new PilaVisual(canvas)
+    // Los granos iniciales derrumban al montar, antes del primer toque: esos no cuentan.
+    let primera = invitaTocar()
     pila.alMedir = (m) => (juego.medidas = m)
     pila.alAvalancha = (n) => efecto({ texto: txt.avalancha(n) })
     pila.alMuestra = (n) => muestraAvalancha(historial, n)
     pila.alTamano = (n) => {
+      if (primera && juego.vistos.punado) {
+        primera = false
+        juego.primera = true
+        sonido.hito('milestone')
+        efecto({ chispa: { r: Math.max(pila.radioCss, 48) } })
+      }
       sismo.push(n)
       sonido.derrumbe(n)
       if (n > juego.record) juego.record = n
@@ -142,11 +155,17 @@
       <!-- SPEC 6.6: la pila se vuelve blanca desde el centro hacia afuera; después colapsa en un punto (.colapsa). -->
       <div class="blanco" style:--r="{Math.max(juego.radioPila, 48) + ANILLO_SEP}px"></div>
     {/if}
+    {#if invitaTocar() && !juego.titulo}
+      <!-- La pista "Tocá la pila": dos ondas que salen del centro, hasta el primer toque. -->
+      <div class="toque"></div><div class="toque segunda"></div>
+    {/if}
     {#each efectos as e (e.id)}
       {#if e.compresion}
         <div class="estela" style:--r="{e.compresion.r}px" style:background={ESTELA}></div>
         <div class="destello"></div>
         <p class="flota densidad" onanimationend={() => quitar(e.id)}>{txt.densidadNueva(e.compresion.densidad)}</p>
+      {:else if e.chispa}
+        <div class="chispa" style:--r="{e.chispa.r}px" onanimationend={() => quitar(e.id)}></div>
       {:else if e.ola}
         <div class="ola" style:--r="{e.ola.r}px" style:--c={e.ola.color} onanimationend={() => quitar(e.id)}></div>
       {:else}
@@ -193,6 +212,21 @@
     mix-blend-mode: screen; animation: ola 1.4s cubic-bezier(0.2, 0.6, 0.3, 1) forwards; will-change: transform, opacity;
   }
   .quieto .ola { background: var(--c); animation-name: tenir; }
+  .toque {
+    position: absolute; width: 6rem; height: 6rem; translate: -50% -50%; border-radius: 50%; opacity: 0;
+    border: 1.5px solid rgb(232 233 243 / 0.55); animation: toque 2.4s ease-out infinite;
+  }
+  .toque.segunda { animation-delay: 1.2s; }
+  .chispa {
+    position: absolute; width: calc(6 * var(--r)); height: calc(6 * var(--r)); translate: -50% -50%; border-radius: 50%;
+    background: radial-gradient(circle, rgb(255 240 210 / 0.95) 0, rgb(255 181 71 / 0.45) 18%, transparent 55%);
+    mix-blend-mode: screen; animation: chispa 0.8s ease-out forwards; will-change: transform, opacity;
+  }
+  .quieto .toque { animation-name: latir; }
+  .quieto .chispa { animation-name: tenir; }
+  @keyframes toque { from { transform: scale(0.35); opacity: 0; } 25% { opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+  @keyframes latir { 50% { opacity: 0.6; } }
+  @keyframes chispa { from { transform: scale(0.25); opacity: 1; } to { transform: scale(1); opacity: 0; } }
   /* Reducir destellos: nada se mueve ni crece, solo aparece y se desvanece. */
   .quieto .flota, .quieto .anillo { animation-name: desvanecer; }
   @keyframes subir { from { transform: none; opacity: 1; } to { transform: translateY(-4rem); opacity: 0; } }

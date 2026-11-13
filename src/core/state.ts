@@ -34,7 +34,7 @@ export interface State {
 
 export const estadoInicial = (): State => ({
   energia: new Decimal(0),
-  granos: 0,
+  granos: CFG.granos_iniciales,
   caudal: 0,
   colores: CFG.colores.map(() => 0),
   cascada: 0,

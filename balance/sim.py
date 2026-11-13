@@ -25,7 +25,7 @@ class State:
         # permanente en la Capa 0
         s.tier = 0; s.mut = {k: 0 for k in ('caudal', 'colores', 'expansion', 'cascada')}
         s.max_ever = -math.inf; s.unlocked_colors = 1
-        s.reset_run()
+        s.reset_run(); s.G = float(CFG['granos_iniciales'])  # solo la primera corrida
     def reset_run(s):
         s.E = -math.inf; s.G = 0.0; s.Lf = 0; s.Lc = [0, 0, 0, 0]; s.Lk = 0; s.run_t = 0.0
 

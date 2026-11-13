@@ -5,7 +5,7 @@ import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
 import type { Medidas } from '../render/pilaVisual'
 import { txt } from '../strings'
-import { nuevosLogros } from './logros'
+import { nuevosLogros, primerDerrumbe } from './logros'
 
 const PASO = 0.05 // s: paso fijo de la economía (SPEC 8)
 const MAX_PASOS = 200 // por cuadro; con más tiempo acumulado (pestaña oculta, carga) va la simulación fuera de línea
@@ -43,6 +43,10 @@ class Juego {
   verHistorial = $state(0)
   /** Panel abierto sobre la pila: Estadísticas, Logros o Ajustes. */
   panel = $state<'estadisticas' | 'logros' | 'ajustes' | null>(null)
+  /** Pantalla de título (partida nueva): la economía espera. */
+  titulo = $state(false)
+  /** La primera avalancha después del primer toque ya pasó (Pila.svelte; el contador de Energía salta). */
+  primera = $state(false)
   /** Sube con cada salto fuera de línea: Pila.svelte no anima lo que pasó en la ausencia. */
   saltos = 0
 }
@@ -90,7 +94,7 @@ function medirEta(s: State) {
 function condiciones(s: State): Record<string, boolean> {
   const e = s.maxEnergia
   const c: Record<string, boolean> = {
-    derrumbes: s.granos >= 4 || s.compresiones > 0, // todos los granos caen al centro: el 4.º hace el primer derrumbe
+    derrumbes: primerDerrumbe(s),
     tienda: e.gte(CFG.revelado.tienda),
     color0: e.gte(CFG.revelado.ambar),
     anillos: anillos(s.granos) > 0 || s.compresiones > 0,
@@ -139,8 +143,11 @@ export function comprimirYa() {
   previo = juego.s
 }
 
+/** La pista "Tocá la pila": hasta el primer Puñado (las partidas de antes no lo anotaban: con la tienda ya visible, tampoco). */
+export const invitaTocar = () => !juego.vistos.punado && !juego.vistos.tienda
+
 /** Hay un cartel o panel encima: las teclas del juego (Espacio, M, C) no hacen nada. */
-export const hayPanel = () => juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto
+export const hayPanel = () => juego.titulo || juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto
 
 export const partidaActual = (): Partida =>
   ({ estado: juego.s, guardadoEn: Date.now(), vistos: juego.vistos, record: juego.record, logros: juego.logros, historial })
@@ -184,6 +191,8 @@ export function arrancar() {
     historial = p.historial ?? historialVacio(p.guardadoEn - p.estado.tiempoTotal * 1000)
     antes = p.guardadoEn // el primer cuadro simula lo que pasó desde el guardado
   }
+  // Sin partida o sin tiempo jugado (recién borrada, o se recargó en el título): partida nueva.
+  if (p !== 'corrupto' && (!p || p.estado.tiempoTotal === 0)) juego.titulo = true
   previo = juego.s
   setInterval(guardarYa, GUARDAR_CADA)
   addEventListener('pagehide', guardarYa)
@@ -191,7 +200,7 @@ export function arrancar() {
 
   const cuadro = () => {
     const ahora = Date.now()
-    acum += (Math.max(0, ahora - antes) / 1000) * juego.velocidad
+    acum += (Math.max(0, ahora - antes) / 1000) * (juego.titulo ? 0 : juego.velocidad)
     antes = ahora
     let s = juego.s
     if (acum > MAX_PASOS * PASO) {

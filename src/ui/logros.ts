@@ -5,8 +5,11 @@ import { txt } from '../strings'
 
 const L = CFG.logros
 
+/** Todos los granos caen al centro: el 4.º derrumba. Con granos_iniciales = 39 (≡ 3 mod 4), el primero que se suelta. */
+export const primerDerrumbe = (s: State) => (s.granosTotales >= 1 && s.granos >= 4) || s.compresiones > 0
+
 export const LOGROS: Record<string, (s: State, record: number) => boolean> = {
-  derrumbe: (s) => s.granos >= 4 || s.compresiones > 0, // todos los granos caen al centro: el 4.º derrumba
+  derrumbe: (s) => primerDerrumbe(s),
   granos: (s) => s.granos >= L.granos_pila,
   avalancha: (_, r) => r >= L.avalancha,
   colores: (s) => s.colores.every((n) => n > 0),

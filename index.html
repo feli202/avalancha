@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Avalancha</title>
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -26,6 +27,9 @@
       .num { font-variant-numeric: tabular-nums; }
       /* Solo para lectores de pantalla. */
       .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+      /* Al cargar, la pantalla entra con un fundido corto (también directo al juego, con partida guardada). */
+      #app { animation: entrar 0.5s ease-out; }
+      @keyframes entrar { from { opacity: 0; } }
       :focus-visible { outline: 2px solid var(--ambar); outline-offset: 2px; }
     </style>
   </head>

@@ -9,9 +9,10 @@ export const puedeComprimir = (s: State) => s.infinitos === 0 && s.energia.log10
 /** SPEC 4.7: reinicia la corrida y sube la Densidad; si no se llegó al umbral, devuelve el mismo estado. */
 export function comprimir(s: State): State {
   if (!puedeComprimir(s)) return s
-  const { energia, granos, caudal, colores, cascada, tiempoCorrida } = estadoInicial()
+  const { energia, caudal, colores, cascada, tiempoCorrida } = estadoInicial()
   return {
-    ...s, energia, granos, caudal, colores, cascada, tiempoCorrida,
+    ...s, energia, granos: 0, caudal, // granos_iniciales es solo para la primera corrida
+    colores, cascada, tiempoCorrida,
     compresiones: s.compresiones + 1,
     mejorCorrida: s.mejorCorrida > 0 ? Math.min(s.mejorCorrida, s.tiempoCorrida) : s.tiempoCorrida,
     compresionesSinAmbar: s.compresionesSinAmbar + (s.colores[0] === 0 ? 1 : 0),

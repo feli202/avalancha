@@ -2,7 +2,7 @@
 import Decimal from 'break_infinity.js'
 import { describe, expect, it } from 'vitest'
 import {
-  INFINITO, anillos, aplicar, autocomprar, cascadaC, caudal, comprar, comprarMax, comprimir, costoCascada,
+  CFG, INFINITO, anillos, aplicar, autocomprar, cascadaC, caudal, comprar, comprarMax, comprimir, costoCascada,
   costoCaudal, costoColor, costoMutacion, densidad, disponibles, estadoInicial, multAnillos, multCascada,
   multColor, produccion, puedeComprimir, punado, tick, valor, type State,
 } from '../src/core'
@@ -68,7 +68,8 @@ describe('producción', () => {
     expect(densidad(con({ compresiones: 17 }))).toBeCloseTo(3.04)
   })
   it('Energía/s = F × 0,035 × G × V^D', () => {
-    expect(produccion(estadoInicial()).toNumber()).toBe(0)
+    expect(produccion(con({ granos: 0 })).toNumber()).toBe(0)
+    cerca(produccion(estadoInicial()), 0.035 * CFG.granos_iniciales) // la primera corrida arranca con granos
     cerca(produccion(con({ granos: 100 })), 3.85) // 1 × 3,5 × 1,1 (un anillo)
     // F = 4, G = 50 (sin anillos), V = 1,25² × 10 = 15,625, D = 1,24
     const s = con({ granos: 50, caudal: 2, colores: [2, 0, 0, 0], compresiones: 2, mutaciones: { caudal: 0, colores: 1, expansion: 0, cascada: 0 } })

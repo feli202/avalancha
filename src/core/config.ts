@@ -9,6 +9,7 @@ interface Curva { c0: number; g: number }
 
 export interface Config {
   K_derrumbes_por_grano: number
+  granos_iniciales: number
   infinito_log10: number
   caudal: Curva & { s: number; granos_base: number; mult_por_nivel: number }
   colores: (Curva & { s: number; id: string; mult_por_nivel: number; desbloqueo_log10: number })[]

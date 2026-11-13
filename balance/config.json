@@ -1,6 +1,8 @@
 {
   "_doc": "Constantes de balance de la Capa 0. Costos en log10. Ver SPEC.md seccion 4.",
   "K_derrumbes_por_grano": 0.035,
+  "_granos_iniciales": "SPEC 4.1: la primera corrida arranca con estos granos en la pila (las siguientes, vacias). 39 deja el primer Punado al borde de una avalancha de ~20 derrumbes, aunque el Caudal haya soltado hasta 4 granos antes.",
+  "granos_iniciales": 39,
   "infinito_log10": 308.2547,
 
   "caudal": { "granos_base": 1, "mult_por_nivel": 2, "c0": 1.0, "g": 0.6, "s": 0.15 },

@@ -23,9 +23,9 @@ El simulador juega la Capa 0 con un bot que compra lo de mejor retorno. Resultad
 
 | Estilo de jugador | Primer Infinito | Compresiones |
 | --- | --- | --- |
-| Muy activo (revisa cada 5 s) | 3 h 08 min | 17 |
+| Muy activo (revisa cada 5 s) | 3 h 07 min | 17 |
 | **Atento (cada 15 s) — referencia** | **3 h 14 min** | 17 |
-| Revisa cada minuto | 3 h 49 min | 17 |
+| Revisa cada minuto | 3 h 48 min | 17 |
 | Casi idle (cada 5 min) | 6 h 16 min | 17 |
 
 Es el rango del primer Infinito de Antimatter Dimensions y Revolution Idle: unas 3 horas jugando atento, bastante más si se deja en segundo plano.
@@ -34,12 +34,11 @@ Línea de tiempo del jugador de referencia (salida real de `python3 balance/sim.
 
 | Minuto | Evento |
 | --- | --- |
-| 0:30 | Primera compra de Caudal |
-| 1:00 | Primera mejora de color (Ámbar) |
-| 1:40 | Aparece Coral |
-| 4:40 | Aparece Jade |
-| 13:30 | Aparece Violeta |
-| 15 | Compresión 1 (1e17) |
+| 0:20 | Primera compra de Caudal y primera mejora de color (Ámbar) |
+| 1:25 | Aparece Coral |
+| 4:10 | Aparece Jade |
+| 13:20 | Aparece Violeta |
+| 14:40 | Compresión 1 (1e17) |
 | 30 | Compresión 2 → se desbloquean Cascada y el autocomprador de Caudal |
 | 44 | Compresión 3 → autocompradores de Ámbar y Coral |
 | 58 | Compresión 4 → autocompradores de Jade y Violeta |
@@ -88,7 +87,7 @@ Energía/s = F × (0,035 × G) × V^D
 - `V` = valor de cada derrumbe (producto de todos los multiplicadores de 4.3 a 4.6).
 - `D` = Densidad, el exponente que da la Compresión (4.7). Se aplica **solo a V**, nunca a F ni a G.
 
-`G` crece `F` por segundo. Energía arranca en 0.
+`G` crece `F` por segundo. Energía arranca en 0. La primera corrida arranca con `G = 39` (`granos_iniciales`): el primer Puñado (4.10) cae sobre una pila al borde de una avalancha de ~20 derrumbes, así la primera avalancha llega con el primer toque. Las corridas después de comprimir arrancan vacías. Efecto medido en el simulador: la primera corrida dura unos 30 s menos; el primer Infinito del jugador de referencia no cambia.
 
 ### 4.2 Caudal
 

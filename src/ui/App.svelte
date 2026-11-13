@@ -11,8 +11,10 @@
   import Pila from './Pila.svelte'
   import Sismografo from './Sismografo.svelte'
   import Tienda from './Tienda.svelte'
+  import Titulo from './Titulo.svelte'
   import { formato, formatoMult, hablado } from './formato'
-  import { comprimirYa, hayPanel, juego, progresoCompresion } from './juego.svelte'
+  import { fade } from 'svelte/transition'
+  import { comprimirYa, hayPanel, invitaTocar, juego, progresoCompresion } from './juego.svelte'
 
   const v = $derived(juego.vistos)
   const s = $derived(juego.s)
@@ -64,7 +66,7 @@
 
   <header class="izq">
     <span class="etiqueta">{txt.energia}</span>
-    {#if fin}<span class="energia infinito">{txt.infinito}</span>{:else}<span class="energia num" aria-hidden="true">{formato(s.energia)}</span><span class="sr">{hablado(formato(s.energia))}</span>{/if}
+    {#if fin}<span class="energia infinito">{txt.infinito}</span>{:else}{#key juego.primera}<span class="energia num" class:salta={juego.primera} aria-hidden="true">{formato(s.energia)}</span>{/key}<span class="sr">{hablado(formato(s.energia))}</span>{/if}
     {#if v.tienda}<span class="linea num aparece"><b class="ambar" aria-hidden="true">+{formato(produccion(s))}</b><span class="sr">{hablado(formato(produccion(s)))}</span> {txt.energiaPorSegundo}</span>{/if}
     {#if s.compresiones > 0}
       <span class="linea num aparece">{txt.densidad} <b>^{formatoMult(densidad(s))}</b></span>
@@ -91,7 +93,7 @@
     {#key juego.aviso.id}<p class="aviso" role="status">{juego.aviso.texto}</p>{/key}
   {/if}
 
-  {#if !v.tienda}<p class="pista">{txt.pista}</p>{/if}
+  {#if invitaTocar()}<p class="pista" out:fade={{ duration: 300 }}>{txt.pista}</p>{/if}
 
   {#if v.derrumbes}
     <footer class="sismo aparece">
@@ -156,6 +158,8 @@
   </section>
 {/if}
 
+{#if juego.titulo}<Titulo />{/if}
+
 <Paneles />
 <Logros />
 <Estadisticas />
@@ -171,6 +175,11 @@
   .izq, .sismo, .der, .aviso, .pista { text-shadow: 0 0 0.75rem var(--fondo), 0 0 0.25rem var(--fondo); }
   b { font-weight: 600; color: var(--tinta); }
   .ambar { color: var(--ambar); }
+  /* La primera avalancha: el número salta y se enciende. */
+  .salta { transform-origin: left center; animation: salta 0.7s cubic-bezier(0.3, 1.6, 0.5, 1); }
+  .quieto .salta { animation-name: encender; }
+  @keyframes salta { 30% { transform: scale(1.3); color: var(--ambar); text-shadow: 0 0 1.5rem var(--ambar); } }
+  @keyframes encender { 30% { color: var(--ambar); } }
 
   .izq {
     position: fixed; top: var(--margen); left: var(--margen); width: var(--col);

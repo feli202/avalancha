@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). **Hito 6** (pulido técnico): sonido, móvil y tablet, accesibilidad (Lighthouse 100) y rendimiento (60 fps en GPU integrada). La Capa 0 está completa.
+Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). **Hito 6** (pulido técnico): sonido, móvil y tablet, accesibilidad (Lighthouse 100) y rendimiento (60 fps en GPU integrada). **Primeros 10 segundos**: pantalla de título, logo y primera avalancha con el primer toque. La Capa 0 está completa.
 
 ## Qué se hizo
 
@@ -29,14 +29,14 @@ Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económ
 
 | Medida | Núcleo (test) | `sim.py` | Diferencia | Rango SPEC 10 |
 | --- | --- | --- | --- | --- |
-| Primera Compresión | 15,1 min | 15,1 min | 0 % | 13–17 |
+| Primera Compresión | 14,6 min | 14,6 min | 0 % | 13–17 |
 | Compresiones | 17 | 17 | — | 17 |
-| Primera Mutación | 123,1 min | 120,6 min | +2,1 % | 110–130 |
-| Infinito | 197,2 min | 193,6 min | +1,9 % | 180–210 |
-| Corrida más larga | 15,1 min | 15,1 min | 0 % | ≤ 16 |
+| Primera Mutación | 122,3 min | 120,6 min | +1,4 % | 110–130 |
+| Infinito | 196,4 min | 194 min | +1,2 % | 180–210 |
+| Corrida más larga | 14,8 min | 14,8 min | 0 % | ≤ 16 |
 
-Corridas del núcleo: 15,1 · 14,8 · 14,3 · 14,3 · 12,3 · 13,1 · 10,3 · 9,6 · 7,2 · 10,1 · 11,2 · 9,2 · 12,0 · 11,1 · 11,3 · 8,9 · 10,7 · 1,8.
-Corridas de `sim.py`: 15,1 · 14,8 · 13,8 · 14,1 · 12,1 · 12,8 · 10,1 · 9,3 · 6,9 · 9,9 · 10,9 · 9,0 · 11,6 · 11,2 · 11,1 · 8,9 · 10,5 · 1,8.
+Corridas del núcleo: 14,6 · 14,8 · 14,0 · 14,3 · 12,3 · 13,1 · 10,3 · 9,6 · 7,2 · 10,1 · 11,2 · 9,2 · 12,0 · 11,1 · 11,3 · 8,9 · 10,7 · 1,8.
+Corridas de `sim.py`: 14,6 · 14,8 · 14,3 · 14,1 · 12,1 · 12,8 · 10,1 · 9,3 · 6,9 · 9,9 · 10,9 · 9,0 · 11,6 · 11,2 · 11,1 · 8,9 · 10,5 · 1,8.
 
 La diferencia aparece desde la Compresión 2 (cuando llegan los autocompradores): el núcleo los dispara una vez por segundo y cada uno compra el máximo de lo suyo (SPEC 4.8); `sim.py` los deja comprar en cada paso (0,2 s al principio de la corrida) y en orden de mejor retorno.
 
@@ -604,7 +604,7 @@ Ajustes deja el panel translúcido y pasa a pantalla completa, con el mismo arma
 ## Inglés como segundo idioma
 
 - `src/strings/en.ts`: la traducción completa, con el tipo de `es.ts` (`typeof es`), así que si falta una clave no compila. Un test en `tests/logros.test.ts` compara además las claves de los dos archivos.
-- Nombres: Energy, Flow, Amber, Coral, Jade, Violet, Rings, Cascade, Compression, Density, Mutations, Infinity, Handful, Avalanche. "Derrumbe" quedó como *topple* (el término de la pila abeliana). El título del juego sigue siendo "Avalancha".
+- Nombres: Energy, Flow, Amber, Coral, Jade, Violet, Rings, Cascade, Compression, Density, Mutations, Infinity, Handful, Avalanche. "Derrumbe" quedó como *topple* (el término de la pila abeliana). El título del juego es "Avalanche" en inglés (ver Los primeros 10 segundos).
 - `src/strings/index.ts` elige el idioma al cargar: el guardado en los ajustes o, si no hay, el del navegador (español si empieza con "es", si no, inglés). Todos los componentes importan `txt` de ahí. `es.ts` y `en.ts` llevan `locale` (`es-AR` / `en-US`) y `decimal`: los números salen 1.234 / 1,23e45 en español y 1,234 / 1.23e45 en inglés. El lector de pantalla lee la potencia en los dos.
 - **Selector en Ajustes → Juego**, arriba de Notación. Cambiar el idioma **recarga la página** (la partida se guarda en el `pagehide`): hay textos que se arman una sola vez al cargar y así ninguno queda en el idioma viejo. `<html lang>` sigue al idioma.
 
@@ -613,3 +613,20 @@ Ajustes deja el panel translúcido y pasa a pantalla completa, con el mismo arma
 - Script que recorre la pantalla principal, las tres pestañas de la tienda y cada pestaña de Logros, Estadísticas y Ajustes buscando texto cortado o fuera de la pantalla, en inglés, con una partida avanzada (Compresión 15): **nada en escritorio (1024×768) ni en móvil (375×812)**. Lo único que encontró fue el último número del eje del gráfico de avalanchas, que se cortaba 3 px en móvil también en español; ahora va alineado a la derecha.
 - Cambiar de English a Español desde Ajustes recarga y conserva la partida.
 - No revisé a ojo cada pantalla en inglés (el navegador integrado estaba oculto y casi no dibujaba la pila); sí vi Ajustes → Juego en móvil.
+
+## Los primeros 10 segundos
+
+- **Pantalla de título** (`src/ui/Titulo.svelte`): logo, el nombre (`txt.titulo`: Avalancha / Avalanche) en Space Grotesk 600 apretada, y un solo botón, Jugar / Play. Detrás, una pila propia (otra `PilaVisual`) que arranca en la foto de 1.000 granos y recibe 30 granos/s: cámara lenta. Al tocar Jugar se funde en 0,6 s. Mientras está, la economía no corre (`juego.titulo`; `hayPanel()` la cuenta, así Espacio no suelta granos).
+- **Cuándo aparece**: sin partida guardada, o con una partida de 0 s de juego (recién borrada, o recargada en el título). **Con partida guardada se entra directo**; toda la página entra con un fundido de 0,5 s (`#app` en `index.html`). Por eso "Continuar" no existe: con partida nunca se ve el título.
+- **Logo** (`public/logo.svg`, también favicon): una A de 7×7 celdas cuyos colores son las alturas reales de una pila de 472 granos soltados al centro (la que mejor reparte los cuatro colores: 6 Coral, 6 Violeta, 9 Jade, 9 Ámbar), con los colores de interfaz. `document.title` sigue al idioma.
+- **Granos iniciales** (`granos_iniciales: 39` en `config.json`, SPEC 4.1): solo la primera corrida (después de comprimir, la pila arranca vacía). 39 ≡ 3 mod 4 deja la pila al borde: el primer Puñado hace una avalancha de ~20 derrumbes aunque el Caudal haya soltado hasta 4 granos antes (39 a 43 granos + 5 → 19–20 derrumbes). Aplicado a todas las corridas acortaba el Infinito ~4 min; solo en la primera, el núcleo da Infinito 196,4 min (antes 197,2) y la primera corrida 14,6 min (antes 15,1). SPEC 2 actualizada (tabla y línea de tiempo).
+- **Primer derrumbe** (revelado y logro, `primerDerrumbe` en `logros.ts`): ahora `granosTotales ≥ 1 y G ≥ 4`; con 39 iniciales el primer grano soltado derrumba el centro.
+- **La primera avalancha** después del primer toque (`Pila.svelte`): destello radial cálido desde la pila (`.chispa`, 0,8 s), el acorde de hito sobre el sonido del derrumbe y el contador de Energía que salta y se enciende en ámbar (`.salta`). Los derrumbes de los granos iniciales al montar no cuentan. Con Reducir destellos: sin escala, solo color y un fundido.
+- **Pista "Tocá la pila"**: además del texto que late, dos ondas que salen del centro de la pila. Desaparece con el primer toque (o Espacio): `vistos.punado`. Las partidas de antes no lo tenían: con la tienda ya vista, tampoco se muestra (`invitaTocar()`).
+
+### Verificación
+
+- `npm test` (70), `npm run typecheck` y `npm run build` en verde.
+- En el navegador: título en móvil (375 px) y escritorio (1280×760); Jugar arranca el juego; tras el toque aparecen el destello y el salto del contador (visto en el DOM), Energía ≈ 7 en el primer toque y la tienda enseguida.
+- **No pude ver los 60 fps ni la animación fluida**: el navegador integrado estaba en segundo plano (~1 cuadro/s). Playwright no tenía Chrome instalado. Falta mirarlo a ojo, también en un celular.
+
