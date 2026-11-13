@@ -65,6 +65,7 @@
   let noSeEscribio = $state(false)
   /** I10: teclas de cosas que todavía no aparecieron (SPEC 5). */
   const TECLA_VISTO: Record<string, string> = { M: 'tienda', C: 'compresion', L: 'tienda', E: 'tienda', P: 'tienda', H: 'tienda' }
+  // M6: la importada arranca ahora (si no, un texto de ayer simularía 24 h fuera de línea, una y otra vez).
   const reemplazar = (p: Partida) => (noSeEscribio = !reemplazarPartida(p))
 
   let reloj: ReturnType<typeof setTimeout>
@@ -224,7 +225,7 @@
                   {txt.opciones.importarConfirma(txt.opciones.descPartida(aImportar.estado.compresiones, txt.duracion(aImportar.estado.tiempoTotal)))}
                 </p>
                 <div class="acciones">
-                  <button class="accion chica peligro" use:enfocar onclick={() => aImportar && reemplazar(aImportar)}>
+                  <button class="accion chica peligro" use:enfocar onclick={() => aImportar && reemplazar({ ...aImportar, guardadoEn: Date.now() })}>
                     {txt.opciones.reemplazar}
                   </button>
                   <button class="secundario" onclick={() => (aImportar = null)}>{txt.opciones.cancelar}</button>

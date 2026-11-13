@@ -1,6 +1,6 @@
 // Guardado (SPEC 8): la partida como JSON con versión. Puro: el almacenamiento entra como Almacen.
 import Decimal from 'break_infinity.js'
-import { estadoInicial, type State } from '../core'
+import { CFG, MUTACIONES, estadoInicial, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
 
@@ -78,9 +78,19 @@ export function deserializar(texto: string): Partida {
   if (Array.isArray(c) && c.length < MODELO.estado.colores.length) d.estado.colores = [...c, ...MODELO.estado.colores.slice(c.length)]
   if (!mismaForma(MODELO, d)) throw new Error('guardado inválido')
   const e = d.estado
-  const deDec = ([m, x]: number[]) => Decimal.fromMantissaExponent_noNormalize(m, x)
+  const deDec = ([m, x]: number[]) => { const v = Decimal.fromMantissaExponent_noNormalize(m, x); return v.lt(0) ? new Decimal(0) : v }
+  // M5: rangos posibles (un guardado editado a mano o importado no deja estados imposibles).
+  const ent = (x: number, max = Infinity) => Math.min(max, Math.max(0, Math.floor(x)))
+  const pos = (x: number) => Math.max(0, x)
   return {
-    estado: { ...e, energia: deDec(e.energia), maxEnergia: deDec(e.maxEnergia) },
+    estado: {
+      ...e, energia: deDec(e.energia), maxEnergia: deDec(e.maxEnergia),
+      granos: pos(e.granos), granosTotales: pos(e.granosTotales), caudal: ent(e.caudal), colores: e.colores.map((n) => ent(n)),
+      cascada: ent(e.cascada, CFG.cascada.nivel_max), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
+      mutaciones: Object.fromEntries(MUTACIONES.map((m) => [m, ent(e.mutaciones[m], CFG.mutaciones.nivel_max)])) as State['mutaciones'],
+      coloresDesbloqueados: ent(e.coloresDesbloqueados, CFG.colores.length), infinitos: ent(e.infinitos),
+      tiempoTotal: pos(e.tiempoTotal), tiempoCorrida: pos(e.tiempoCorrida),
+    },
     guardadoEn: d.guardadoEn,
     vistos: d.vistos,
     record: d.record,
@@ -91,7 +101,13 @@ export function deserializar(texto: string): Partida {
 }
 
 // Exportar / importar (SPEC 8): el mismo JSON en base64, para copiar y pegar. Por bytes UTF-8: btoa solo acepta latin-1.
-export const exportar = (p: Partida) => btoa(String.fromCharCode(...new TextEncoder().encode(serializar(p))))
+export function exportar(p: Partida) {
+  const bytes = new TextEncoder().encode(serializar(p))
+  let bin = ''
+  // En trozos (M7): fromCharCode(...todos) pasa el máximo de argumentos del motor con un guardado grande.
+  for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode(...bytes.subarray(i, i + 8192))
+  return btoa(bin)
+}
 
 /** Tira un error si el texto no es un guardado exportado válido. */
 export function importar(texto: string): Partida {

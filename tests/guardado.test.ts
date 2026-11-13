@@ -200,3 +200,20 @@ describe('estadísticas del núcleo', () => {
     expect(s.granosTotales).toBe(g)
   })
 })
+
+describe('rangos al importar (M5) y exportar grande (M7)', () => {
+  const p = partida(estadoInicial())
+  const con = (f: (d: any) => void) => { const d = JSON.parse(serializar(p)); f(d); return deserializar(JSON.stringify(d)).estado }
+  it('granos negativos, 99 compresiones y Energía negativa quedan en rango', () => {
+    const e = con((d) => { d.estado.granos = -5; d.estado.compresiones = 99; d.estado.energia = [-3, 10]; d.estado.cascada = 1e9 })
+    expect(e.granos).toBe(0)
+    expect(e.compresiones).toBe(CFG.compresion.umbrales_log10.length)
+    expect(e.energia.toNumber()).toBe(0)
+    expect(e.cascada).toBe(CFG.cascada.nivel_max)
+  })
+  it('un estado válido no cambia', () => { const s = jugar(estadoInicial(), 120); expect(deserializar(serializar(partida(s))).estado).toEqual(s) })
+  it('exporta un guardado de 300 KB', () => {
+    const grande = { ...p, vistos: Object.fromEntries(Array.from({ length: 20000 }, (_, i) => [`clave${i}`, true])) }
+    expect(importar(exportar(grande))).toEqual(grande)
+  })
+})

@@ -229,19 +229,25 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Cómo reproducirlo:** comprar Caudal una vez y mirar la fila cuando la Energía llega a 47.
 - **Arreglo propuesto:** comparar con `energia.gte(Decimal.pow10(umbral))`. Mostrar los costos redondeados para arriba (`Math.ceil` por debajo de 1e6).
 
-### M5. Importar no valida rangos
+### M5. Importar no valida rangos — ✅ resuelto
+
+- **Resuelto:** `deserializar` acota: niveles enteros ≥ 0, Cascada y Mutaciones hasta su máximo, compresiones hasta 17, granos, tiempos y Energía ≥ 0. Test en `tests/guardado.test.ts`.
 
 - **Dónde:** `src/guardado/guardado.ts:53-58`.
 - **Qué pasa:** se aceptan granos negativos, 99 compresiones o una Energía con mantisa negativa (verificado). No rompe el juego (con 99 compresiones no hay más umbrales y sigue), pero deja estados imposibles.
 - **Arreglo propuesto:** después de `mismaForma`, acotar: niveles y granos ≥ 0, `compresiones` entre 0 y 17, Cascada y Mutaciones hasta su máximo, Energía ≥ 0.
 
-### M6. Importar un guardado viejo regala hasta 24 h
+### M6. Importar un guardado viejo regala hasta 24 h — ✅ resuelto
+
+- **Resuelto:** al importar, la partida se escribe con `guardadoEn: Date.now()` (`Opciones.svelte`).
 
 - **Dónde:** `src/ui/juego.svelte.ts:177-184, 200`. Anotado como decisión en el hito 5b.
 - **Qué pasa:** la partida importada conserva su `guardadoEn`, así que importar un texto de ayer simula 24 h; se puede repetir con el mismo texto.
 - **Arreglo propuesto:** al importar, poner `guardadoEn: Date.now()`.
 
-### M7. `exportar` arma el base64 con un `spread` de todos los bytes
+### M7. `exportar` arma el base64 con un `spread` de todos los bytes — ✅ resuelto
+
+- **Resuelto:** `exportar` arma el texto en trozos de 8.192 bytes. Test con un guardado de ~300 KB.
 
 - **Dónde:** `src/guardado/guardado.ts:80`.
 - **Qué pasa:** `String.fromCharCode(...bytes)` falla si los bytes pasan el máximo de argumentos del motor (unos 65.000 en Safari). Hoy el guardado llega a 16–25 KB (medido) y anda; si el historial crece, deja de exportar.
