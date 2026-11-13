@@ -11,6 +11,7 @@ export const en: typeof es = {
   potencia: (m: string, e: string) => `${m} times ten to the ${e}`,
   titulo: 'Avalanche',
   jugar: 'Play',
+  continuar: 'Continue',
   energia: 'Energy',
   energiaPorSegundo: 'per second',
   densidad: 'Density',

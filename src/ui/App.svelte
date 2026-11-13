@@ -44,6 +44,17 @@
     if (juego.vistos.compresion && lista) comprimirYa()
   }
 
+  // Al dejar el título, la clase .entrando escalona la aparición; después se saca (lo que aparezca más tarde usa .aparece).
+  const ENTRADA_MS = 3000
+  let entrando = $state(false)
+  let enTitulo = juego.titulo
+  $effect.pre(() => { // .pre: la clase llega en el mismo cuadro en que se va .en-titulo
+    if (!enTitulo || juego.titulo) return
+    enTitulo = false
+    entrando = true
+    setTimeout(() => (entrando = false), ENTRADA_MS)
+  })
+
   // Móvil: la tienda es una hoja inferior; se arrastra o se toca la manija.
   let alta = $state(false)
   let arrastre = $state<number | null>(null)
@@ -67,7 +78,7 @@
 
 <!-- .lista: se puede comprimir; el botón y el anillo de la pila laten juntos (arrancan en el mismo cuadro). -->
 <!-- inert con un panel encima: el foco y los clics quedan en el panel. -->
-<div class="juego" class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel !== null} inert={hayPanel()}>
+<div class="juego" class:en-titulo={juego.titulo} class:entrando class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel !== null} inert={hayPanel()}>
   <Pila />
 
   <header class="izq">
@@ -201,6 +212,16 @@
   /* Escritorio: el canvas ocupa la ventana y la pila queda en el centro exacto. La interfaz flota encima, sin cajas,
      en dos columnas del mismo ancho (simetría alrededor de la pila). */
   .juego { --col: clamp(16rem, 21vw, 21rem); --margen: 2rem; }
+  /* Ventanas poco anchas (4:3, 16:10, 16:9): la pila no se corre, se achica para no quedar debajo de las columnas. */
+  .juego { --pila-radio-max: calc(50vw - var(--col) - 2 * var(--margen)); }
+
+  /* I5: en el título solo está la pila; al entrar, la interfaz aparece en orden mientras la cámara se acerca (Pila.svelte). */
+  .en-titulo :is(.izq, .ajustes, .sismo, .der, .pista, .aviso) { visibility: hidden; }
+  .entrando .izq { animation: aparecer 0.8s 0.9s ease-out backwards; }
+  .entrando .sismo { animation: aparecer 0.8s 1.3s ease-out backwards; }
+  .entrando .pista { animation: aparecer 0.8s 1.5s ease-out backwards, latir 2.4s 2.3s ease-in-out infinite; }
+  .entrando .der { animation: fundido 0.8s 1.7s ease-out backwards; }
+  .entrando .ajustes { animation: fundido 0.8s 2.1s ease-out backwards; }
 
   .izq, .sismo, .der, .aviso, .pista, .sin-guardar { text-shadow: 0 0 0.75rem var(--fondo), 0 0 0.25rem var(--fondo); }
   b { font-weight: 600; color: var(--tinta); }
@@ -324,11 +345,9 @@
   @keyframes latir { 50% { opacity: 0.45; } }
 
   /* Móvil (vertical): pila arriba centrada, Energía arriba, tienda como hoja inferior deslizable. */
-  /* Pantallas poco anchas (tablet horizontal, 4:3, 16:10): la pila se corre a la izquierda de la tienda, sin pisarla. */
-  @media (max-aspect-ratio: 16/9) { .juego { --pila-derecha: calc(var(--col) + 2 * var(--margen)); } }
   /* También tablet en vertical: con las columnas a los costados la pila quedaría debajo de la tienda. */
   @media (max-width: 767px), (orientation: portrait) and (max-width: 1100px) {
-    .juego { --margen: 1rem; --col: auto; --pila-derecha: 0px; --pila-arriba: 7rem; --pila-abajo: calc(45dvh + 3.5rem); --hoja: 88dvh; }
+    .juego { --margen: 1rem; --col: auto; --pila-radio-max: 100vw; --pila-arriba: 7rem; --pila-abajo: calc(45dvh + 3.5rem); --hoja: 88dvh; }
     .izq { right: var(--margen); }
     .energia { font-size: 2.25rem; margin-bottom: 0.25rem; }
     .linea { font-size: 0.875rem; line-height: 1.4; }

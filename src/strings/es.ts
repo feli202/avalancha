@@ -8,6 +8,7 @@ export const es = {
   potencia: (m: string, e: string) => `${m} por diez a la ${e}`,
   titulo: 'Avalancha',
   jugar: 'Jugar',
+  continuar: 'Continuar',
   energia: 'Energía',
   energiaPorSegundo: 'por segundo',
   densidad: 'Densidad',

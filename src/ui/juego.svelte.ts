@@ -50,8 +50,10 @@ class Juego {
   panel = $state<'estadisticas' | 'logros' | 'ajustes' | 'ayuda' | null>(null)
   /** Sistemas recién aparecidos que esperan su indicador (Guia.svelte), en orden. Claves de `vistos`. */
   guias = $state.raw<string[]>([])
-  /** Pantalla de título (partida nueva): la economía espera. */
+  /** Pantalla de título (siempre al cargar): la economía espera y el fuera de línea se calcula recién al entrar. */
   titulo = $state(false)
+  /** Hay partida para seguir (el título dice "Continuar"). */
+  hayPartida = $state(false)
   /** La primera avalancha después del primer toque ya pasó (Pila.svelte; el contador de Energía salta). */
   primera = $state(false)
   /** Sube con cada salto fuera de línea: Pila.svelte no anima lo que pasó en la ausencia. */
@@ -228,8 +230,10 @@ export function arrancar() {
     antes = p.guardadoEn // el primer cuadro simula lo que pasó desde el guardado
   }
   simuladoHasta = antes
-  // Sin partida o sin tiempo jugado (recién borrada, o se recargó en el título): partida nueva.
-  if (p !== 'corrupto' && (!p || p.estado.tiempoTotal === 0)) juego.titulo = true
+  // Sin partida o sin tiempo jugado (recién borrada, o se recargó en el título): partida nueva, que arranca al entrar.
+  const nueva = !p || p === 'corrupto' || p.estado.tiempoTotal === 0
+  juego.hayPartida = !nueva
+  if (p !== 'corrupto') juego.titulo = true
   previo = juego.s
   tomarCandado()
   setInterval(guardarYa, GUARDAR_CADA)
@@ -238,7 +242,13 @@ export function arrancar() {
 
   const cuadro = () => {
     const ahora = Date.now()
-    acum += (Math.max(0, ahora - antes) / 1000) * (juego.titulo || juego.otraPestana ? 0 : juego.velocidad)
+    // En el título el reloj no avanza: lo de afuera se simula al entrar (una partida nueva arranca de ese momento).
+    if (juego.titulo) {
+      if (nueva) antes = simuladoHasta = ahora
+      requestAnimationFrame(cuadro)
+      return
+    }
+    acum += (Math.max(0, ahora - antes) / 1000) * (juego.otraPestana ? 0 : juego.velocidad)
     antes = ahora
     let s = juego.s
     if (acum > MAX_PASOS * PASO) {

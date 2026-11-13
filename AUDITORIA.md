@@ -94,7 +94,10 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Cómo reproducirlo:** en la consola, `Storage.prototype.setItem = () => { throw new Error('lleno') }`, jugar y recargar.
 - **Arreglo propuesto:** si `guardarYa()` falla dos veces seguidas, un aviso fijo de una línea ("No se pudo guardar. Exportá tu partida desde Ajustes."). En `reemplazarPartida`, no recargar si la escritura falló y mostrar el error.
 
-### I4. La pila se descentra (`PENDIENTES.md` 1)
+### I4. La pila se descentra (`PENDIENTES.md` 1) — ✅ resuelto
+
+- **Resuelto:** en escritorio el canvas es siempre la ventana entera y la pila queda en el centro exacto (medido: 0 px de corrimiento en 1280×720, 1920×1080, 1024×768 y 1440×900); en ventanas angostas se achica con `PilaVisual.radioMax` (`--pila-radio-max`: 50vw − columna − 2 márgenes) en vez de correrse. Con una sola pila (I5) ya no salta al tocar Jugar.
+- **⚠️ Sin resolver en móvil (requiere SPEC):** SPEC 6.4 dice "pila arriba (55 % de la pantalla)" y `PENDIENTES.md` pide el centro exacto de la ventana también en móvil. Quedó como dice la spec: centro exacto en horizontal, centrada en la zona de arriba en vertical (155 px sobre el centro a 375×812). Para cambiarlo hay que decidir primero la spec.
 
 - **Dónde:** `src/ui/App.svelte:322` (`@media (max-aspect-ratio: 16/9) { --pila-derecha: calc(var(--col) + 2 * var(--margen)) }`, agregado en el hito 6), `:325` (móvil: `--pila-arriba` y `--pila-abajo`), `src/ui/Pila.svelte:190`.
 - **Qué pasa:** en cualquier ventana de 16:9 o más angosta, la región de la pila se achica por la derecha y la pila queda corrida a la izquierda, con o sin tienda. Incluye 16:9 exacto, o sea pantalla completa en un monitor 1080p. Medido (centro de la pila menos centro de la ventana):
@@ -112,7 +115,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Cómo reproducirlo:** abrir el juego a 1280×720 o en pantalla completa (F11) en 1920×1080.
 - **Arreglo propuesto:** sacar la regla de `:322` y dejar el canvas siempre a ventana completa. Para que la tienda no tape la pila en ventanas angostas, achicar la pila en vez de correrla: que `PilaVisual.encuadre` reciba un radio máximo en px (`50vw − columna − 2 márgenes`) además del 80 % del lado corto. En móvil hay que decidir: SPEC 6.4 dice "pila arriba (55 % de la pantalla)" y el pendiente dice "centro exacto de la ventana". Con la hoja inferior ocupando el 45 % de abajo, el centro exacto queda medio tapado. Propongo centro exacto en horizontal y centrada en la zona visible en vertical, y anotarlo en la spec.
 
-### I5. El inicio no es cinematográfico (`PENDIENTES.md` 2)
+### I5. El inicio no es cinematográfico (`PENDIENTES.md` 2) — ✅ resuelto
+
+- **Resuelto:** el título sale siempre ("Continuar" con partida). No tiene pila propia: es un velo sobre la pila del juego, quieta (Caudal 0 en pantalla) y con la cámara lejos (`PilaVisual.zoom` = 0,5). Al entrar, la cámara se acerca en 1,4 s, la economía arranca (el primer grano del Caudal cae al segundo) y la interfaz aparece en orden: Energía, sismógrafo, pista, tienda, íconos. En el título el reloj no avanza: el fuera de línea se simula y se muestra recién después de entrar (verificado: 1 h de ausencia, el cartel aparece al tocar Continuar).
 
 - **Dónde:** `src/ui/App.svelte:70-71, 187` (el juego entero se monta debajo del título), `src/ui/Titulo.svelte:19-33, 36` (pila propia que suelta 30 granos/s, fundido de 0,6 s), `src/ui/juego.svelte.ts:203, 211, 214-216` (título solo sin partida; el fuera de línea se calcula en el primer cuadro).
 - **Qué pasa:**
@@ -265,7 +270,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Qué pasa:** los íconos se apagan y la pantalla final no tiene cómo empezar otra partida ni ver logros; solo quedan las teclas (A, L, E). Al recargar, la secuencia del final se repite entera.
 - **Arreglo propuesto:** en la pantalla final, enlaces de texto a Logros, Estadísticas y "Empezar de nuevo". Guardar en `vistos` que el final ya se vio y, al cargar, mostrar la pantalla final directo.
 
-### M15. Dos pilas vivas durante el título
+### M15. Dos pilas vivas durante el título — ✅ resuelto
+
+- **Resuelto:** con I5: una sola `PilaVisual` (un contexto WebGL y un worker).
 
 - Es parte de I5: `Titulo.svelte` crea su propia `PilaVisual` (otro contexto WebGL y otro worker) con la del juego ya montada debajo. Se arregla con I5.
 

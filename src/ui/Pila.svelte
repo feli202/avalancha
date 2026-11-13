@@ -13,9 +13,13 @@
   import * as sonido from './sonido'
 
   const ANILLO_SEP = 8 // px CSS entre la pila y el anillo de Compresión
+  const LEJOS = 0.5 // cámara de la pantalla de título
+  const ACERCAR_MS = 1400 // al entrar, la cámara se acerca; el primer grano del Caudal cae a 1 s
   const IMPLOSION_MS = 900 // lo que dura la animación implotar del CSS
 
   let canvas: HTMLCanvasElement
+  /** Radio máximo de la pila en px CSS: el ancho de .tope (App.svelte fija --pila-radio-max). */
+  let radioMax = $state(0)
   const comp = $derived(progresoCompresion(juego.s))
   const ra = $derived(juego.radioPila + ANILLO_SEP)
   // Textos flotantes y anillos (SPEC 6.2). Animaciones de CSS (transform y opacidad): no pasan por el hilo principal.
@@ -76,7 +80,9 @@
       ? COLORES_DALTONISMO
       : PALETAS[elegido('paleta', Object.keys(PALETAS), ajustes.paleta, juego.logros)]))
     $effect(() => void (pila.efecto = EFECTOS.indexOf(elegido('efecto', EFECTOS, ajustes.efecto, juego.logros))))
+    $effect(() => void (pila.radioMax = radioMax || Infinity))
     camara.foto = () => pila.foto()
+    let entro = juego.titulo ? -1 : 0 // ms en que se tocó Jugar (0: no hubo título)
     let anillosAntes = anillos(juego.s.granos)
     const coloresVistos = () => CFG.colores.filter((_, i) => juego.vistos[`color${i}`]).length
     let coloresAntes = coloresVistos()
@@ -91,6 +97,10 @@
     let hitosAntes = hitos(juego.s)
     let raf = requestAnimationFrame(function cuadro(ahora) {
       const s = juego.s
+      // Título: la pila quieta y lejos. Al entrar, la cámara se acerca.
+      if (!juego.titulo && entro < 0) entro = ahora
+      const t = entro < 0 ? 0 : ajustes.reducirDestellos || !entro ? 1 : Math.min(1, (ahora - entro) / ACERCAR_MS)
+      pila.zoom = LEJOS + (1 - LEJOS) * (1 - (1 - t) ** 3)
       // Vuelta de una ausencia: lo que pasó afuera (compresiones, anillos, colores) no se anima; la pila salta a su foto.
       if (juego.saltos !== saltosAntes) {
         saltosAntes = juego.saltos
@@ -119,7 +129,7 @@
       else {
         // juego.nivelColores: nivel simulado desde el panel de debug (0 = el real)
         s.colores.forEach((nivel, i) => (brillos[ALTURA_DE_COLOR[i]] = brillo(multColor(i, juego.nivelColores || nivel).log10())))
-        pila.cuadro(ahora, s.granos, caudal(s), brillos)
+        pila.cuadro(ahora, s.granos, juego.titulo ? 0 : caudal(s), brillos)
         granosAntes = s.granos
       }
       juego.escalaK = pila.escalaK
@@ -152,6 +162,7 @@
 
 <div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:colapsa={juego.s.infinitos > 0} class:quieto={ajustes.reducirDestellos}>
   <canvas bind:this={canvas} onpointerdown={soltar} aria-label={txt.pila}></canvas>
+  <div class="tope" bind:clientWidth={radioMax}></div>
   <div class="efectos" class:quieto={ajustes.reducirDestellos} aria-hidden="true">
     {#if juego.vistos.compresion && comp.meta !== undefined}
       <!-- Compresión: el anillo se cierra con el progreso (escala logarítmica); al 100 % brilla. -->
@@ -186,9 +197,10 @@
 </div>
 
 <style>
-  /* La región de la pila la fija App.svelte con --pila-arriba, --pila-derecha y --pila-abajo; la pila se centra sola en ella. */
-  .pila { position: fixed; inset: var(--pila-arriba, 0) var(--pila-derecha, 0) var(--pila-abajo, 0) 0;
-    transition: top 0.6s ease, right 0.6s ease, bottom 0.6s ease; }
+  /* La región de la pila la fija App.svelte con --pila-arriba y --pila-abajo (móvil); la pila se centra sola en ella.
+     En escritorio es la ventana entera: la pila en el centro exacto, achicada (--pila-radio-max) si las columnas la tapan. */
+  .pila { position: fixed; inset: var(--pila-arriba, 0) 0 var(--pila-abajo, 0) 0; transition: top 0.6s ease, bottom 0.6s ease; }
+  .tope { position: absolute; width: var(--pila-radio-max, 100vw); height: 0; pointer-events: none; }
   canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: manipulation; }
   p { margin: 0; font-variant-numeric: tabular-nums; pointer-events: none; white-space: nowrap; }
   .efectos { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }

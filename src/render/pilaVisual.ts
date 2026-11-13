@@ -52,6 +52,10 @@ export class PilaVisual {
   alMuestra?: (derrumbes: number) => void
   /** Cada avalancha terminada, con sus derrumbes (el sismógrafo). */
   alTamano?: (derrumbes: number) => void
+  /** Cámara: 1 = encuadre normal; menos de 1, más lejos (la pantalla de título). */
+  zoom = 1
+  /** Radio máximo de la pila en px CSS (que no la tapen las columnas de la interfaz). */
+  radioMax = Infinity
 
   private lz: Lienzo
   private worker = new Worker(new URL('./pila.worker.ts', import.meta.url), { type: 'module' })
@@ -299,12 +303,12 @@ export class PilaVisual {
     }
   }
 
-  /** Acerca la escala a la que corresponde (la pila en el 80 % del lado corto) y devuelve los px reales por celda. */
+  /** Acerca la escala a la que corresponde (la pila en el 80 % del lado corto, sin pasar radioMax) y devuelve los px reales por celda. */
   private encuadre(dt: number) {
     const { canvas } = this
     // Encuadre: la pila entera en el 80 % del lado corto, con celdas de un número entero de píxeles (cuadradas y nítidas).
-    const lado = Math.min(canvas.width, canvas.height)
-    const entra = (0.8 * lado) / (2 * Math.min(this.radio + 2, LADO / 2) + 1)
+    const diametro = Math.min(0.8 * Math.min(canvas.width, canvas.height), (2 * this.radioMax * canvas.width) / (canvas.clientWidth || 1))
+    const entra = diametro / (2 * Math.min(this.radio + 2, LADO / 2) + 1)
     // Celdas de menos de ENTERO_DESDE px: tamaño fraccionario (la pila en el 80 % aunque no entren 2 px por celda).
     const objetivo = entra >= ENTERO_DESDE ? Math.min(Math.floor(entra), Math.round(PX_MAX * devicePixelRatio)) : entra
     this.escala = this.escala ? this.escala + (objetivo - this.escala) * (1 - Math.exp(-dt * 6)) : objetivo
@@ -313,7 +317,7 @@ export class PilaVisual {
     const t = this.alejarDesde < 0 ? 1 : (this.ahora - this.alejarDesde) / ALEJAR_S
     if (t >= 1) this.alejarDesde = -1
     const alejar = 1 + 0.6 * (1 - Math.min(t, 1)) ** 3
-    return this.escala * alejar
+    return this.escala * alejar * this.zoom
   }
 
   private medir(ahoraMs: number, cuadroMs: number) {
