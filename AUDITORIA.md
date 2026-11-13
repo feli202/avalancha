@@ -136,7 +136,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Cómo reproducirlo:** en las herramientas de desarrollo, bloquear la URL de `pilas-*.bin`, recargar y saltar a la Compresión 12 con el panel de debug.
 - **Arreglo propuesto:** `try/catch` en el camino de la foto del worker: si falla, responder `foto: -1` con una marca; `PilaVisual` deja de pedir fotos y sigue soltando granos al ritmo máximo. De paso, reiniciar `midiendo` al cargar una foto (M12).
 
-### I7. Sin manejo de pérdida de contexto WebGL
+### I7. Sin manejo de pérdida de contexto WebGL — ✅ resuelto
+
+- **Resuelto:** `Lienzo` hace `preventDefault()` en `webglcontextlost` y en `webglcontextrestored` vuelve a armar programas, texturas y uniformes (paleta, destellos, efecto); `PilaVisual` vuelve a subir las alturas. Sin WebGL2, la pila muestra un aviso en vez de la pantalla vacía. Verificado en Edge headless con `WEBGL_lose_context`: la pila vuelve a dibujarse, sin errores.
 
 - **Dónde:** `src/render/lienzo.ts:173`; no hay `webglcontextlost` ni `webglcontextrestored` en `src/`. Estaba anotado como pendiente en el hito 2a.
 - **Qué pasa:** si el navegador pierde el contexto (driver, cambio de GPU en una laptop, celular que vuelve de segundo plano), la pila queda negra hasta recargar. En sesiones de horas pasa.

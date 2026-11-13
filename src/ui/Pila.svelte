@@ -20,6 +20,7 @@
   let canvas: HTMLCanvasElement
   /** Radio máximo de la pila en px CSS: el ancho de .tope (App.svelte fija --pila-radio-max). */
   let radioMax = $state(0)
+  let sinWebGL = $state(false)
   const comp = $derived(progresoCompresion(juego.s))
   const ra = $derived(juego.radioPila + ANILLO_SEP)
   // Textos flotantes y anillos (SPEC 6.2). Animaciones de CSS (transform y opacidad): no pasan por el hilo principal.
@@ -54,6 +55,7 @@
 
   onMount(() => {
     const pila = new PilaVisual(canvas)
+    sinWebGL = pila.sinWebGL
     // Los granos iniciales derrumban al montar, antes del primer toque: esos no cuentan.
     let primera = invitaTocar()
     pila.alMedir = (m) => (juego.medidas = m)
@@ -163,6 +165,7 @@
 <div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:colapsa={juego.s.infinitos > 0} class:quieto={ajustes.reducirDestellos}>
   <canvas bind:this={canvas} onpointerdown={soltar} aria-label={txt.pila}></canvas>
   <div class="tope" bind:clientWidth={radioMax}></div>
+  {#if sinWebGL}<p class="sin-webgl" role="alert">{txt.sinWebGL}</p>{/if}
   <div class="efectos" class:quieto={ajustes.reducirDestellos} aria-hidden="true">
     {#if juego.vistos.compresion && comp.meta !== undefined}
       <!-- Compresión: el anillo se cierra con el progreso (escala logarítmica); al 100 % brilla. -->
@@ -200,6 +203,7 @@
   /* La región de la pila la fija App.svelte con --pila-arriba y --pila-abajo (móvil); la pila se centra sola en ella.
      En escritorio es la ventana entera: la pila en el centro exacto, achicada (--pila-radio-max) si las columnas la tapan. */
   .pila { position: fixed; inset: var(--pila-arriba, 0) 0 var(--pila-abajo, 0) 0; transition: top 0.6s ease, bottom 0.6s ease; }
+  .sin-webgl { position: absolute; left: 50%; top: 50%; translate: -50% -50%; max-width: 20rem; white-space: normal; text-align: center; color: var(--tenue); }
   .tope { position: absolute; width: var(--pila-radio-max, 100vw); height: 0; pointer-events: none; }
   canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: manipulation; }
   p { margin: 0; font-variant-numeric: tabular-nums; pointer-events: none; white-space: nowrap; }

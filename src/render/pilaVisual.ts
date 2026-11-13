@@ -118,6 +118,10 @@ export class PilaVisual {
     }
 
     this.lz = new Lienzo(canvas)
+    this.lz.alRestaurar = () => {
+      this.alturas = this.ultimas
+      this.sucio = true
+    }
     this.destellos = !this.destello
   }
 
@@ -137,6 +141,11 @@ export class PilaVisual {
   set destellos(reducir: boolean) {
     this.destello = reducir ? 0 : 1
     this.lz.destello = this.destello
+  }
+
+  /** No hay WebGL2: la pila no se puede dibujar (Pila.svelte muestra un aviso). */
+  get sinWebGL() {
+    return !this.lz.gl
   }
 
   /** Radio de la pila en pantalla, en px CSS. */

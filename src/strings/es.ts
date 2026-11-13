@@ -95,6 +95,7 @@ export const es = {
     compresiones: (n: number) => (n === 1 ? '1 compresión' : `${n.toLocaleString('es-AR')} compresiones`),
     seguir: 'Seguir',
   },
+  sinWebGL: 'Este navegador no puede dibujar la pila (falta WebGL2). El juego sigue andando: probá con otro navegador o activá la aceleración por hardware.',
   sinGuardar: 'No se pudo guardar. Exportá tu partida desde Ajustes.',
   otraPestana: {
     titulo: 'El juego está abierto en otra pestaña',

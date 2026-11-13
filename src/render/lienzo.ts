@@ -169,12 +169,28 @@ export class Lienzo {
   private uniP: Uniformes = {}
   private fbo: WebGLFramebuffer | null = null
 
+  /** I7: el contexto volvió después de perderse; lo dibujado se sube de nuevo (PilaVisual). */
+  alRestaurar?: () => void
+  private valores = { colores: COLORES_PILA, destello: 1, efecto: 0 }
+
   constructor(readonly canvas: HTMLCanvasElement | OffscreenCanvas) {
-    const gl = (this.gl = canvas.getContext('webgl2', { alpha: false, antialias: false }) as WebGL2RenderingContext | null)
-    if (!gl) {
+    this.gl = canvas.getContext('webgl2', { alpha: false, antialias: false }) as WebGL2RenderingContext | null
+    if (!this.gl) {
       console.error('WebGL2 no disponible: la pila no se dibuja')
       return
     }
+    // Driver, cambio de GPU, celular que vuelve de segundo plano: sin preventDefault el contexto no vuelve nunca.
+    canvas.addEventListener('webglcontextlost', (e) => e.preventDefault())
+    canvas.addEventListener('webglcontextrestored', () => {
+      this.armar()
+      this.alRestaurar?.()
+    })
+    this.armar()
+  }
+
+  /** Programas, texturas y uniformes: al crear y al recuperar el contexto. */
+  private armar() {
+    const gl = this.gl!
     const programa = (frag: string, nombres: string[], uni: Uniformes) => {
       const prog = gl.createProgram()
       for (const [tipo, src] of [[gl.VERTEX_SHADER, VERT], [gl.FRAGMENT_SHADER, frag]] as const) {
@@ -226,12 +242,14 @@ export class Lienzo {
     gl.uniform1i(this.uniP.u_celdas, 2)
     gl.uniform1i(this.uniP.u_luz, 3)
     gl.uniform1i(this.uniP.u_viejo, 4)
-    this.colores = COLORES_PILA
-    this.destello = 1
+    this.colores = this.valores.colores
+    this.destello = this.valores.destello
+    this.efecto = this.valores.efecto
   }
 
   /** Colores sRGB de cada altura; el shader trabaja en lineal y convierte al final. */
   set colores(p: number[]) {
+    this.valores.colores = p
     const { gl } = this
     if (!gl) return
     gl.useProgram(this.progCeldas)
@@ -240,6 +258,7 @@ export class Lienzo {
 
   /** 0 apaga destellos y mica ("Reducir destellos"). */
   set destello(v: number) {
+    this.valores.destello = v
     const { gl } = this
     if (!gl) return
     gl.useProgram(this.progCeldas)
@@ -250,6 +269,7 @@ export class Lienzo {
 
   /** Índice en EFECTOS (paletas.ts). */
   set efecto(n: number) {
+    this.valores.efecto = n
     const { gl } = this
     if (!gl) return
     gl.useProgram(this.progCeldas)
@@ -279,7 +299,7 @@ export class Lienzo {
   /** px: px reales por celda; fundido: 1 → 0 sobre u_viejo; ahora: segundos (los de tDerrumbe); dpr: px reales por px CSS. */
   pintar(px: number, brillos: number[], fundido: number, ahora: number, dpr: number) {
     const { gl, canvas, uniC, uniP } = this
-    if (!gl) return
+    if (!gl || gl.isContextLost()) return
     // Pasada 1: color y luz de cada celda a la grilla, y los mipmaps de la luz para el bloom.
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
     gl.viewport(0, 0, LADO, LADO)

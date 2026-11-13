@@ -89,6 +89,7 @@ export const en: typeof es = {
     compresiones: (n: number) => `${n0(n)} ${s(n, 'compression', 'compressions')}`,
     seguir: 'Continue',
   },
+  sinWebGL: "This browser can't draw the pile (WebGL2 is missing). The game still runs: try another browser or turn on hardware acceleration.",
   sinGuardar: "Couldn't save. Export your game from Settings.",
   otraPestana: {
     titulo: 'The game is open in another tab',
