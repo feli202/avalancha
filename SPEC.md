@@ -261,11 +261,15 @@ La pila se vuelve blanca desde el centro hacia afuera, el número de Energía se
 
 ### 6.7 Sonido
 
-- Derrumbes: granulado suave; volumen y tono según el tamaño de la avalancha del frame. Limitar a 12 voces simultáneas.
-- Compras: un "clic" cristalino distinto por color.
+Todo se genera por código con Web Audio: sin archivos de audio. Todo lo tonal usa una misma escala (pentatónica de Re).
+
+- Derrumbes: textura granular de arena, cálida, que no cansa aunque suene durante horas; volumen, largo y tono según el tamaño de la avalancha. Limitar a 12 voces simultáneas.
+- Avalanchas grandes: golpe grave y profundo con cola larga.
+- Compras: una campana cristalina distinta por color, cada una en un grado de la escala.
 - Hitos (×4 cada 25 niveles, anillos, aparición de color): acorde breve.
-- Fondo: pad ambiental que gana capas con cada color desbloqueado.
-- Recursos: dejar marcadores de posición con nombres claros (`sfx/topple_small.ogg`, etc.); el audio final se reemplaza después.
+- Compresión: implosión que cae de tono y acorde de recompensa. Infinito: crescendo, un segundo de silencio y acorde final.
+- Fondo: música generativa (pad) que gana una capa con cada color desbloqueado y nunca se repite igual.
+- Volúmenes separados: general, efectos y música. El sonido arranca con la primera interacción.
 
 ### 6.8 Accesibilidad
 

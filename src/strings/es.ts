@@ -266,10 +266,8 @@ export const es = {
     volumen: 'Volumen general',
     volumenDesc: 'El sonido arranca con el primer toque o tecla.',
     volumenes: {
-      volDerrumbes: ['Derrumbes', 'El granulado de cada avalancha.'],
-      volCompras: ['Compras', 'Un clic distinto por color.'],
-      volHitos: ['Hitos', 'Acordes de anillos, colores nuevos y cada ×4.'],
-      volFondo: ['Fondo', 'Gana una capa con cada color.'],
+      volEfectos: ['Efectos', 'Arena, avalanchas, compras y acordes.'],
+      volMusica: ['Música', 'Suma una capa con cada color.'],
     },
     daltonismo: 'Paleta para daltonismo',
     partida: 'Partida',

@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). **Hito 6** (pulido técnico): sonido, móvil y tablet, accesibilidad (Lighthouse 100) y rendimiento (60 fps en GPU integrada). **Primeros 10 segundos**: pantalla de título, logo y primera avalancha con el primer toque. **Guardar imagen**: PNG de 2048×2048 de la pila (botón de cámara, tecla P, "Guardá tu mandala" en el Infinito). La Capa 0 está completa.
+Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). **Hito 6** (pulido técnico): sonido, móvil y tablet, accesibilidad (Lighthouse 100) y rendimiento (60 fps en GPU integrada). **Primeros 10 segundos**: pantalla de título, logo y primera avalancha con el primer toque. **Guardar imagen**: PNG de 2048×2048 de la pila (botón de cámara, tecla P, "Guardá tu mandala" en el Infinito). **Sonido sintetizado**: todo el audio generado por código con Web Audio (sin archivos), con música generativa. La Capa 0 está completa.
 
 ## Qué se hizo
 
@@ -562,7 +562,7 @@ Ajustes deja el panel translúcido y pasa a pantalla completa, con el mismo arma
 | Archivo | Contenido |
 | --- | --- |
 | `src/ui/sonido.ts` | Nuevo. Web Audio: derrumbes (los de 50 ms se juntan en uno, con volumen y tono según el tamaño), un clic por color al comprar a mano, acordes de hitos (cada ×4, anillo nuevo, color nuevo) y el pad de fondo con una capa por color visto. Tope de 12 voces (las que no entran se descartan; el pad no cuenta). Arranca con el primer toque o tecla (los navegadores no dejan antes) y se suspende con la pestaña oculta. |
-| `scripts/sfx.py` | Nuevo. Genera los marcadores de posición en `public/sfx/` (`topple_small/medium/large`, `buy_caudal/ambar/coral/jade/violeta/other`, `chord_milestone/ring/color`, `pad_ambar/coral/jade/violeta`), en `.ogg` y en `.m4a`: Safari no decodifica Vorbis y usa el AAC. Necesita ffmpeg. El audio final se reemplaza con los mismos nombres. |
+| `scripts/sfx.py` | (Borrado en "Sonido sintetizado".) Genera los marcadores de posición en `public/sfx/` (`topple_small/medium/large`, `buy_caudal/ambar/coral/jade/violeta/other`, `chord_milestone/ring/color`, `pad_ambar/coral/jade/violeta`), en `.ogg` y en `.m4a`: Safari no decodifica Vorbis y usa el AAC. Necesita ffmpeg. El audio final se reemplaza con los mismos nombres. |
 | `src/ui/ajustes.svelte.ts`, `Opciones.svelte` | Volumen general y uno por tipo (derrumbes, compras, hitos, fondo), en Ajustes → Juego. |
 | `src/ui/Pila.svelte`, `Tienda.svelte` | Dónde suena cada cosa: la pila (derrumbes, hitos, fondo) y la compra a mano. |
 | `src/render/lienzo.ts` | Rendimiento: la pasada a pantalla no muestrea la arena fuera del círculo de la grilla (las esquinas) y lee las 4 vecinas una vez por muestra (antes, dos). El dibujo no cambia. |
@@ -644,3 +644,25 @@ Ajustes deja el panel translúcido y pasa a pantalla completa, con el mismo arma
 - En el navegador (descarga interceptada): con la pila llena, el botón da un PNG de **2048×2048** (~6 MB) y aparece "Imagen guardada"; mirada a tamaño real: celdas nítidas, pie legible. En el Infinito (Compresión 17 + Dar Energía): "Guardá tu mandala" aparece en la pantalla final y la foto sale con la pila entera (no colapsada), el brillo alto de los niveles y "Energía ∞".
 - Móvil (375×812): los cuatro íconos entran junto a la Energía y el botón del mandala entra en la pantalla final.
 - **No probado**: el menú de compartir real en un celular (el navegador integrado no tiene `navigator.canShare`, así que ahí descarga), el logo en Firefox (es un SVG sin tamaño propio; si no se puede dibujar, la foto sale sin logo) ni los 60 fps durante la foto (el navegador integrado estaba en segundo plano). El dibujo a 2048 px es un solo cuadro de GPU más el PNG; en móviles flojos puede trabar un instante.
+
+## Sonido sintetizado
+
+Los marcadores de posición (`public/sfx/`, `scripts/sfx.py`) se borraron: `src/ui/sonido.ts` genera todo con Web Audio, sin archivos ni sonidos de IA. SPEC 6.7 actualizada.
+
+- **Escala común**: pentatónica mayor de Re (`nota(grado)`, Re3 = 146,83 Hz). Compras, acordes, Compresión, Infinito y música salen de ahí, así todo consuena entre sí.
+- **Cadena**: efectos y música → general → limitador suave (`DynamicsCompressor`) → salida. Reverb de sala con respuesta de ruido generada (3,5 s).
+- **Derrumbes**: un buffer de 4 s de chasquidos sueltos y suavizados ("granos"), tocado desde un punto al azar con un pasabanda (2,6 kHz → 900 Hz según el tamaño), ±15 % de tono al azar. Más derrumbes: más largo (60 ms a 1 s), más fuerte y más grave; desde ~300 derrumbes, con reverb. Se siguen juntando los de 50 ms y el tope de 12 voces (derrumbes y golpes).
+- **Avalancha grande** (`pila.alAvalancha`, la misma que muestra "Avalancha ×N"): seno que cae de ~55 a ~27 Hz con 3 s de cola, más la arena a ¼ de velocidad bajo 300 Hz. Como mucho uno cada 1,5 s.
+- **Compras**: campana con parciales inarmónicos (1; 2,76; 5,4; 8,93), un grado por color (Caudal Re5, Ámbar Mi5, Coral Fa#5, Jade La5, Violeta Si5, lo demás Re6).
+- **Hitos**: arpegio rápido de triangulares más campanas, distinto para ×4, anillo y color nuevo.
+- **Compresión**: diente de sierra y arena que caen de tono y se cierran en 0,9 s (lo que dura la implosión visual), y un acorde de recompensa.
+- **Infinito**: siete sierras que suben una octava y abren el filtro durante 2,8 s (blanco y colapso), corte seco, 1 s de silencio y el acorde final largo al aparecer la pantalla final (3,8 s). La música vuelve despacio ~6 s después.
+- **Música generativa**: cuatro capas, una por color visto (bordón grave, pad medio, pad alto, campanitas sueltas). Cada capa elige al azar su próxima nota, su largo (2–24 s) y a veces una quinta; las notas se superponen y el filtro respira. Nunca se repite igual.
+- **Ajustes → Juego**: volumen general, efectos (0,8) y música (0,5). Los cuatro deslizadores por tipo de antes se fueron; los valores guardados de esos se ignoran.
+- El sonido sigue arrancando con el primer toque o tecla y se suspende con la pestaña oculta.
+
+### Verificación
+
+- `npm test` (70), `npm run typecheck` y `npm run build` en verde.
+- En el navegador, con un analizador enganchado a la salida: cada sonido da señal (pico sobre el fondo): derrumbe chico 0,05, de 100.000 0,10, golpe grave 0,45, compras 0,14–0,18, acordes 0,14–0,37, Compresión 0,38, música con 4 capas 0,08. Infinito: crescendo hasta 0,97, silencio 0,018 (cola de la reverb, −35 dB) y acorde final 0,55. Sin errores en la consola.
+- **No lo escuché**: no tengo salida de audio. Los volúmenes relativos están puestos por medición, no a oído. Falta escucharlo, sobre todo una sesión larga de derrumbes para ver que no canse.

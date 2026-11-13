@@ -246,10 +246,8 @@ export const en: typeof es = {
     volumen: 'Master volume',
     volumenDesc: 'Sound starts with your first tap or key press.',
     volumenes: {
-      volDerrumbes: ['Topples', 'The grainy hiss of each avalanche.'],
-      volCompras: ['Purchases', 'A different click per color.'],
-      volHitos: ['Milestones', 'Chords for rings, new colors and every ×4.'],
-      volFondo: ['Ambience', 'Adds a layer with each color.'],
+      volEfectos: ['Effects', 'Sand, avalanches, purchases and chords.'],
+      volMusica: ['Music', 'Adds a layer with each color.'],
     },
     daltonismo: 'Color-blind palette',
     partida: 'Save',

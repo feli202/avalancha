@@ -53,7 +53,10 @@
     // Los granos iniciales derrumban al montar, antes del primer toque: esos no cuentan.
     let primera = invitaTocar()
     pila.alMedir = (m) => (juego.medidas = m)
-    pila.alAvalancha = (n) => efecto({ texto: txt.avalancha(n) })
+    pila.alAvalancha = (n) => {
+      efecto({ texto: txt.avalancha(n) })
+      sonido.avalancha(n)
+    }
     pila.alMuestra = (n) => muestraAvalancha(historial, n)
     pila.alTamano = (n) => {
       if (primera && juego.vistos.punado) {
@@ -80,6 +83,7 @@
     sonido.fondo(coloresAntes)
     const brillos = [0, 0, 0, 0]
     let compAntes = juego.s.compresiones
+    let infAntes = juego.s.infinitos
     let granosAntes = juego.s.granos
     let saltosAntes = juego.saltos
     // SPEC 6.7: acorde en cada hito ×4 de un color (cada CFG.hito_colores.cada niveles).
@@ -91,6 +95,7 @@
       if (juego.saltos !== saltosAntes) {
         saltosAntes = juego.saltos
         compAntes = s.compresiones
+        infAntes = s.infinitos
         anillosAntes = anillos(s.granos)
         coloresAntes = coloresVistos()
         hitosAntes = hitos(s)
@@ -102,9 +107,13 @@
       if (s.compresiones > compAntes) {
         implotando = true
         implotaHasta = ahora + IMPLOSION_MS
+        sonido.compresion(IMPLOSION_MS)
         efecto({ compresion: { r: Math.max(pila.radioCss, 48), densidad: formatoMult(densidad(s)) } })
       }
       compAntes = s.compresiones
+      // SPEC 6.6: blanco y colapso (2,8 s, CSS de abajo), un segundo de silencio y el final.
+      if (s.infinitos > infAntes) sonido.infinito(2.8, 1)
+      infAntes = s.infinitos
       if (implotando && ahora >= implotaHasta) implotando = false
       if (implotando) pila.cuadro(ahora, granosAntes, 0, brillos)
       else {
