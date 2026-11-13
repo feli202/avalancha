@@ -40,8 +40,9 @@
     // Táctil: se cierra con el próximo toque fuera de lo que lo abrió.
     const fuera = (e: PointerEvent) => !a.el.contains(e.target as Node) && (tip.actual = null)
     addEventListener('pointerdown', fuera, true)
-    addEventListener('scroll', () => (tip.actual = null), { capture: true, once: true })
-    return () => { cancelAnimationFrame(raf); removeEventListener('pointerdown', fuera, true) }
+    const alScroll = () => (tip.actual = null)
+    addEventListener('scroll', alScroll, { capture: true, once: true })
+    return () => { cancelAnimationFrame(raf); removeEventListener('pointerdown', fuera, true); removeEventListener('scroll', alScroll, true) }
   })
 
   // ---------- indicador de sistema nuevo ----------

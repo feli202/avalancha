@@ -261,7 +261,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Qué pasa:** dice 193 / 226 / 397 y `sim.py` da 194 / 228 / 376 (SPEC 2 dice 194 / 228 / 376). El test del ±5 % compara contra 193. Hoy pasa igual.
 - **Arreglo propuesto:** actualizar los tres valores con la salida de `sim.py` y corregir el 229 de `PROGRESO.md`.
 
-### M9. El tooltip deja un listener de `scroll` cada vez que se muestra
+### M9. El tooltip deja un listener de `scroll` cada vez que se muestra — ✅ resuelto
+
+- **Resuelto:** el listener de `scroll` se guarda y se saca en la limpieza del efecto.
 
 - **Dónde:** `src/ui/Ayuda.svelte:43-44`.
 - **Qué pasa:** se agrega con `once` y no se saca en la limpieza del efecto; si nadie hace scroll, se acumulan (uno por tooltip mostrado). No se notó en la partida larga porque el bot no pasa el mouse.
