@@ -54,7 +54,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 
 ## Bloqueante
 
-### B1. En segundo plano, el guardado automático pisa la partida con un estado viejo y fecha nueva
+### B1. En segundo plano, el guardado automático pisa la partida con un estado viejo y fecha nueva — ✅ resuelto
+
+- **Resuelto:** `guardadoEn` es `simuladoHasta`, el reloj hasta el que llegó el bucle. Test en `tests/juego.test.ts`.
 
 - **Dónde:** `src/ui/juego.svelte.ts:160-161` (`partidaActual` pone `guardadoEn: Date.now()`), `:205-207` (el `setInterval` de 10 s y el `pagehide`).
 - **Qué pasa:** con la pestaña oculta el navegador deja de dar cuadros, así que `juego.s` queda congelado, pero el `setInterval` sigue (en Chrome, una vez por segundo o por minuto). Cada guardado escribe el estado del momento en que se ocultó con la hora de ahora. Si la pestaña se recarga, se cierra o el navegador la descarta sin haber vuelto a verla, la carga calcula el tiempo fuera de línea desde ese `guardadoEn` falso y todo lo que pasó en segundo plano se pierde. Es el caso del jugador "casi idle", que es justo el que deja el juego atrás por horas. Cerrar la ventana con la pestaña atrás también lo dispara (el `pagehide` guarda igual).

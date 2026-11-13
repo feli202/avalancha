@@ -157,8 +157,12 @@ export const invitaTocar = () => !juego.vistos.punado && !juego.vistos.tienda
 /** Hay un cartel o panel encima: las teclas del juego (Espacio, M, C) no hacen nada. */
 export const hayPanel = (): boolean => juego.titulo || juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto
 
+/** Reloj real (ms) hasta el que llegó la simulación. El guardado lleva esta fecha y no Date.now(): con la pestaña oculta
+ * no hay cuadros, juego.s queda quieto y el guardado tiene que seguir diciendo de cuándo es (si no, se pierde la ausencia). */
+let simuladoHasta = Date.now()
+
 export const partidaActual = (): Partida =>
-  ({ estado: juego.s, guardadoEn: Date.now(), vistos: juego.vistos, record: juego.record, logros: juego.logros, historial })
+  ({ estado: juego.s, guardadoEn: simuladoHasta, vistos: juego.vistos, record: juego.record, logros: juego.logros, historial })
 
 let reemplazando = false
 /** true si se guardó. */
@@ -199,6 +203,7 @@ export function arrancar() {
     historial = p.historial ?? historialVacio(p.guardadoEn - p.estado.tiempoTotal * 1000)
     antes = p.guardadoEn // el primer cuadro simula lo que pasó desde el guardado
   }
+  simuladoHasta = antes
   // Sin partida o sin tiempo jugado (recién borrada, o se recargó en el título): partida nueva.
   if (p !== 'corrupto' && (!p || p.estado.tiempoTotal === 0)) juego.titulo = true
   previo = juego.s
@@ -223,6 +228,7 @@ export function arrancar() {
     previo = s
     if (Math.floor(s.tiempoTotal) !== Math.floor(juego.s.tiempoTotal)) juego.verHistorial++
     juego.s = s
+    simuladoHasta = ahora
     revelar(s)
     revisarLogros(s)
     medirEta(s)
