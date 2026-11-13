@@ -90,11 +90,11 @@
     <li style:--c={i >= 0 ? COLOR_CSS[ALTURA_DE_COLOR[i]] : 'var(--tinta)'} data-guia={id === 'caudal' ? 'tienda' : id}
       use:ayuda={() => ayudaItem(juego.s, id)}>
       <button class="fila" class:puede={o.puede && !tope} disabled={!o.puede || tope} onclick={() => compra(id)}
-        aria-label="{txt.comprar} {nombre(id)} · {tope ? txt.nivelMaximo : hablado(formato(o.c))}">
+        aria-label="{txt.comprar} {nombre(id)} · {tope ? txt.nivelMaximo : hablado(formato(o.c, true))}">
         <span class="muestra" class:caudal={i < 0} aria-hidden="true"></span>
         <span class="nombre">{nombre(id)} <span class="nv num">{txt.nivel(nivel(juego.s, id))}</span></span>
         <span class="costo num">
-          {#if tope}{txt.nivelMaximo}{:else}{#if o.n > 1}<span class="cuantos">{txt.comprarCuantos(o.n)}</span> {/if}{formato(o.c)}{/if}
+          {#if tope}{txt.nivelMaximo}{:else}{#if o.n > 1}<span class="cuantos">{txt.comprarCuantos(o.n)}</span> {/if}{formato(o.c, true)}{/if}
         </span>
         <span class="efecto num">{efecto(juego.s, id)}</span>
       </button>

@@ -6,9 +6,10 @@ import { txt } from '../strings'
  * SPEC 8: hasta 999.999 con separador de miles; después científica con 2 decimales (1,23e45),
  * o de ingeniería si lo piden los ajustes (exponente múltiplo de 3: 12,30e45).
  */
-export function formato(x: Decimal | number): string {
+export function formato(x: Decimal | number, arriba = false): string {
   const d = new Decimal(x)
-  if (d.lt(1e6)) return Math.floor(d.toNumber()).toLocaleString(txt.locale)
+  // Los costos van para arriba (M4): con 47,1 de Energía y un costo de 47,3 no se lee "47" y "47" con la fila apagada.
+  if (d.lt(1e6)) return (arriba ? Math.ceil : Math.floor)(d.toNumber()).toLocaleString(txt.locale)
   const paso = ajustes.notacion === 'ingenieria' ? 3 : 1
   const r = ((d.exponent % paso) + paso) % paso
   let e = d.exponent - r

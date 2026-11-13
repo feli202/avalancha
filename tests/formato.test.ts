@@ -28,3 +28,15 @@ describe('hablado', () => {
     expect(hablado('12.345')).toBe('12.345')
   })
 })
+
+describe('M4', async () => {
+  const { formato } = await import('../src/ui/formato')
+  const Decimal = (await import('break_infinity.js')).default
+  const { CFG, estadoInicial, puedeComprimir } = await import('../src/core')
+  it('los costos se redondean para arriba', () => expect([formato(47.1), formato(47.3, true)]).toEqual(['47', '48']))
+  it('comprimir: con la Energía apenas por debajo del umbral, no', () => {
+    const u = CFG.compresion.umbrales_log10[0]
+    expect(puedeComprimir({ ...estadoInicial(), energia: Decimal.pow10(u).mul(1 - 1e-12) })).toBe(false)
+    expect(puedeComprimir({ ...estadoInicial(), energia: Decimal.pow10(u) })).toBe(true)
+  })
+})

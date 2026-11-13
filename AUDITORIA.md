@@ -220,7 +220,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Cómo reproducirlo:** con Compresión automática, dejar la pestaña oculta hasta que comprima una vez y mirar Estadísticas → Corridas.
 - **Arreglo propuesto:** anotar el umbral de esa Compresión (`CFG.compresion.umbrales_log10[antes.compresiones]`) cuando el paso viene de `fueraDeLinea`.
 
-### M4. Comparaciones y redondeos que no coinciden en el borde
+### M4. Comparaciones y redondeos que no coinciden en el borde — ✅ resuelto
+
+- **Resuelto:** `puedeComprimir` compara `energia.gte(10^umbral)`, como las compras. Los costos de la tienda se muestran redondeados para arriba por debajo de 1e6 (`formato(x, true)`). Tests en `tests/formato.test.ts`; el balance da igual.
 
 - **Dónde:** `src/core/compress.ts:7` (compara `log10`), `src/core/shop.ts:54` (compara con `gte`), `src/ui/formato.ts:11` (`Math.floor`), `src/strings/es.ts:48`.
 - **Qué pasa:** `puedeComprimir` acepta 10^umbral × (1 − 1e-15) por el redondeo del logaritmo (inofensivo, pero no es la misma regla que las compras). En pantalla, costo y Energía se redondean para abajo los dos: con 47,1 de Energía y Caudal a 47,3 se lee "47" y "47" con la fila apagada.
