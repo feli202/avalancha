@@ -1,6 +1,7 @@
 // SPEC 7: los 24 logros de la Capa 0, en el orden de la pantalla. Se miran en cada cuadro; una vez conseguido, queda en el guardado.
 import { CFG, MUTACIONES, anillos, densidad, type State } from '../core'
 import FOTOS from '../assets/pilas.json'
+import { es } from '../strings/es'
 
 const L = CFG.logros
 
@@ -43,6 +44,12 @@ export const UMBRAL: Record<string, number> = {
   relampago: L.corrida_rapida_min, densidadAlta: L.densidad_alta,
 }
 
+const conNumero = (t: string | ((n: string) => string), k: string) =>
+  typeof t === 'string' ? t : t(UMBRAL[k]?.toLocaleString('es-AR') ?? '')
+/** Nombre y descripción de un logro, con su número. */
+export const nombreLogro = (k: string) => conNumero(es.logros.lista[k][0], k)
+export const descLogro = (k: string) => conNumero(es.logros.lista[k][1], k)
+
 export type Cosmetico = 'paleta' | 'efecto' | 'marco'
 /** Recompensa de cada logro: solo cosmética (paletas.ts), sin efecto en el balance. */
 export const RECOMPENSA: Record<string, [Cosmetico, string]> = {
@@ -57,6 +64,10 @@ export const RECOMPENSA: Record<string, [Cosmetico, string]> = {
 /** Los cosméticos de un tipo que ya se pueden usar: el de siempre (el primero de la lista) y los de los logros conseguidos. */
 export const desbloqueados = (tipo: Cosmetico, todos: string[], tiene: Record<string, boolean>) =>
   todos.filter((id, i) => i === 0 || Object.entries(RECOMPENSA).some(([k, [t, r]]) => t === tipo && r === id && tiene[k]))
+
+/** El logro que da un cosmético (undefined para el de siempre). */
+export const logroDe = (tipo: Cosmetico, id: string) =>
+  Object.keys(RECOMPENSA).find((k) => RECOMPENSA[k][0] === tipo && RECOMPENSA[k][1] === id)
 
 /** El cosmético elegido si está desbloqueado; si no, el de siempre. */
 export const elegido = (tipo: Cosmetico, todos: string[], id: string, tiene: Record<string, boolean>) =>

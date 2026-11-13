@@ -98,6 +98,19 @@ export const ESCENAS: Record<string, Escena> = {
   infinitoRapido: { granos: 30000, onda: espiral, t: 0.8, efecto: 'blanco', trazos: resplandor(0.9, 0.6) },
 }
 
+/**
+ * La escena de una clave: un logro (ESCENAS), o la vista previa de un cosmético de Ajustes:
+ * 'paleta:ID' (la pila llena y redonda con esa paleta) o 'efecto:ID' (una onda de derrumbes con ese efecto).
+ */
+function escena(clave: string): Escena {
+  const [tipo, id] = clave.split(':')
+  if (tipo === 'paleta') return { granos: -1, entera: true, brillos: todo(0.45), colores: () => PALETAS[id] }
+  if (tipo === 'efecto') return { granos: 10000, onda: expansiva(45), t: 0.45, efecto: id, brillos: todo(0.3) }
+  return ESCENAS[clave]
+}
+/** Radio de la pila entera en la imagen, en px reales (para dibujar alrededor, como los marcos). */
+export const RADIO_ENTERA = 0.41 * ALTO
+
 // ---------- las pilas ----------
 
 let fotos: Promise<Uint8Array> | null = null
@@ -157,7 +170,7 @@ export function paletaBase(daltonismo: boolean) {
 }
 
 function preparar(clave: string, e: Estado) {
-  const esc = ESCENAS[clave]
+  const esc = escena(clave)
   lz ??= new Lienzo(new OffscreenCanvas(ANCHO, ALTO))
   lienzo2d ??= new OffscreenCanvas(ANCHO, ALTO)
   if (subida === clave) return
@@ -177,7 +190,7 @@ function preparar(clave: string, e: Estado) {
 /** Dibuja la escena en el instante `s` del ciclo y devuelve el lienzo 2D con los trazos encima. */
 function dibujar(clave: string, e: Estado, s: number, destello: number) {
   preparar(clave, e)
-  const esc = ESCENAS[clave]
+  const esc = escena(clave)
   const entra = Math.min((0.82 * ALTO) / (2 * e.radio + 1), 48)
   // Sin zoom propio, al menos MIN_PX por celda: las pilas grandes se recortan y se lee el mandala, no ruido.
   const px = esc.zoom ? entra * esc.zoom : esc.entera ? entra : Math.max(entra, MIN_PX)
@@ -194,9 +207,9 @@ const cache = new Map<string, Promise<ImageBitmap>>()
 /** La imagen quieta de un logro. */
 export function imagen(clave: string): Promise<ImageBitmap> {
   if (!cache.has(clave))
-    cache.set(clave, pila(ESCENAS[clave].granos).then((e) => {
+    cache.set(clave, pila(escena(clave).granos).then((e) => {
       listas.set(clave, e)
-      return dibujar(clave, e, ESCENAS[clave].t ?? 0, 1).transferToImageBitmap()
+      return dibujar(clave, e, escena(clave).t ?? 0, 1).transferToImageBitmap()
     }))
   return cache.get(clave)!
 }
@@ -214,7 +227,7 @@ export function miniPila(canvas: HTMLCanvasElement, p: { clave: string; quieta: 
   const entrar = () => {
     const e = listas.get(p.clave)
     if (p.quieta || !e || raf) return
-    const t0 = performance.now() - (ESCENAS[p.clave].t ?? 0) * 1000
+    const t0 = performance.now() - (escena(p.clave).t ?? 0) * 1000
     const paso = (ahora: number) => {
       g.clearRect(0, 0, ANCHO, ALTO)
       g.drawImage(dibujar(p.clave, e, ((ahora - t0) / 1000) % CICLO, 1), 0, 0)

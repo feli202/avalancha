@@ -3,11 +3,11 @@ import { css } from './paletas'
 
 const LADO_FOTO = 1080
 
-type Ctx = CanvasRenderingContext2D
+type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
 const circulo = (g: Ctx, c: number, r: number) => { g.beginPath(); g.arc(c, c, r, 0, Math.PI * 2); g.stroke() }
 
 /** Dibuja el marco alrededor de un mandala de radio r centrado en (c, c). color: el más claro de la paleta. */
-function marco(g: Ctx, id: string, c: number, r: number, color: string) {
+export function marco(g: Ctx, id: string, c: number, r: number, color: string) {
   g.strokeStyle = g.fillStyle = color
   g.lineWidth = 2
   g.globalAlpha = 0.85

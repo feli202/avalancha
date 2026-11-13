@@ -4,6 +4,7 @@
   import { es } from '../strings/es'
   import { ajustes } from './ajustes.svelte'
   import Debug from './Debug.svelte'
+  import Opciones from './Opciones.svelte'
   import Estadisticas from './Estadisticas.svelte'
   import Logros from './Logros.svelte'
   import Paneles from './Paneles.svelte'
@@ -29,6 +30,7 @@
       !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
     if (libre && e.code === 'KeyL') juego.panel = 'logros'
     if (libre && e.code === 'KeyE') juego.panel = 'estadisticas'
+    if (libre && e.code === 'KeyA') juego.panel = 'ajustes'
     if (e.code !== 'KeyC' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || hayPanel()) return
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
     if (juego.vistos.compresion && lista) comprimirYa()
@@ -57,7 +59,7 @@
 
 <!-- .lista: se puede comprimir; el botón y el anillo de la pila laten juntos (arrancan en el mismo cuadro). -->
 <!-- inert con un panel encima: el foco y los clics quedan en el panel. -->
-<div class="juego" class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel === 'logros' || juego.panel === 'estadisticas'} inert={hayPanel()}>
+<div class="juego" class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel !== null} inert={hayPanel()}>
   <Pila />
 
   <header class="izq">
@@ -78,7 +80,7 @@
     <button class="icono" aria-label={es.menu.estadisticas} aria-haspopup="dialog" aria-keyshortcuts="E" onclick={() => (juego.panel = 'estadisticas')}>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15.5V9M7 15.5V3M11 15.5V7M15 15.5v-4M1.5 15.5h15" /></svg>
     </button>
-    <button class="icono" aria-label={es.menu.abrir} aria-haspopup="dialog" onclick={() => (juego.panel = 'ajustes')}>
+    <button class="icono" aria-label={es.menu.abrir} aria-haspopup="dialog" aria-keyshortcuts="A" onclick={() => (juego.panel = 'ajustes')}>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
         <path d="M2 5h8M14 5h2M2 13h2M8 13h8" /><circle cx="12" cy="5" r="2" /><circle cx="6" cy="13" r="2" />
       </svg>
@@ -157,6 +159,7 @@
 <Paneles />
 <Logros />
 <Estadisticas />
+<Opciones />
 
 {#if import.meta.env.DEV}<Debug />{/if}
 

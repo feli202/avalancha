@@ -88,7 +88,7 @@
               {#each factores as f (f.id)}
                 {#if f.log > 0}
                   <span
-                    class="segmento" class:apagado={resaltado && resaltado !== f.id}
+                    role="presentation" class="segmento" class:apagado={resaltado && resaltado !== f.id}
                     style:flex-grow={f.log} style:background={COLOR[f.id]}
                     onpointerenter={() => (resaltado = f.id)} onpointerleave={() => (resaltado = null)}
                   ></span>

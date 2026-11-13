@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros y Estadísticas**: las dos son pantallas completas (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). Sigue el hito 6 (pulido: sonido, accesibilidad, rendimiento).
+Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). Sigue el hito 6 (pulido: sonido, accesibilidad, rendimiento).
 
 ## Qué se hizo
 
@@ -532,4 +532,27 @@ Estadísticas deja el panel y pasa a pantalla completa, con cuatro pestañas. El
 4. **Varias compresiones juntas fuera de línea no se anotan** en Corridas (no hay detalle de cada una). La serie de Energía sí toma el punto al volver.
 5. **"Desde que empezó la partida"**: en las partidas de antes se estima con el reloj del guardado menos el tiempo de juego. La serie de Energía arranca en su primera muestra.
 6. **Serie de Energía**: un punto cada 5 s de juego; al pasar de 600 se descarta uno de cada dos y el paso se duplica.
+
+## Ajustes: pantalla completa
+
+Ajustes deja el panel translúcido y pasa a pantalla completa, con el mismo armazón (`Pantalla.svelte`). Para entrar: el ícono o la tecla A. Ya no queda ningún panel sobre la pila, salvo "Mientras no estabas" y el guardado dañado.
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/ui/Opciones.svelte` | Nuevo. Cuatro pestañas: Aspecto, Juego, Partida, Teclado. Se llama así y no `Ajustes.svelte` porque en Windows ese nombre choca con `ajustes.svelte.ts`: `./ajustes.svelte` resolvía al componente. |
+| `src/render/miniPilas.ts` | Claves de vista previa además de las de logros: `paleta:ID` (la pila llena y redonda con esa paleta) y `efecto:ID` (una onda de derrumbes con ese efecto, animada al pasar el mouse). |
+| `src/render/marcos.ts` | `marco()` exportada, para dibujar las vistas previas. |
+| `src/ui/logros.ts` | `nombreLogro`, `descLogro` (antes vivían en Logros.svelte) y `logroDe` (qué logro da un cosmético). |
+| `src/ui/Paneles.svelte` | Solo "Mientras no estabas", el guardado dañado, Escape y el foco de todas las pantallas. |
+
+- **Aspecto**: una grilla de tarjetas por tipo (paletas, efectos de avalancha, marcos), con la cuenta de desbloqueados ("6 / 9"). Cada tarjeta muestra su vista previa hecha con el motor de la pila. Los marcos se ven alrededor de la pila llena con la paleta en uso. La elegida va con borde ámbar y "En uso"; las bloqueadas, en gris con un candado y el logro que las da, y no se pueden elegir. Debajo, "Sacar foto del mandala".
+- **Juego**: notación (con el mismo número escrito en cada una), volumen, Reducir destellos y paleta para daltonismo, cada uno con una línea que explica qué hace.
+- **Partida**: un resumen (compresiones y tiempo de juego), y guardar, exportar, importar y empezar de cero, con la misma doble confirmación de antes.
+- **Teclado**: las teclas, ahora con L, E y A.
+
+### Verificación
+
+- `npm test`: 68 en verde; `vite build` sin errores.
+- En el navegador, escritorio y móvil (375 px): las cuatro pestañas y las vistas previas de paletas, efectos y marcos. Elegir Aurora la deja "En uso" y la guarda en los ajustes; una paleta bloqueada (Negativo) no se puede elegir.
+- **Ojo:** el primer servidor de desarrollo de la sesión quedó vivo después de detenerlo, con la resolución vieja de `./ajustes.svelte` en caché. Lo cerré (era el del puerto 5176; los de 5173–5175 son de otras sesiones).
 

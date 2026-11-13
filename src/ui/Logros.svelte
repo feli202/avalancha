@@ -6,15 +6,13 @@
   import { es } from '../strings/es'
   import { ajustes } from './ajustes.svelte'
   import { juego } from './juego.svelte'
-  import { CAPAS, RECOMPENSA, UMBRAL } from './logros'
+  import { CAPAS, RECOMPENSA, descLogro, nombreLogro } from './logros'
   import Pantalla from './Pantalla.svelte'
 
   $effect.pre(() => paletaBase(ajustes.daltonismo))
 
-  const conNumero = (t: string | ((n: string) => string), k: string) =>
-    typeof t === 'string' ? t : t(UMBRAL[k]?.toLocaleString('es-AR') ?? '')
-  const nombre = (k: string) => conNumero(es.logros.lista[k][0], k)
-  const desc = (k: string) => conNumero(es.logros.lista[k][1], k)
+  const nombre = nombreLogro
+  const desc = descLogro
 
   let capa = $state(0)
   const lista = $derived(CAPAS[capa].logros)
