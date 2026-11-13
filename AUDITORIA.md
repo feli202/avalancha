@@ -191,7 +191,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 
 ## Menor
 
-### M1. El texto de los botones se selecciona al arrastrar
+### M1. El texto de los botones se selecciona al arrastrar — ✅ resuelto
+
+- **Resuelto:** `index.html`: `user-select: none` (y `-webkit-touch-callout`, `tap-highlight`) en el cuerpo; se vuelve a permitir en `textarea`, `input`, `code` (las fórmulas de Cómo funciona) y `.seleccionable`.
 
 - **Dónde:** ninguna regla `user-select` en `index.html` ni en los componentes, salvo `src/ui/MiniPila.svelte:93`. Medido: los 26 botones de la pantalla principal tienen `user-select: auto`.
 - **Qué pasa:** arrastrar el mouse sobre una fila de la tienda, una pestaña, x1 / x10 / Máx, Comprimir, "Comprar todo" o los rótulos selecciona el texto como si fuera un documento. En móvil, mantener presionado para ver el tooltip (450 ms) también puede abrir la selección del sistema.
