@@ -248,12 +248,14 @@ export function arrancar() {
       requestAnimationFrame(cuadro)
       return
     }
-    acum += (Math.max(0, ahora - antes) / 1000) * (juego.otraPestana ? 0 : juego.velocidad)
+    const real = Math.max(0, ahora - antes) / 1000
+    acum += real * (juego.otraPestana ? 0 : juego.velocidad)
     antes = ahora
     let s = juego.s
     if (acum > MAX_PASOS * PASO) {
       const a = fueraDeLinea(s, acum)
-      if (a.segundos >= AVISAR_DESDE && s.infinitos === 0 && a.s.infinitos === 0) juego.ausencia = a
+      // Contra el tiempo real (M11): a ×50 un tirón de 1,2 s no es una ausencia.
+      if (real >= AVISAR_DESDE && s.infinitos === 0 && a.s.infinitos === 0) juego.ausencia = a
       juego.saltos++
       s = a.s
       acum = 0

@@ -277,7 +277,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Qué pasa:** copia y ordena ~1.200 muestras por cuadro (2.880 a 144 Hz) para un percentil y un máximo, y `shift()` es lineal. Es poco, pero es por cuadro y para siempre.
 - **Arreglo propuesto:** recalcular piso y tope 4 veces por segundo en vez de 60.
 
-### M11. A velocidad ×50, un tirón de 1,2 s abre "Mientras no estabas"
+### M11. A velocidad ×50, un tirón de 1,2 s abre "Mientras no estabas" — ✅ resuelto
+
+- **Resuelto:** el umbral de 60 s del cartel se compara contra el tiempo real del cuadro, no el de juego (ya multiplicado por la velocidad).
 
 - **Dónde:** `src/ui/juego.svelte.ts:211-216` (el tiempo acumulado ya viene multiplicado por la velocidad).
 - **Qué pasa:** solo en desarrollo. Tapa la interfaz y frena al bot de `scripts/partida50.mjs` (deja de comprar hasta que alguien toca Seguir).
