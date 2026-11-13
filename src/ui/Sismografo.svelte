@@ -7,13 +7,14 @@
 
   const VENTANA_MS = 20_000
   const DECAE_S = 0.35 // constante de tiempo de la caída de cada pico
+  const MEDIR_MS = 250
   const RANGO_MIN = 0.5 // décadas: alto mínimo de la escala, para no agrandar ruido cuando todo es parejo
   let canvas: HTMLCanvasElement
 
   onMount(() => {
     const ctx = canvas.getContext('2d')!
     const muestras: [number, number][] = [] // [instante, valor] por cuadro
-    let v = 0, piso = 0, tope = 2, antes = performance.now()
+    let v = 0, piso = 0, tope = 2, antes = performance.now(), medido = -Infinity, bajo = 0, alto = 2
     let raf = requestAnimationFrame(function dibujar(ahora) {
       const dt = Math.min(0.1, (ahora - antes) / 1000)
       antes = ahora
@@ -23,9 +24,13 @@
       while (muestras[0][0] < ahora - VENTANA_MS) muestras.shift()
       // Escala sola entre lo bajo (percentil 5, ignora ceros sueltos) y el pico de la ventana: con avalanchas todo el
       // tiempo la línea no se satura arriba y siempre se ven picos y valles. Con transición para que no salte.
-      const orden = muestras.map(([, m]) => m).sort((a, b) => a - b)
-      const bajo = orden[Math.floor(orden.length * 0.05)]
-      const alto = Math.max(orden[orden.length - 1], bajo + RANGO_MIN)
+      // Se recalcula 4 veces por segundo y no en cada cuadro (M10): ordenar ~1.200 muestras por cuadro, para siempre.
+      if (ahora - medido >= MEDIR_MS) {
+        medido = ahora
+        const orden = muestras.map(([, m]) => m).sort((a, b) => a - b)
+        bajo = orden[Math.floor(orden.length * 0.05)]
+        alto = Math.max(orden[orden.length - 1], bajo + RANGO_MIN)
+      }
       const k = 1 - Math.exp(-dt * 2)
       piso += (bajo - piso) * k
       tope += (alto - tope) * k

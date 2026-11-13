@@ -269,7 +269,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Qué pasa:** se agrega con `once` y no se saca en la limpieza del efecto; si nadie hace scroll, se acumulan (uno por tooltip mostrado). No se notó en la partida larga porque el bot no pasa el mouse.
 - **Arreglo propuesto:** guardar la función y sacarla en el `return` del efecto, igual que `fuera`.
 
-### M10. El sismógrafo ordena todas sus muestras en cada cuadro
+### M10. El sismógrafo ordena todas sus muestras en cada cuadro — ✅ resuelto
+
+- **Resuelto:** piso y tope se recalculan cada 250 ms (la transición suave ya existía, así que no se nota).
 
 - **Dónde:** `src/ui/Sismografo.svelte:22-28`.
 - **Qué pasa:** copia y ordena ~1.200 muestras por cuadro (2.880 a 144 Hz) para un percentil y un máximo, y `shift()` es lineal. Es poco, pero es por cuadro y para siempre.
