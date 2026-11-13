@@ -295,11 +295,15 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 
 ### M13. La fuente viene de Google Fonts
 
+- **⚠️ Pendiente, necesita tu permiso:** el arreglo es `npm i @fontsource/space-grotesk` (o bajar los `.woff2` a `public/`) e importarla en `src/main.ts`; no agregué la dependencia sin tu OK.
+
 - **Dónde:** `index.html:8-10`. Anotado como pendiente en el hito 3.
 - **Qué pasa:** sin conexión (o empaquetado) cae a la fuente del sistema, y las cifras tabulares y los anchos cambian. SPEC 8 pide no depender del navegador fuera del almacenamiento.
 - **Arreglo propuesto:** servir Space Grotesk desde `public/` con `@font-face`.
 
-### M14. Después del Infinito no hay salida visible
+### M14. Después del Infinito no hay salida visible — ✅ resuelto
+
+- **Resuelto:** la pantalla final tiene Logros, Estadísticas y "Empezar de nuevo" (con confirmación), como texto con línea de 1 px. Se anota `vistos.fin`; al volver a cargar, el final aparece directo, sin repetir el blanco y el colapso. Las guías de sistema nuevo no salen después del Infinito. Verificado en Edge headless.
 
 - **Dónde:** `src/ui/App.svelte:163-181, 264`. Anotado en el hito 4.
 - **Qué pasa:** los íconos se apagan y la pantalla final no tiene cómo empezar otra partida ni ver logros; solo quedan las teclas (A, L, E). Al recargar, la secuencia del final se repite entera.

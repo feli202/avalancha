@@ -84,6 +84,8 @@ export const es = {
     record: 'Avalancha récord',
     derrumbes: (n: string) => `${n} derrumbes`,
     adelanto: 'Capa 1: Cristalización — próximamente',
+    empezar: 'Empezar de nuevo',
+    empezarSi: 'Sí, borrar y empezar',
   },
 
   // Fuera de línea y guardado (SPEC 8)

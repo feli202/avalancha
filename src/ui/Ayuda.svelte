@@ -46,7 +46,7 @@
   })
 
   // ---------- indicador de sistema nuevo ----------
-  const clave = $derived(hayPanel() ? null : (juego.guias[0] ?? null))
+  const clave = $derived(hayPanel() || juego.s.infinitos > 0 ? null : (juego.guias[0] ?? null)) // después del Infinito no hay nada que señalar
   let anillo = $state<{ x: number; y: number; w: number; h: number; c: string } | null>(null)
   let rotulo = $state<HTMLElement>()
   let objetivo: Element | null = null

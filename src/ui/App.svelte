@@ -17,7 +17,7 @@
   import Titulo from './Titulo.svelte'
   import { formato, formatoMult, hablado } from './formato'
   import { fade } from 'svelte/transition'
-  import { comprimirYa, hayPanel, invitaTocar, juego, progresoCompresion } from './juego.svelte'
+  import { borrarPartida, comprimirYa, hayPanel, invitaTocar, juego, progresoCompresion } from './juego.svelte'
   import { foto, guardarImagen } from './foto.svelte'
 
   const v = $derived(juego.vistos)
@@ -27,6 +27,10 @@
   const comp = $derived(progresoCompresion(s))
   const lista = $derived(puedeComprimir(s))
   const fin = $derived(s.infinitos > 0)
+  // M14: el final ya se vio en otra carga: aparece directo, sin repetir la secuencia.
+  const finVisto = !!juego.vistos.fin && juego.s.infinitos > 0
+  $effect(() => { if (fin && !juego.vistos.fin) juego.vistos = { ...juego.vistos, fin: true } })
+  let empezar = $state(false)
   const alternarAutoComp = () =>
     (juego.s = { ...juego.s, auto: { ...juego.s.auto, compresion_auto: !juego.s.auto.compresion_auto } })
 
@@ -80,7 +84,7 @@
 
 <!-- .lista: se puede comprimir; el botón y el anillo de la pila laten juntos (arrancan en el mismo cuadro). -->
 <!-- inert con un panel encima: el foco y los clics quedan en el panel. -->
-<div class="juego" class:en-titulo={juego.titulo} class:entrando class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel !== null} inert={hayPanel()}>
+<div class="juego" class:ya={finVisto} class:en-titulo={juego.titulo} class:entrando class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel !== null} inert={hayPanel()}>
   <Pila />
 
   <header class="izq">
@@ -181,7 +185,7 @@
 
 {#if fin}
   <!-- SPEC 6.6: después del blanco, el colapso y un segundo de silencio, el final de la capa. -->
-  <section class="final" aria-label={txt.fin.titulo}>
+  <section class="final" class:ya={finVisto} aria-label={txt.fin.titulo}>
     <p class="simbolo" aria-hidden="true">{txt.infinito}</p>
     <h1>{txt.fin.titulo}</h1>
     <dl class="num">
@@ -196,6 +200,16 @@
       </svg>
       {txt.foto.mandala}
     </button>
+    <nav class="salidas">
+      <button onclick={() => (juego.panel = 'logros')} aria-keyshortcuts="L">{txt.menu.logros}</button>
+      <button onclick={() => (juego.panel = 'estadisticas')} aria-keyshortcuts="E">{txt.menu.estadisticas}</button>
+      {#if empezar}
+        <button class="peligro" onclick={borrarPartida}>{txt.fin.empezarSi}</button>
+        <button onclick={() => (empezar = false)}>{txt.opciones.cancelar}</button>
+      {:else}
+        <button onclick={() => (empezar = true)}>{txt.fin.empezar}</button>
+      {/if}
+    </nav>
   </section>
 {/if}
 
@@ -316,6 +330,18 @@
   }
   .mandala:hover { background: rgb(232 233 243 / 0.16); box-shadow: 0 0 2rem rgb(255 255 255 / 0.3); }
   .mandala svg { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+
+  /* Salidas del final: texto con una línea de 1 px. */
+  .salidas { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.5rem; margin-top: 1.5rem; }
+  .salidas button {
+    min-height: 2.75rem; padding: 0 0.25rem; border: 0; border-bottom: 1px solid var(--borde); background: none;
+    color: var(--tenue); font: inherit; font-size: 0.9375rem; cursor: pointer; transition: color 0.15s, border-color 0.15s;
+  }
+  .salidas button:hover, .salidas button:focus-visible { color: var(--tinta); border-color: var(--tinta); }
+  .salidas .peligro { color: var(--coral); }
+  /* Ya visto: todo en su lugar final, sin la secuencia. */
+  .final.ya { animation: none; opacity: 1; }
+  .ya.fin :is(.izq, .der, .sismo, .aviso, .ajustes) { animation-duration: 0s; animation-delay: 0s; }
 
   .destello { position: fixed; inset: 0; z-index: 20; background: #fff; pointer-events: none; opacity: 0; animation: destello 0.6s ease-out; }
   .destello.quieto { animation-duration: 0.9s; animation-name: destelloSuave; }

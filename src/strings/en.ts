@@ -79,6 +79,8 @@ export const en: typeof es = {
     record: 'Record avalanche',
     derrumbes: (n: string) => `${n} topples`,
     adelanto: 'Layer 1: Crystallization — coming soon',
+    empezar: 'Start over',
+    empezarSi: 'Yes, erase and start over',
   },
 
   ausencia: {

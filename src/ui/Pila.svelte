@@ -317,6 +317,8 @@
   .colapsa canvas { animation: colapsar 0.8s 2s cubic-bezier(0.7, 0, 0.9, 0.3) forwards; }
   .colapsa .blanco { animation: blanquear 2s cubic-bezier(0.4, 0, 0.6, 1) forwards, colapsar 0.8s 2s cubic-bezier(0.7, 0, 0.9, 0.3) forwards; }
   .colapsa.quieto canvas { animation-name: apagar; }
+  /* M14: el final ya visto (App.svelte .ya): la pila ya colapsó. */
+  :global(.ya) .colapsa canvas, :global(.ya) .colapsa .blanco, :global(.ya) .colapsa .compresion { animation-duration: 0s; animation-delay: 0s; }
   .colapsa.quieto .blanco { animation: aparecerBlanco 2s forwards, apagar 0.8s 2s forwards; }
   @keyframes blanquear { from { transform: scale(0); } to { transform: scale(1); } }
   @keyframes aparecerBlanco { from { opacity: 0; } }
