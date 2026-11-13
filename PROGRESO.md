@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). Sigue el hito 6 (pulido: sonido, accesibilidad, rendimiento).
+Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). **Hito 6** (pulido técnico): sonido, móvil y tablet, accesibilidad (Lighthouse 100) y rendimiento (60 fps en GPU integrada). La Capa 0 está completa.
 
 ## Qué se hizo
 
@@ -556,3 +556,47 @@ Ajustes deja el panel translúcido y pasa a pantalla completa, con el mismo arma
 - En el navegador, escritorio y móvil (375 px): las cuatro pestañas y las vistas previas de paletas, efectos y marcos. Elegir Aurora la deja "En uso" y la guarda en los ajustes; una paleta bloqueada (Negativo) no se puede elegir.
 - **Ojo:** el primer servidor de desarrollo de la sesión quedó vivo después de detenerlo, con la resolución vieja de `./ajustes.svelte` en caché. Lo cerré (era el del puerto 5176; los de 5173–5175 son de otras sesiones).
 
+
+## Hito 6: pulido técnico
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/ui/sonido.ts` | Nuevo. Web Audio: derrumbes (los de 50 ms se juntan en uno, con volumen y tono según el tamaño), un clic por color al comprar a mano, acordes de hitos (cada ×4, anillo nuevo, color nuevo) y el pad de fondo con una capa por color visto. Tope de 12 voces (las que no entran se descartan; el pad no cuenta). Arranca con el primer toque o tecla (los navegadores no dejan antes) y se suspende con la pestaña oculta. |
+| `scripts/sfx.py` | Nuevo. Genera los marcadores de posición en `public/sfx/` (`topple_small/medium/large`, `buy_caudal/ambar/coral/jade/violeta/other`, `chord_milestone/ring/color`, `pad_ambar/coral/jade/violeta`), en `.ogg` y en `.m4a`: Safari no decodifica Vorbis y usa el AAC. Necesita ffmpeg. El audio final se reemplaza con los mismos nombres. |
+| `src/ui/ajustes.svelte.ts`, `Opciones.svelte` | Volumen general y uno por tipo (derrumbes, compras, hitos, fondo), en Ajustes → Juego. |
+| `src/ui/Pila.svelte`, `Tienda.svelte` | Dónde suena cada cosa: la pila (derrumbes, hitos, fondo) y la compra a mano. |
+| `src/render/lienzo.ts` | Rendimiento: la pasada a pantalla no muestrea la arena fuera del círculo de la grilla (las esquinas) y lee las 4 vecinas una vez por muestra (antes, dos). El dibujo no cambia. |
+| `src/ui/App.svelte`, `Tienda.svelte` | Objetivos de 44 px. Tablet en vertical usa la hoja inferior del móvil; en pantallas de 16:9 o menos anchas la pila se corre a la izquierda de la tienda. |
+| `index.html` | `--apagado` de 0,32 a 0,5 de opacidad: 2,5:1 → 4,6:1 de contraste (AA). Clase `.sr` (solo lectores de pantalla). |
+| `src/ui/formato.ts` | `hablado`: "1,23e45" se lee "1,23 por diez a la 45" (Energía, Energía/s y costos de la tienda). |
+| `vite.config.ts` | `server.host` y `preview.host`: el servidor escucha en la red local para probar desde el celular. |
+
+### Probar desde el celular
+
+1. `npm run dev` en la PC. Vite muestra la dirección de red (`Network: http://192.168.0.103:5173/` en esta máquina).
+2. El celular, en la misma red Wi-Fi, abre esa dirección.
+3. Si no carga, es el firewall de Windows: la primera vez pregunta si Node.js puede usar redes privadas (hay que aceptar). La versión compilada: `npm run build` y `npx vite preview` (puerto 4173).
+
+### Verificación
+
+- `npm test`: 69 en verde (uno nuevo, `hablado`). `tsc` y `vite build` sin errores ni avisos (también se fue el aviso de Svelte del sismógrafo).
+- **Sonido**: en el navegador cargan y se decodifican los 16 archivos, sin errores. Al pedir 42 sonidos de golpe arrancaron 11 (más el derrumbe que ya sonaba: 12). No lo escuché: no tengo salida de audio.
+- **Móvil (390×844) y tablet (768×1024 y 1024×768)**: un script recorre la pantalla principal y cada pestaña de Logros, Estadísticas y Ajustes buscando controles de menos de 44 px y cosas cortadas a la derecha. Antes: los íconos (36 px), la manija de la hoja (28), los modos x1/x10/Máx (15–28 de ancho), los interruptores "auto" (19 de alto), las pestañas de la tienda y los botones de Partida (40). Ahora ninguno. En tablet vertical la pila quedaba debajo de la tienda y en 1024×768 la tienda se escribía encima de la pila: los dos arreglados.
+- **Foco visible**: con Tab, contorno ámbar de 2 px en cada control.
+- **Lighthouse (accesibilidad), 12.8.2 con Edge** (no hay Chrome instalado), sobre una partida avanzada (Compresión 6, cuatro colores, autocompradores, Cascada): **100 en móvil, 100 en escritorio** y **100 en las 9 pestañas** de Logros, Estadísticas y Ajustes (modo instantánea). Con una partida nueva también da 100.
+- **Rendimiento**, en esta laptop (Ryzen 7 4800H, **Radeon integrada**, pantalla de 60 Hz), Edge con ventana a 1366×800, versión compilada, pila llena y Caudal muy por encima del tope de 3.000 granos/s, 45 s por corrida: **60,0 / 59,9 / 60,0 fps**, p99 de 16,9 ms, 1–2 cuadros de más de 20 ms por corrida (peor: 83 ms, uno). Hilo principal: 0,4 ms por cuadro.
+
+### Lo que encontré al perfilar
+
+1. **El cuello era la GPU, no el código del juego**: en la traza, `Present` esperaba ~15 ms por cuadro. Ocultando el lienzo de la pila: 60,0 fps exactos. Con el arreglo del shader, `Present` bajó a ~13 ms.
+2. **Las mediciones son ruidosas en esta máquina**: algunas corridas sueltas dieron 31–39 fps, con el shader viejo y con el nuevo por igual, y la siguiente volvía a 60. Coincidían con otras cosas usando la GPU (el navegador integrado tenía el juego abierto). Bajar a media resolución o sacar el supermuestreo no cambió nada en esas corridas, así que no es el dibujo.
+3. **El worker no siempre llega a 3.000 granos/s**: con la pila llena está ocupado ~90 % del tiempo y suelta entre 1.500 y 3.000 granos/s según el momento (las avalanchas cambian de tamaño). Los fps no se enteran: el ritmo baja solo, sin acumular deuda. Si hace falta más, el paso siguiente sigue siendo el bucle de derrumbes en WebAssembly.
+
+### Decisiones (revisar)
+
+1. **Formato de audio**: la spec pide `.ogg`; van también `.m4a` del mismo nombre para Safari (iPhone). El final tiene que venir en los dos.
+2. **Los autocompradores no hacen clic**; solo la compra a mano. Con los autocompradores andando sería un clic continuo. Los hitos sí suenan aunque los compre un autocomprador.
+3. **Los volúmenes por tipo son cuatro deslizadores** debajo del general. Arrancan en 0,6 (derrumbes), 0,8 (compras e hitos) y 0,4 (fondo), a ojo: no se pudo escuchar.
+4. **Objetivos de 44 px en todas las pantallas**, también con mouse. Las filas de la tienda con interruptor "auto" crecen de ~62 a 76 px.
+5. **Tablet vertical (hasta 1100 px de ancho) usa el diseño del móvil.** Las pantallas completas (Logros, Estadísticas, Ajustes) siguen cambiando a 768 px.
+6. **No toqué** las animaciones de anillos y colores del hito 6 de la spec: ya estaban (ola de color, anillo con texto).

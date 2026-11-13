@@ -10,6 +10,7 @@
   import { contarAvalancha, muestraAvalancha } from '../guardado/historial'
   import { camara, hayPanel, historial, juego, progresoCompresion, sismo } from './juego.svelte'
   import { elegido } from './logros'
+  import * as sonido from './sonido'
 
   const ANILLO_SEP = 8 // px CSS entre la pila y el anillo de Compresión
   const IMPLOSION_MS = 900 // lo que dura la animación implotar del CSS
@@ -49,6 +50,7 @@
     pila.alMuestra = (n) => muestraAvalancha(historial, n)
     pila.alTamano = (n) => {
       sismo.push(n)
+      sonido.derrumbe(n)
       if (n > juego.record) juego.record = n
       contarAvalancha(historial, n)
       if (sismo.length > 1000) sismo.shift() // nadie lo vacía hasta que aparece el sismógrafo
@@ -62,10 +64,14 @@
     let anillosAntes = anillos(juego.s.granos)
     const coloresVistos = () => CFG.colores.filter((_, i) => juego.vistos[`color${i}`]).length
     let coloresAntes = coloresVistos()
+    sonido.fondo(coloresAntes)
     const brillos = [0, 0, 0, 0]
     let compAntes = juego.s.compresiones
     let granosAntes = juego.s.granos
     let saltosAntes = juego.saltos
+    // SPEC 6.7: acorde en cada hito ×4 de un color (cada CFG.hito_colores.cada niveles).
+    const hitos = (s: typeof juego.s) => s.colores.reduce((t, n) => t + Math.floor(n / CFG.hito_colores.cada), 0)
+    let hitosAntes = hitos(juego.s)
     let raf = requestAnimationFrame(function cuadro(ahora) {
       const s = juego.s
       // Vuelta de una ausencia: lo que pasó afuera (compresiones, anillos, colores) no se anima; la pila salta a su foto.
@@ -74,7 +80,11 @@
         compAntes = s.compresiones
         anillosAntes = anillos(s.granos)
         coloresAntes = coloresVistos()
+        hitosAntes = hitos(s)
       }
+      const h = hitos(s)
+      if (h > hitosAntes) sonido.hito('milestone')
+      hitosAntes = h
       // Comprimir (a mano o la automática): implosión. La pila de pantalla se congela con lo que tenía.
       if (s.compresiones > compAntes) {
         implotando = true
@@ -95,11 +105,14 @@
       if (r !== juego.radioPila) juego.radioPila = r
       // SPEC 5: el color nuevo recorre la pila, del centro al borde.
       const c = coloresVistos()
+      if (c > coloresAntes) sonido.hito('color')
+      if (c !== coloresAntes) sonido.fondo(c)
       if (c > coloresAntes) efecto({ ola: { r: Math.max(pila.radioCss, 48), color: COLOR_CSS[ALTURA_DE_COLOR[c - 1]] } })
       coloresAntes = c
       // Si se ganan varios en un cuadro (saltos de debug) se muestra uno solo, el último.
       const n = anillos(s.granos)
       if (n > anillosAntes) {
+        sonido.hito('ring')
         const mult = multAnillos(s).pow(1 / n).toNumber()
         efecto({ texto: es.anillo(n, mult), anillo: { r: pila.radioCss, color: pila.colorDominante() } })
       }

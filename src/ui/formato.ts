@@ -1,5 +1,6 @@
 import Decimal from 'break_infinity.js'
 import { ajustes } from './ajustes.svelte'
+import { es } from '../strings/es'
 
 /**
  * SPEC 8: hasta 999.999 con separador de miles; después científica con 2 decimales (1,23e45),
@@ -21,3 +22,6 @@ export function formatoMult(x: Decimal | number): string {
   const d = new Decimal(x)
   return d.lt(1000) ? d.toNumber().toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : formato(d)
 }
+
+/** Para lectores de pantalla: "1,23e45" se lee "1,23 por diez a la 45". */
+export const hablado = (texto: string) => texto.replace(/(\d+(?:,\d+)?)e(\d+)/g, (_, m, e) => es.potencia(m, e))

@@ -8,8 +8,9 @@
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
   import { es } from '../strings/es'
-  import { formato, formatoMult } from './formato'
+  import { formato, formatoMult, hablado } from './formato'
   import { hayPanel, juego, nombreAuto } from './juego.svelte'
+  import * as sonido from './sonido'
 
   type Modo = keyof typeof es.modos
   let modo = $state<Modo>('x1')
@@ -48,6 +49,7 @@
   function compra(id: ItemId) {
     const s = juego.s
     juego.s = modo === 'x1' || !enTienda ? comprar(s, id) : modo === 'x10' ? comprarN(s, id, DIEZ) : comprarMax(s, id)
+    if (juego.s !== s) sonido.compra(claveAuto(id) ?? 'other')
   }
 
   const alternarAuto = (k: string) => (juego.s = { ...juego.s, auto: { ...juego.s.auto, [k]: !juego.s.auto[k] } })
@@ -108,7 +110,7 @@
     {@const k = claveAuto(id)}
     <li style:--c={i >= 0 ? COLOR_CSS[ALTURA_DE_COLOR[i]] : 'var(--tinta)'}>
       <button class="fila" class:puede={o.puede && !tope} disabled={!o.puede || tope} onclick={() => compra(id)}
-        aria-label="{es.comprar} {nombre(id)} · {tope ? es.nivelMaximo : formato(o.c)}">
+        aria-label="{es.comprar} {nombre(id)} · {tope ? es.nivelMaximo : hablado(formato(o.c))}">
         <span class="muestra" class:caudal={i < 0} aria-hidden="true"></span>
         <span class="nombre">{nombre(id)} <span class="nv num">{es.nivel(nivel(juego.s, id))}</span></span>
         <span class="costo num">
@@ -136,9 +138,9 @@
   /* Sin título: los modos arrancan en el borde izquierdo de la lista; a la derecha, el ícono de Ajustes
      (fijo, App.svelte), alineado con el borde derecho. */
   .cabeza { display: flex; align-items: center; padding: 0 2.5rem 0.25rem 0; }
-  .modos { display: flex; gap: 1rem; }
+  .modos { display: flex; }
   .modos button {
-    min-height: 2.25rem; padding: 0; border: 0; background: none;
+    min-width: 2.75rem; min-height: 2.75rem; padding: 0; text-align: left; border: 0; background: none;
     color: var(--apagado); font: inherit; font-size: 0.875rem; cursor: pointer; transition: color 0.15s;
   }
   .modos button:hover { color: var(--tenue); }
@@ -146,7 +148,7 @@
 
   .pestanas { display: flex; gap: 1rem; padding: 0 2.5rem 0.25rem 0; }
   .pestanas button {
-    min-height: 2.25rem; padding: 0; border: 0; border-bottom: 1px solid transparent; background: none;
+    min-height: 2.75rem; padding: 0; border: 0; border-bottom: 1px solid transparent; background: none;
     color: var(--apagado); font: inherit; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: color 0.15s;
   }
   .pestanas button:hover { color: var(--tenue); }
@@ -176,13 +178,16 @@
 
   /* Interruptor del autocomprador: abajo a la derecha de la fila, en la línea del efecto. */
   .auto {
-    position: absolute; right: 0; bottom: 0.5rem; padding: 0.125rem 0 0.125rem 0.75rem; border: 0; background: none;
+    /* 44 px de alto (objetivo táctil); la fila crece para que no tape el costo. */
+    position: absolute; right: 0; bottom: 0; min-height: 2.75rem; padding: 0 0 0.625rem 0.75rem; border: 0; background: none;
+    display: flex; align-items: flex-end;
     color: var(--apagado); font: inherit; font-size: 0.75rem; cursor: pointer; text-shadow: inherit;
   }
   .auto::before { content: ''; display: inline-block; width: 0.375rem; height: 0.375rem; margin-right: 0.375rem;
     border: 1px solid currentColor; border-radius: 50%; vertical-align: 0.0625rem; }
   .auto[aria-checked='true'] { color: var(--c); }
   li:has(.auto) .efecto { padding-right: 3.5rem; }
+  li:has(.auto) .fila { min-height: 4.75rem; }
   .auto[aria-checked='true']::before { background: currentColor; }
 
   .todo {
@@ -193,7 +198,7 @@
   .todo:hover { color: var(--tinta); }
   kbd { font: inherit; font-size: 0.8125rem; color: var(--apagado); }
 
-  @media (max-width: 767px) { .cabeza { padding-right: 0; } } /* en móvil Ajustes queda arriba de la pantalla */
+  @media (max-width: 767px), (orientation: portrait) and (max-width: 1100px) { .cabeza { padding-right: 0; } } /* en móvil Ajustes queda arriba de la pantalla */
   @keyframes entrar { from { opacity: 0; transform: translateY(6px); } }
   :global(.quieto) li { animation-name: fundido; }
   @keyframes fundido { from { opacity: 0; } }

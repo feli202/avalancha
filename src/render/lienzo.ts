@@ -77,14 +77,13 @@ const vec3 LUZ = vec3(-0.5, 0.55, 0.67); // arriba a la izquierda (sin normaliza
 
 vec3 dec(vec4 v) { return v.rgb * v.rgb * 4.0; }
 vec4 celda(ivec2 c) { return all(greaterThanEqual(c, ivec2(0))) && all(lessThan(c, ivec2(${LADO}))) ? texelFetch(u_celdas, c, 0) : vec4(0.0); }
-// Altura de una vecina; afuera de la pila cuenta como la propia, así el contorno no hace un barranco con su franja de luz.
-float alt(ivec2 c, float propia) { float a = celda(c).a; return a > 0.0 ? a * 4.0 - 1.0 : propia; }
 // Bloom: mips de la luz. Cerca: el resplandor de cada celda que brilla; lejos: un velo suave.
 vec3 halo(vec2 q) {
   vec2 uv = q / L;
   // Fuera de la grilla, CLAMP_TO_EDGE estiraba la luz de la fila del borde en una cruz sobre el fondo: se apaga.
   vec2 fuera = max(-uv, uv - 1.0);
   float dentro = 1.0 - smoothstep(0.0, 0.01, max(fuera.x, fuera.y));
+  if (dentro <= 0.0) return vec3(0.0);
   return dentro * 0.22 * (dec(textureLod(u_luz, uv, 1.0)) + dec(textureLod(u_luz, uv, 2.0)))
        + dentro * 0.07 * (dec(textureLod(u_luz, uv, 3.5)) + dec(textureLod(u_luz, uv, 5.0)));
 }
@@ -104,7 +103,11 @@ vec4 arenaEn(vec2 q) {
   float h = v.a * 4.0 - 1.0;
   float b = u_brillo[int(h + 0.5)];
   float forma = smoothstep(4.0, 14.0, u_escala / u_dpr); // celdas grandes (en px CSS): relieve dentro de la celda
-  float hl = alt(c - ivec2(1, 0), h), hr = alt(c + ivec2(1, 0), h), hd = alt(c - ivec2(0, 1), h), hu = alt(c + ivec2(0, 1), h);
+  // Las cuatro vecinas, leídas una vez (relieve y contorno). Afuera de la pila la altura cuenta como la propia,
+  // así el contorno no hace un barranco con su franja de luz.
+  float al = celda(c - ivec2(1, 0)).a, ar = celda(c + ivec2(1, 0)).a, ad = celda(c - ivec2(0, 1)).a, au = celda(c + ivec2(0, 1)).a;
+  float hl = al > 0.0 ? al * 4.0 - 1.0 : h, hr = ar > 0.0 ? ar * 4.0 - 1.0 : h;
+  float hd = ad > 0.0 ? ad * 4.0 - 1.0 : h, hu = au > 0.0 ? au * 4.0 - 1.0 : h;
   // Celdas chicas: una pendiente por celda (nítida, sin mezclar vecinas).
   vec2 pend = -vec2(hr - hl, hu - hd) * 0.18;
   // Celdas grandes: bisel solo en los bordes que bajan hacia una vecina, más un domo leve: volumen con borde definido.
@@ -122,7 +125,7 @@ vec4 arenaEn(vec2 q) {
   vec3 em = dec(texelFetch(u_luz, c, 0)) * mix(1.0, 0.35 + 1.1 * exp(-dot(f, f) * 6.0), forma);
   // Contorno limpio: la fila del borde (sobre los lados rectos de la pila es una barra de un solo color) se funde
   // a medias con el fondo.
-  float afuera = step(celda(c - ivec2(1, 0)).a, 0.0) + step(celda(c + ivec2(1, 0)).a, 0.0) + step(celda(c - ivec2(0, 1)).a, 0.0) + step(celda(c + ivec2(0, 1)).a, 0.0);
+  float afuera = step(al, 0.0) + step(ar, 0.0) + step(ad, 0.0) + step(au, 0.0);
   float w = 1.0 - 0.6 * min(afuera, 1.0);
   return vec4((arena + em + mica * (0.3 + 0.7 * alb)) * w, w);
 }
@@ -136,14 +139,18 @@ void main() {
 
   // Con la pila alejada (menos de ~2,5 px por celda) varias celdas caen en un píxel: se promedian u_ss × u_ss
   // muestras para que el centro no titile como ruido. Con celdas grandes, una sola: nítida.
-  vec4 a = vec4(0.0);
-  float n = float(u_ss);
-  for (int i = 0; i < u_ss; i++)
-    for (int j = 0; j < u_ss; j++)
-      a += arenaEn((p + (vec2(i, j) + 0.5) / n - 0.5) / u_escala + L * 0.5);
-  a /= n * n;
-  col = col * (1.0 - a.a) + a.rgb;
   vec2 q = p / u_escala + L * 0.5;
+  // Rendimiento: fuera del círculo inscrito de la grilla no hay arena (borde circular, pila.ts) y no se muestrea.
+  // En pantallas anchas las esquinas son más de la mitad de los píxeles. El margen cubre el corrimiento de las muestras.
+  if (length(q - L * 0.5) < L * 0.5 + 2.0 + 1.0 / u_escala) {
+    vec4 a = vec4(0.0);
+    float n = float(u_ss);
+    for (int i = 0; i < u_ss; i++)
+      for (int j = 0; j < u_ss; j++)
+        a += arenaEn((p + (vec2(i, j) + 0.5) / n - 0.5) / u_escala + L * 0.5);
+    a /= n * n;
+    col = col * (1.0 - a.a) + a.rgb;
+  }
   col = hombro(col + halo(q));
   // A sRGB, con un poco de ruido para que el degradado del fondo no haga escalones.
   col = mix(col * 12.92, 1.055 * pow(col, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, col));

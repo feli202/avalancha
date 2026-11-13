@@ -11,7 +11,7 @@
   import Pila from './Pila.svelte'
   import Sismografo from './Sismografo.svelte'
   import Tienda from './Tienda.svelte'
-  import { formato, formatoMult } from './formato'
+  import { formato, formatoMult, hablado } from './formato'
   import { comprimirYa, hayPanel, juego, progresoCompresion } from './juego.svelte'
 
   const v = $derived(juego.vistos)
@@ -64,8 +64,8 @@
 
   <header class="izq">
     <span class="etiqueta">{es.energia}</span>
-    {#if fin}<span class="energia infinito">{es.infinito}</span>{:else}<span class="energia num">{formato(s.energia)}</span>{/if}
-    {#if v.tienda}<span class="linea num aparece"><b class="ambar">+{formato(produccion(s))}</b> {es.energiaPorSegundo}</span>{/if}
+    {#if fin}<span class="energia infinito">{es.infinito}</span>{:else}<span class="energia num" aria-hidden="true">{formato(s.energia)}</span><span class="sr">{hablado(formato(s.energia))}</span>{/if}
+    {#if v.tienda}<span class="linea num aparece"><b class="ambar" aria-hidden="true">+{formato(produccion(s))}</b><span class="sr">{hablado(formato(produccion(s)))}</span> {es.energiaPorSegundo}</span>{/if}
     {#if s.compresiones > 0}
       <span class="linea num aparece">{es.densidad} <b>^{formatoMult(densidad(s))}</b></span>
     {/if}
@@ -216,8 +216,8 @@
     50% { text-shadow: 0 0 0.25rem rgb(232 233 243 / 0.2), 0 0 0.25rem var(--fondo); opacity: 0.75; }
   }
 
-  .autocomp { display: flex; align-items: center; gap: 0.5rem; min-height: 2.25rem; font-size: 0.8125rem; color: var(--tenue); cursor: pointer; }
-  .autocomp input { margin: 0; accent-color: var(--tinta); }
+  .autocomp { display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; font-size: 0.8125rem; color: var(--tenue); cursor: pointer; }
+  .autocomp input { width: 1.25rem; height: 1.25rem; margin: 0; accent-color: var(--tinta); }
 
   /* SPEC 6.6, Infinito. Pila.svelte hace el blanco (0–2 s) y el colapso (2–2,8 s); el número ya es ∞; el resto se apaga,
      un segundo de silencio y aparece el final (3,8 s). */
@@ -242,9 +242,9 @@
   .juego { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s, filter 0.6s; }
   .juego.alejado { transform: scale(0.82); opacity: 0; filter: blur(6px); }
   .juego.quieto.alejado { transform: none; filter: none; }
-  .ajustes { position: fixed; top: var(--margen); right: calc(var(--margen) - 0.6875rem); z-index: 2; display: flex; gap: 0.25rem; } /* el trazo del ícono, al ras de la lista */
+  .ajustes { position: fixed; top: var(--margen); right: calc(var(--margen) - 0.8125rem); z-index: 2; display: flex; } /* el trazo del ícono, al ras de la lista */
   .icono {
-    display: grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0; border: 0; background: none;
+    display: grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: 0; border: 0; background: none;
     color: var(--apagado); cursor: pointer; transition: color 0.15s;
   }
   .icono:hover { color: var(--tinta); }
@@ -259,8 +259,11 @@
   @keyframes latir { 50% { opacity: 0.45; } }
 
   /* Móvil (vertical): pila arriba centrada, Energía arriba, tienda como hoja inferior deslizable. */
-  @media (max-width: 767px) {
-    .juego { --margen: 1rem; --col: auto; --pila-arriba: 7rem; --pila-abajo: calc(45dvh + 3.5rem); --hoja: 88dvh; }
+  /* Pantallas poco anchas (tablet horizontal, 4:3, 16:10): la pila se corre a la izquierda de la tienda, sin pisarla. */
+  @media (max-aspect-ratio: 16/9) { .juego { --pila-derecha: calc(var(--col) + 2 * var(--margen)); } }
+  /* También tablet en vertical: con las columnas a los costados la pila quedaría debajo de la tienda. */
+  @media (max-width: 767px), (orientation: portrait) and (max-width: 1100px) {
+    .juego { --margen: 1rem; --col: auto; --pila-derecha: 0px; --pila-arriba: 7rem; --pila-abajo: calc(45dvh + 3.5rem); --hoja: 88dvh; }
     .izq { right: var(--margen); }
     .energia { font-size: 2.25rem; margin-bottom: 0.25rem; }
     .linea { font-size: 0.875rem; line-height: 1.4; }
@@ -280,10 +283,10 @@
     }
     .der.alta { transform: translateY(max(0px, var(--arrastre))); }
     .der.arrastrando { transition: none; }
-    .manija { display: block; flex: none; width: 100%; height: 1.75rem; border: 0; background: none; cursor: grab; touch-action: none; }
+    .manija { display: block; flex: none; width: 100%; height: 2.75rem; border: 0; background: none; cursor: grab; touch-action: none; }
     .manija::before { content: ''; display: block; width: 2.5rem; height: 3px; margin: 0 auto; border-radius: 2px; background: var(--apagado); }
     .contenido { flex: 1; }
-    .der:not(.alta) .contenido { flex: none; max-height: calc(45dvh - 2.75rem); }
+    .der:not(.alta) .contenido { flex: none; max-height: calc(45dvh - 3.75rem); }
   }
-  @media (max-width: 767px) and (prefers-reduced-motion: reduce) { .der { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .der { transition: none; } }
 </style>

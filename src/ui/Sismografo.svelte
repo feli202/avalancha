@@ -52,6 +52,8 @@
   })
 </script>
 
+<!-- Un canvas que solo dibuja es una imagen; el aviso de Svelte lo trata como interactivo. -->
+<!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role -->
 <canvas bind:this={canvas} role="img" aria-label={es.sismografo}></canvas>
 
 <style>

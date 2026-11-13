@@ -148,9 +148,15 @@
             </div>
           </div>
           <label class="fila">
-            <span class="texto">{es.opciones.volumen}<small>{es.opciones.sinSonido}</small></span>
+            <span class="texto">{es.opciones.volumen}<small>{es.opciones.volumenDesc}</small></span>
             <input type="range" min="0" max="1" step="0.05" bind:value={ajustes.volumen} />
           </label>
+          {#each Object.entries(es.opciones.volumenes) as [k, [nombre, desc]]}
+            <label class="fila sub">
+              <span class="texto">{nombre}<small>{desc}</small></span>
+              <input type="range" min="0" max="1" step="0.05" bind:value={ajustes[k as keyof typeof es.opciones.volumenes]} />
+            </label>
+          {/each}
           <label class="fila">
             <span class="texto">{es.reducirDestellos}<small>{es.opciones.reducirDesc}</small></span>
             <input type="checkbox" bind:checked={ajustes.reducirDestellos} />
@@ -289,7 +295,8 @@
   .texto { display: grid; gap: 0.25rem; }
   .texto small { font-size: 0.8125rem; color: var(--tenue); }
   .fila input[type='checkbox'] { flex: none; width: 1.25rem; height: 1.25rem; margin: 0; accent-color: var(--ambar); cursor: pointer; }
-  .fila input[type='range'] { flex: none; width: 12rem; accent-color: var(--ambar); cursor: pointer; }
+  .fila input[type='range'] { flex: none; width: 12rem; height: 2.75rem; margin: 0; accent-color: var(--ambar); cursor: pointer; }
+  .fila.sub { padding-left: 1.25rem; }
   .segmentos { display: flex; gap: 0.5rem; flex: none; }
   .segmentos button {
     display: grid; gap: 0.125rem; justify-items: start; min-height: 3rem; padding: 0.375rem 0.875rem; border: 1px solid var(--borde);
@@ -308,7 +315,6 @@
   }
   .accion:hover, .accion:focus-visible { border-color: var(--tinta); background: rgb(232 233 243 / 0.04); }
   .accion:disabled { color: var(--apagado); border-color: var(--borde); background: none; cursor: default; }
-  .accion.chica { min-height: 2.5rem; }
   .accion.peligro { color: var(--coral); }
   .accion.peligro:hover, .accion.peligro:focus-visible { border-color: var(--coral); }
   .secundario { min-height: 2.5rem; padding: 0; border: 0; background: none; color: var(--tenue); font: inherit; font-size: 0.9375rem; cursor: pointer; }

@@ -1,11 +1,16 @@
 // Ajustes (SPEC 6.8 y 8): se guardan solos en cada cambio, aparte de la partida.
 import { almacenLocal } from '../guardado/almacen'
 import { AJUSTES } from '../guardado/guardado'
+import { aplicarVolumen } from './sonido'
 
 const base = {
   notacion: 'cientifica' as 'cientifica' | 'ingenieria',
-  /** 0–1. shortcut: todavía no hay sonido (hito 6); queda guardado para cuando llegue. */
+  /** 0–1: el general y uno por tipo de sonido (SPEC 6.7, sonido.ts). */
   volumen: 0.8,
+  volDerrumbes: 0.6,
+  volCompras: 0.8,
+  volHitos: 0.8,
+  volFondo: 0.4,
   /** SPEC 6.8: arranca como pida el sistema. */
   reducirDestellos: matchMedia('(prefers-reduced-motion: reduce)').matches,
   daltonismo: false,
@@ -34,5 +39,6 @@ $effect.root(() => {
     const texto = JSON.stringify(ajustes)
     try { almacenLocal.escribir(AJUSTES, texto) } catch { /* sin almacenamiento: duran hasta recargar */ }
   })
+  $effect(() => void [ajustes.volumen, ajustes.volDerrumbes, ajustes.volCompras, ajustes.volHitos, ajustes.volFondo, aplicarVolumen()])
   $effect(() => void document.documentElement.classList.toggle('daltonismo', ajustes.daltonismo))
 })

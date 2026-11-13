@@ -2,6 +2,7 @@
 const num = (x: number, d = 2) => x.toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d })
 
 export const es = {
+  potencia: (m: string, e: string) => `${m} por diez a la ${e}`,
   titulo: 'Avalancha',
   energia: 'Energía',
   energiaPorSegundo: 'por segundo',
@@ -248,8 +249,14 @@ export const es = {
     notacion: 'Notación',
     cientifica: 'Científica',
     ingenieria: 'Ingeniería',
-    volumen: 'Volumen',
-    sinSonido: 'Todavía no hay sonidos.',
+    volumen: 'Volumen general',
+    volumenDesc: 'El sonido arranca con el primer toque o tecla.',
+    volumenes: {
+      volDerrumbes: ['Derrumbes', 'El granulado de cada avalancha.'],
+      volCompras: ['Compras', 'Un clic distinto por color.'],
+      volHitos: ['Hitos', 'Acordes de anillos, colores nuevos y cada ×4.'],
+      volFondo: ['Fondo', 'Gana una capa con cada color.'],
+    },
     daltonismo: 'Paleta para daltonismo',
     partida: 'Partida',
     guardarAhora: 'Guardar ahora',

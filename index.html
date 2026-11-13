@@ -10,7 +10,7 @@
     <style>
       /* SPEC 6.1 */
       :root {
-        --fondo: #07080f; --tinta: #e8e9f3; --tenue: rgb(232 233 243 / 0.6); --apagado: rgb(232 233 243 / 0.32);
+        --fondo: #07080f; --tinta: #e8e9f3; --tenue: rgb(232 233 243 / 0.6); --apagado: rgb(232 233 243 / 0.5); /* 4,6:1 sobre el fondo (AA) */
         --vidrio: rgb(14 16 30 / 0.62); --borde: rgb(255 255 255 / 0.1);
         --ambar: #ffb547; --coral: #ff6b6b; --jade: #2dd4a7; --violeta: #9b7bff;
         color-scheme: dark;
@@ -24,6 +24,8 @@
       }
       /* Cifras tabulares: los números no bailan al cambiar. */
       .num { font-variant-numeric: tabular-nums; }
+      /* Solo para lectores de pantalla. */
+      .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
       :focus-visible { outline: 2px solid var(--ambar); outline-offset: 2px; }
     </style>
   </head>

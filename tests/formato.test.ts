@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 const ajustes = vi.hoisted(() => ({ notacion: 'cientifica' }))
 vi.mock('../src/ui/ajustes.svelte', () => ({ ajustes }))
-const { formato } = await import('../src/ui/formato')
+const { formato, hablado } = await import('../src/ui/formato')
 
 describe('formato', () => {
   it('científica', () => {
@@ -19,5 +19,12 @@ describe('formato', () => {
     expect(formato(1.234e7)).toBe('12,34e6')
     expect(formato(1.234e47)).toBe('123,40e45')
     expect(formato(9.99999e47)).toBe('1,00e48')
+  })
+})
+
+describe('hablado', () => {
+  it('lee la notación científica para lectores de pantalla', () => {
+    expect(hablado('1,23e45')).toBe('1,23 por diez a la 45')
+    expect(hablado('12.345')).toBe('12.345')
   })
 })
