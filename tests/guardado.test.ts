@@ -40,7 +40,7 @@ describe('fuera de línea', () => {
       expect(Math.abs(a.s.energia.div(normal.energia).toNumber() - 1)).toBeLessThanOrEqual(0.01)
       expect(Math.abs(a.s.granos / normal.granos - 1)).toBeLessThanOrEqual(0.01)
       expect(a.s.tiempoTotal).toBeCloseTo(normal.tiempoTotal, 6)
-    })
+    }, 30_000) // 8 h de ticks de 1 s: 4–5 s solo, más con la suite en paralelo
   }
 
   it('hasta max_pasos usa pasos de 1 s: idéntico al tick normal', () => {

@@ -145,7 +145,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Cómo reproducirlo:** en la consola, `document.querySelector('.pila canvas').getContext('webgl2').getExtension('WEBGL_lose_context').loseContext()`.
 - **Arreglo propuesto:** en `Lienzo`, `preventDefault()` en `webglcontextlost` y rearmar programas y texturas en `webglcontextrestored`; `PilaVisual` marca `sucio` para volver a subir las alturas. Si no hay WebGL2, un mensaje en vez de la pantalla vacía.
 
-### I8. El modo Máx recalcula la compra máxima de cada fila en cada cuadro
+### I8. El modo Máx recalcula la compra máxima de cada fila en cada cuadro — ✅ resuelto
+
+- **Resuelto:** `comprarMax` revisa la disponibilidad una vez (lo único que la cambia al subir es el nivel máximo, que se compara directo) y calcula un costo por nivel. Con 0,999 × Infinito, las cinco filas pasan de 70 ms a 5 ms por cuadro (mismos 523 niveles). `tests/tienda.test.ts` compara contra comprar de a uno en 5 Energías × 11 filas; la economía no cambia (balance en verde). Además: el test de 8 h fuera de línea, que estaba al borde de los 5 s y fallaba a veces con la suite en paralelo, tiene un timeout de 30 s.
 
 - **Dónde:** `src/ui/Tienda.svelte:34-44, 88` (`oferta` llama a `comprarMax`), `src/core/shop.ts:53-64` (cada nivel llama a `disponibles`, que arma un arreglo, y dos veces a `costo`).
 - **Qué pasa:** `juego.s` cambia en cada cuadro, así que con Máx elegido se simula la compra máxima de las cinco filas 60 veces por segundo. Medido en Node con el núcleo: 323 niveles pagables = 32 ms, o sea dos cuadros enteros. Con poca Energía sin gastar no se nota; con mucha (autocompradores apagados o antes de tenerlos, con Energía acumulada) baja de 60 fps.

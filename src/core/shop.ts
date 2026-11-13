@@ -59,8 +59,16 @@ export const comprar = (s: State, id: ItemId): State =>
 
 /** Compra todos los niveles que se puedan pagar ("Máx"). */
 export function comprarMax(s: State, id: ItemId): State {
-  while (puedeComprar(s, id)) s = comprar(s, id)
-  return s
+  if (!puedeComprar(s, id)) return s
+  // Lo único que cambia la disponibilidad al subir niveles es el nivel máximo: se revisa una vez, no por nivel (I8).
+  const tope = id === 'cascada' ? CFG.cascada.nivel_max : mutDe(id) ? CFG.mutaciones.nivel_max : Infinity
+  let energia = s.energia
+  let t = s
+  for (let c = costo(t, id); nivel(t, id) < tope && energia.gte(c); c = costo(t, id)) {
+    energia = energia.sub(c)
+    t = aplicar(t, id)
+  }
+  return { ...t, energia }
 }
 
 /** Compra exactamente n niveles, o ninguno si no alcanza (modo x10). */
