@@ -47,3 +47,15 @@ describe('en.ts', () => {
     o && typeof o === 'object' ? Object.entries(o).flatMap(([k, v]) => [p + k, ...claves(v, `${p}${k}.`)]) : []
   it('tiene las mismas claves que es.ts', () => expect(claves(en).sort()).toEqual(claves(es).sort()))
 })
+
+describe('logros secretos (I10)', async () => {
+  const { SISTEMA, secreto } = await import('../src/ui/logros')
+  it('todo SISTEMA apunta a logros que existen', () => for_(Object.keys(SISTEMA)))
+  const for_ = (ks: string[]) => ks.forEach((k) => expect(LOGROS[k]).toBeDefined())
+  it('sin el sistema visto y sin conseguir: secreto; conseguido o visto: no', () => {
+    expect(secreto('cascada', {}, {})).toBe(true)
+    expect(secreto('cascada', {}, { cascada: true })).toBe(false)
+    expect(secreto('cascada', { cascada: true }, {})).toBe(false)
+    expect(secreto('derrumbe', {}, {})).toBe(false)
+  })
+})

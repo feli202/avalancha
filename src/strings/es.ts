@@ -96,6 +96,8 @@ export const es = {
     seguir: 'Seguir',
   },
   sinWebGL: 'Este navegador no puede dibujar la pila (falta WebGL2). El juego sigue andando: probá con otro navegador o activá la aceleración por hardware.',
+  /** Lo que todavía no apareció (logros, Cómo funciona). */
+  secreto: '???',
   sinGuardar: 'No se pudo guardar. Exportá tu partida desde Ajustes.',
   otraPestana: {
     titulo: 'El juego está abierto en otra pestaña',
@@ -369,6 +371,7 @@ export const es = {
       mut_cascada: 'Hace más fuerte la Cascada, si tiene al menos un nivel. No se pierde al comprimir.',
       energia: 'La dan los derrumbes de la pila. Con ella se compra todo.',
       produccion: 'Granos por segundo × derrumbes por grano × valor de cada derrumbe, elevado a la Densidad.',
+      produccionSinDensidad: 'Granos por segundo × derrumbes por grano × valor de cada derrumbe.',
       densidad: 'El exponente que da la Compresión. Se aplica al valor de cada derrumbe: hace pesar más cada mejora.',
       anillos: 'Cada vez que la pila duplica sus granos gana un anillo, y todo vale un poco más.',
       escala: 'La pila de pantalla se llenó: cada grano que ves representa muchos de la pila real.',

@@ -53,6 +53,16 @@ const conNumero = (t: string | ((n: string) => string), k: string) =>
 export const nombreLogro = (k: string) => conNumero(txt.logros.lista[k][0], k)
 export const descLogro = (k: string) => conNumero(txt.logros.lista[k][1], k)
 
+/** I10: el sistema (clave de juego.vistos) que nombra cada logro; sin conseguir y sin ese sistema visto, se muestra como ???. */
+export const SISTEMA: Record<string, string> = {
+  colores: 'color3', hito: 'color0', mandala: 'color3', anillo: 'anillos', anilloMedio: 'anillos', anilloGrande: 'anillos',
+  compresion: 'compresion', sinAmbar: 'compresion', diez: 'compresion', relampago: 'compresion', densidad: 'compresion',
+  densidadAlta: 'compresion', infinito: 'compresion', infinitoRapido: 'compresion', piloto: 'auto_caudal', cascada: 'cascada',
+  mutacion: 'mutaciones', mutaciones: 'mutaciones',
+}
+export const secreto = (k: string, logros: Record<string, boolean>, vistos: Record<string, boolean>) =>
+  !logros[k] && !!SISTEMA[k] && !vistos[SISTEMA[k]]
+
 export type Cosmetico = 'paleta' | 'efecto' | 'marco'
 /** Recompensa de cada logro: solo cosmética (paletas.ts), sin efecto en el balance. */
 export const RECOMPENSA: Record<string, [Cosmetico, string]> = {

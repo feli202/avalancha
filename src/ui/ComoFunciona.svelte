@@ -121,7 +121,7 @@
       <nav class="indice" aria-label={g.titulo}>
         {#each lista as x (x.id)}
           <button class:bloqueada={!x.abierta} style:--c={x.color} onclick={() => ir(x.id)}>
-            <span class="punto"></span>{x.titulo}{#if !x.abierta}{@render candado()}{/if}
+            <span class="punto"></span>{x.abierta ? x.titulo : txt.secreto}{#if !x.abierta}{@render candado()}{/if}
           </button>
         {/each}
       </nav>
@@ -129,7 +129,7 @@
       <div class="secciones">
         {#each lista as x (x.id)}
           <section id="cf-{x.id}" class="seccion" class:bloqueada={!x.abierta} style:--c={x.color} aria-labelledby="cf-t-{x.id}">
-            <h2 id="cf-t-{x.id}"><span class="punto"></span>{x.titulo}{#if !x.abierta}{@render candado()}{/if}</h2>
+            <h2 id="cf-t-{x.id}"><span class="punto"></span>{x.abierta ? x.titulo : txt.secreto}{#if !x.abierta}{@render candado()}{/if}</h2>
             {#if !x.abierta}
               <p class="texto">{g.bloqueada}</p>
             {:else}

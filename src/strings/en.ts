@@ -90,6 +90,7 @@ export const en: typeof es = {
     seguir: 'Continue',
   },
   sinWebGL: "This browser can't draw the pile (WebGL2 is missing). The game still runs: try another browser or turn on hardware acceleration.",
+  secreto: '???',
   sinGuardar: "Couldn't save. Export your game from Settings.",
   otraPestana: {
     titulo: 'The game is open in another tab',
@@ -344,6 +345,7 @@ export const en: typeof es = {
       mut_cascada: 'Makes Cascade stronger, if it has at least one level. Kept when you compress.',
       energia: 'Topples in the pile make it. You buy everything with it.',
       produccion: 'Grains per second × topples per grain × value of each topple, raised to Density.',
+      produccionSinDensidad: 'Grains per second × topples per grain × value of each topple.',
       densidad: 'The exponent Compression gives you. It applies to the value of each topple, so every upgrade weighs more.',
       anillos: 'Every time the pile doubles its grains it gains a ring, and everything is worth a bit more.',
       escala: 'The on-screen pile is full: each grain you see stands for many in the real pile.',

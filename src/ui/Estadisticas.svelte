@@ -2,7 +2,7 @@
   // Pantalla de Estadísticas (Pantalla.svelte): Producción (el desglose de la Energía/s), Corridas, Avalanchas y General.
   // Todos los gráficos son SVG o divs dibujados acá, con la paleta del juego.
   import Decimal from 'break_infinity.js'
-  import { produccion } from '../core'
+  import { CFG, produccion } from '../core'
     import { txt } from '../strings'
   import { desglose } from './desglose'
   import { formato, formatoMult } from './formato'
@@ -21,7 +21,10 @@
     caudal: '#6ea8ff', derrumbes: '#a3a8c8', ambar: 'var(--ambar)', coral: 'var(--coral)', jade: 'var(--jade)',
     violeta: 'var(--violeta)', anillos: '#e8e9f3', cascada: '#3cc8e8', mutaciones: '#ff7ad9', densidad: '#ffe36e',
   }
-  const factores = $derived(desglose(s))
+  // I10: solo los factores de lo que ya apareció (los ocultos valen ×1, la suma no cambia).
+  const VISTO: Record<string, string> = { ...Object.fromEntries(CFG.colores.map((c, i) => [c.id, `color${i}`])), anillos: 'anillos', cascada: 'cascada', mutaciones: 'mutaciones' }
+  const visible = (id: string) => (id === 'densidad' ? juego.s.compresiones > 0 : !VISTO[id] || !!juego.vistos[VISTO[id]])
+  const factores = $derived(desglose(s).filter((f) => visible(f.id)))
   const positivo = $derived(factores.reduce((a, f) => a + Math.max(0, f.log), 0) || 1)
   let resaltado = $state<string | null>(null)
   let abiertos = $state<Record<string, boolean>>({})

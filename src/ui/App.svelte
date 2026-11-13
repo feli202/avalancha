@@ -34,11 +34,13 @@
   function tecla(e: KeyboardEvent) {
     const libre = !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !hayPanel() &&
       !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
-    if (libre && e.code === 'KeyL') juego.panel = 'logros'
-    if (libre && e.code === 'KeyE') juego.panel = 'estadisticas'
+    // SPEC 5: Ajustes desde el inicio (sonido, accesibilidad); el resto aparece con la tienda.
+    const conTienda = libre && juego.vistos.tienda
+    if (conTienda && e.code === 'KeyL') juego.panel = 'logros'
+    if (conTienda && e.code === 'KeyE') juego.panel = 'estadisticas'
     if (libre && e.code === 'KeyA') juego.panel = 'ajustes'
-    if (libre && e.code === 'KeyP') guardarImagen()
-    if (libre && e.code === 'KeyH') juego.panel = 'ayuda'
+    if (conTienda && e.code === 'KeyP') guardarImagen()
+    if (conTienda && e.code === 'KeyH') juego.panel = 'ayuda'
     if (e.code !== 'KeyC' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || hayPanel()) return
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
     if (juego.vistos.compresion && lista) comprimirYa()
@@ -91,6 +93,7 @@
   </header>
 
   <div class="ajustes">
+    {#if v.tienda}
     <button class="icono" aria-label={txt.menu.guardarImagen} title={txt.menu.guardarImagen} aria-keyshortcuts="P" onclick={guardarImagen}>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
         <path d="M1.5 6a1.5 1.5 0 0 1 1.5-1.5h2.2L6.7 2.5h4.6l1.5 2H15A1.5 1.5 0 0 1 16.5 6v8a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 14z" /><circle cx="9" cy="9.75" r="3" />
@@ -104,16 +107,19 @@
     <button class="icono" aria-label={txt.menu.estadisticas} aria-haspopup="dialog" aria-keyshortcuts="E" onclick={() => (juego.panel = 'estadisticas')}>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15.5V9M7 15.5V3M11 15.5V7M15 15.5v-4M1.5 15.5h15" /></svg>
     </button>
+    {/if}
     <button class="icono" aria-label={txt.menu.abrir} aria-haspopup="dialog" aria-keyshortcuts="A" onclick={() => (juego.panel = 'ajustes')}>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
         <path d="M2 5h8M14 5h2M2 13h2M8 13h8" /><circle cx="12" cy="5" r="2" /><circle cx="6" cy="13" r="2" />
       </svg>
     </button>
+    {#if v.tienda}
     <button class="icono" aria-label={txt.menu.ayuda} aria-haspopup="dialog" aria-keyshortcuts="H" onclick={() => (juego.panel = 'ayuda')}>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
         <circle cx="9" cy="9" r="7.5" /><path d="M6.9 6.9a2.2 2.2 0 1 1 3 2.05c-.55.22-.9.7-.9 1.3v.5" /><circle class="lleno" cx="9" cy="13" r="0.4" />
       </svg>
     </button>
+    {/if}
   </div>
 
   {#if juego.aviso}

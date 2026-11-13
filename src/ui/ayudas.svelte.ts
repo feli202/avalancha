@@ -99,10 +99,11 @@ const n2 = (x: number) => formatoMult(x)
 
 export const ayudaEnergia = (): Tip => ({ titulo: txt.energia, que: txt.guia.que.energia })
 
+// I10: la Densidad no se nombra antes de la primera Compresión.
 export const ayudaProduccion = (s: State): Tip => ({
   titulo: txt.guia.produccion,
-  que: txt.guia.que.produccion,
-  ahora: `${formato(caudal(s))} × (${n2(CFG.K_derrumbes_por_grano)} × ${formato(s.granos)}) × ${formatoMult(valor(s))}^${n2(densidad(s))}`,
+  que: s.compresiones > 0 ? txt.guia.que.produccion : txt.guia.que.produccionSinDensidad,
+  ahora: `${formato(caudal(s))} × (${n2(CFG.K_derrumbes_por_grano)} × ${formato(s.granos)}) × ${formatoMult(valor(s))}${s.compresiones > 0 ? `^${n2(densidad(s))}` : ''}`,
 })
 
 export function ayudaDensidad(s: State): Tip {

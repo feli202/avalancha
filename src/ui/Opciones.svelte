@@ -63,6 +63,8 @@
   let aImportar = $state.raw<Partida | null>(null)
   let borrar = $state(0) // 0, 1 o 2: doble confirmación
   let noSeEscribio = $state(false)
+  /** I10: teclas de cosas que todavía no aparecieron (SPEC 5). */
+  const TECLA_VISTO: Record<string, string> = { M: 'tienda', C: 'compresion', L: 'tienda', E: 'tienda', P: 'tienda', H: 'tienda' }
   const reemplazar = (p: Partida) => (noSeEscribio = !reemplazarPartida(p))
 
   let reloj: ReturnType<typeof setTimeout>
@@ -256,7 +258,7 @@
 
       {:else}
         <dl class="teclas">
-          {#each txt.opciones.teclas as [k, que]}<dt><kbd>{k}</kbd></dt><dd>{que}</dd>{/each}
+          {#each txt.opciones.teclas.filter(([k]) => !TECLA_VISTO[k] || juego.vistos[TECLA_VISTO[k]]) as [k, que]}<dt><kbd>{k}</kbd></dt><dd>{que}</dd>{/each}
         </dl>
       {/if}
     </div>

@@ -6,7 +6,7 @@
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import { juego } from './juego.svelte'
-  import { CAPAS, RECOMPENSA, descLogro, nombreLogro } from './logros'
+  import { CAPAS, RECOMPENSA, descLogro, nombreLogro, secreto } from './logros'
   import Pantalla from './Pantalla.svelte'
 
   $effect.pre(() => paletaBase(ajustes.daltonismo))
@@ -51,13 +51,14 @@
     <ol class="grilla">
       {#each lista as k, i (k)}
         {@const si = !!juego.logros[k]}
-        <li class="tarjeta" class:si data-tarjeta style:--i={i}>
-          <canvas class="imagen" use:miniPila={{ clave: k, quieta: ajustes.reducirDestellos }} aria-hidden="true"></canvas>
+        {@const oculto = secreto(k, juego.logros, juego.vistos)}
+        <li class="tarjeta" class:si class:oculto data-tarjeta style:--i={i}>
+          <canvas class="imagen" use:miniPila={{ clave: k, quieta: ajustes.reducirDestellos || oculto }} aria-hidden="true"></canvas>
           <div class="texto">
-            <h3>{nombre(k)}</h3>
-            <p>{desc(k)}</p>
+            <h3>{oculto ? txt.secreto : nombre(k)}</h3>
+            {#if !oculto}<p>{desc(k)}</p>{/if}
           </div>
-          {@render recompensa(k)}
+          {#if !oculto}{@render recompensa(k)}{/if}
           <span class="sr">{si ? txt.logros.conseguido : txt.logros.pendiente}</span>
         </li>
       {/each}
@@ -121,6 +122,7 @@
   .tarjeta:not(.si) h3 { color: var(--tenue); }
   .tarjeta:not(.si) .texto p { color: var(--apagado); }
   .tarjeta:not(.si) .premio { background: none; }
+  .oculto .imagen { opacity: 0.25; }
 
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 

@@ -164,7 +164,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Cómo reproducirlo:** jugar hasta llenar la pila de pantalla y mirar Logros.
 - **Arreglo propuesto:** el worker ya mide la avalancha de un grano solo por pedido (`muestras`). Usar esas muestras para `juego.record` y para los tres logros, y dejar las tandas para el sismógrafo y el sonido.
 
-### I10. Cosas que se muestran antes de tiempo (SPEC 5)
+### I10. Cosas que se muestran antes de tiempo (SPEC 5) — ✅ resuelto
+
+- **Resuelto:** Ajustes está desde el inicio; foto, Logros, Estadísticas y Cómo funciona (íconos y teclas P, L, E, H) aparecen con la tienda. Logros sin conseguir cuyo sistema no se vio: "???", sin descripción ni recompensa y con la mini pila apagada (`SISTEMA` y `secreto` en `logros.ts`, test en `tests/logros.test.ts`). Estadísticas → Producción filtra los factores con `juego.vistos` (Densidad desde la primera Compresión). El tooltip de Energía/s no nombra la Densidad ni muestra el exponente antes de la primera Compresión. Ajustes → Teclado solo lista las teclas de lo que ya apareció. Cómo funciona: "???" en vez del nombre de las secciones bloqueadas.
 
 - **Dónde y qué:**
   - `src/ui/App.svelte:82-106`: los cinco íconos (foto, logros, estadísticas, ajustes, ayuda) están desde el primer segundo. SPEC 5: la pantalla inicial tiene solo la pila, la Energía y "Tocá la pila".
