@@ -315,7 +315,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 
 - Es parte de I5: `Titulo.svelte` crea su propia `PilaVisual` (otro contexto WebGL y otro worker) con la del juego ya montada debajo. Se arregla con I5.
 
-### M16. Cosas chicas de memoria y audio
+### M16. Cosas chicas de memoria y audio — ✅ resuelto
+
+- **Resuelto:** al cambiar la paleta se cierran los `ImageBitmap` del caché; `arenita` no arma nodos si no hay voces libres.
 
 - `src/render/miniPilas.ts:163-169`: al cambiar la paleta para daltonismo se vacía el caché sin cerrar los `ImageBitmap` (`close()`).
 - `src/ui/sonido.ts:112-128`: `arenita` crea los nodos de audio aunque ya no haya voces libres; conviene preguntar antes de crearlos.

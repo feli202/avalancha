@@ -166,6 +166,7 @@ export function paletaBase(daltonismo: boolean) {
   const b = daltonismo ? COLORES_DALTONISMO : COLORES_PILA
   if (b === base) return
   base = b
+  for (const p of cache.values()) p.then((bm) => bm.close(), () => {}) // M16: liberar los bitmaps de la paleta anterior
   cache.clear()
   subida = ''
 }

@@ -110,6 +110,7 @@ export function derrumbe(n: number) {
 }
 
 function arenita(n: number) {
+  if (voces >= VOCES_MAX) return // sin voces libres, ni se arman los nodos (M16)
   const c = ctx!
   const t = Math.min(1, Math.log10(n + 1) / 5) // 0 = un derrumbe, 1 = 100.000
   const dura = 0.06 + 0.9 * t
