@@ -3,6 +3,9 @@
   import { anillos, densidad, multAnillos, produccion, puedeComprimir } from '../core'
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
+  import Ayuda from './Ayuda.svelte'
+  import { ayuda, ayudaAnillos, ayudaComprimir, ayudaDensidad, ayudaEnergia, ayudaProduccion, ayudaSimple } from './ayudas.svelte'
+  import ComoFunciona from './ComoFunciona.svelte'
   import Debug from './Debug.svelte'
   import Opciones from './Opciones.svelte'
   import Estadisticas from './Estadisticas.svelte'
@@ -35,6 +38,7 @@
     if (libre && e.code === 'KeyE') juego.panel = 'estadisticas'
     if (libre && e.code === 'KeyA') juego.panel = 'ajustes'
     if (libre && e.code === 'KeyP') guardarImagen()
+    if (libre && e.code === 'KeyH') juego.panel = 'ayuda'
     if (e.code !== 'KeyC' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || hayPanel()) return
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
     if (juego.vistos.compresion && lista) comprimirYa()
@@ -68,10 +72,10 @@
 
   <header class="izq">
     <span class="etiqueta">{txt.energia}</span>
-    {#if fin}<span class="energia infinito">{txt.infinito}</span>{:else}{#key juego.primera}<span class="energia num" class:salta={juego.primera} aria-hidden="true">{formato(s.energia)}</span>{/key}<span class="sr">{hablado(formato(s.energia))}</span>{/if}
-    {#if v.tienda}<span class="linea num aparece"><b class="ambar" aria-hidden="true">+{formato(produccion(s))}</b><span class="sr">{hablado(formato(produccion(s)))}</span> {txt.energiaPorSegundo}</span>{/if}
+    {#if fin}<span class="energia infinito">{txt.infinito}</span>{:else}{#key juego.primera}<span use:ayuda={ayudaEnergia} class="energia num" class:salta={juego.primera} aria-hidden="true">{formato(s.energia)}</span>{/key}<span class="sr">{hablado(formato(s.energia))}</span>{/if}
+    {#if v.tienda}<span class="linea num aparece" use:ayuda={() => ayudaProduccion(juego.s)}><b class="ambar" aria-hidden="true">+{formato(produccion(s))}</b><span class="sr">{hablado(formato(produccion(s)))}</span> {txt.energiaPorSegundo}</span>{/if}
     {#if s.compresiones > 0}
-      <span class="linea num aparece">{txt.densidad} <b>^{formatoMult(densidad(s))}</b></span>
+      <span class="linea num aparece" use:ayuda={() => ayudaDensidad(juego.s)}>{txt.densidad} <b>^{formatoMult(densidad(s))}</b></span>
     {/if}
   </header>
 
@@ -94,6 +98,11 @@
         <path d="M2 5h8M14 5h2M2 13h2M8 13h8" /><circle cx="12" cy="5" r="2" /><circle cx="6" cy="13" r="2" />
       </svg>
     </button>
+    <button class="icono" aria-label={txt.menu.ayuda} aria-haspopup="dialog" aria-keyshortcuts="H" onclick={() => (juego.panel = 'ayuda')}>
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <circle cx="9" cy="9" r="7.5" /><path d="M6.9 6.9a2.2 2.2 0 1 1 3 2.05c-.55.22-.9.7-.9 1.3v.5" /><circle class="lleno" cx="9" cy="13" r="0.4" />
+      </svg>
+    </button>
   </div>
 
   {#if juego.aviso}
@@ -104,10 +113,10 @@
 
   {#if v.derrumbes}
     <footer class="sismo aparece">
-      <Sismografo />
+      <div class="tocable" use:ayuda={() => ayudaSimple(txt.sismografo, txt.guia.que.sismografo)}><Sismografo /></div>
       <p class="chico num">
-        {#if v.anillos}<span class="aparece">{txt.anillos(anillos(s.granos))} <b>{txt.mult(formatoMult(multAnillos(s)))}</b></span>{/if}
-        {#if juego.escalaK > 0}{#key juego.escalaK}<span class="aparece">{txt.escala(juego.escalaK)}</span>{/key}{/if}
+        {#if v.anillos}<span class="aparece tocable" data-guia="anillos" use:ayuda={() => ayudaAnillos(juego.s)}>{txt.anillos(anillos(s.granos))} <b>{txt.mult(formatoMult(multAnillos(s)))}</b></span>{/if}
+        {#if juego.escalaK > 0}{#key juego.escalaK}<span class="aparece tocable" use:ayuda={() => ayudaSimple(txt.escala(juego.escalaK), txt.guia.que.escala)}>{txt.escala(juego.escalaK)}</span>{/key}{/if}
       </p>
     </footer>
   {/if}
@@ -133,7 +142,7 @@
         <Tienda />
         {#if v.compresion}
           <!-- Después de la última Compresión la meta es el Infinito: llega solo. -->
-          <button class="comprimir aparece" disabled={!lista} onclick={comprimirYa} aria-keyshortcuts="C">
+          <button class="comprimir aparece" data-guia="compresion" use:ayuda={() => ayudaComprimir(juego.s)} disabled={!lista} onclick={comprimirYa} aria-keyshortcuts="C">
             <span class="nombre">{comp.final ? txt.haciaInfinito : txt.comprimir}</span>
             <span class="meta num">
               {#if !comp.final}{txt.compresion(s.compresiones + 1)}{' · '}{/if}{txt.meta(comp.meta)} · <b>{txt.progreso(comp.p)}</b>
@@ -141,7 +150,7 @@
             </span>
           </button>
           {#if v.auto_compresion_auto && !comp.final}
-            <label class="autocomp aparece">
+            <label class="autocomp aparece" data-guia="auto_compresion_auto" use:ayuda={() => ayudaSimple(txt.compresionAuto, txt.guia.que.auto)}>
               <input type="checkbox" checked={s.auto.compresion_auto} onchange={alternarAutoComp} /> {txt.compresionAuto}
             </label>
           {/if}
@@ -181,6 +190,8 @@
 <Logros />
 <Estadisticas />
 <Opciones />
+<ComoFunciona />
+<Ayuda />
 
 {#if import.meta.env.DEV}<Debug />{/if}
 
@@ -294,6 +305,9 @@
   }
   .icono:hover { color: var(--tinta); }
   .icono svg { fill: var(--fondo); stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+  .icono .lleno { fill: currentColor; }
+  /* Lo que tiene tooltip dentro de las zonas que dejan pasar los clics a la pila. */
+  .izq .num, .tocable { pointer-events: auto; }
 
   .aparece { animation: aparecer 0.6s ease-out; }
   .der.aparece { animation-name: fundido; } /* sin transform: en móvil la hoja usa el suyo */

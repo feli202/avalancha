@@ -3,11 +3,12 @@
   // Todos los gráficos son SVG o divs dibujados acá, con la paleta del juego.
   import Decimal from 'break_infinity.js'
   import { produccion } from '../core'
-  import { POR_DECADA } from '../guardado/historial'
-  import { txt } from '../strings'
+    import { txt } from '../strings'
   import { desglose } from './desglose'
   import { formato, formatoMult } from './formato'
   import { historial, juego } from './juego.svelte'
+  import { ayuda } from './ayudas.svelte'
+  import Histograma from './Histograma.svelte'
   import Pantalla from './Pantalla.svelte'
 
   const PESTANAS = ['produccion', 'corridas', 'avalanchas', 'general'] as const
@@ -24,6 +25,7 @@
   const positivo = $derived(factores.reduce((a, f) => a + Math.max(0, f.log), 0) || 1)
   let resaltado = $state<string | null>(null)
   let abiertos = $state<Record<string, boolean>>({})
+  const cifra = (k: string) => ({ titulo: txt.estadisticas[k as 'record'], que: txt.guia.cifra[k] })
   const mult = (log: number) => `×${formatoMult(Decimal.pow10(log))}`
   const n = (x: number) => x.toLocaleString(txt.locale, { maximumFractionDigits: 2 })
 
@@ -38,21 +40,6 @@
   const masLarga = $derived(Math.max(1, ...corridas.map((c) => c.duracion)))
   const masRapida = $derived(corridas.length ? corridas.reduce((a, c) => (c.duracion < a.duracion ? c : a)) : null)
 
-  // Avalanchas: histograma log-log y la recta de mínimos cuadrados (la ley de potencias).
-  const AV = { w: 640, h: 280, izq: 44, abajo: 34, arriba: 12, der: 12 }
-  const casillas = $derived(h.avalanchas.map((c, k) => ({ k, c })).filter((x) => x.c > 0))
-  const xMax = $derived(Math.max(4, Math.ceil(h.avalanchas.length / POR_DECADA))) // décadas
-  const yMax = $derived(Math.max(1, Math.ceil(Math.log10(Math.max(1, ...h.avalanchas)) + 0.2)))
-  const ax = (dec: number) => AV.izq + (dec / xMax) * (AV.w - AV.izq - AV.der)
-  const ay = (dec: number) => AV.h - AV.abajo - (dec / yMax) * (AV.h - AV.abajo - AV.arriba)
-  const recta = $derived.by(() => {
-    if (casillas.length < 3) return null
-    const xs = casillas.map((p) => (p.k + 0.5) / POR_DECADA), ys = casillas.map((p) => Math.log10(p.c))
-    const mx = xs.reduce((a, b) => a + b) / xs.length, my = ys.reduce((a, b) => a + b) / ys.length
-    const m = xs.reduce((a, x, i) => a + (x - mx) * (ys[i] - my), 0) / xs.reduce((a, x) => a + (x - mx) ** 2, 0)
-    const x0 = xs[0], x1 = xs[xs.length - 1]
-    return { m, x0, x1, y0: my + m * (x0 - mx), y1: my + m * (x1 - mx) }
-  })
   const contadas = $derived(h.avalanchas.reduce((a, b) => a + b, 0))
 
   // General: la Energía de la partida (log10) en el tiempo.
@@ -97,7 +84,9 @@
             </div>
             <ul class="factores">
               {#each factores as f (f.id)}
-                <li class:resaltado={resaltado === f.id} onpointerenter={() => (resaltado = f.id)} onpointerleave={() => (resaltado = null)}>
+                <li class:resaltado={resaltado === f.id} use:ayuda={() => ({
+                  titulo: txt.estadisticas.factores[f.id], que: txt.guia.factor[f.id] ?? txt.guia.factor.color,
+                  ahora: txt.guia.aporta(mult(f.log), Math.round((Math.max(0, f.log) / positivo) * 100)) })} onpointerenter={() => (resaltado = f.id)} onpointerleave={() => (resaltado = null)}>
                   <button class="fila" aria-expanded={!!abiertos[f.id]} aria-label={txt.estadisticas.expandir(txt.estadisticas.factores[f.id])}
                     onclick={() => (abiertos[f.id] = !abiertos[f.id])}>
                     <span class="punto" style:background={COLOR[f.id]}></span>
@@ -154,51 +143,26 @@
       {:else if PESTANAS[activa] === 'avalanchas'}
         <section class="seccion">
           <p class="lema">{txt.estadisticas.leyPotencias}</p>
-          {#if casillas.length}
-            <svg class="grafico" viewBox="0 0 {AV.w} {AV.h}" role="img" aria-label={txt.estadisticas.leyPotencias}>
-              {#each { length: yMax + 1 } as _, d}
-                <line class="guia" x1={AV.izq} x2={AV.w - AV.der} y1={ay(d)} y2={ay(d)} />
-                <text class="eje" x={AV.izq - 8} y={ay(d) + 4} text-anchor="end">{formato(10 ** d)}</text>
-              {/each}
-              {#each { length: xMax + 1 } as _, d}
-                <text class="eje" class:par={d % 2 === 1} x={ax(d)} y={AV.h - AV.abajo + 18} text-anchor={d === xMax ? 'end' : 'middle'}>{formato(10 ** d)}</text>
-              {/each}
-              {#each casillas as p, i (p.k)}
-                {@const x = ax(p.k / POR_DECADA)}
-                {@const w = ax(1 / POR_DECADA) - ax(0)}
-                <rect class="columna" style:--i={i} x={x + 1} y={ay(Math.log10(p.c) + 0.12)} width={w - 2}
-                  height={ay(0) - ay(Math.log10(p.c) + 0.12)} />
-              {/each}
-              {#if recta}
-                <line class="recta" x1={ax(recta.x0)} y1={ay(recta.y0)} x2={ax(recta.x1)} y2={ay(recta.y1)} />
-                <text class="eje recta-t" x={ax(recta.x1)} y={ay(recta.y1) - 8} text-anchor="end">
-                  {txt.estadisticas.pendiente(n(recta.m))}
-                </text>
-              {/if}
-              <text class="eje titulo-eje" x={AV.w - AV.der} y={AV.h - 2} text-anchor="end">{txt.estadisticas.ejeTamano} →</text>
-            </svg>
-          {:else}
-            <p class="vacio">{txt.estadisticas.sinAvalanchas}</p>
-          {/if}
+          <Histograma avalanchas={h.avalanchas} />
           <dl class="cifras">
-            <div><dt>{txt.estadisticas.record}</dt><dd class="num">{formato(juego.record)}</dd></div>
-            <div><dt>{txt.estadisticas.mayorCorrida}</dt><dd class="num">{formato(h.mayorCorrida)}</dd></div>
-            <div><dt>{txt.estadisticas.contadas}</dt><dd class="num">{formato(contadas)}</dd></div>
-            <div><dt>{txt.estadisticas.derrumbesPila}</dt><dd class="num">{formato(h.derrumbesPila)}</dd></div>
+            <div use:ayuda={() => cifra('record')}><dt>{txt.estadisticas.record}</dt><dd class="num">{formato(juego.record)}</dd></div>
+            <div use:ayuda={() => cifra('mayorCorrida')}><dt>{txt.estadisticas.mayorCorrida}</dt><dd class="num">{formato(h.mayorCorrida)}</dd></div>
+            <div use:ayuda={() => cifra('contadas')}><dt>{txt.estadisticas.contadas}</dt><dd class="num">{formato(contadas)}</dd></div>
+            <div use:ayuda={() => cifra('derrumbesPila')}><dt>{txt.estadisticas.derrumbesPila}</dt><dd class="num">{formato(h.derrumbesPila)}</dd></div>
           </dl>
         </section>
 
       {:else}
         <section class="seccion">
           <dl class="cifras">
-            <div class="destacada"><dt>{txt.estadisticas.tiempoTotal}</dt><dd class="num">{txt.duracion(s.tiempoTotal)}</dd></div>
-            <div><dt>{txt.estadisticas.tiempoCorrida}</dt><dd class="num">{txt.duracion(s.tiempoCorrida)}</dd></div>
-            <div><dt>{txt.estadisticas.partida}</dt><dd class="num">{txt.duracion(Math.max(0, (ahoraMs - h.inicio) / 1000))}</dd></div>
-            <div><dt>{txt.estadisticas.mejorCorrida}</dt>
+            <div class="destacada" use:ayuda={() => cifra('tiempoTotal')}><dt>{txt.estadisticas.tiempoTotal}</dt><dd class="num">{txt.duracion(s.tiempoTotal)}</dd></div>
+            <div use:ayuda={() => cifra('tiempoCorrida')}><dt>{txt.estadisticas.tiempoCorrida}</dt><dd class="num">{txt.duracion(s.tiempoCorrida)}</dd></div>
+            <div use:ayuda={() => cifra('partida')}><dt>{txt.estadisticas.partida}</dt><dd class="num">{txt.duracion(Math.max(0, (ahoraMs - h.inicio) / 1000))}</dd></div>
+            <div use:ayuda={() => cifra('mejorCorrida')}><dt>{txt.estadisticas.mejorCorrida}</dt>
               <dd class="num">{s.mejorCorrida > 0 ? txt.duracion(s.mejorCorrida) : txt.estadisticas.ninguna}</dd></div>
-            <div><dt>{txt.estadisticas.compresiones}</dt><dd class="num">{s.compresiones}</dd></div>
-            <div><dt>{txt.estadisticas.granosTotales}</dt><dd class="num">{formato(s.granosTotales)}</dd></div>
-            <div><dt>{txt.estadisticas.derrumbesTotales}</dt><dd class="num">{formato(h.derrumbes)}</dd></div>
+            <div use:ayuda={() => cifra('compresiones')}><dt>{txt.estadisticas.compresiones}</dt><dd class="num">{s.compresiones}</dd></div>
+            <div use:ayuda={() => cifra('granosTotales')}><dt>{txt.estadisticas.granosTotales}</dt><dd class="num">{formato(s.granosTotales)}</dd></div>
+            <div use:ayuda={() => cifra('derrumbesTotales')}><dt>{txt.estadisticas.derrumbesTotales}</dt><dd class="num">{formato(h.derrumbes)}</dd></div>
           </dl>
           <p class="rotulo">{txt.estadisticas.graficoEnergia}</p>
           {#if h.serie.length > 1}
@@ -282,12 +246,8 @@
   .grafico { display: block; width: 100%; height: auto; margin: 0 0 2rem; overflow: visible; }
   .guia { stroke: var(--borde); stroke-width: 1; }
   .eje { fill: var(--apagado); font-size: 12px; font-variant-numeric: tabular-nums; }
-  .columna { fill: var(--ambar); opacity: 0.85; transform-box: fill-box; transform-origin: bottom; animation: crecer 0.6s calc(var(--i) * 0.03s) cubic-bezier(0.2, 0.8, 0.2, 1) backwards; transition: y 0.6s, height 0.6s; }
-  .recta { stroke: var(--tinta); stroke-width: 1.5; stroke-dasharray: 5 5; opacity: 0.7; }
-  .recta-t { fill: var(--tenue); }
   .linea { fill: none; stroke: var(--ambar); stroke-width: 2; stroke-linejoin: round; stroke-dasharray: 1; animation: trazar 1.2s ease-out backwards; }
   .area { animation: fundido 1.2s 0.3s ease-out backwards; }
-  @keyframes crecer { from { transform: scaleY(0); } }
   @keyframes trazar { from { stroke-dashoffset: 1; } }
 
   /* Cifras: sin cajas, jerarquía por tamaño (como el resto de la interfaz). */
@@ -300,7 +260,7 @@
 
   @keyframes fundido { from { opacity: 0; } }
   @keyframes subir { from { opacity: 0; transform: translateY(6px); } }
-  :global(.quieto) .columna, :global(.quieto) .linea, :global(.quieto) .tabla tbody tr { animation: none; }
+  :global(.quieto) :global(.quieto) .linea, :global(.quieto) .tabla tbody tr { animation: none; }
 
   @media (max-width: 767px) {
     .contenido { padding: 0.25rem 1rem 2rem; }
@@ -313,6 +273,5 @@
     .cifras { grid-template-columns: 1fr 1fr; gap: 1.25rem 1.5rem; }
     .cifras dd { font-size: 1.375rem; }
     .eje { font-size: 22px; } /* el SVG se achica a la mitad: que el texto siga legible */
-    .par, .titulo-eje { display: none; } /* una década sí y una no, sin pisarse */
   }
 </style>

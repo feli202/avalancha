@@ -1,0 +1,206 @@
+<script lang="ts">
+  // Pantalla "Cómo funciona" (Pantalla.svelte): una sección por sistema, abierta recién cuando el jugador llegó a él.
+  // "Para curiosos" muestra la fórmula exacta de SPEC 4 con los valores actuales; todo sale de CFG y del núcleo.
+  import Decimal from 'break_infinity.js'
+  import {
+    CFG, MUTACIONES, anillos, caudal, cascadaC, costoCascada, costoCaudal, costoColor, costoMutacion, densidad,
+    multAnillos, multCascada, multColor, produccion, valor, type State,
+  } from '../core'
+  import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
+  import { txt } from '../strings'
+  import { efecto } from './ayudas.svelte'
+  import { formato, formatoMult } from './formato'
+  import Histograma from './Histograma.svelte'
+  import { historial, juego, nombreAuto } from './juego.svelte'
+  import MiniPila from './MiniPila.svelte'
+  import Pantalla from './Pantalla.svelte'
+
+  interface Formula { r: string; g: string; v: string }
+  interface Seccion { id: string; abierta: boolean; color: string; titulo: string; texto: string[]; f: Formula[] }
+
+  const g = txt.guia
+  const V = g.v
+  const d = (x: number, dec = 3) => x.toLocaleString(txt.locale, { maximumFractionDigits: dec })
+  /** Costo 10^(c0 + g·n + s·n²/2), escrito con los valores del nivel actual. */
+  function curva(c: { c0: number; g: number; s?: number }, n: number, costo: Decimal): Formula {
+    const s2 = (c.s ?? 0) / 2
+    const cuad = (x: string) => (s2 ? ` + ${d(s2)}·${x}²` : '')
+    const e = c.c0 + c.g * n + s2 * n * n
+    return {
+      r: g.rotulo.costo,
+      g: `10^(${d(c.c0)} + ${d(c.g)}·${V.nivel}${cuad(V.nivel)})`,
+      v: `= 10^(${d(c.c0)} + ${d(c.g)}·${n}${cuad(String(n))}) = 10^${d(e)} = ${formato(costo)}`,
+    }
+  }
+
+  function secciones(s: State): Seccion[] {
+    const v = juego.vistos
+    const C = CFG.caudal, M = CFG.mutaciones, K = CFG.K_derrumbes_por_grano, H = CFG.hito_colores, A = CFG.anillos
+    const G = formato(s.granos), D = densidad(s), a = anillos(s.granos), c = cascadaC(s)
+    const meta = CFG.compresion.umbrales_log10[s.compresiones]
+    const sec = (id: string, abierta: boolean, color: string, f: Formula[], texto = g.secciones[id][1]): Seccion =>
+      ({ id, abierta, color, titulo: g.secciones[id][0], texto, f })
+
+    return [
+      sec('pila', true, 'var(--ambar)', [
+        { r: g.rotulo.total, g: `T(N) ≈ ${d(K / 2, 4)} · N²`, v: `→ dT/dN ≈ ${d(K)} · G` },
+        { r: g.rotulo.derrumbes, g: `${d(K)} × G`, v: `= ${d(K)} × ${G} ${g.derrumbesUnidad(formato(K * s.granos))}` },
+      ]),
+      sec('caudal', !!v.tienda, 'var(--tinta)', [
+        { r: g.rotulo.caudal, g: `F = ${d(C.granos_base)} × ${d(C.mult_por_nivel)}^${V.nivel} × ${d(M.caudal.por_nivel)}^${V.mut}`,
+          v: `= ${d(C.granos_base)} × ${d(C.mult_por_nivel)}^${s.caudal} × ${d(M.caudal.por_nivel)}^${s.mutaciones.caudal} = ${txt.efectoCaudal(formato(caudal(s)))}` },
+        curva(C, s.caudal, costoCaudal(s.caudal)),
+        { r: g.rotulo.produccion, g: `${txt.energia}/s = F × (${d(K)} × G) × V^D`,
+          v: `= ${formato(caudal(s))} × (${d(K)} × ${G}) × ${formatoMult(valor(s))}^${d(D)} = ${formato(produccion(s))}` },
+      ]),
+      ...CFG.colores.map((col, i) => {
+        const n = s.colores[i], hitos = Math.floor(n / H.cada)
+        return sec(`color${i}`, !!v[`color${i}`], COLOR_CSS[ALTURA_DE_COLOR[i]], [
+          { r: g.rotulo.mult, g: `${d(col.mult_por_nivel)}^${V.nivel} × ${H.mult}^⌊${V.nivel} / ${H.cada}⌋`,
+            v: `= ${d(col.mult_por_nivel)}^${n} × ${H.mult}^${hitos} = ×${formatoMult(multColor(i, n))}` },
+          curva(col, n, costoColor(i, n)),
+        ], g.colorTexto(txt.colores[i], txt.alturaColor[i], d(col.mult_por_nivel), H.cada, H.mult))
+      }),
+      sec('anillos', !!v.anillos, '#e8e9f3', [
+        { r: g.rotulo.anillos, g: `G ≥ ${A.granos_primer_anillo} ? ⌊log₂(G / ${A.granos_primer_anillo})⌋ + 1 : 0`, v: `G = ${G} → ${a}` },
+        { r: g.rotulo.multAnillos, g: `(${d(A.mult_por_anillo)} + ${d(M.expansion.por_nivel)} × ${V.expansion})^${V.anillos}`,
+          v: `= (${d(A.mult_por_anillo)} + ${d(M.expansion.por_nivel)} × ${s.mutaciones.expansion})^${a} = ×${formatoMult(multAnillos(s))}` },
+        { r: g.rotulo.proximoAnillo, g: `G = ${A.granos_primer_anillo} × 2^${V.anillos}`,
+          v: `= ${A.granos_primer_anillo} × 2^${a} = ${g.granosUnidad(formato(A.granos_primer_anillo * 2 ** a))}` },
+      ]),
+      sec('compresion', !!v.compresion, 'var(--tinta)', [
+        { r: g.rotulo.densidad, g: `D = 1 + ${d(CFG.compresion.densidad_por_nivel)} × ${V.comp}`,
+          v: `= 1 + ${d(CFG.compresion.densidad_por_nivel)} × ${s.compresiones} = ${d(D)}` },
+        { r: g.rotulo.meta, g: CFG.compresion.umbrales_log10.map((u) => `1e${u}`).join(' · '),
+          v: meta === undefined ? g.sinMetas : `${txt.compresion(s.compresiones + 1)}: 1e${meta}` },
+      ]),
+      sec('cascada', !!v.cascada, '#3cc8e8', [
+        { r: g.rotulo.c, g: `c = ${d(CFG.cascada.c_por_nivel)} × ${V.nivel} + (${V.nivel} ≥ 1 ? ${d(M.cascada.por_nivel)} × ${V.mut} : 0)`,
+          v: `= ${d(c)}` },
+        { r: g.rotulo.mult, g: `G^(${d(CFG.cascada.exp_G)}·c) / 10^(${d(CFG.cascada.exp_penal)}·c)`,
+          v: `= ${G}^(${d(CFG.cascada.exp_G)}·${d(c)}) / 10^(${d(CFG.cascada.exp_penal)}·${d(c)}) = ×${formatoMult(multCascada(s))}` },
+        curva(CFG.cascada, s.cascada, costoCascada(s.cascada)),
+      ]),
+      sec('mutaciones', !!v.mutaciones, '#ff7ad9', MUTACIONES.map((m) => ({
+        r: txt.mutaciones[m],
+        g: `10^(${d(M[m].c0)} + ${d(M[m].g)}·${V.nivel})`,
+        v: `${txt.nivel(s.mutaciones[m])} · ${efecto(s, `mut_${m}`)} · ${s.mutaciones[m] >= M.nivel_max ? txt.nivelMaximo : formato(costoMutacion(m, s.mutaciones[m]))}`,
+      }))),
+      sec('auto', !!v.auto_caudal, 'var(--tenue)', Object.entries(CFG.autocompradores).map(([k, n]) => ({
+        r: k === 'compresion_auto' ? g.compresionAuto : nombreAuto(k),
+        g: g.autoEn(n),
+        v: s.compresiones >= n ? '✓' : '—',
+      }))),
+    ]
+  }
+
+  const lista = $derived(secciones(juego.s))
+  const avalanchas = $derived.by(() => (void juego.verHistorial, historial.avalanchas.slice()))
+  const ir = (id: string) => document.getElementById(`cf-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+</script>
+
+{#snippet candado()}
+  <svg class="candado" width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><rect x="1.5" y="6" width="9" height="7" rx="1" /><path d="M3.5 6V4a2.5 2.5 0 0 1 5 0v2" /></svg>
+{/snippet}
+
+{#snippet formulas(f: Formula[])}
+  <details class="curiosos">
+    <summary>{g.curiosos}</summary>
+    <dl>
+      {#each f as x (x.r)}
+        <dt>{x.r}</dt>
+        <dd><code>{x.g}</code><code class="valor num">{x.v}</code></dd>
+      {/each}
+    </dl>
+  </details>
+{/snippet}
+
+{#if juego.panel === 'ayuda'}
+  <Pantalla titulo={g.titulo} pestanas={[{ id: 'como', texto: g.titulo }]}>
+    <div class="contenido">
+      <nav class="indice" aria-label={g.titulo}>
+        {#each lista as x (x.id)}
+          <button class:bloqueada={!x.abierta} style:--c={x.color} onclick={() => ir(x.id)}>
+            <span class="punto"></span>{x.titulo}{#if !x.abierta}{@render candado()}{/if}
+          </button>
+        {/each}
+      </nav>
+
+      <div class="secciones">
+        {#each lista as x (x.id)}
+          <section id="cf-{x.id}" class="seccion" class:bloqueada={!x.abierta} style:--c={x.color} aria-labelledby="cf-t-{x.id}">
+            <h2 id="cf-t-{x.id}"><span class="punto"></span>{x.titulo}{#if !x.abierta}{@render candado()}{/if}</h2>
+            {#if !x.abierta}
+              <p class="texto">{g.bloqueada}</p>
+            {:else}
+              {#each x.texto as p}<p class="texto">{p}</p>{/each}
+              {@render formulas(x.f)}
+              {#if x.id === 'pila'}
+                <h3>{g.derrumbesTitulo(d(CFG.K_derrumbes_por_grano))}</h3>
+                <p class="texto">{g.derrumbesTexto}</p>
+                <h3>{g.potenciasTitulo}</h3>
+                <p class="texto">{g.potenciasTexto}</p>
+                <p class="ley"><code>{g.potenciasFormula}</code></p>
+                <Histograma {avalanchas} />
+                <h3>{g.ordenTitulo}</h3>
+                <p class="texto">{g.ordenTexto}</p>
+                <h3>{g.mini.titulo}</h3>
+                <p class="texto">{g.mini.ayuda}</p>
+                <MiniPila />
+              {/if}
+            {/if}
+          </section>
+        {/each}
+      </div>
+    </div>
+  </Pantalla>
+{/if}
+
+<style>
+  .contenido {
+    display: grid; grid-template-columns: 12rem minmax(0, 44rem); justify-content: center; gap: 3rem;
+    width: 100%; padding: 0.5rem 2rem 4rem;
+  }
+  .indice { position: sticky; top: 6rem; align-self: start; display: grid; }
+  .indice button {
+    display: flex; align-items: center; gap: 0.625rem; min-height: 2.25rem; padding: 0; border: 0; background: none;
+    color: var(--tenue); font: inherit; font-size: 0.9375rem; text-align: left; cursor: pointer; transition: color 0.15s;
+  }
+  .indice button:hover { color: var(--tinta); }
+  .indice .bloqueada { color: var(--apagado); }
+  .punto { flex: none; width: 0.5rem; height: 0.5rem; border-radius: 1px; background: var(--c); }
+  .bloqueada .punto { background: none; border: 1px solid var(--apagado); }
+  .candado { flex: none; margin-left: 0.25rem; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+
+  .seccion { padding: 2rem 0; border-top: 1px solid var(--borde); scroll-margin-top: 5rem; }
+  .seccion:first-child { padding-top: 0.5rem; border-top: 0; }
+  .seccion.bloqueada { opacity: 0.5; }
+  h2 { display: flex; align-items: center; gap: 0.75rem; margin: 0 0 0.75rem; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
+  h2 .punto { width: 0.625rem; height: 0.625rem; box-shadow: 0 0 0.75rem var(--c); }
+  .bloqueada h2 .punto { box-shadow: none; }
+  h3 { margin: 2.25rem 0 0.5rem; font-size: 1.0625rem; font-weight: 600; text-wrap: balance; }
+  .texto { margin: 0 0 0.75rem; font-size: 1rem; line-height: 1.6; color: var(--tenue); text-wrap: pretty; }
+  .bloqueada .texto { color: var(--apagado); }
+  code { font-family: inherit; font-variant-numeric: tabular-nums; }
+  .ley { margin: 0.25rem 0 1rem; color: var(--tinta); }
+
+  /* "Para curiosos": la fórmula general y, debajo, la misma con tus números. */
+  .curiosos { margin: 1rem 0 0; }
+  .curiosos summary {
+    display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; color: var(--c); font-size: 0.9375rem;
+    font-weight: 600; cursor: pointer; list-style: none;
+  }
+  .curiosos summary::-webkit-details-marker { display: none; }
+  .curiosos summary::before { content: ''; width: 0.375rem; height: 0.375rem; border: solid currentColor; border-width: 0 1.5px 1.5px 0; rotate: -45deg; transition: rotate 0.2s; }
+  .curiosos[open] summary::before { rotate: 45deg; }
+  .curiosos dl { display: grid; gap: 1rem; margin: 0.5rem 0 0; padding-left: 1rem; border-left: 1px solid color-mix(in srgb, var(--c) 40%, transparent); animation: fundido 0.25s ease-out; }
+  .curiosos dt { font-size: 0.8125rem; color: var(--apagado); }
+  .curiosos dd { display: grid; gap: 0.125rem; margin: 0.125rem 0 0; font-size: 0.9375rem; overflow-wrap: anywhere; }
+  .curiosos .valor { color: var(--tenue); }
+  @keyframes fundido { from { opacity: 0; } }
+
+  @media (max-width: 767px) {
+    .contenido { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0.25rem 1rem 3rem; }
+    .indice { display: none; }
+  }
+</style>

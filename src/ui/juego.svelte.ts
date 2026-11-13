@@ -43,7 +43,9 @@ class Juego {
   /** Sube una vez por segundo: Estadísticas relee `historial` (que se muta sin $state, cambia con cada avalancha). */
   verHistorial = $state(0)
   /** Panel abierto sobre la pila: Estadísticas, Logros o Ajustes. */
-  panel = $state<'estadisticas' | 'logros' | 'ajustes' | null>(null)
+  panel = $state<'estadisticas' | 'logros' | 'ajustes' | 'ayuda' | null>(null)
+  /** Sistemas recién aparecidos que esperan su indicador (Guia.svelte), en orden. Claves de `vistos`. */
+  guias = $state.raw<string[]>([])
   /** Pantalla de título (partida nueva): la economía espera. */
   titulo = $state(false)
   /** La primera avalancha después del primer toque ya pasó (Pila.svelte; el contador de Energía salta). */
@@ -122,6 +124,11 @@ function revelar(s: State) {
   const autos = nuevos.filter((k) => k.startsWith('auto_') && !(k in txt.revelado)).map((k) => nombreAuto(k.slice(5)))
   const frases = nuevos.filter((k) => k in txt.revelado).map((k) => txt.revelado[k])
   if (autos.length) frases.push(txt.autocompradores(autos))
+  // Un indicador por sistema; los autocompradores que llegan juntos, uno solo (el primero).
+  const conGuia = nuevos.filter((k) => k in txt.guia.indicador || k.startsWith('auto_'))
+  const primerAuto = conGuia.find((k) => k.startsWith('auto_') && !(k in txt.guia.indicador))
+  const guias = conGuia.filter((k) => k in txt.guia.indicador || k === primerAuto)
+  if (guias.length) juego.guias = [...juego.guias, ...guias].slice(-AVISOS_JUNTOS)
   juego.aviso = { id: avisos++, texto: frases.slice(-AVISOS_JUNTOS).join(' ') }
 }
 
@@ -148,7 +155,7 @@ export function comprimirYa() {
 export const invitaTocar = () => !juego.vistos.punado && !juego.vistos.tienda
 
 /** Hay un cartel o panel encima: las teclas del juego (Espacio, M, C) no hacen nada. */
-export const hayPanel = () => juego.titulo || juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto
+export const hayPanel = (): boolean => juego.titulo || juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto
 
 export const partidaActual = (): Partida =>
   ({ estado: juego.s, guardadoEn: Date.now(), vistos: juego.vistos, record: juego.record, logros: juego.logros, historial })

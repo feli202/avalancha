@@ -108,6 +108,7 @@ export const es = {
     pestanas: { estadisticas: 'Estadísticas', logros: 'Logros', ajustes: 'Ajustes' } as Record<string, string>,
     logros: 'Logros',
     guardarImagen: 'Guardar imagen',
+    ayuda: 'Cómo funciona',
   },
   foto: {
     guardada: 'Imagen guardada',
@@ -299,6 +300,7 @@ export const es = {
       ['E', 'ver las estadísticas'],
       ['A', 'abrir los ajustes'],
       ['P', 'guardar una imagen de la pila'],
+      ['H', 'ver cómo funciona'],
       ['Esc', 'volver a la pila'],
     ],
   },
@@ -320,6 +322,142 @@ export const es = {
   /** Autocompradores que aparecen juntos, en una sola frase. */
   autocompradores: (nombres: string[]) =>
     `${nombres.length === 1 ? 'Autocomprador' : 'Autocompradores'} de ${nombres.join(' y ')}: compra${nombres.length === 1 ? '' : 'n'} solo${nombres.length === 1 ? '' : 's'} una vez por segundo.`,
+
+  // Ayuda integrada: indicadores de sistema nuevo, tooltips y la pantalla "Cómo funciona"
+  guia: {
+    /** El indicador que señala cada sistema cuando aparece (claves de juego.vistos). */
+    indicador: {
+      tienda: 'Acá subís el Caudal. Pasá el mouse o mantené presionado sobre cualquier cosa para ver qué hace.',
+      color0: 'Ámbar está acá. Cada nivel hace valer más las celdas con 3 granos.',
+      color1: 'Coral está acá. Cada nivel hace valer más las celdas con 2 granos.',
+      color2: 'Jade está acá. Cada nivel hace valer más las celdas vacías.',
+      color3: 'Violeta está acá: el color más raro y el más fuerte.',
+      anillos: 'Acá ves tus anillos y cuánto multiplican.',
+      compresion: 'Tu meta de Compresión. El anillo alrededor de la pila marca cuánto falta.',
+      cascada: 'Pestaña nueva: la Cascada.',
+      mutaciones: 'Pestaña nueva: las Mutaciones, que no se pierden.',
+      auto_compresion_auto: 'Prendelo y la pila comprime sola al llegar a la meta.',
+    } as Record<string, string>,
+    auto: 'Este interruptor prende y apaga el autocomprador.',
+    cerrar: 'Cerrar',
+    // Tooltips
+    ahora: (x: string) => `Ahora: ${x}`,
+    proximo: (x: string, e: string | null) => `Próximo nivel: ${x}${e ? ` · Energía/s ×${e}` : ''}`,
+    conCompresion: (d: string) => `Con la próxima Compresión: ^${d}`,
+    proximoAnillo: (g: string, m: string) => `Próximo anillo con ${g} granos: ×${m} más`,
+    produccion: 'Energía por segundo',
+    queColor: (altura: string, cada: number, hito: number) =>
+      `Hace valer más cada derrumbe en las ${altura}. Cada ${cada} niveles, ×${hito} extra.`,
+    que: {
+      caudal: 'Granos que caen por segundo en el centro de la pila. Más granos, más derrumbes.',
+      cascada: 'Multiplica según los granos de la pila: las pilas grandes rinden más que proporcionalmente.',
+      mut_caudal: 'Más Caudal en todas las corridas. No se pierde al comprimir.',
+      mut_colores: 'Multiplica el valor de todos los derrumbes. No se pierde al comprimir.',
+      mut_expansion: 'Cada anillo multiplica un poco más. No se pierde al comprimir.',
+      mut_cascada: 'Hace más fuerte la Cascada, si tiene al menos un nivel. No se pierde al comprimir.',
+      energia: 'La dan los derrumbes de la pila. Con ella se compra todo.',
+      produccion: 'Granos por segundo × derrumbes por grano × valor de cada derrumbe, elevado a la Densidad.',
+      densidad: 'El exponente que da la Compresión. Se aplica al valor de cada derrumbe: hace pesar más cada mejora.',
+      anillos: 'Cada vez que la pila duplica sus granos gana un anillo, y todo vale un poco más.',
+      escala: 'La pila de pantalla se llenó: cada grano que ves representa muchos de la pila real.',
+      comprimir: 'Vuelve la pila a cero a cambio de Densidad. Se pierden la Energía, los granos y los niveles; quedan los colores, las Mutaciones y los autocompradores.',
+      auto: 'Una vez por segundo compra todos los niveles que alcancen. Tocalo para prenderlo o apagarlo.',
+      sismografo: 'Cada pico es una avalancha de la pila, en escala logarítmica: un pico el doble de alto son muchísimos más derrumbes.',
+    } as Record<string, string>,
+    /** Estadísticas · Producción: qué es cada factor. */
+    factor: {
+      caudal: 'Granos que caen por segundo.',
+      derrumbes: 'Cuántos derrumbes provoca cada grano: crece con los granos de la pila.',
+      color: 'Lo que este color multiplica el valor de cada derrumbe.',
+      anillos: 'Un poco más por cada vez que la pila duplicó sus granos.',
+      cascada: 'El premio de las pilas grandes.',
+      mutaciones: 'Las Mutaciones de Caudal y Colores.',
+      densidad: 'Lo que suma el exponente: el valor de cada derrumbe elevado a la Densidad.',
+    } as Record<string, string>,
+    aporta: (m: string, p: number) => `Aporta ${m}: el ${p} % de la Energía/s, en órdenes de magnitud.`,
+    /** Estadísticas: qué cuenta cada cifra (mismas claves que estadisticas.*). */
+    cifra: {
+      record: 'La avalancha con más derrumbes que pasó en la pila de pantalla, en toda la partida.',
+      mayorCorrida: 'La avalancha más grande desde la última Compresión.',
+      contadas: 'Todas las avalanchas que entraron en el histograma.',
+      derrumbesPila: 'Derrumbes que hizo la pila de pantalla. La real hace muchos más.',
+      tiempoTotal: 'Tiempo jugado, contando el que pasó mientras no estabas.',
+      tiempoCorrida: 'Tiempo desde la última Compresión.',
+      partida: 'Tiempo real desde que empezaste esta partida.',
+      mejorCorrida: 'La corrida más corta que terminó en Compresión.',
+      compresiones: 'Cuántas veces comprimiste la pila.',
+      granosTotales: 'Todos los granos que cayeron: Caudal y puñados.',
+      derrumbesTotales: 'Los derrumbes de toda la partida en la pila real.',
+    } as Record<string, string>,
+
+    // Pantalla "Cómo funciona"
+    titulo: 'Cómo funciona',
+    curiosos: 'Para curiosos',
+    bloqueada: 'Seguí jugando para descubrirlo',
+    /** Nombres de las variables en las fórmulas. */
+    v: { nivel: 'nivel', mut: 'mutación', anillos: 'anillos', comp: 'compresiones', expansion: 'Expansión' },
+    rotulo: {
+      caudal: 'Granos por segundo', costo: 'Costo del próximo nivel', produccion: 'Energía por segundo',
+      mult: 'Multiplicador', anillos: 'Anillos', multAnillos: 'Multiplicador de los anillos', proximoAnillo: 'Próximo anillo',
+      densidad: 'Densidad', meta: 'Próxima meta', c: 'Fuerza de la Cascada', derrumbes: 'Derrumbes por grano',
+      total: 'Derrumbes de N granos soltados de a uno',
+    } as Record<string, string>,
+    granosUnidad: (g: string) => `${g} granos`,
+    derrumbesUnidad: (d: string) => `≈ ${d} derrumbes`,
+    sinMetas: 'Ya no quedan metas: la pila llega sola al Infinito.',
+    autoEn: (n: number) => `Compresión ${n}`,
+    compresionAuto: 'Compresión automática',
+    secciones: {
+      pila: ['La pila de arena', [
+        'Cada celda junta granos. Cuando llega a 4 se derrumba: le pasa un grano a cada vecina, y alguna puede llegar a 4 y derrumbarse también. Eso es una avalancha, y cada derrumbe da Energía.',
+        'Los colores son las alturas: cada celda estable tiene de 0 a 3 granos. No es un invento del juego: es la pila de arena abeliana, un modelo de física de 1987 (Bak, Tang y Wiesenfeld).',
+      ]],
+      caudal: ['Caudal', [
+        'El Caudal es cuántos granos caen por segundo sobre el centro de la pila. Cada nivel lo duplica.',
+        'Más granos son más derrumbes, y además la pila crece: cada grano nuevo provoca más derrumbes que el anterior.',
+      ]],
+      color0: ['Ámbar', []], color1: ['Coral', []], color2: ['Jade', []], color3: ['Violeta', []],
+      anillos: ['Anillos', [
+        'Cada vez que la pila duplica sus granos gana un anillo, y cada anillo multiplica un poco el valor de cada derrumbe.',
+        'No se compran: llegan solos a medida que la pila crece.',
+      ]],
+      compresion: ['Compresión', [
+        'Al llegar a la meta podés comprimir: la pila vuelve a cero y a cambio gana Densidad.',
+        'La Densidad es un exponente sobre el valor de cada derrumbe, así que todo lo que compres después pesa más. Las metas son fijas: comprimir antes o después no rompe nada.',
+      ]],
+      cascada: ['Cascada', [
+        'La Cascada premia las pilas grandes: multiplica según cuántos granos tiene la pila, más que proporcionalmente.',
+        'El exponente no es inventado: sale de medir la distribución real de las avalanchas.',
+      ]],
+      mutaciones: ['Mutaciones', [
+        'Las Mutaciones son mejoras que sobreviven a la Compresión. Son caras, pero se quedan para siempre.',
+      ]],
+      auto: ['Autocompradores', [
+        'Llegan con las compresiones. Una vez por segundo compran todos los niveles que alcancen de lo suyo, como "Máx".',
+        'La Cascada y las Mutaciones siempre son a mano: son las decisiones.',
+      ]],
+    } as Record<string, [string, string[]]>,
+    colorTexto: (nombre: string, altura: string, mult: string, cada: number, hito: number) => [
+      `${nombre} hace valer más los derrumbes en las ${altura}. Cada nivel multiplica por ${mult}, y cada ${cada} niveles hay un ×${hito} extra.`,
+      'En la pila, el color más raro es el más caro y el más fuerte: lo que ves y lo que comprás son lo mismo.',
+    ],
+    // La pila de arena, a fondo
+    derrumbesTitulo: (k: string) => `¿Por qué cada grano da unos ${k} × G derrumbes?`,
+    derrumbesTexto: 'Los granos entran por el centro, pero la pila tiene que quedar estable: lo que entra se reparte hasta el borde. La pila es un disco cuya superficie crece con G, así que cada grano nuevo empuja derrumbes por todo el disco, y eso también crece con G. Si soltás N granos de a uno, los derrumbes suman una parábola en N; su derivada son los derrumbes de cada grano nuevo.',
+    potenciasTitulo: '¿Por qué casi todas las avalanchas son chicas?',
+    potenciasTexto: 'La pila se acomoda sola al borde del derrumbe: los físicos dicen que es crítica. Un grano puede no mover nada o desatar una avalancha que cruza la pila entera, y no hay un tamaño típico. Por eso tu histograma, en escala log-log, es casi una recta: es una ley de potencias.',
+    potenciasFormula: 'avalanchas de tamaño s ∝ s^−τ',
+    ordenTitulo: '¿Por qué no importa el orden?',
+    ordenTexto: 'Si dos celdas están por derrumbarse, da igual cuál va primero: un derrumbe solo suma granos a las vecinas, y una celda inestable sigue inestable hasta que le toca. Al final queda exactamente la misma pila, con el mismo número de derrumbes. Por eso se llama abeliana, como las operaciones donde a + b = b + a. El juego lo aprovecha: hace los derrumbes en el orden más rápido y el resultado es el mismo.',
+    mini: {
+      titulo: 'Probala',
+      ayuda: 'Tocá una celda para soltar un grano. Cada derrumbe va en cámara lenta. Soltá varios en plena avalancha: el final es el mismo en cualquier orden.',
+      pila: 'Mini pila de 15 por 15. Tocá una celda para soltar un grano; con el teclado, Enter suelta uno en el centro.',
+      derrumbes: (n: number) => `${n.toLocaleString('es-AR')} ${n === 1 ? 'derrumbe' : 'derrumbes'} en esta avalancha`,
+      caidos: (n: number) => `${n.toLocaleString('es-AR')} ${n === 1 ? 'grano cayó' : 'granos cayeron'} por el borde`,
+      reiniciar: 'Reiniciar',
+    },
+  },
 
   debug: {
     titulo: 'Debug',

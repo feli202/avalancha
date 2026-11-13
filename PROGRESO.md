@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). **Hito 6** (pulido técnico): sonido, móvil y tablet, accesibilidad (Lighthouse 100) y rendimiento (60 fps en GPU integrada). **Primeros 10 segundos**: pantalla de título, logo y primera avalancha con el primer toque. **Guardar imagen**: PNG de 2048×2048 de la pila (botón de cámara, tecla P, "Guardá tu mandala" en el Infinito). **Sonido sintetizado**: todo el audio generado por código con Web Audio (sin archivos), con música generativa. La Capa 0 está completa.
+Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). **Hito 6** (pulido técnico): sonido, móvil y tablet, accesibilidad (Lighthouse 100) y rendimiento (60 fps en GPU integrada). **Primeros 10 segundos**: pantalla de título, logo y primera avalancha con el primer toque. **Guardar imagen**: PNG de 2048×2048 de la pila (botón de cámara, tecla P, "Guardá tu mandala" en el Infinito). **Sonido sintetizado**: todo el audio generado por código con Web Audio (sin archivos), con música generativa. **Guías**: indicadores de sistema nuevo, tooltips y la pantalla "Cómo funciona". La Capa 0 está completa.
 
 ## Qué se hizo
 
@@ -666,3 +666,35 @@ Los marcadores de posición (`public/sfx/`, `scripts/sfx.py`) se borraron: `src/
 - `npm test` (70), `npm run typecheck` y `npm run build` en verde.
 - En el navegador, con un analizador enganchado a la salida: cada sonido da señal (pico sobre el fondo): derrumbe chico 0,05, de 100.000 0,10, golpe grave 0,45, compras 0,14–0,18, acordes 0,14–0,37, Compresión 0,38, música con 4 capas 0,08. Infinito: crescendo hasta 0,97, silencio 0,018 (cola de la reverb, −35 dB) y acorde final 0,55. Sin errores en la consola.
 - **No lo escuché**: no tengo salida de audio. Los volúmenes relativos están puestos por medición, no a oído. Falta escucharlo, sobre todo una sesión larga de derrumbes para ver que no canse.
+
+## Guías: ayuda integrada y "Cómo funciona"
+
+Textos en `src/strings/{es,en}.ts`, bloque `guia`. Ningún número de balance escrito a mano: todo sale de `CFG` y del núcleo.
+
+**Ayuda integrada**
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/ui/ayudas.svelte.ts` | `use:ayuda` (el tooltip), lo que dice cada mejora y número (`ayudaItem`, `ayudaProduccion`…), y `nombre`/`efecto`/`maximo` de la tienda (salieron de `Tienda.svelte`). Se llama `ayudas` y no `ayuda`: en Windows `./ayuda.svelte` resolvía a `Ayuda.svelte`. |
+| `src/ui/Ayuda.svelte` | Dibuja el tooltip y el indicador de sistema nuevo. |
+
+- **Indicador de sistema nuevo.** `revelar()` (juego.svelte.ts) encola en `juego.guias` cada sistema con indicador: Caudal, cada color, anillos, Compresión, Cascada, Mutaciones, el primer autocomprador de cada tanda y la Compresión automática. Cada objetivo tiene `data-guia="<clave>"`. Se ve un contorno fino del color del sistema que respira, más una línea de texto al lado (a la izquierda si está en la mitad derecha; arriba o abajo en móvil). Se cierra a los 9 s, o con un clic en el texto o en lo señalado; un clic en la pila no lo cierra (si no, los puñados lo borrarían al instante). Espera mientras hay un panel abierto. No vuelve: depende de que `vistos` cambie, y eso pasa una sola vez por partida. Si lo señalado no está en pantalla (por ejemplo, un color nuevo con la pestaña Cascada abierta), se descarta.
+- **Tooltips.** Al pasar el mouse (350 ms), al mantener presionado en pantallas táctiles (450 ms; soltar después no compra) o con foco de teclado (`aria-describedby`). Muestran título, qué hace, "Ahora: …" y "Próximo nivel: … · Energía/s ×N" (N = `produccion(aplicar(s, id)) / produccion(s)`, sale del núcleo real). Lo tienen las filas de la tienda (también sin poder comprar: el botón deshabilitado deja pasar el puntero al `li`), los autocompradores, la Energía, la Energía/s (con la fórmula y tus valores), la Densidad, los anillos (próximo anillo), la escala, el sismógrafo, el botón Comprimir, la Compresión automática, y en Estadísticas los factores de Producción y todas las cifras.
+
+**Pantalla "Cómo funciona"** (`ComoFunciona.svelte`, ícono "?" arriba a la derecha, tecla H)
+
+- Pantalla completa sobre `Pantalla.svelte`, con un índice a la izquierda (se oculta en móvil). Una sección por sistema; las que todavía no aparecieron (según `juego.vistos`) se ven apagadas, con candado y "Seguí jugando para descubrirlo".
+- En cada sección: 2 o 3 frases y "Para curiosos", con la fórmula exacta de SPEC 4 y debajo la misma con los valores del jugador (por ejemplo, `= 1 × 2^2 × 3^0 = 4 granos/s`, `= 10^(1 + 0,6·2 + 0,075·2²) = 10^2,5 = 316`).
+- **La pila de arena**: qué es (Bak, Tang y Wiesenfeld), por qué cada grano da ~K·G derrumbes (T(N) ≈ K/2·N² y su derivada, con tu G), la ley de potencias (el histograma de Estadísticas, ahora `Histograma.svelte`, compartido) y por qué el orden no importa. Incluye `MiniPila.svelte`: 15×15 con clics, un derrumbe por paso cada 120 ms (se acelera de a uno más por paso cada 40 derrumbes para que una avalancha enorme no dure minutos), contador de derrumbes y de granos caídos por el borde, y Reiniciar. Teclado: Enter suelta un grano en el centro.
+
+### Verificación
+
+- `npm run typecheck`, `npm run build` y `npm test` (70) en verde. En la corrida completa, dos tests de `guardado.test.ts` (8 h fuera de línea) pasaron los 5 s de límite con dos servidores de desarrollo y el navegador corriendo; solos pasan (27/27). No tocan nada de este cambio.
+- En el navegador (partida nueva, 1024×768): al aparecer la tienda, el indicador rodea Caudal con el texto a la izquierda; después Ámbar (en ámbar) y anillos (abajo a la izquierda). El tooltip de Caudal muestra "Ahora: 1 grano/s · Próximo nivel: 2 granos/s · Energía/s ×2,00". Saltando a la Compresión 6 (debug), las fórmulas de Caudal, Compresión, Cascada y Autocompradores salen con los valores del estado; Mutaciones queda bloqueada. La mini pila hizo una avalancha de 7 derrumbes. Tooltips de Estadísticas OK. Móvil (375×812): entran los cinco íconos, la pantalla se lee en una columna y el indicador va encima de lo señalado. Sin errores en la consola.
+- **No probado**: mantener presionado en un celular real (el navegador integrado manda clics de mouse); los 60 fps (el navegador integrado estaba en segundo plano). El indicador y el tooltip siguen a su objetivo con un `requestAnimationFrame` mientras están visibles (un `getBoundingClientRect` por cuadro).
+
+### Decisiones (revisar)
+
+1. **Las secciones bloqueadas muestran el nombre** (apagado, con candado) pero no el texto. Si "sin spoilers" significa también esconder el nombre, cambiarlo es una línea en `ComoFunciona.svelte`.
+2. **"La pila de arena" está abierta desde el inicio**: es el juego mismo.
+3. Si aparecen muchos sistemas juntos (saltos de debug), solo se muestran los dos últimos indicadores, igual que las frases de aviso.

@@ -3,12 +3,12 @@
   // Pestañas Cascada y Mutaciones cuando aparecen (SPEC 5): ahí se compra de a un nivel, son las decisiones.
   import Decimal from 'break_infinity.js'
   import {
-    CFG, MUTACIONES, aplicar, caudal, comprar, comprarMax, comprarN, comprarTodo, costo, multCascada, multColor, nivel,
-    type ItemId, type MutId, type State,
+    CFG, MUTACIONES, aplicar, comprar, comprarMax, comprarN, comprarTodo, costo, nivel, type ItemId, type State,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
   import { txt } from '../strings'
-  import { formato, formatoMult, hablado } from './formato'
+  import { ayuda, ayudaItem, ayudaSimple, colorDe as color, efecto, maximo, nombre } from './ayudas.svelte'
+  import { formato, hablado } from './formato'
   import { hayPanel, juego, nombreAuto } from './juego.svelte'
   import * as sonido from './sonido'
 
@@ -27,9 +27,6 @@
   )
   const enTienda = $derived(pestana === 'tienda')
 
-  const mutDe = (id: ItemId) => (id.startsWith('mut_') ? (id.slice(4) as MutId) : null)
-  const maximo = (id: ItemId) =>
-    id === 'cascada' ? CFG.cascada.nivel_max : mutDe(id) ? CFG.mutaciones.nivel_max : Infinity
   /** Clave del autocomprador de cada fila (CFG.autocompradores), si tiene. */
   const claveAuto = (id: ItemId) => (id === 'caudal' ? 'caudal' : color(id) >= 0 ? CFG.colores[color(id)].id : null)
 
@@ -54,30 +51,12 @@
 
   const alternarAuto = (k: string) => (juego.s = { ...juego.s, auto: { ...juego.s.auto, [k]: !juego.s.auto[k] } })
 
-  function nombre(id: ItemId) {
-    const m = mutDe(id)
-    return m ? txt.mutaciones[m] : id === 'cascada' ? txt.cascada : color(id) >= 0 ? txt.colores[color(id)] : txt.caudal
-  }
-
-  function efecto(s: State, id: ItemId) {
-    const m = mutDe(id)
-    const n = nivel(s, id)
-    if (m === 'expansion') return txt.efectoMutacion[m](formatoMult(CFG.anillos.mult_por_anillo + CFG.mutaciones[m].por_nivel * n))
-    if (m === 'cascada') return txt.efectoMutacion[m](formatoMult(CFG.mutaciones[m].por_nivel * n))
-    if (m) return txt.efectoMutacion[m](formato(CFG.mutaciones[m].por_nivel ** n))
-    if (id === 'cascada') return txt.mult(formatoMult(multCascada(s)))
-    if (color(id) >= 0) return `${txt.mult(formatoMult(multColor(color(id), n)))} · ${txt.alturaColor[color(id)]}`
-    return txt.efectoCaudal(formato(caudal(s)))
-  }
-
   const todo = () => (juego.s = comprarTodo(juego.s, items))
 
   function tecla(e: KeyboardEvent) {
     if (e.code !== 'KeyM' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || hayPanel() || e.target instanceof HTMLInputElement) return
     todo()
   }
-
-  const color = (id: ItemId) => (id.startsWith('color') ? Number(id.slice(5)) : -1)
 </script>
 
 <svelte:window onkeydown={tecla} />
@@ -85,7 +64,7 @@
 {#if pestanas.length > 1}
   <div class="pestanas" role="tablist">
     {#each pestanas as p (p)}
-      <button role="tab" class="aparece" aria-selected={pestana === p} onclick={() => (pestana = p)}>{txt.pestanas[p]}</button>
+      <button role="tab" class="aparece" data-guia={p} aria-selected={pestana === p} onclick={() => (pestana = p)}>{txt.pestanas[p]}</button>
     {/each}
   </div>
 {/if}
@@ -108,7 +87,8 @@
     {@const tope = nivel(juego.s, id) >= maximo(id)}
     {@const o = oferta(juego.s, id)}
     {@const k = claveAuto(id)}
-    <li style:--c={i >= 0 ? COLOR_CSS[ALTURA_DE_COLOR[i]] : 'var(--tinta)'}>
+    <li style:--c={i >= 0 ? COLOR_CSS[ALTURA_DE_COLOR[i]] : 'var(--tinta)'} data-guia={id === 'caudal' ? 'tienda' : id}
+      use:ayuda={() => ayudaItem(juego.s, id)}>
       <button class="fila" class:puede={o.puede && !tope} disabled={!o.puede || tope} onclick={() => compra(id)}
         aria-label="{txt.comprar} {nombre(id)} · {tope ? txt.nivelMaximo : hablado(formato(o.c))}">
         <span class="muestra" class:caudal={i < 0} aria-hidden="true"></span>
@@ -120,7 +100,7 @@
       </button>
       {#if k && juego.vistos[`auto_${k}`]}
         <!-- SPEC 4.8: interruptor del autocomprador, fuera del botón de la fila. -->
-        <button class="auto aparece" role="switch" aria-checked={juego.s.auto[k]} aria-label={txt.autoDe(nombreAuto(k))}
+        <button class="auto aparece" data-guia="auto_{k}" use:ayuda={() => ayudaSimple(txt.autoDe(nombreAuto(k)), txt.guia.que.auto)} role="switch" aria-checked={juego.s.auto[k]} aria-label={txt.autoDe(nombreAuto(k))}
           onclick={() => alternarAuto(k)}>{txt.auto}</button>
       {/if}
     </li>
@@ -164,6 +144,7 @@
     border: 0; background: none; color: var(--tinta); font: inherit; text-align: left; text-shadow: inherit; cursor: default;
   }
   .fila.puede { cursor: pointer; }
+  .fila:disabled { pointer-events: none; } /* el tooltip (en el li) tiene que verse también sin poder comprar */
   .muestra { grid-area: m; align-self: center; width: 0.5rem; height: 0.5rem; border-radius: 1px; background: var(--c); }
   .muestra.caudal { background: none; border: 1px solid var(--tinta); border-radius: 50%; }
   .nombre { grid-area: n; font-size: 1rem; font-weight: 600; }
