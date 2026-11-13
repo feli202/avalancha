@@ -26,6 +26,8 @@ export interface Respuesta {
    * vuelve a estar estable. Es una muestra de la distribución real (la ley de potencias); el resto va en tandas.
    */
   muestras: number[]
+  /** Las fotos no se pudieron cargar (sin red, sin DecompressionStream): no pedir más, soltar granos al ritmo máximo. */
+  sinFotos?: boolean
 }
 
 const PRESUPUESTO_MS = 12 // por pedido: deja margen dentro de un cuadro de 16,7 ms
@@ -34,9 +36,11 @@ const TOPE = 50_000 // derrumbes entre dos miradas al reloj (~1 ms)
 let pila = new Pila()
 let midiendo = false // el grano de muestra todavía se está derrumbando (puede seguir en el próximo pedido)
 let muestra = 0
-const fotos = fetch(url)
-  .then((r) => new Response(r.body!.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer())
+// null si fallan (I6): sin esto el pedido de foto no contesta nunca y la pila queda congelada.
+const fotos: Promise<Uint8Array | null> = fetch(url)
+  .then((r) => { if (!r.ok) throw new Error(`pilas.bin: ${r.status}`); return new Response(r.body!.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer() })
   .then((b) => new Uint8Array(b))
+  .catch((e) => { console.warn(e); return null })
 
 /** Arma la pila entera espejando el cuadrante guardado; devuelve las celdas de adentro con 0 granos. */
 function cargar(q: Uint8Array, n: number): Int32Array {
@@ -57,7 +61,14 @@ onmessage = async (e: MessageEvent<Pedido>) => {
   const { granos, reiniciar, gen, foto } = e.data
   if (foto >= 0) {
     const t0 = performance.now()
-    const celdas = cargar(await fotos, foto)
+    const q = await fotos
+    if (!q) {
+      const r: Respuesta = { gen, foto: -1, hechos: 0, tamano: 0, celdas: new Int32Array(0), alturas: pila.h.slice(), radio: pila.radio, perdidos: pila.perdidos, estable: pila.estable, ms: 0, muestras: [], sinFotos: true }
+      postMessage(r, { transfer: [r.alturas.buffer] })
+      return
+    }
+    midiendo = false // M12: la muestra a medias era de la pila de antes
+    const celdas = cargar(q, foto)
     const alturas = pila.h.slice()
     const r: Respuesta = { gen, foto, hechos: 0, tamano: 0, celdas, alturas, radio: pila.radio, perdidos: 0, estable: true, ms: performance.now() - t0, muestras: [] }
     postMessage(r, { transfer: [celdas.buffer, alturas.buffer] })

@@ -127,7 +127,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Cómo reproducirlo:** borrar la partida y mirar el título; después recargar con partida guardada.
 - **Arreglo propuesto:** el título siempre (con partida, "Continuar"). La pila de fondo quieta: una foto fija, sin soltar granos. Usar una sola `PilaVisual`: la del juego hace de fondo y el título es solo el velo con el nombre y el botón; así el acercamiento es animar la escala que ya existe (`u_escala`) y no hay salto de lugar (I4). Montar la interfaz recién al tocar Jugar, en orden y con retardos (Energía, tienda, el resto). Mover la carga del fuera de línea a ese momento: guardar `antes = p.guardadoEn` y sumar a `acum` recién cuando `juego.titulo` pasa a `false`.
 
-### I6. Si no cargan las fotos de la pila, la pila queda congelada para siempre
+### I6. Si no cargan las fotos de la pila, la pila queda congelada para siempre — ✅ resuelto
+
+- **Resuelto:** el worker atrapa el fallo de `pilas.bin` (o la falta de `DecompressionStream`) y contesta `sinFotos`; `PilaVisual` deja de pedir fotos y sigue soltando granos. Las mini pilas de Logros y Ajustes también atrapan el fallo (antes eran errores sin atrapar). Verificado en Edge headless con `pilas.bin` fallando: la pila sigue creciendo, sin errores en la consola. Sin test automático (es el worker con la red).
 
 - **Dónde:** `src/render/pila.worker.ts:37-39, 56-65` (`await fotos` sin `catch`), `src/render/pilaVisual.ts:200-208` (`ocupado` no vuelve a `false` si no hay respuesta).
 - **Qué pasa:** si falla el `fetch` de `pilas.bin` (sin conexión, error de red, empaquetado) o no existe `DecompressionStream` (Safari anterior a 16.4), el primer pedido de foto rechaza la promesa, el worker no contesta nunca y la pila no vuelve a recibir granos ni a dibujar cambios. No hay error en pantalla.
@@ -252,7 +254,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Qué pasa:** solo en desarrollo. Tapa la interfaz y frena al bot de `scripts/partida50.mjs` (deja de comprar hasta que alguien toca Seguir).
 - **Arreglo propuesto:** comparar el umbral de 60 s contra el tiempo real, no el de juego.
 
-### M12. Cargar una foto no reinicia la muestra de avalancha
+### M12. Cargar una foto no reinicia la muestra de avalancha — ✅ resuelto
+
+- **Resuelto:** `midiendo = false` al cargar una foto (con I6).
 
 - **Dónde:** `src/render/pila.worker.ts:58-65`.
 - **Qué pasa:** `midiendo` queda como estaba; el primer pedido después de la foto puede anotar una muestra vieja en el histograma. Un dato falso por foto.

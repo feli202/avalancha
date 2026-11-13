@@ -49,7 +49,7 @@
       g.fillRect(0, 0, L, L)
       g.drawImage(b, L / 2 - (ANCHO / 2) * s, L / 2 - (ALTO / 2) * s, ANCHO * s, ALTO * s)
       marco(g, p.id, L / 2, r, css(p.colores[1]))
-    })
+    }).catch(() => {}) // sin las fotos (sin red): sin vista previa
     pintar()
     return { update(n: typeof p) { p = n; pintar() } }
   }

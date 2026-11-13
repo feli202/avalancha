@@ -118,6 +118,7 @@ async function foto(n: number): Promise<Estado> {
   fotos ??= fetch(url)
     .then((r) => new Response(r.body!.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer())
     .then((b) => new Uint8Array(b))
+    .catch((e) => { fotos = null; throw e }) // sin red: se reintenta la próxima vez
   const q = await fotos
   const Q = FOTOS.lado, base = n * Q * Q
   const alturas = new Uint8Array(LADO * LADO), dentro = new Uint8Array(LADO * LADO)
@@ -210,7 +211,7 @@ export function imagen(clave: string): Promise<ImageBitmap> {
     cache.set(clave, pila(escena(clave).granos).then((e) => {
       listas.set(clave, e)
       return dibujar(clave, e, escena(clave).t ?? 0, 1).transferToImageBitmap()
-    }))
+    }).catch((e) => { cache.delete(clave); throw e }))
   return cache.get(clave)!
 }
 
@@ -224,6 +225,7 @@ export function miniPila(canvas: HTMLCanvasElement, p: { clave: string; quieta: 
   const g = canvas.getContext('2d')!
   let raf = 0, vivo = true
   const quieta = () => imagen(p.clave).then((b) => vivo && !raf && (g.clearRect(0, 0, ANCHO, ALTO), g.drawImage(b, 0, 0)))
+    .catch(() => {}) // sin las fotos (sin red): el lugar queda vacío
   const entrar = () => {
     const e = listas.get(p.clave)
     if (p.quieta || !e || raf) return

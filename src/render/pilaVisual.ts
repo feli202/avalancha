@@ -73,6 +73,8 @@ export class PilaVisual {
   /** Llegó una foto: el próximo cuadro guarda lo que se veía antes de subirla, para fundir. */
   private fundir = false
   private fundidoDesde = -1
+  /** El worker no pudo cargar las fotos: la pila sigue soltando granos, sin saltar. */
+  private sinFotos = false
 
   // --- avalanchas: una avalancha = pedidos seguidos hasta que la pila queda estable ---
   private avTamano = 0
@@ -213,7 +215,7 @@ export class PilaVisual {
 
   /** La foto más grande que no pasa el objetivo, si la pila quedó más atrás de lo que alcanza en ~1 s; si no, -1. */
   private fotoQueConviene() {
-    if (this.fundir || this.fundidoDesde >= 0 || this.objetivo - this.soltados <= RITMO_MAX) return -1
+    if (this.sinFotos || this.fundir || this.fundidoDesde >= 0 || this.objetivo - this.soltados <= RITMO_MAX) return -1
     let i = FOTOS.granos.length - 1
     while (i >= 0 && FOTOS.granos[i] > this.objetivo) i--
     return i >= 0 && FOTOS.granos[i] > this.soltados ? i : -1
@@ -221,6 +223,7 @@ export class PilaVisual {
 
   private recibir(r: Respuesta) {
     this.ocupado = false
+    if (r.sinFotos) this.sinFotos = true
     if (r.gen === this.gen && r.foto >= 0) {
       this.soltados = FOTOS.granos[r.foto]
       this.pendientes = 0
