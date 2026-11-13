@@ -7,7 +7,8 @@
   import { formatoMult } from './formato'
   import { ajustes } from './ajustes.svelte'
   import { COLORES_DALTONISMO, EFECTOS, PALETAS } from '../render/paletas'
-  import { camara, hayPanel, juego, progresoCompresion, sismo } from './juego.svelte'
+  import { contarAvalancha, muestraAvalancha } from '../guardado/historial'
+  import { camara, hayPanel, historial, juego, progresoCompresion, sismo } from './juego.svelte'
   import { elegido } from './logros'
 
   const ANILLO_SEP = 8 // px CSS entre la pila y el anillo de Compresión
@@ -45,9 +46,11 @@
     const pila = new PilaVisual(canvas)
     pila.alMedir = (m) => (juego.medidas = m)
     pila.alAvalancha = (n) => efecto({ texto: es.avalancha(n) })
+    pila.alMuestra = (n) => muestraAvalancha(historial, n)
     pila.alTamano = (n) => {
       sismo.push(n)
       if (n > juego.record) juego.record = n
+      contarAvalancha(historial, n)
       if (sismo.length > 1000) sismo.shift() // nadie lo vacía hasta que aparece el sismógrafo
     }
     $effect(() => void (pila.destellos = ajustes.reducirDestellos))

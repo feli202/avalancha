@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Pantalla de Logros: pantalla completa con fondo propio (la pila se aleja detrás, App.svelte), una pestaña por capa
+  // Pantalla de Logros (Pantalla.svelte): una pestaña por capa
   // y una grilla de tarjetas con la mini pila de cada logro. Y la notificación al conseguir uno.
   import { miniPila, paletaBase } from '../render/miniPilas'
   import { PALETAS, css } from '../render/paletas'
@@ -7,6 +7,7 @@
   import { ajustes } from './ajustes.svelte'
   import { juego } from './juego.svelte'
   import { CAPAS, RECOMPENSA, UMBRAL } from './logros'
+  import Pantalla from './Pantalla.svelte'
 
   $effect.pre(() => paletaBase(ajustes.daltonismo))
 
@@ -20,8 +21,6 @@
   const hechos = $derived(lista.filter((k) => juego.logros[k]).length)
   const abierta = (i: number) => CAPAS[i].abierta(juego.s)
 
-  const enfocar = (el: HTMLElement, si: boolean) => void (si && el.focus())
-  const cerrar = () => (juego.panel = null)
 
   // Notificación: las tarjetas en miniatura de lo último conseguido (hasta 3), se van solas.
   const avisar = $derived(juego.logro && juego.panel !== 'logros' && !juego.guardadoRoto ? juego.logro : null)
@@ -43,33 +42,14 @@
 {/snippet}
 
 {#if juego.panel === 'logros'}
-  <div class="pantalla" class:quieto={ajustes.reducirDestellos} role="dialog" aria-modal="true" aria-labelledby="logros-t">
-    <header class="barra">
-      <h2 id="logros-t" class="sr">{es.logros.titulo}</h2>
-      <div class="capas" role="tablist" aria-label={es.logros.titulo}>
-        {#each CAPAS as c, i (c.id)}
-          {@const si = abierta(i)}
-          <button
-            role="tab" aria-selected={capa === i} aria-disabled={!si} tabindex={capa === i ? 0 : -1}
-            onclick={() => si && (capa = i)} use:enfocar={capa === i}
-          >
-            {#if !si}
-              <svg width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><rect x="1.5" y="6" width="9" height="7" rx="1" /><path d="M3.5 6V4a2.5 2.5 0 0 1 5 0v2" /></svg>
-            {/if}
-            <span>{es.logros.capas[c.id]}</span>
-            {#if !si}<small>{es.logros.bloqueada}</small>{/if}
-          </button>
-        {/each}
-      </div>
+  <Pantalla titulo={es.logros.titulo} bind:activa={capa}
+    pestanas={CAPAS.map((c, i) => ({ id: c.id, texto: es.logros.capas[c.id], bloqueada: abierta(i) ? undefined : es.logros.bloqueada }))}>
+    {#snippet extra()}
       <div class="cuenta">
         <span class="num"><b>{hechos}</b> / {lista.length}</span>
         <span class="barrita" aria-hidden="true"><i style:width="{(hechos / Math.max(lista.length, 1)) * 100}%"></i></span>
       </div>
-      <button class="cerrar" aria-label={es.logros.volver} onclick={cerrar}>
-        <svg width="16" height="16" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" /></svg>
-      </button>
-    </header>
-
+    {/snippet}
     <ol class="grilla">
       {#each lista as k, i (k)}
         {@const si = !!juego.logros[k]}
@@ -84,7 +64,7 @@
         </li>
       {/each}
     </ol>
-  </div>
+  </Pantalla>
 {/if}
 
 {#if avisar}
@@ -104,45 +84,10 @@
 {/if}
 
 <style>
-  /* Fondo propio: el azul noche de la pila, con el centro índigo arriba. Opaco: la pila ya no se ve. */
-  .pantalla {
-    position: fixed; inset: 0; z-index: 6; display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain;
-    background:
-      radial-gradient(ellipse 80% 55% at 50% -5%, rgb(42 40 96 / 0.55), transparent 70%),
-      radial-gradient(ellipse 60% 40% at 50% 110%, rgb(255 181 71 / 0.06), transparent 70%),
-      var(--fondo);
-    animation: entrar 0.55s 0.12s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-    scrollbar-width: thin;
-  }
-  @keyframes entrar { from { opacity: 0; transform: scale(1.03); } }
-  .quieto { animation-name: fundido; }
-
-  .barra {
-    position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 1.5rem;
-    padding: 1.25rem 2rem; background: linear-gradient(var(--fondo) 70%, transparent);
-  }
-  .capas { display: flex; gap: 0.5rem; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-  .capas button {
-    display: flex; align-items: center; gap: 0.5rem; flex: none; min-height: 2.75rem; padding: 0 1rem;
-    border: 1px solid var(--borde); border-radius: 999px; background: none; color: var(--tenue);
-    font: inherit; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s, color 0.15s;
-  }
-  .capas button[aria-selected='true'] { color: var(--tinta); border-color: color-mix(in srgb, var(--ambar) 55%, transparent); background: rgb(255 181 71 / 0.06); }
-  .capas button[aria-disabled='true'] { color: var(--apagado); cursor: not-allowed; border-style: dashed; }
-  .capas small { font-size: 0.75rem; font-weight: 400; }
-  .capas svg { fill: none; stroke: currentColor; stroke-width: 1.4; }
-
   .cuenta { display: grid; gap: 0.375rem; justify-items: end; flex: none; font-size: 0.9375rem; color: var(--tenue); }
   .cuenta b { font-size: 1.5rem; font-weight: 600; color: var(--tinta); letter-spacing: -0.02em; }
   .barrita { display: block; width: 9rem; height: 2px; background: var(--borde); }
   .barrita i { display: block; height: 100%; background: var(--ambar); box-shadow: 0 0 0.5rem var(--ambar); transition: width 0.6s ease-out; }
-
-  .cerrar {
-    display: grid; place-items: center; flex: none; width: 2.75rem; height: 2.75rem; padding: 0; border: 0;
-    background: none; color: var(--tenue); cursor: pointer;
-  }
-  .cerrar:hover { color: var(--tinta); }
-  .cerrar svg, .icono-premio { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
 
   .grilla {
     list-style: none; margin: 0 auto; padding: 0.5rem 2rem 3rem; width: 100%; max-width: 96rem;
@@ -202,13 +147,11 @@
   @keyframes fundir-aviso { 0%, 100% { opacity: 0; } 8%, 85% { opacity: 1; } }
   @keyframes subir { from { opacity: 0; transform: translateY(8px); } }
   @keyframes fundido { from { opacity: 0; } }
-  .quieto .tarjeta { animation-name: fundido; }
+  :global(.quieto) .tarjeta { animation-name: fundido; }
 
   @media (max-width: 1279px) { .grilla { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
   @media (max-width: 899px) { .grilla { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   @media (max-width: 767px) {
-    .barra { flex-wrap: wrap; gap: 0.75rem 1rem; padding: 0.75rem 1rem; }
-    .capas { order: 3; flex-basis: 100%; flex-wrap: wrap; }
     .cuenta { justify-items: start; flex: 1; }
     .grilla { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.625rem; padding: 0.25rem 1rem 2rem; }
     .texto { padding: 0.5rem 0.625rem 0.625rem; }

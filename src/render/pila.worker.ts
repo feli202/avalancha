@@ -21,12 +21,19 @@ export interface Respuesta {
   /** false: quedó una avalancha a medias; sigue en el próximo pedido (aunque sea de 0 granos). */
   estable: boolean
   ms: number
+  /**
+   * Avalanchas de un grano solo (derrumbes de cada una): uno por pedido se suelta aparte y se mide hasta que la pila
+   * vuelve a estar estable. Es una muestra de la distribución real (la ley de potencias); el resto va en tandas.
+   */
+  muestras: number[]
 }
 
 const PRESUPUESTO_MS = 12 // por pedido: deja margen dentro de un cuadro de 16,7 ms
 const TOPE = 50_000 // derrumbes entre dos miradas al reloj (~1 ms)
 
 let pila = new Pila()
+let midiendo = false // el grano de muestra todavía se está derrumbando (puede seguir en el próximo pedido)
+let muestra = 0
 const fotos = fetch(url)
   .then((r) => new Response(r.body!.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer())
   .then((b) => new Uint8Array(b))
@@ -52,27 +59,33 @@ onmessage = async (e: MessageEvent<Pedido>) => {
     const t0 = performance.now()
     const celdas = cargar(await fotos, foto)
     const alturas = pila.h.slice()
-    const r: Respuesta = { gen, foto, hechos: 0, tamano: 0, celdas, alturas, radio: pila.radio, perdidos: 0, estable: true, ms: performance.now() - t0 }
+    const r: Respuesta = { gen, foto, hechos: 0, tamano: 0, celdas, alturas, radio: pila.radio, perdidos: 0, estable: true, ms: performance.now() - t0, muestras: [] }
     postMessage(r, { transfer: [celdas.buffer, alturas.buffer] })
     return
   }
-  if (reiniciar) pila = new Pila()
+  if (reiniciar) (pila = new Pila()), (midiendo = false)
   const t0 = performance.now()
-  let hechos = 0, tamano = 0
+  let hechos = 0, tamano = 0, muestreado = false
+  const muestras: number[] = []
   do {
     if (pila.estable) {
+      if (midiendo) muestras.push(muestra), (midiendo = false)
       if (hechos >= granos) break
-      const n = Math.min(granos - hechos, LOTE)
+      // El primer grano de cada pedido va solo, para medir su avalancha.
+      const n = muestreado ? Math.min(granos - hechos, LOTE) : 1
+      if (!muestreado) (midiendo = muestreado = true), (muestra = 0)
       pila.soltar(n)
       hechos += n
     }
-    tamano += pila.estabilizar(TOPE)
+    const d = pila.estabilizar(TOPE)
+    tamano += d
+    if (midiendo) muestra += d
   } while (performance.now() - t0 < PRESUPUESTO_MS)
   const celdas = pila.tomarCeldas()
   const alturas = pila.h.slice()
   const r: Respuesta = {
     gen, foto, hechos, tamano, celdas, alturas,
-    radio: pila.radio, perdidos: pila.perdidos, estable: pila.estable, ms: performance.now() - t0,
+    radio: pila.radio, perdidos: pila.perdidos, estable: pila.estable, ms: performance.now() - t0, muestras,
   }
   postMessage(r, { transfer: [celdas.buffer, alturas.buffer] })
 }

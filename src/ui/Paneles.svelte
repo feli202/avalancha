@@ -1,6 +1,6 @@
 <script lang="ts">
-  // Todo lo que flota sobre la pila: "Mientras no estabas", guardado dañado, y el panel de Estadísticas · Logros ·
-  // Ajustes. Un solo lenguaje: velo oscuro translúcido, sin cajas, jerarquía por tamaño, números con cifras tabulares.
+  // Todo lo que flota sobre la pila: "Mientras no estabas", guardado dañado y el panel de Ajustes
+  // Un solo lenguaje: velo oscuro translúcido, sin cajas, jerarquía por tamaño, números con cifras tabulares.
   import { untrack } from 'svelte'
   import { CFG } from '../core'
   import { exportar, importar, type Partida } from '../guardado/guardado'
@@ -12,8 +12,6 @@
   import { borrarPartida, camara, guardarYa, juego, partidaActual, reemplazarPartida } from './juego.svelte'
   import { desbloqueados, elegido } from './logros'
 
-  const s = $derived(juego.s)
-  const PESTANAS = ['estadisticas', 'ajustes'] as const
 
   // Al cerrar cualquier panel, el foco vuelve a donde estaba (el ícono, casi siempre).
   const abierto = $derived(juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto)
@@ -33,14 +31,6 @@
   }
   const teclaVentana = (e: KeyboardEvent) => e.key === 'Escape' && !juego.guardadoRoto && abierto && cerrar()
   const afuera = (e: MouseEvent) => e.target === e.currentTarget && cerrar()
-
-  // Pestañas con flechas (patrón de ARIA).
-  function flechas(e: KeyboardEvent) {
-    const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
-    if (!d || (juego.panel !== 'estadisticas' && juego.panel !== 'ajustes')) return
-    juego.panel = PESTANAS[(PESTANAS.indexOf(juego.panel) + d + PESTANAS.length) % PESTANAS.length]
-    ;(e.currentTarget as HTMLElement).querySelector<HTMLElement>(`#tab-${juego.panel}`)?.focus()
-  }
 
   // Aspecto: lo desbloqueado con logros.
   const paletas = $derived(desbloqueados('paleta', Object.keys(PALETAS), juego.logros))
@@ -126,37 +116,17 @@
       <button class="accion" use:enfocar onclick={cerrar}>{es.ausencia.seguir}</button>
     </div>
   </div>
-{:else if juego.panel && juego.panel !== 'logros'}
+{:else if juego.panel === 'ajustes'}
   <div class="velo" class:quieto={ajustes.reducirDestellos} role="presentation" onclick={afuera}>
-    <div class="hoja" role="dialog" aria-modal="true" aria-label={es.menu.abrir}>
+    <div class="hoja" role="dialog" aria-modal="true" aria-labelledby="hoja-t">
       <div class="cabeza">
-        <div class="pestanas" role="tablist" tabindex="-1" onkeydown={flechas}>
-          {#each PESTANAS as p (p)}
-            <button
-              role="tab" id="tab-{p}" aria-selected={juego.panel === p} aria-controls="hoja-cuerpo"
-              tabindex={juego.panel === p ? 0 : -1} onclick={() => (juego.panel = p)}
-              use:enfocar={juego.panel === p}
-            >{es.menu.pestanas[p]}</button>
-          {/each}
-        </div>
-        <button class="cerrar" aria-label={es.menu.cerrar} onclick={cerrar}>
+        <h2 id="hoja-t" class="titulo-hoja">{es.menu.abrir}</h2>
+        <button class="cerrar" aria-label={es.menu.cerrar} onclick={cerrar} use:enfocar>
           <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" /></svg>
         </button>
       </div>
 
-      <div id="hoja-cuerpo" class="cuerpo" role="tabpanel" aria-labelledby="tab-{juego.panel}">
-        {#if juego.panel === 'estadisticas'}
-          <dl class="stats">
-            <div class="destacada"><dt>{es.estadisticas.tiempoTotal}</dt><dd class="num">{es.duracion(s.tiempoTotal)}</dd></div>
-            <div><dt>{es.estadisticas.tiempoCorrida}</dt><dd class="num">{es.duracion(s.tiempoCorrida)}</dd></div>
-            <div><dt>{es.estadisticas.mejorCorrida}</dt>
-              <dd class="num">{s.mejorCorrida > 0 ? es.duracion(s.mejorCorrida) : es.estadisticas.ninguna}</dd></div>
-            <div><dt>{es.estadisticas.granosTotales}</dt><dd class="num">{formato(s.granosTotales)}</dd></div>
-            <div><dt>{es.estadisticas.compresiones}</dt><dd class="num">{s.compresiones}</dd></div>
-            <div><dt>{es.estadisticas.record}</dt>
-              <dd class="num">{formato(juego.record)} <small>{es.estadisticas.derrumbes}</small></dd></div>
-          </dl>
-        {:else}
+      <div class="cuerpo">
           <section class="opciones">
             <h3>{es.opciones.aspecto}</h3>
             <div class="fila">
@@ -267,7 +237,6 @@
               {#each es.opciones.teclas as [k, que]}<dt><kbd>{k}</kbd></dt><dd>{que}</dd>{/each}
             </dl>
           </section>
-        {/if}
       </div>
     </div>
   </div>
@@ -318,16 +287,10 @@
   }
   .secundario:hover { color: var(--tinta); }
 
-  /* Estadísticas · Logros · Ajustes */
+  /* Ajustes */
   .hoja { width: min(34rem, 100%); max-height: calc(100dvh - 3rem); display: flex; flex-direction: column; }
   .cabeza { display: flex; align-items: center; justify-content: space-between; flex: none; padding-bottom: 1.25rem; }
-  .pestanas { display: flex; gap: 1.5rem; }
-  .pestanas button {
-    min-height: 2.75rem; padding: 0; border: 0; border-bottom: 1px solid transparent; background: none;
-    color: var(--apagado); font: inherit; font-size: 1.125rem; font-weight: 600; cursor: pointer; transition: color 0.15s;
-  }
-  .pestanas button:hover { color: var(--tenue); }
-  .pestanas button[aria-selected='true'] { color: var(--tinta); border-bottom-color: var(--tinta); }
+  .titulo-hoja { margin: 0; font-size: 1.125rem; font-weight: 600; }
   .cerrar {
     display: grid; place-items: center; width: 2.75rem; height: 2.75rem; margin-right: -0.75rem; padding: 0; border: 0;
     background: none; color: var(--apagado); cursor: pointer;
@@ -336,13 +299,6 @@
   .cerrar svg { stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
   .cuerpo { padding-bottom: 0.25rem; overflow-y: auto; /* el padding absorbe los subpíxeles que dejaban una barra sin contenido */ overscroll-behavior: contain; scrollbar-width: thin; animation: fundido 0.25s ease-out; }
 
-  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1.75rem 2rem; margin: 0; }
-  .stats div { display: grid; gap: 0.25rem; }
-  .stats .destacada { grid-column: 1 / -1; }
-  .stats dt { font-size: 0.875rem; color: var(--tenue); }
-  .stats dd { margin: 0; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
-  .stats .destacada dd { font-size: clamp(2.5rem, 7vw, 3.5rem); letter-spacing: -0.03em; }
-  .stats small { font-size: 0.875rem; font-weight: 400; color: var(--tenue); letter-spacing: 0; }
 
 
   .opciones { display: grid; gap: 0.25rem; margin-bottom: 2rem; }
@@ -392,10 +348,6 @@
 
   @media (max-width: 767px) {
     .velo { background: rgb(7 8 15 / 0.88); } /* la tienda en hoja queda detrás del texto: más oscuro */
-    .stats { gap: 1.25rem 1.5rem; }
-    .stats dd { font-size: 1.375rem; }
-    .pestanas { gap: 1.25rem; }
-    .pestanas button { font-size: 1rem; }
     .hoja { max-height: calc(100dvh - 2rem); }
   }
 </style>

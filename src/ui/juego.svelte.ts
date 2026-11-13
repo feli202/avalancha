@@ -1,7 +1,8 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, anillos, estadoInicial, fueraDeLinea, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
+import { CFG, anillos, comprimir, estadoInicial, fueraDeLinea, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
 import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
+import { historialVacio, registrar } from '../guardado/historial'
 import type { Medidas } from '../render/pilaVisual'
 import { es } from '../strings/es'
 import { nuevosLogros } from './logros'
@@ -38,12 +39,17 @@ class Juego {
   logros = $state.raw<Record<string, boolean>>({})
   /** El último aviso de logro (notificación discreta). */
   logro = $state.raw<{ id: number; claves: string[] } | null>(null)
+  /** Sube una vez por segundo: Estadísticas relee `historial` (que se muta sin $state, cambia con cada avalancha). */
+  verHistorial = $state(0)
   /** Panel abierto sobre la pila: Estadísticas, Logros o Ajustes. */
   panel = $state<'estadisticas' | 'logros' | 'ajustes' | null>(null)
   /** Sube con cada salto fuera de línea: Pila.svelte no anima lo que pasó en la ausencia. */
   saltos = 0
 }
 export const juego = new Juego()
+
+/** Historial para Estadísticas (corridas, avalanchas, Energía en el tiempo). Se muta en el lugar: ver juego.verHistorial. */
+export let historial = historialVacio(Date.now())
 
 /** Sismógrafo: derrumbes de cada avalancha de la pila visual que todavía no se dibujó. Sin $state: lo vacía un canvas. */
 export const sismo: number[] = []
@@ -122,11 +128,22 @@ function revisarLogros(s: State) {
   juego.logro = { id: logrosAvisados++, claves: nuevos }
 }
 
+/** El último estado que vio el bucle (el historial compara contra este). */
+let previo = juego.s
+
+/** Comprimir a mano (botón, tecla C): se anota en el historial con la Energía exacta de ese momento. */
+export function comprimirYa() {
+  const antes = juego.s
+  juego.s = comprimir(antes)
+  registrar(historial, antes, juego.s)
+  previo = juego.s
+}
+
 /** Hay un cartel o panel encima: las teclas del juego (Espacio, M, C) no hacen nada. */
 export const hayPanel = () => juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto
 
 export const partidaActual = (): Partida =>
-  ({ estado: juego.s, guardadoEn: Date.now(), vistos: juego.vistos, record: juego.record, logros: juego.logros })
+  ({ estado: juego.s, guardadoEn: Date.now(), vistos: juego.vistos, record: juego.record, logros: juego.logros, historial })
 
 let reemplazando = false
 /** true si se guardó. */
@@ -149,7 +166,7 @@ export function reemplazarPartida(p: Partida) {
 }
 
 export const borrarPartida = () =>
-  reemplazarPartida({ estado: estadoInicial(), guardadoEn: Date.now(), vistos: {}, record: 0, logros: {} })
+  reemplazarPartida({ estado: estadoInicial(), guardadoEn: Date.now(), vistos: {}, record: 0, logros: {}, historial: historialVacio(Date.now()) })
 
 /** Carga la partida y arranca el bucle. Llamar antes de montar la interfaz: Pila.svelte lee el estado al montarse. */
 export function arrancar() {
@@ -164,8 +181,10 @@ export function arrancar() {
     juego.vistos = p.vistos
     juego.record = p.record
     juego.logros = p.logros
+    historial = p.historial ?? historialVacio(p.guardadoEn - p.estado.tiempoTotal * 1000)
     antes = p.guardadoEn // el primer cuadro simula lo que pasó desde el guardado
   }
+  previo = juego.s
   setInterval(guardarYa, GUARDAR_CADA)
   addEventListener('pagehide', guardarYa)
   document.addEventListener('visibilitychange', () => document.hidden && guardarYa())
@@ -182,6 +201,10 @@ export function arrancar() {
       s = a.s
       acum = 0
     } else for (; acum >= PASO; acum -= PASO) s = tick(s, PASO)
+    // Contra el último estado que vio el bucle, no juego.s: comprimir a mano (botón, tecla C) lo reemplaza entre cuadros.
+    registrar(historial, previo, s)
+    previo = s
+    if (Math.floor(s.tiempoTotal) !== Math.floor(juego.s.tiempoTotal)) juego.verHistorial++
     juego.s = s
     revelar(s)
     revisarLogros(s)

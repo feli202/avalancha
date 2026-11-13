@@ -1,16 +1,17 @@
 <script lang="ts">
   // Interfaz principal (SPEC 6.4). Cada parte aparece recién cuando juego.vistos lo dice (SPEC 5).
-  import { anillos, comprimir, densidad, multAnillos, produccion, puedeComprimir } from '../core'
+  import { anillos, densidad, multAnillos, produccion, puedeComprimir } from '../core'
   import { es } from '../strings/es'
   import { ajustes } from './ajustes.svelte'
   import Debug from './Debug.svelte'
+  import Estadisticas from './Estadisticas.svelte'
   import Logros from './Logros.svelte'
   import Paneles from './Paneles.svelte'
   import Pila from './Pila.svelte'
   import Sismografo from './Sismografo.svelte'
   import Tienda from './Tienda.svelte'
   import { formato, formatoMult } from './formato'
-  import { hayPanel, juego, progresoCompresion } from './juego.svelte'
+  import { comprimirYa, hayPanel, juego, progresoCompresion } from './juego.svelte'
 
   const v = $derived(juego.vistos)
   const s = $derived(juego.s)
@@ -22,11 +23,12 @@
   const alternarAutoComp = () =>
     (juego.s = { ...juego.s, auto: { ...juego.s.auto, compresion_auto: !juego.s.auto.compresion_auto } })
 
-  const comprimirYa = () => (juego.s = comprimir(juego.s))
   // C comprime (Espacio y M viven en Pila y Tienda).
   function tecla(e: KeyboardEvent) {
-    if (e.code === 'KeyL' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !hayPanel() &&
-      !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) juego.panel = 'logros'
+    const libre = !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !hayPanel() &&
+      !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
+    if (libre && e.code === 'KeyL') juego.panel = 'logros'
+    if (libre && e.code === 'KeyE') juego.panel = 'estadisticas'
     if (e.code !== 'KeyC' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || hayPanel()) return
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
     if (juego.vistos.compresion && lista) comprimirYa()
@@ -55,7 +57,7 @@
 
 <!-- .lista: se puede comprimir; el botón y el anillo de la pila laten juntos (arrancan en el mismo cuadro). -->
 <!-- inert con un panel encima: el foco y los clics quedan en el panel. -->
-<div class="juego" class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel === 'logros'} inert={hayPanel()}>
+<div class="juego" class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel === 'logros' || juego.panel === 'estadisticas'} inert={hayPanel()}>
   <Pila />
 
   <header class="izq">
@@ -72,6 +74,9 @@
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
         <path d="M5 2.5h8v4a4 4 0 0 1-8 0zM9 10.5v3M6 15.5h6M5 4H2.5a2.5 2.5 0 0 0 2.6 3M13 4h2.5a2.5 2.5 0 0 1-2.6 3" />
       </svg>
+    </button>
+    <button class="icono" aria-label={es.menu.estadisticas} aria-haspopup="dialog" aria-keyshortcuts="E" onclick={() => (juego.panel = 'estadisticas')}>
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15.5V9M7 15.5V3M11 15.5V7M15 15.5v-4M1.5 15.5h15" /></svg>
     </button>
     <button class="icono" aria-label={es.menu.abrir} aria-haspopup="dialog" onclick={() => (juego.panel = 'ajustes')}>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
@@ -151,6 +156,7 @@
 
 <Paneles />
 <Logros />
+<Estadisticas />
 
 {#if import.meta.env.DEV}<Debug />{/if}
 

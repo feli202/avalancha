@@ -46,6 +46,8 @@ export class PilaVisual {
   alMedir?: (m: Medidas) => void
   /** SPEC 6.2: avalancha de más de 30× el promedio; recibe cuántas veces el promedio. */
   alAvalancha?: (veces: number) => void
+  /** Avalancha de un grano solo (muestra de la distribución real, ver pila.worker.ts), con sus derrumbes. */
+  alMuestra?: (derrumbes: number) => void
   /** Cada avalancha terminada, con sus derrumbes (el sismógrafo). */
   alTamano?: (derrumbes: number) => void
 
@@ -231,6 +233,7 @@ export class PilaVisual {
       for (const i of r.celdas) this.tDerrumbe[i] = this.ahora
       this.alturas = this.ultimas = r.alturas
       this.contarAvalancha(r)
+      for (const m of r.muestras) this.alMuestra?.(m)
       this.sucio = true
       this.m.granosSeg += r.hechos
       this.m.derrumbesSeg += r.tamano

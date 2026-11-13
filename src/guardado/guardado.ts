@@ -2,6 +2,7 @@
 import Decimal from 'break_infinity.js'
 import { estadoInicial, type State } from '../core'
 import type { Almacen } from './almacen'
+import { limpiarHistorial, type Historial } from './historial'
 
 export const VERSION = 2
 export const CLAVE = 'avalancha.guardado'
@@ -20,6 +21,8 @@ export interface Partida {
   record: number
   /** SPEC 7: logros conseguidos (los de la corrida, como Anillo 10, no se pueden recalcular después). */
   logros: Record<string, boolean>
+  /** Para Estadísticas (historial.ts). Opcional: los guardados de antes no lo tienen. */
+  historial?: Historial
 }
 
 // Decimal como [mantisa, exponente]: dos doubles, que JSON guarda sin perder un dígito.
@@ -68,6 +71,8 @@ export function deserializar(texto: string): Partida {
     vistos: d.vistos,
     record: d.record,
     logros: d.logros,
+    // Partidas de antes del historial: no viene, y el juego arranca uno con el comienzo estimado por el tiempo de juego.
+    ...((d as any).historial !== undefined && { historial: limpiarHistorial((d as any).historial, d.guardadoEn - e.tiempoTotal * 1000) }),
   }
 }
 

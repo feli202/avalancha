@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros**: pantalla completa con 24 logros, mini pilas y recompensas cosméticas (Estadísticas pasa a pantalla completa en la próxima sesión). Sigue el hito 6 (pulido: sonido, accesibilidad, rendimiento).
+Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros y Estadísticas**: las dos son pantallas completas (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). Sigue el hito 6 (pulido: sonido, accesibilidad, rendimiento).
 
 ## Qué se hizo
 
@@ -498,4 +498,38 @@ Los 8 nuevos (SPEC 7): Hasta el borde, Alud, Anillo 25, Mandala pleno, 10 Compre
 4. **Piloto automático**: los autocompradores arrancan encendidos, así que en la práctica sale con la 6.ª Compresión, salvo que el jugador apague alguno.
 5. **La foto del mandala no existía**: la sumé como botón en Ajustes, porque los marcos la necesitan.
 6. **Capa 1**: `CAPAS` tiene la pestaña con `abierta: () => false` y sin logros. Cuando exista, hay que sumar sus logros y su condición real.
+
+## Estadísticas: pantalla completa
+
+Estadísticas deja el panel y pasa a pantalla completa, con cuatro pestañas. El panel queda solo para Ajustes. Para entrar: el ícono de barras o la tecla E. Esc o la cruz vuelven al juego.
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/ui/Pantalla.svelte` | Nuevo. El armazón compartido por Logros y Estadísticas: fondo propio, barra con pestañas (flechas, pestañas bloqueadas), un extra a la derecha y la cruz. |
+| `src/ui/Estadisticas.svelte` | Nuevo. Las cuatro pestañas y sus gráficos (divs y SVG, sin bibliotecas). |
+| `src/ui/desglose.ts` | Nuevo. Energía/s = F × (K × G) × V^D en factores log10: Caudal (base, niveles), Derrumbes por grano (K, G), los cuatro colores (niveles, hitos ×4), Anillos (cantidad, Expansión), Cascada (c), Mutaciones (Caudal ×3, Colores ×10) y Densidad: el exponente suma (D − 1) × log10 V. |
+| `src/guardado/historial.ts` | Nuevo. Lo que el núcleo no guarda: las últimas 10 corridas, el histograma de avalanchas, la avalancha más grande de la corrida, los derrumbes, la Energía en el tiempo y el comienzo de la partida. Puro; va en el guardado como campo opcional, validado campo por campo (`limpiarHistorial`). |
+| `src/render/pila.worker.ts` | El primer grano de cada pedido se suelta solo y se mide su avalancha hasta que la pila vuelve a estar estable (`muestras`). |
+| `src/ui/juego.svelte.ts` | `registrar` en cada cuadro, contra el último estado que vio el bucle. `comprimirYa` (el botón y la tecla C) anota la corrida en el momento exacto. `verHistorial` sube una vez por segundo. |
+| `tests/estadisticas.test.ts` | El desglose suma exactamente log10(Energía/s), y cada parte suma su factor; corridas, casillas del histograma, limpieza y viaje por el guardado. |
+
+- **Producción**: la Energía/s en grande, una barra vertical apilada (cada factor ocupa lo que aporta en log10, con su color) y la lista. Al pasar el mouse por un segmento se resalta su fila, y al revés. Las filas se expanden en sus partes. Se actualiza en vivo; la barra se acomoda con una transición.
+- **Corridas**: tabla de las últimas 10 compresiones (duración con una raya proporcional, Energía, Densidad, Energía/min). La más rápida va resaltada en ámbar.
+- **Avalanchas**: histograma log-log con 4 casillas por década, la recta de mínimos cuadrados con su pendiente, la frase de la ley de potencias y, debajo, los récords: la avalancha récord, la más grande de la corrida, las avalanchas contadas y los derrumbes en la pila.
+- **General**: tiempo de juego, de la corrida, desde que empezó la partida (reloj real), la corrida más rápida, las compresiones, los granos y los derrumbes. Debajo, la Energía en log10 a lo largo de la partida, con relleno y una animación que la traza.
+
+### Verificación
+
+- `npm test`: 68 en verde. `tsc` y `vite build` sin errores ni avisos.
+- En el navegador: las cuatro pestañas en escritorio y en móvil (375 px), el resaltado de barra y fila, una fila expandida y dos compresiones a mano anotadas con la Energía exacta (8,20e240). Logros sigue igual después de pasarla al armazón compartido.
+- **La ley de potencias la comprobé en Node**, con la misma `Pila`: 60.000 granos y después 4.000 sueltos. 3.000 no derrumban nada; de los 1.000 restantes, la cantidad baja de forma pareja con el tamaño (483 de 1 derrumbe, 110 en la casilla de 6 a 10, … 6 en la de ~1,8e5). En el navegador integrado llegan pocas muestras, porque oculto da ~1 cuadro por segundo.
+
+### Decisiones (revisar)
+
+1. **El histograma usa muestras, no todas las avalanchas.** Con flujo continuo el worker suelta tandas (ver hito 2b), y una tanda no es una avalancha. Por eso se mide aparte un grano solo por pedido (hasta ~60 por segundo). El récord, el sismógrafo, "la más grande de la corrida" y los derrumbes en la pila siguen contando tandas, como antes.
+2. **Las avalanchas de 0 derrumbes no van al histograma** (en escala log no tienen lugar). Son las más comunes (~75 %).
+3. **"Derrumbes"** (General) es la cuenta de la economía: K × G por cada grano que cae, sumada a medida que caen. No es la pila visual. Empieza en 0 en las partidas de antes de este cambio.
+4. **Varias compresiones juntas fuera de línea no se anotan** en Corridas (no hay detalle de cada una). La serie de Energía sí toma el punto al volver.
+5. **"Desde que empezó la partida"**: en las partidas de antes se estima con el reloj del guardado menos el tiempo de juego. La serie de Energía arranca en su primera muestra.
+6. **Serie de Energía**: un punto cada 5 s de juego; al pasar de 600 se descarta uno de cada dos y el paso se duplica.
 
