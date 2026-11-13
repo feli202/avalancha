@@ -178,7 +178,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Cómo reproducirlo:** partida nueva, tocar Jugar y abrir L, E, A y H sin jugar.
 - **Arreglo propuesto:** íconos: Ajustes desde el inicio (hace falta para accesibilidad y sonido); los demás aparecen con la tienda. Logros: los no conseguidos cuyo sistema no se vio, como "???" con la mini pila apagada. Estadísticas: filtrar `factores` con `juego.vistos` (el desglose sigue sumando igual, porque los ocultos valen ×1). Tooltip: sin Densidad mientras `compresiones === 0`. Teclado: filtrar por `vistos`. Cómo funciona: "???" en vez del nombre.
 
-### I11. Un núcleo de CPU casi entero, siempre, con la pila llena
+### I11. Un núcleo de CPU casi entero, siempre, con la pila llena — ✅ resuelto
+
+- **Resuelto:** con la pila llena el worker recibe un pedido por cuadro (antes pedía de nuevo apenas contestaba) y el ajuste nuevo "Ahorrar batería" (Ajustes → Juego) baja su presupuesto de 12 a 4 ms. Las alturas viajan en un arreglo que vuelve al worker con el pedido siguiente (`transfer` de ida y vuelta), sin 263 KB nuevos por respuesta. Medido en Edge headless con la pila llena: worker 594 ms/s (≈59 %) normal y 438 ms/s con Ahorrar batería, 60 fps en los dos. Sin test automático (worker y tiempos reales).
 
 - **Dónde:** `src/render/pilaVisual.ts:167-178, 246` (pide de nuevo apenas llega la respuesta), `src/render/pila.worker.ts:31, 85` (12 ms por pedido; `pila.h.slice()` de 263 KB y un `Int32Array` de celdas por respuesta).
 - **Qué pasa:** en estado estacionario con Caudal ≥ 3.000 el worker trabaja ~90 % del tiempo (medido en el hito 6) mientras el juego esté abierto y visible. Los fps no bajan, pero en una laptop o un celular es batería y ventilador durante horas, en un juego pensado para dejar abierto. Aparte, cada respuesta crea 263 KB de alturas más las celdas, unos 16 MB por segundo de memoria para el recolector.

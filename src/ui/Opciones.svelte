@@ -178,6 +178,10 @@
             <input type="checkbox" bind:checked={ajustes.reducirDestellos} />
           </label>
           <label class="fila">
+            <span class="texto">{txt.opciones.ahorro}<small>{txt.opciones.ahorroDesc}</small></span>
+            <input type="checkbox" bind:checked={ajustes.ahorro} />
+          </label>
+          <label class="fila">
             <span class="texto">{txt.opciones.daltonismo}<small>{txt.opciones.daltonismoDesc}</small></span>
             <input type="checkbox" bind:checked={ajustes.daltonismo} />
           </label>

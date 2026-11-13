@@ -235,6 +235,8 @@ export const en: typeof es = {
     notacionDesc: 'How big numbers are written.',
     ejemplo: { cientifica: '1.23e46', ingenieria: '12.30e45' },
     reducirDesc: 'Turns off topple flashes, mica sparkle and camera zoom.',
+    ahorro: 'Save battery',
+    ahorroDesc: 'With a full pile, the sand moves slower on screen. The economy is unchanged.',
     daltonismoDesc: 'Okabe-Ito colors, readable with any kind of color blindness.',
     tuPartida: 'Your save',
     guardadoAuto: 'Saves automatically every 10 seconds and when you close the tab.',

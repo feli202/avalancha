@@ -255,6 +255,8 @@ export const es = {
     /** El mismo número, 1,23 × 10^46, en cada notación. */
     ejemplo: { cientifica: '1,23e46', ingenieria: '12,30e45' } as Record<string, string>,
     reducirDesc: 'Apaga los destellos de derrumbe, la mica y el zoom de cámara.',
+    ahorro: 'Ahorrar batería',
+    ahorroDesc: 'Con la pila llena, la arena se mueve más despacio en pantalla. La economía no cambia.',
     daltonismoDesc: 'Colores Okabe-Ito, distinguibles con cualquier tipo de daltonismo.',
     tuPartida: 'Tu partida',
     guardadoAuto: 'Se guarda sola cada 10 segundos y al cerrar la pestaña.',

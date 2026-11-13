@@ -81,6 +81,7 @@
       if (sismo.length > 1000) sismo.shift() // nadie lo vacía hasta que aparece el sismógrafo
     }
     $effect(() => void (pila.destellos = ajustes.reducirDestellos))
+    $effect(() => void (pila.ahorro = ajustes.ahorro))
     $effect(() => void (pila.paleta = ajustes.daltonismo
       ? COLORES_DALTONISMO
       : PALETAS[elegido('paleta', Object.keys(PALETAS), ajustes.paleta, juego.logros)]))

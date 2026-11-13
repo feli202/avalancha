@@ -18,6 +18,8 @@ const PX_MAX = 28 // tamaño máximo de una celda, en px CSS (para que el primer
 const AVALANCHA_GRANDE = 30
 const AVALANCHAS_PARA_PROMEDIO = 20 // avalanchas antes de confiar en el promedio
 const ALEJAR_S = 0.8 // animación de alejamiento al saltar de escala
+const PRESUPUESTO_MS = 12 // trabajo del worker por pedido: deja margen dentro de un cuadro de 16,7 ms
+const PRESUPUESTO_AHORRO_MS = 4 // I11: con la pila llena y "Ahorrar batería" (el dibujo casi no cambia)
 
 /** Altura de celda de cada color, en el orden de CFG.colores (Ámbar, Coral, Jade, Violeta). */
 export const ALTURA_DE_COLOR = [3, 2, 0, 1]
@@ -54,6 +56,8 @@ export class PilaVisual {
   alTamano?: (derrumbes: number) => void
   /** Cámara: 1 = encuadre normal; menos de 1, más lejos (la pantalla de título). */
   zoom = 1
+  /** I11 "Ahorrar batería": con la pila llena, el worker trabaja un tercio. */
+  ahorro = false
   /** Radio máximo de la pila en px CSS (que no la tapen las columnas de la interfaz). */
   radioMax = Infinity
 
@@ -68,6 +72,8 @@ export class PilaVisual {
   private escala = 0
   private px = 0
   private ultimas: Uint8Array = new Uint8Array(LADO * LADO)
+  /** El arreglo de la última respuesta, ya copiado en `ultimas`: vuelve al worker con el próximo pedido. */
+  private devolver: Uint8Array | null = null
   private destello = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1
   private alejarDesde = -1
   /** Llegó una foto: el próximo cuadro guarda lo que se veía antes de subirla, para fundir. */
@@ -206,8 +212,8 @@ export class PilaVisual {
     this.estable = true
     this.pendientes = this.soltados = this.escalaK = this.radio = this.avalancha = 0
     this.avTamano = this.avGranos = this.avPromedio = this.avCuenta = 0
-    this.ultimas = new Uint8Array(LADO * LADO)
-    this.alturas = new Uint8Array(LADO * LADO)
+    this.ultimas.fill(0)
+    this.alturas = this.ultimas
     this.tDerrumbe.fill(-1)
     this.sucio = true
   }
@@ -216,8 +222,14 @@ export class PilaVisual {
     if (this.ocupado) return
     const foto = this.fotoQueConviene()
     if (foto < 0 && this.pendientes < 1 && this.estable && !this.reiniciar) return
-    const p: Pedido = { granos: Math.floor(this.pendientes), reiniciar: this.reiniciar, gen: this.gen, foto }
-    this.worker.postMessage(p)
+    const llena = this.soltados >= this.capacidad
+    const p: Pedido = {
+      granos: Math.floor(this.pendientes), reiniciar: this.reiniciar, gen: this.gen, foto,
+      presupuesto: this.ahorro && llena ? PRESUPUESTO_AHORRO_MS : PRESUPUESTO_MS,
+      ...(this.devolver && { devuelto: this.devolver }),
+    }
+    this.worker.postMessage(p, this.devolver ? [this.devolver.buffer] : [])
+    this.devolver = null
     this.reiniciar = false
     this.ocupado = true
   }
@@ -240,7 +252,7 @@ export class PilaVisual {
       this.radio = r.radio
       this.tDerrumbe.fill(-1)
       for (const i of r.celdas) this.tDerrumbe[i] = 0 // adentro, sin destello
-      this.alturas = this.ultimas = r.alturas
+      this.guardarAlturas(r.alturas)
       this.avTamano = this.avGranos = 0
       this.fundir = this.sucio = true
       this.escala = 0 // encuadre de golpe: el fundido ya se ve con la escala nueva
@@ -251,7 +263,7 @@ export class PilaVisual {
       this.avalancha = r.tamano
       this.radio = r.radio
       for (const i of r.celdas) this.tDerrumbe[i] = this.ahora
-      this.alturas = this.ultimas = r.alturas
+      this.guardarAlturas(r.alturas)
       this.contarAvalancha(r)
       for (const m of r.muestras) this.alMuestra?.(m)
       this.sucio = true
@@ -259,7 +271,15 @@ export class PilaVisual {
       this.m.derrumbesSeg += r.tamano
       this.m.workerMs += r.ms
     }
-    this.pedir() // si quedó trabajo, que el worker no espere al próximo cuadro
+    // Si quedó trabajo, que el worker no espere al próximo cuadro; con la pila llena, no: un pedido por cuadro (I11).
+    if (this.soltados < this.capacidad) this.pedir()
+  }
+
+  /** Copia las alturas a `ultimas` (la de la foto y el color dominante) y deja el arreglo para devolverlo al worker. */
+  private guardarAlturas(a: Uint8Array) {
+    this.ultimas.set(a)
+    this.alturas = this.ultimas
+    this.devolver = a
   }
 
   // shortcut: el worker suelta los granos en lotes y no separa avalanchas; con flujo continuo (estado estacionario)
