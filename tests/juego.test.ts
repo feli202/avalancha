@@ -1,6 +1,6 @@
 // El bucle del juego (src/ui/juego.svelte.ts), sin DOM.
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { guardarYa, juego, partidaActual, tomarCandado } from '../src/ui/juego.svelte'
+import { guardarYa, juego, partidaActual, reemplazarPartida, tomarCandado } from '../src/ui/juego.svelte'
 
 afterEach(() => vi.useRealTimers())
 
@@ -21,6 +21,32 @@ describe('dos pestañas (I1)', () => {
     expect(juego.otraPestana).toBe(true)
     expect(guardarYa()).toBe(false)
     juego.otraPestana = false
+    vi.unstubAllGlobals()
+  })
+})
+
+describe('guardado que falla (I3)', () => {
+  it('dos fallos seguidos prenden el aviso; uno bueno lo apaga', () => {
+    const m = new Map<string, string>()
+    let lleno = true
+    vi.stubGlobal('localStorage', { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, t: string) => { if (lleno) throw new Error('lleno'); m.set(k, t) } })
+    expect(guardarYa()).toBe(false)
+    expect(juego.sinGuardar).toBe(false)
+    expect(guardarYa()).toBe(false)
+    expect(juego.sinGuardar).toBe(true)
+    lleno = false
+    expect(guardarYa()).toBe(true)
+    expect(juego.sinGuardar).toBe(false)
+    vi.unstubAllGlobals()
+  })
+
+  it('importar o borrar sin poder escribir no recarga', () => {
+    const reload = vi.fn()
+    vi.stubGlobal('localStorage', { getItem: () => null, setItem: () => { throw new Error('lleno') } })
+    vi.stubGlobal('location', { reload })
+    expect(reemplazarPartida(partidaActual())).toBe(false)
+    expect(reload).not.toHaveBeenCalled()
+    expect(guardarYa()).toBe(false) // y el guardado normal sigue intentando (no quedó "reemplazando")
     vi.unstubAllGlobals()
   })
 })

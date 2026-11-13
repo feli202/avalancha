@@ -94,6 +94,7 @@ export const es = {
     compresiones: (n: number) => (n === 1 ? '1 compresión' : `${n.toLocaleString('es-AR')} compresiones`),
     seguir: 'Seguir',
   },
+  sinGuardar: 'No se pudo guardar. Exportá tu partida desde Ajustes.',
   otraPestana: {
     titulo: 'El juego está abierto en otra pestaña',
     texto: 'Para no pisar tu partida, solo una pestaña juega y guarda.',
@@ -285,6 +286,7 @@ export const es = {
     importar: 'Importar',
     pegar: 'Pegá acá el texto de una partida exportada',
     importarMal: 'Ese texto no es una partida válida.',
+    noSeEscribio: 'No se pudo escribir en el almacenamiento del navegador. Tu partida sigue como estaba.',
     importarConfirma: (desc: string) => `Esto reemplaza tu partida actual por la importada (${desc}).`,
     descPartida: (compresiones: number, tiempo: string) =>
       `${compresiones === 1 ? '1 compresión' : `${compresiones.toLocaleString('es-AR')} compresiones`}, ${tiempo} de juego`,

@@ -83,7 +83,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Cómo reproducirlo:** borrar `compresionesSinAmbar` del JSON en `localStorage` y recargar. Verificado en el test temporal: falta un campo o un autocomprador → rechazado.
 - **Arreglo propuesto:** completar lo que falta con `estadoInicial()` (mezcla campo por campo, como ya hace `ajustes.svelte.ts`) y rechazar solo tipos equivocados. En el cartel, un segundo botón "Copiar la partida dañada" que copie el texto del respaldo. Guardar el respaldo con fecha en la clave para no pisar el anterior.
 
-### I3. Si el guardado falla, el jugador no se entera
+### I3. Si el guardado falla, el jugador no se entera — ✅ resuelto
+
+- **Resuelto:** dos fallos seguidos de `guardarYa` muestran "No se pudo guardar. Exportá tu partida desde Ajustes." (fijo, se apaga al volver a guardar). `reemplazarPartida` no recarga si no pudo escribir y Ajustes → Partida muestra el error. Tests en `tests/juego.test.ts`.
 
 - **Dónde:** `src/ui/juego.svelte.ts:165-174` (solo `console.warn`), `:192` (sin almacenamiento, también por consola), `:177-181` (`reemplazarPartida` recarga aunque no haya podido escribir).
 - **Qué pasa:** con el almacenamiento lleno, bloqueado o en modo privado, el juego sigue horas sin guardar nada y sin avisar. Importar o borrar con el almacenamiento lleno recarga igual y vuelve la partida vieja.

@@ -109,6 +109,8 @@
     {#key juego.aviso.id}<p class="aviso" role="status">{juego.aviso.texto}</p>{/key}
   {/if}
 
+  {#if juego.sinGuardar}<p class="sin-guardar" role="alert">{txt.sinGuardar}</p>{/if}
+
   {#if invitaTocar()}<p class="pista" out:fade={{ duration: 300 }}>{txt.pista}</p>{/if}
 
   {#if v.derrumbes}
@@ -200,7 +202,7 @@
      en dos columnas del mismo ancho (simetría alrededor de la pila). */
   .juego { --col: clamp(16rem, 21vw, 21rem); --margen: 2rem; }
 
-  .izq, .sismo, .der, .aviso, .pista { text-shadow: 0 0 0.75rem var(--fondo), 0 0 0.25rem var(--fondo); }
+  .izq, .sismo, .der, .aviso, .pista, .sin-guardar { text-shadow: 0 0 0.75rem var(--fondo), 0 0 0.25rem var(--fondo); }
   b { font-weight: 600; color: var(--tinta); }
   .ambar { color: var(--ambar); }
   /* La primera avalancha: el número salta y se enciende. */
@@ -221,6 +223,10 @@
     position: fixed; top: var(--margen); left: 50%; translate: -50% 0; width: max-content;
     max-width: min(28rem, calc(100% - 2 * var(--col) - 4 * var(--margen)));
     margin: 0; font-size: 0.9375rem; text-align: center; text-wrap: balance; pointer-events: none; animation: aviso 6s ease-out forwards;
+  }
+  .sin-guardar {
+    position: fixed; left: 50%; bottom: var(--margen); translate: -50% 0; z-index: 3; width: max-content;
+    max-width: min(28rem, calc(100% - 2 * var(--col) - 4 * var(--margen))); margin: 0; font-size: 0.9375rem; color: var(--coral); text-align: center;
   }
   .pista {
     position: fixed; left: 0; right: 0; top: calc(50% + 4.5rem); margin: 0; text-align: center;
@@ -328,6 +334,7 @@
     .linea { font-size: 0.875rem; line-height: 1.4; }
     .aviso { top: auto; bottom: calc(45dvh + 4rem); max-width: calc(100% - 2rem); font-size: 0.8125rem; }
     .pista { top: calc(50% - 2rem); }
+    .sin-guardar { bottom: auto; top: calc(var(--margen) + 5.5rem); max-width: calc(100% - 2rem); font-size: 0.8125rem; }
     .sismo {
       right: var(--margen); bottom: calc(45dvh + 0.5rem);
       display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 1rem;

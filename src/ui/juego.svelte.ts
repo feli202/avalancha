@@ -38,6 +38,8 @@ class Juego {
   guardadoRoto = $state(false)
   /** I1: el juego está abierto en otra pestaña (tiene el candado): esta no simula ni guarda. */
   otraPestana = $state(false)
+  /** I3: los últimos guardados fallaron (almacenamiento lleno, bloqueado o privado). */
+  sinGuardar = $state(false)
   /** SPEC 7: logros conseguidos. */
   logros = $state.raw<Record<string, boolean>>({})
   /** El último aviso de logro (notificación discreta). */
@@ -167,23 +169,30 @@ export const partidaActual = (): Partida =>
   ({ estado: juego.s, guardadoEn: simuladoHasta, vistos: juego.vistos, record: juego.record, logros: juego.logros, historial })
 
 let reemplazando = false
+let fallos = 0
+const FALLOS_PARA_AVISAR = 2
 /** true si se guardó. */
 export function guardarYa() {
   if (juego.guardadoRoto || juego.otraPestana || reemplazando) return false
   try {
     guardar(almacenLocal, partidaActual())
+    fallos = 0
+    juego.sinGuardar = false
     return true
   } catch (e) {
-    console.warn(e) // sin lugar o sin permiso: el juego sigue
+    console.warn(e) // sin lugar o sin permiso: el juego sigue, con el aviso fijo
+    if (++fallos >= FALLOS_PARA_AVISAR) juego.sinGuardar = true
     return false
   }
 }
 
-/** Importar o borrar: escribe la partida y recarga, así entra por el mismo camino que una carga (fuera de línea, fotos de la pila). */
+/** Importar o borrar: escribe la partida y recarga, así entra por el mismo camino que una carga (fuera de línea, fotos de la pila).
+ * false si no se pudo escribir: no recarga (volvería la partida vieja). */
 export function reemplazarPartida(p: Partida) {
+  try { guardar(almacenLocal, p) } catch (e) { console.warn(e); return false }
   reemplazando = true // que el pagehide no la pise con la de ahora
-  try { guardar(almacenLocal, p) } catch (e) { console.warn(e) }
   location.reload()
+  return true
 }
 
 export const borrarPartida = () =>

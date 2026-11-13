@@ -62,6 +62,8 @@
   let importarMal = $state(false)
   let aImportar = $state.raw<Partida | null>(null)
   let borrar = $state(0) // 0, 1 o 2: doble confirmación
+  let noSeEscribio = $state(false)
+  const reemplazar = (p: Partida) => (noSeEscribio = !reemplazarPartida(p))
 
   let reloj: ReturnType<typeof setTimeout>
   function guardarAhora() {
@@ -216,7 +218,7 @@
                   {txt.opciones.importarConfirma(txt.opciones.descPartida(aImportar.estado.compresiones, txt.duracion(aImportar.estado.tiempoTotal)))}
                 </p>
                 <div class="acciones">
-                  <button class="accion chica peligro" use:enfocar onclick={() => aImportar && reemplazarPartida(aImportar)}>
+                  <button class="accion chica peligro" use:enfocar onclick={() => aImportar && reemplazar(aImportar)}>
                     {txt.opciones.reemplazar}
                   </button>
                   <button class="secundario" onclick={() => (aImportar = null)}>{txt.opciones.cancelar}</button>
@@ -241,7 +243,7 @@
               <p class="aviso-fuerte" role="alert">{borrar === 1 ? txt.opciones.borrarConfirma : txt.opciones.borrarConfirma2}</p>
               <div class="acciones">
                 {#key borrar}
-                  <button class="accion chica peligro" use:enfocar onclick={() => (borrar === 1 ? (borrar = 2) : borrarPartida())}>
+                  <button class="accion chica peligro" use:enfocar onclick={() => (borrar === 1 ? (borrar = 2) : (noSeEscribio = !borrarPartida()))}>
                     {borrar === 1 ? txt.opciones.borrarSi : txt.opciones.borrarDefinitivo}
                   </button>
                 {/key}
@@ -249,6 +251,7 @@
               </div>
             {/if}
           </div>
+          {#if noSeEscribio}<p class="nota mal" role="alert">{txt.opciones.noSeEscribio}</p>{/if}
         </section>
 
       {:else}

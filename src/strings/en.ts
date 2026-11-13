@@ -88,6 +88,7 @@ export const en: typeof es = {
     compresiones: (n: number) => `${n0(n)} ${s(n, 'compression', 'compressions')}`,
     seguir: 'Continue',
   },
+  sinGuardar: "Couldn't save. Export your game from Settings.",
   otraPestana: {
     titulo: 'The game is open in another tab',
     texto: 'To keep your save safe, only one tab plays and saves.',
@@ -265,6 +266,7 @@ export const en: typeof es = {
     importar: 'Import',
     pegar: 'Paste an exported save here',
     importarMal: "That text isn't a valid save.",
+    noSeEscribio: "Couldn't write to the browser's storage. Your game is unchanged.",
     importarConfirma: (desc: string) => `This replaces your current game with the imported one (${desc}).`,
     descPartida: (compresiones: number, tiempo: string) =>
       `${n0(compresiones)} ${s(compresiones, 'compression', 'compressions')}, ${tiempo} played`,
