@@ -2,6 +2,9 @@
 const num = (x: number, d = 2) => x.toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d })
 
 export const es = {
+  /** Formato de números (Intl) y separador decimal de la notación científica. */
+  locale: 'es-AR',
+  decimal: ',',
   potencia: (m: string, e: string) => `${m} por diez a la ${e}`,
   titulo: 'Avalancha',
   energia: 'Energía',
@@ -247,6 +250,10 @@ export const es = {
     masConLogros: 'Los logros desbloquean más paletas, efectos y marcos.',
     daltonismoManda: 'Con la paleta para daltonismo activada, la pila usa esa.',
     notacion: 'Notación',
+    idioma: 'Idioma',
+    idiomaDesc: 'Cambiarlo recarga la página. La partida se guarda antes.',
+    /** Cada idioma en su propio nombre. */
+    idiomas: { es: 'Español', en: 'English' } as Record<string, string>,
     cientifica: 'Científica',
     ingenieria: 'Ingeniería',
     volumen: 'Volumen general',

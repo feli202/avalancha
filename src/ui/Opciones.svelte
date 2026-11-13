@@ -1,10 +1,11 @@
 <script lang="ts">
   // Pantalla de Ajustes (Pantalla.svelte): Aspecto (paletas, efectos y marcos con su vista previa), Juego, Partida y Teclado.
+  import { flushSync } from 'svelte'
   import { exportar, importar, type Partida } from '../guardado/guardado'
   import { marco, sacarFoto } from '../render/marcos'
   import { ALTO, ANCHO, RADIO_ENTERA, imagen, miniPila } from '../render/miniPilas'
   import { COLORES_DALTONISMO, EFECTOS, MARCOS, PALETAS, css } from '../render/paletas'
-  import { es } from '../strings/es'
+  import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import { borrarPartida, camara, guardarYa, juego, partidaActual, reemplazarPartida } from './juego.svelte'
   import { desbloqueados, elegido, logroDe, nombreLogro, type Cosmetico } from './logros'
@@ -12,6 +13,13 @@
 
   const PESTANAS = ['aspecto', 'juego', 'partida', 'teclado'] as const
   let activa = $state(0)
+  /** Recarga para que todo (también lo armado al cargar) salga en el idioma nuevo; la partida se guarda en el pagehide. */
+  function cambiarIdioma(i: string) {
+    if (i === ajustes.idioma) return
+    ajustes.idioma = i
+    flushSync() // que el efecto de ajustes.svelte.ts guarde el idioma antes de recargar
+    location.reload()
+  }
   const enfocar = (el: HTMLElement) => el.focus()
 
   // ---------- Aspecto ----------
@@ -47,7 +55,7 @@
 
   function foto() {
     const f = camara.foto?.()
-    if (f) sacarFoto(f, actual.marco, coloresActuales, es.opciones.archivoFoto)
+    if (f) sacarFoto(f, actual.marco, coloresActuales, txt.opciones.archivoFoto)
   }
 
   // ---------- Partida: guardar, exportar, importar y borrar, cada uno con su mensaje o su paso de confirmación ----------
@@ -87,7 +95,7 @@
   <section class="grupo">
     <header class="cabeza-grupo">
       <h3>{titulo}</h3>
-      <span class="num cuenta">{es.opciones.cuantos(libres[tipo].length, TODOS[tipo].length)}</span>
+      <span class="num cuenta">{txt.opciones.cuantos(libres[tipo].length, TODOS[tipo].length)}</span>
     </header>
     <p class="desc">{desc}</p>
     <div class="tarjetas" role="radiogroup" aria-label={titulo}>
@@ -106,13 +114,13 @@
           <span class="pie">
             <span class="nombre">
               {#if tipo === 'paleta'}<span class="muestras" aria-hidden="true">{#each PALETAS[id] as c}<i style:background={css(c)}></i>{/each}</span>{/if}
-              {es.cosmeticos[tipo][id]}
+              {txt.cosmeticos[tipo][id]}
             </span>
-            {#if actual[tipo] === id}<span class="en-uso">{es.opciones.enUso}</span>
+            {#if actual[tipo] === id}<span class="en-uso">{txt.opciones.enUso}</span>
             {:else if !libre && logro}
               <span class="bloqueo">
                 <svg width="10" height="12" viewBox="0 0 12 14" aria-hidden="true"><rect x="1.5" y="6" width="9" height="7" rx="1" /><path d="M3.5 6V4a2.5 2.5 0 0 1 5 0v2" /></svg>
-                {es.opciones.bloqueadoPor(nombreLogro(logro))}
+                {txt.opciones.bloqueadoPor(nombreLogro(logro))}
               </span>
             {/if}
           </span>
@@ -123,46 +131,54 @@
 {/snippet}
 
 {#if juego.panel === 'ajustes'}
-  <Pantalla titulo={es.menu.abrir} bind:activa pestanas={PESTANAS.map((id) => ({ id, texto: es.opciones.pestanas[id] }))}>
+  <Pantalla titulo={txt.menu.abrir} bind:activa pestanas={PESTANAS.map((id) => ({ id, texto: txt.opciones.pestanas[id] }))}>
     <div class="contenido">
       {#if PESTANAS[activa] === 'aspecto'}
-        {#if ajustes.daltonismo}<p class="aviso">{es.opciones.daltonismoManda}</p>{/if}
-        {@render cosmeticos('paleta', es.opciones.paleta, es.opciones.paletaDesc)}
-        {@render cosmeticos('efecto', es.opciones.efecto, es.opciones.efectoDesc)}
-        {@render cosmeticos('marco', es.opciones.marco, es.opciones.marcoDesc)}
+        {#if ajustes.daltonismo}<p class="aviso">{txt.opciones.daltonismoManda}</p>{/if}
+        {@render cosmeticos('paleta', txt.opciones.paleta, txt.opciones.paletaDesc)}
+        {@render cosmeticos('efecto', txt.opciones.efecto, txt.opciones.efectoDesc)}
+        {@render cosmeticos('marco', txt.opciones.marco, txt.opciones.marcoDesc)}
         <div class="foto">
-          <button class="accion" onclick={foto}>{es.opciones.foto}</button>
-          <p class="desc">{es.opciones.fotoDesc}</p>
+          <button class="accion" onclick={foto}>{txt.opciones.foto}</button>
+          <p class="desc">{txt.opciones.fotoDesc}</p>
         </div>
 
       {:else if PESTANAS[activa] === 'juego'}
         <section class="lista">
           <div class="fila">
-            <span class="texto"><span id="notacion-t">{es.opciones.notacion}</span><small>{es.opciones.notacionDesc}</small></span>
+            <span class="texto"><span id="idioma-t">{txt.opciones.idioma}</span><small>{txt.opciones.idiomaDesc}</small></span>
+            <div class="segmentos" role="radiogroup" aria-labelledby="idioma-t">
+              {#each Object.entries(txt.opciones.idiomas) as [i, nombre]}
+                <button role="radio" lang={i} aria-checked={ajustes.idioma === i} onclick={() => cambiarIdioma(i)}>{nombre}</button>
+              {/each}
+            </div>
+          </div>
+          <div class="fila">
+            <span class="texto"><span id="notacion-t">{txt.opciones.notacion}</span><small>{txt.opciones.notacionDesc}</small></span>
             <div class="segmentos" role="radiogroup" aria-labelledby="notacion-t">
               {#each ['cientifica', 'ingenieria'] as const as n}
                 <button role="radio" aria-checked={ajustes.notacion === n} onclick={() => (ajustes.notacion = n)}>
-                  {es.opciones[n]}<small class="num">{es.opciones.ejemplo[n]}</small>
+                  {txt.opciones[n]}<small class="num">{txt.opciones.ejemplo[n]}</small>
                 </button>
               {/each}
             </div>
           </div>
           <label class="fila">
-            <span class="texto">{es.opciones.volumen}<small>{es.opciones.volumenDesc}</small></span>
+            <span class="texto">{txt.opciones.volumen}<small>{txt.opciones.volumenDesc}</small></span>
             <input type="range" min="0" max="1" step="0.05" bind:value={ajustes.volumen} />
           </label>
-          {#each Object.entries(es.opciones.volumenes) as [k, [nombre, desc]]}
+          {#each Object.entries(txt.opciones.volumenes) as [k, [nombre, desc]]}
             <label class="fila sub">
               <span class="texto">{nombre}<small>{desc}</small></span>
-              <input type="range" min="0" max="1" step="0.05" bind:value={ajustes[k as keyof typeof es.opciones.volumenes]} />
+              <input type="range" min="0" max="1" step="0.05" bind:value={ajustes[k as keyof typeof txt.opciones.volumenes]} />
             </label>
           {/each}
           <label class="fila">
-            <span class="texto">{es.reducirDestellos}<small>{es.opciones.reducirDesc}</small></span>
+            <span class="texto">{txt.reducirDestellos}<small>{txt.opciones.reducirDesc}</small></span>
             <input type="checkbox" bind:checked={ajustes.reducirDestellos} />
           </label>
           <label class="fila">
-            <span class="texto">{es.opciones.daltonismo}<small>{es.opciones.daltonismoDesc}</small></span>
+            <span class="texto">{txt.opciones.daltonismo}<small>{txt.opciones.daltonismoDesc}</small></span>
             <input type="checkbox" bind:checked={ajustes.daltonismo} />
           </label>
         </section>
@@ -170,51 +186,51 @@
       {:else if PESTANAS[activa] === 'partida'}
         <section class="lista">
           <div class="resumen">
-            <p class="rotulo">{es.opciones.tuPartida}</p>
-            <p class="grande num">{es.opciones.descPartida(juego.s.compresiones, es.duracion(juego.s.tiempoTotal))}</p>
+            <p class="rotulo">{txt.opciones.tuPartida}</p>
+            <p class="grande num">{txt.opciones.descPartida(juego.s.compresiones, txt.duracion(juego.s.tiempoTotal))}</p>
           </div>
 
           <div class="fila">
-            <span class="texto">{es.opciones.guardarAhora}<small>{guardadoOk ? es.opciones.guardado : es.opciones.guardadoAuto}</small></span>
-            <button class="accion chica" onclick={guardarAhora}>{es.opciones.guardarAhora}</button>
+            <span class="texto">{txt.opciones.guardarAhora}<small>{guardadoOk ? txt.opciones.guardado : txt.opciones.guardadoAuto}</small></span>
+            <button class="accion chica" onclick={guardarAhora}>{txt.opciones.guardarAhora}</button>
           </div>
 
           <div class="bloque">
             <div class="fila sin-borde">
-              <span class="texto">{es.opciones.exportar}<small>{es.opciones.exportarDesc}</small></span>
-              <button class="accion chica" onclick={alExportar}>{es.opciones.exportar}</button>
+              <span class="texto">{txt.opciones.exportar}<small>{txt.opciones.exportarDesc}</small></span>
+              <button class="accion chica" onclick={alExportar}>{txt.opciones.exportar}</button>
             </div>
             {#if exportado}
-              <p class="nota" role="status">{exportado.copiado ? es.opciones.exportado : es.opciones.exportadoSinCopiar}</p>
-              <textarea class="codigo" readonly rows="3" aria-label={es.opciones.exportar} onfocus={(e) => e.currentTarget.select()}
+              <p class="nota" role="status">{exportado.copiado ? txt.opciones.exportado : txt.opciones.exportadoSinCopiar}</p>
+              <textarea class="codigo" readonly rows="3" aria-label={txt.opciones.exportar} onfocus={(e) => e.currentTarget.select()}
                 >{exportado.texto}</textarea>
             {/if}
           </div>
 
           <div class="bloque">
             <div class="fila sin-borde">
-              <span class="texto">{es.opciones.importar}<small>{es.opciones.importarDesc}</small></span>
+              <span class="texto">{txt.opciones.importar}<small>{txt.opciones.importarDesc}</small></span>
               <button class="accion chica" aria-expanded={importando} onclick={() => ((importando = !importando), (aImportar = null))}>
-                {es.opciones.importar}
+                {txt.opciones.importar}
               </button>
             </div>
             {#if importando}
               {#if aImportar}
                 <p class="aviso-fuerte" role="alert">
-                  {es.opciones.importarConfirma(es.opciones.descPartida(aImportar.estado.compresiones, es.duracion(aImportar.estado.tiempoTotal)))}
+                  {txt.opciones.importarConfirma(txt.opciones.descPartida(aImportar.estado.compresiones, txt.duracion(aImportar.estado.tiempoTotal)))}
                 </p>
                 <div class="acciones">
                   <button class="accion chica peligro" use:enfocar onclick={() => aImportar && reemplazarPartida(aImportar)}>
-                    {es.opciones.reemplazar}
+                    {txt.opciones.reemplazar}
                   </button>
-                  <button class="secundario" onclick={() => (aImportar = null)}>{es.opciones.cancelar}</button>
+                  <button class="secundario" onclick={() => (aImportar = null)}>{txt.opciones.cancelar}</button>
                 </div>
               {:else}
-                <textarea class="codigo" rows="3" aria-label={es.opciones.pegar} placeholder={es.opciones.pegar} use:enfocar
+                <textarea class="codigo" rows="3" aria-label={txt.opciones.pegar} placeholder={txt.opciones.pegar} use:enfocar
                   bind:value={pegado} oninput={() => (importarMal = false)}></textarea>
-                {#if importarMal}<p class="nota mal" role="alert">{es.opciones.importarMal}</p>{/if}
+                {#if importarMal}<p class="nota mal" role="alert">{txt.opciones.importarMal}</p>{/if}
                 <div class="acciones">
-                  <button class="accion chica" disabled={!pegado.trim()} onclick={alImportar}>{es.opciones.importar}</button>
+                  <button class="accion chica" disabled={!pegado.trim()} onclick={alImportar}>{txt.opciones.importar}</button>
                 </div>
               {/if}
             {/if}
@@ -222,18 +238,18 @@
 
           <div class="bloque peligro-zona">
             <div class="fila sin-borde">
-              <span class="texto">{es.opciones.zonaPeligro}<small>{es.opciones.borrarDesc}</small></span>
-              {#if borrar === 0}<button class="accion chica peligro" onclick={() => (borrar = 1)}>{es.opciones.borrar}</button>{/if}
+              <span class="texto">{txt.opciones.zonaPeligro}<small>{txt.opciones.borrarDesc}</small></span>
+              {#if borrar === 0}<button class="accion chica peligro" onclick={() => (borrar = 1)}>{txt.opciones.borrar}</button>{/if}
             </div>
             {#if borrar > 0}
-              <p class="aviso-fuerte" role="alert">{borrar === 1 ? es.opciones.borrarConfirma : es.opciones.borrarConfirma2}</p>
+              <p class="aviso-fuerte" role="alert">{borrar === 1 ? txt.opciones.borrarConfirma : txt.opciones.borrarConfirma2}</p>
               <div class="acciones">
                 {#key borrar}
                   <button class="accion chica peligro" use:enfocar onclick={() => (borrar === 1 ? (borrar = 2) : borrarPartida())}>
-                    {borrar === 1 ? es.opciones.borrarSi : es.opciones.borrarDefinitivo}
+                    {borrar === 1 ? txt.opciones.borrarSi : txt.opciones.borrarDefinitivo}
                   </button>
                 {/key}
-                <button class="secundario" onclick={() => (borrar = 0)}>{es.opciones.cancelar}</button>
+                <button class="secundario" onclick={() => (borrar = 0)}>{txt.opciones.cancelar}</button>
               </div>
             {/if}
           </div>
@@ -241,7 +257,7 @@
 
       {:else}
         <dl class="teclas">
-          {#each es.opciones.teclas as [k, que]}<dt><kbd>{k}</kbd></dt><dd>{que}</dd>{/each}
+          {#each txt.opciones.teclas as [k, que]}<dt><kbd>{k}</kbd></dt><dd>{que}</dd>{/each}
         </dl>
       {/if}
     </div>

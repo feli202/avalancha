@@ -2,7 +2,7 @@
   // Pantalla completa con fondo propio (Logros, Estadísticas): barra con pestañas, un extra a la derecha y la cruz.
   // La pila se aleja detrás (App.svelte); Esc cierra (Paneles.svelte).
   import type { Snippet } from 'svelte'
-  import { es } from '../strings/es'
+  import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import { juego } from './juego.svelte'
 
@@ -41,7 +41,7 @@
       {/each}
     </div>
     {@render extra?.()}
-    <button class="cerrar" aria-label={es.logros.volver} onclick={() => (juego.panel = null)}>
+    <button class="cerrar" aria-label={txt.logros.volver} onclick={() => (juego.panel = null)}>
       <svg width="16" height="16" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" /></svg>
     </button>
   </header>

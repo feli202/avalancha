@@ -2,7 +2,7 @@
   // Panel de debug: solo se monta en desarrollo (ver App.svelte).
   import Decimal from 'break_infinity.js'
   import { CFG, estadoInicial } from '../core'
-  import { es } from '../strings/es'
+  import { txt } from '../strings'
   import { borrarPartida, juego } from './juego.svelte'
 
   const umbrales = CFG.compresion.umbrales_log10
@@ -24,7 +24,7 @@
     }
   }
 
-  const formatoMedida = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 })
+  const formatoMedida = new Intl.NumberFormat(txt.locale, { maximumFractionDigits: 1 })
 
   function exportar() {
     const a = document.createElement('a')
@@ -36,38 +36,38 @@
 </script>
 
 <details>
-  <summary>{es.debug.titulo}</summary>
+  <summary>{txt.debug.titulo}</summary>
   <div>
-    {es.debug.velocidad}
+    {txt.debug.velocidad}
     {#each [1, 10, 50] as v}
       <button aria-pressed={juego.velocidad === v} onclick={() => (juego.velocidad = v)}>×{v}</button>
     {/each}
   </div>
-  <button onclick={darEnergia}>{es.debug.darEnergia}</button>
+  <button onclick={darEnergia}>{txt.debug.darEnergia}</button>
   <label>
-    {es.debug.saltar}
+    {txt.debug.saltar}
     <input type="number" min="0" max={umbrales.length} bind:value={n} />
-    <button onclick={saltar}>{es.debug.ir}</button>
+    <button onclick={saltar}>{txt.debug.ir}</button>
   </label>
-  <button onclick={exportar}>{es.debug.exportar}</button>
+  <button onclick={exportar}>{txt.debug.exportar}</button>
   <!-- Sin confirmación: es una herramienta de desarrollo (en Ajustes lleva doble confirmación). -->
-  <button onclick={borrarPartida}>{es.debug.borrar}</button>
-  <button onclick={() => (juego.s = { ...juego.s, caudal: juego.s.caudal + 1 })}>{es.debug.caudalMas}</button>
+  <button onclick={borrarPartida}>{txt.debug.borrar}</button>
+  <button onclick={() => (juego.s = { ...juego.s, caudal: juego.s.caudal + 1 })}>{txt.debug.caudalMas}</button>
   <div>
     {#each [50_000, 400_000] as n}
-      <button onclick={() => (juego.s = { ...juego.s, granos: Math.max(juego.s.granos, n) })}>{es.debug.pilaA(n)}</button>
+      <button onclick={() => (juego.s = { ...juego.s, granos: Math.max(juego.s.granos, n) })}>{txt.debug.pilaA(n)}</button>
     {/each}
     <!-- Más que la capacidad (~463.000) más el relleno del 12 %: la pila llega al círculo y queda redonda. -->
-    <button onclick={() => (juego.s = { ...juego.s, granos: Math.max(juego.s.granos, 600_000) })}>{es.debug.pilaLlena}</button>
+    <button onclick={() => (juego.s = { ...juego.s, granos: Math.max(juego.s.granos, 600_000) })}>{txt.debug.pilaLlena}</button>
   </div>
   <label>
-    {es.debug.nivelColores} ({juego.nivelColores})
+    {txt.debug.nivelColores} ({juego.nivelColores})
     <input type="range" min="0" max="200" step="5" bind:value={juego.nivelColores} />
   </label>
   {#if juego.medidas}
     <dl>
       {#each ['fps', 'peorCuadro', 'cuadroMs', 'granosSeg', 'derrumbesSeg', 'workerMs'] as const as k}
-        <dt>{es.debug[k]}</dt><dd>{formatoMedida.format(juego.medidas[k])}</dd>
+        <dt>{txt.debug[k]}</dt><dd>{formatoMedida.format(juego.medidas[k])}</dd>
       {/each}
     </dl>
   {/if}

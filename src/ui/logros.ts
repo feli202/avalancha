@@ -1,7 +1,7 @@
 // SPEC 7: los 24 logros de la Capa 0, en el orden de la pantalla. Se miran en cada cuadro; una vez conseguido, queda en el guardado.
 import { CFG, MUTACIONES, anillos, densidad, type State } from '../core'
 import FOTOS from '../assets/pilas.json'
-import { es } from '../strings/es'
+import { txt } from '../strings'
 
 const L = CFG.logros
 
@@ -36,7 +36,7 @@ export const LOGROS: Record<string, (s: State, record: number) => boolean> = {
 export const nuevosLogros = (s: State, record: number, tiene: Record<string, boolean>) =>
   Object.keys(LOGROS).filter((k) => !tiene[k] && LOGROS[k](s, record))
 
-/** El número de cada logro que va en su nombre o descripción (los textos están en es.logros). */
+/** El número de cada logro que va en su nombre o descripción (los textos están en txt.logros). */
 export const UMBRAL: Record<string, number> = {
   granos: L.granos_pila, avalancha: L.avalancha, hito: CFG.hito_colores.cada, anillo: L.anillo, densidad: L.densidad,
   anilloGrande: L.anillo_grande, record: L.avalancha_record, infinitoRapido: L.infinito_rapido_horas,
@@ -45,10 +45,10 @@ export const UMBRAL: Record<string, number> = {
 }
 
 const conNumero = (t: string | ((n: string) => string), k: string) =>
-  typeof t === 'string' ? t : t(UMBRAL[k]?.toLocaleString('es-AR') ?? '')
+  typeof t === 'string' ? t : t(UMBRAL[k]?.toLocaleString(txt.locale) ?? '')
 /** Nombre y descripción de un logro, con su número. */
-export const nombreLogro = (k: string) => conNumero(es.logros.lista[k][0], k)
-export const descLogro = (k: string) => conNumero(es.logros.lista[k][1], k)
+export const nombreLogro = (k: string) => conNumero(txt.logros.lista[k][0], k)
+export const descLogro = (k: string) => conNumero(txt.logros.lista[k][1], k)
 
 export type Cosmetico = 'paleta' | 'efecto' | 'marco'
 /** Recompensa de cada logro: solo cosmética (paletas.ts), sin efecto en el balance. */

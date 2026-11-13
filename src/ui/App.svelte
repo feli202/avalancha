@@ -1,7 +1,7 @@
 <script lang="ts">
   // Interfaz principal (SPEC 6.4). Cada parte aparece recién cuando juego.vistos lo dice (SPEC 5).
   import { anillos, densidad, multAnillos, produccion, puedeComprimir } from '../core'
-  import { es } from '../strings/es'
+  import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import Debug from './Debug.svelte'
   import Opciones from './Opciones.svelte'
@@ -63,24 +63,24 @@
   <Pila />
 
   <header class="izq">
-    <span class="etiqueta">{es.energia}</span>
-    {#if fin}<span class="energia infinito">{es.infinito}</span>{:else}<span class="energia num" aria-hidden="true">{formato(s.energia)}</span><span class="sr">{hablado(formato(s.energia))}</span>{/if}
-    {#if v.tienda}<span class="linea num aparece"><b class="ambar" aria-hidden="true">+{formato(produccion(s))}</b><span class="sr">{hablado(formato(produccion(s)))}</span> {es.energiaPorSegundo}</span>{/if}
+    <span class="etiqueta">{txt.energia}</span>
+    {#if fin}<span class="energia infinito">{txt.infinito}</span>{:else}<span class="energia num" aria-hidden="true">{formato(s.energia)}</span><span class="sr">{hablado(formato(s.energia))}</span>{/if}
+    {#if v.tienda}<span class="linea num aparece"><b class="ambar" aria-hidden="true">+{formato(produccion(s))}</b><span class="sr">{hablado(formato(produccion(s)))}</span> {txt.energiaPorSegundo}</span>{/if}
     {#if s.compresiones > 0}
-      <span class="linea num aparece">{es.densidad} <b>^{formatoMult(densidad(s))}</b></span>
+      <span class="linea num aparece">{txt.densidad} <b>^{formatoMult(densidad(s))}</b></span>
     {/if}
   </header>
 
   <div class="ajustes">
-    <button class="icono" aria-label={es.menu.logros} aria-haspopup="dialog" aria-keyshortcuts="L" onclick={() => (juego.panel = 'logros')}>
+    <button class="icono" aria-label={txt.menu.logros} aria-haspopup="dialog" aria-keyshortcuts="L" onclick={() => (juego.panel = 'logros')}>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
         <path d="M5 2.5h8v4a4 4 0 0 1-8 0zM9 10.5v3M6 15.5h6M5 4H2.5a2.5 2.5 0 0 0 2.6 3M13 4h2.5a2.5 2.5 0 0 1-2.6 3" />
       </svg>
     </button>
-    <button class="icono" aria-label={es.menu.estadisticas} aria-haspopup="dialog" aria-keyshortcuts="E" onclick={() => (juego.panel = 'estadisticas')}>
+    <button class="icono" aria-label={txt.menu.estadisticas} aria-haspopup="dialog" aria-keyshortcuts="E" onclick={() => (juego.panel = 'estadisticas')}>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15.5V9M7 15.5V3M11 15.5V7M15 15.5v-4M1.5 15.5h15" /></svg>
     </button>
-    <button class="icono" aria-label={es.menu.abrir} aria-haspopup="dialog" aria-keyshortcuts="A" onclick={() => (juego.panel = 'ajustes')}>
+    <button class="icono" aria-label={txt.menu.abrir} aria-haspopup="dialog" aria-keyshortcuts="A" onclick={() => (juego.panel = 'ajustes')}>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
         <path d="M2 5h8M14 5h2M2 13h2M8 13h8" /><circle cx="12" cy="5" r="2" /><circle cx="6" cy="13" r="2" />
       </svg>
@@ -91,14 +91,14 @@
     {#key juego.aviso.id}<p class="aviso" role="status">{juego.aviso.texto}</p>{/key}
   {/if}
 
-  {#if !v.tienda}<p class="pista">{es.pista}</p>{/if}
+  {#if !v.tienda}<p class="pista">{txt.pista}</p>{/if}
 
   {#if v.derrumbes}
     <footer class="sismo aparece">
       <Sismografo />
       <p class="chico num">
-        {#if v.anillos}<span class="aparece">{es.anillos(anillos(s.granos))} <b>{es.mult(formatoMult(multAnillos(s)))}</b></span>{/if}
-        {#if juego.escalaK > 0}{#key juego.escalaK}<span class="aparece">{es.escala(juego.escalaK)}</span>{/key}{/if}
+        {#if v.anillos}<span class="aparece">{txt.anillos(anillos(s.granos))} <b>{txt.mult(formatoMult(multAnillos(s)))}</b></span>{/if}
+        {#if juego.escalaK > 0}{#key juego.escalaK}<span class="aparece">{txt.escala(juego.escalaK)}</span>{/key}{/if}
       </p>
     </footer>
   {/if}
@@ -109,11 +109,11 @@
       class:alta
       class:arrastrando={arrastre !== null}
       style:--arrastre="{arrastre ?? 0}px"
-      aria-label={es.tienda}
+      aria-label={txt.tienda}
     >
       <button
         class="manija"
-        aria-label={alta ? es.cerrarTienda : es.abrirTienda}
+        aria-label={alta ? txt.cerrarTienda : txt.abrirTienda}
         aria-expanded={alta}
         onpointerdown={bajar}
         onpointermove={mover}
@@ -125,15 +125,15 @@
         {#if v.compresion}
           <!-- Después de la última Compresión la meta es el Infinito: llega solo. -->
           <button class="comprimir aparece" disabled={!lista} onclick={comprimirYa} aria-keyshortcuts="C">
-            <span class="nombre">{comp.final ? es.haciaInfinito : es.comprimir}</span>
+            <span class="nombre">{comp.final ? txt.haciaInfinito : txt.comprimir}</span>
             <span class="meta num">
-              {#if !comp.final}{es.compresion(s.compresiones + 1)}{' · '}{/if}{es.meta(comp.meta)} · <b>{es.progreso(comp.p)}</b>
-              {#if !lista && juego.eta !== null} · {es.eta(es.duracion(juego.eta))}{/if}
+              {#if !comp.final}{txt.compresion(s.compresiones + 1)}{' · '}{/if}{txt.meta(comp.meta)} · <b>{txt.progreso(comp.p)}</b>
+              {#if !lista && juego.eta !== null} · {txt.eta(txt.duracion(juego.eta))}{/if}
             </span>
           </button>
           {#if v.auto_compresion_auto && !comp.final}
             <label class="autocomp aparece">
-              <input type="checkbox" checked={s.auto.compresion_auto} onchange={alternarAutoComp} /> {es.compresionAuto}
+              <input type="checkbox" checked={s.auto.compresion_auto} onchange={alternarAutoComp} /> {txt.compresionAuto}
             </label>
           {/if}
         {/if}
@@ -144,15 +144,15 @@
 
 {#if fin}
   <!-- SPEC 6.6: después del blanco, el colapso y un segundo de silencio, el final de la capa. -->
-  <section class="final" aria-label={es.fin.titulo}>
-    <p class="simbolo" aria-hidden="true">{es.infinito}</p>
-    <h1>{es.fin.titulo}</h1>
+  <section class="final" aria-label={txt.fin.titulo}>
+    <p class="simbolo" aria-hidden="true">{txt.infinito}</p>
+    <h1>{txt.fin.titulo}</h1>
     <dl class="num">
-      <dt>{es.fin.tiempo}</dt><dd>{es.duracion(s.tiempoTotal)}</dd>
-      <dt>{es.fin.compresiones}</dt><dd>{s.compresiones}</dd>
-      <dt>{es.fin.record}</dt><dd>{es.fin.derrumbes(formato(juego.record))}</dd>
+      <dt>{txt.fin.tiempo}</dt><dd>{txt.duracion(s.tiempoTotal)}</dd>
+      <dt>{txt.fin.compresiones}</dt><dd>{s.compresiones}</dd>
+      <dt>{txt.fin.record}</dt><dd>{txt.fin.derrumbes(formato(juego.record))}</dd>
     </dl>
-    <p class="adelanto">{es.fin.adelanto}</p>
+    <p class="adelanto">{txt.fin.adelanto}</p>
   </section>
 {/if}
 

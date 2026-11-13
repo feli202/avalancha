@@ -3,7 +3,7 @@
   import { onMount } from 'svelte'
   import { CFG, anillos, caudal, densidad, multAnillos, multColor, punado } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS, PilaVisual, brillo } from '../render/pilaVisual'
-  import { es } from '../strings/es'
+  import { txt } from '../strings'
   import { formatoMult } from './formato'
   import { ajustes } from './ajustes.svelte'
   import { COLORES_DALTONISMO, EFECTOS, PALETAS } from '../render/paletas'
@@ -46,7 +46,7 @@
   onMount(() => {
     const pila = new PilaVisual(canvas)
     pila.alMedir = (m) => (juego.medidas = m)
-    pila.alAvalancha = (n) => efecto({ texto: es.avalancha(n) })
+    pila.alAvalancha = (n) => efecto({ texto: txt.avalancha(n) })
     pila.alMuestra = (n) => muestraAvalancha(historial, n)
     pila.alTamano = (n) => {
       sismo.push(n)
@@ -114,7 +114,7 @@
       if (n > anillosAntes) {
         sonido.hito('ring')
         const mult = multAnillos(s).pow(1 / n).toNumber()
-        efecto({ texto: es.anillo(n, mult), anillo: { r: pila.radioCss, color: pila.colorDominante() } })
+        efecto({ texto: txt.anillo(n, mult), anillo: { r: pila.radioCss, color: pila.colorDominante() } })
       }
       anillosAntes = n
       raf = requestAnimationFrame(cuadro)
@@ -129,7 +129,7 @@
 <svelte:window onkeydown={tecla} />
 
 <div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:colapsa={juego.s.infinitos > 0} class:quieto={ajustes.reducirDestellos}>
-  <canvas bind:this={canvas} onpointerdown={soltar} aria-label={es.pila}></canvas>
+  <canvas bind:this={canvas} onpointerdown={soltar} aria-label={txt.pila}></canvas>
   <div class="efectos" class:quieto={ajustes.reducirDestellos} aria-hidden="true">
     {#if juego.vistos.compresion && comp.meta !== undefined}
       <!-- Compresión: el anillo se cierra con el progreso (escala logarítmica); al 100 % brilla. -->
@@ -146,7 +146,7 @@
       {#if e.compresion}
         <div class="estela" style:--r="{e.compresion.r}px" style:background={ESTELA}></div>
         <div class="destello"></div>
-        <p class="flota densidad" onanimationend={() => quitar(e.id)}>{es.densidadNueva(e.compresion.densidad)}</p>
+        <p class="flota densidad" onanimationend={() => quitar(e.id)}>{txt.densidadNueva(e.compresion.densidad)}</p>
       {:else if e.ola}
         <div class="ola" style:--r="{e.ola.r}px" style:--c={e.ola.color} onanimationend={() => quitar(e.id)}></div>
       {:else}

@@ -1,9 +1,12 @@
 // Ajustes (SPEC 6.8 y 8): se guardan solos en cada cambio, aparte de la partida.
 import { almacenLocal } from '../guardado/almacen'
 import { AJUSTES } from '../guardado/guardado'
+import { idioma } from '../strings'
 import { aplicarVolumen } from './sonido'
 
 const base = {
+  /** Lo elige strings/index.ts; cambiarlo recarga la página. */
+  idioma: idioma as string,
   notacion: 'cientifica' as 'cientifica' | 'ingenieria',
   /** 0–1: el general y uno por tipo de sonido (SPEC 6.7, sonido.ts). */
   volumen: 0.8,
@@ -41,4 +44,5 @@ $effect.root(() => {
   })
   $effect(() => void [ajustes.volumen, ajustes.volDerrumbes, ajustes.volCompras, ajustes.volHitos, ajustes.volFondo, aplicarVolumen()])
   $effect(() => void document.documentElement.classList.toggle('daltonismo', ajustes.daltonismo))
+  $effect(() => void (document.documentElement.lang = ajustes.idioma))
 })

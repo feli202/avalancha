@@ -3,7 +3,7 @@
   // Un solo lenguaje: velo oscuro translúcido, sin cajas, jerarquía por tamaño, números con cifras tabulares.
   import { untrack } from 'svelte'
   import { CFG } from '../core'
-  import { es } from '../strings/es'
+  import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import { formato } from './formato'
   import { juego } from './juego.svelte'
@@ -35,27 +35,27 @@
   <!-- No se cierra con Escape ni tocando afuera: hasta aceptar, no se guarda nada. -->
   <div class="velo" class:quieto={ajustes.reducirDestellos}>
     <div class="centro" role="alertdialog" aria-modal="true" aria-labelledby="roto-t" aria-describedby="roto-d">
-      <h2 id="roto-t" class="titulo">{es.guardadoRoto.titulo}</h2>
-      <p id="roto-d" class="texto">{es.guardadoRoto.texto}</p>
-      <button class="accion" use:enfocar onclick={() => (juego.guardadoRoto = false)}>{es.guardadoRoto.empezar}</button>
+      <h2 id="roto-t" class="titulo">{txt.guardadoRoto.titulo}</h2>
+      <p id="roto-d" class="texto">{txt.guardadoRoto.texto}</p>
+      <button class="accion" use:enfocar onclick={() => (juego.guardadoRoto = false)}>{txt.guardadoRoto.empezar}</button>
     </div>
   </div>
 {:else if juego.ausencia}
   {@const a = juego.ausencia}
   <div class="velo" class:quieto={ajustes.reducirDestellos} role="presentation" onclick={afuera}>
     <div class="centro recompensa" role="dialog" aria-modal="true" aria-labelledby="ausencia-t" aria-describedby="ausencia-d">
-      <p id="ausencia-t" class="rotulo">{es.ausencia.titulo}</p>
+      <p id="ausencia-t" class="rotulo">{txt.ausencia.titulo}</p>
       <p id="ausencia-d" class="grande">
         <span class="cifra num">+{formato(a.energia)}</span>
-        <span class="unidad">{es.ausencia.energia}</span>
+        <span class="unidad">{txt.ausencia.energia}</span>
       </p>
       <p class="detalle num">
         {a.segundos >= CFG.fuera_de_linea.tope_horas * 3600
-          ? es.ausencia.tope(CFG.fuera_de_linea.tope_horas)
-          : es.ausencia.tiempo(es.duracion(a.segundos))}
-        {#if a.compresiones > 0}<span class="sep">·</span>{es.ausencia.compresiones(a.compresiones)}{/if}
+          ? txt.ausencia.tope(CFG.fuera_de_linea.tope_horas)
+          : txt.ausencia.tiempo(txt.duracion(a.segundos))}
+        {#if a.compresiones > 0}<span class="sep">·</span>{txt.ausencia.compresiones(a.compresiones)}{/if}
       </p>
-      <button class="accion" use:enfocar onclick={cerrar}>{es.ausencia.seguir}</button>
+      <button class="accion" use:enfocar onclick={cerrar}>{txt.ausencia.seguir}</button>
     </div>
   </div>
 {/if}

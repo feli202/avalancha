@@ -7,12 +7,12 @@
     type ItemId, type MutId, type State,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
-  import { es } from '../strings/es'
+  import { txt } from '../strings'
   import { formato, formatoMult, hablado } from './formato'
   import { hayPanel, juego, nombreAuto } from './juego.svelte'
   import * as sonido from './sonido'
 
-  type Modo = keyof typeof es.modos
+  type Modo = keyof typeof txt.modos
   let modo = $state<Modo>('x1')
   const DIEZ = 10
 
@@ -56,18 +56,18 @@
 
   function nombre(id: ItemId) {
     const m = mutDe(id)
-    return m ? es.mutaciones[m] : id === 'cascada' ? es.cascada : color(id) >= 0 ? es.colores[color(id)] : es.caudal
+    return m ? txt.mutaciones[m] : id === 'cascada' ? txt.cascada : color(id) >= 0 ? txt.colores[color(id)] : txt.caudal
   }
 
   function efecto(s: State, id: ItemId) {
     const m = mutDe(id)
     const n = nivel(s, id)
-    if (m === 'expansion') return es.efectoMutacion[m](formatoMult(CFG.anillos.mult_por_anillo + CFG.mutaciones[m].por_nivel * n))
-    if (m === 'cascada') return es.efectoMutacion[m](formatoMult(CFG.mutaciones[m].por_nivel * n))
-    if (m) return es.efectoMutacion[m](formato(CFG.mutaciones[m].por_nivel ** n))
-    if (id === 'cascada') return es.mult(formatoMult(multCascada(s)))
-    if (color(id) >= 0) return `${es.mult(formatoMult(multColor(color(id), n)))} · ${es.alturaColor[color(id)]}`
-    return es.efectoCaudal(formato(caudal(s)))
+    if (m === 'expansion') return txt.efectoMutacion[m](formatoMult(CFG.anillos.mult_por_anillo + CFG.mutaciones[m].por_nivel * n))
+    if (m === 'cascada') return txt.efectoMutacion[m](formatoMult(CFG.mutaciones[m].por_nivel * n))
+    if (m) return txt.efectoMutacion[m](formato(CFG.mutaciones[m].por_nivel ** n))
+    if (id === 'cascada') return txt.mult(formatoMult(multCascada(s)))
+    if (color(id) >= 0) return `${txt.mult(formatoMult(multColor(color(id), n)))} · ${txt.alturaColor[color(id)]}`
+    return txt.efectoCaudal(formato(caudal(s)))
   }
 
   const todo = () => (juego.s = comprarTodo(juego.s, items))
@@ -85,20 +85,20 @@
 {#if pestanas.length > 1}
   <div class="pestanas" role="tablist">
     {#each pestanas as p (p)}
-      <button role="tab" class="aparece" aria-selected={pestana === p} onclick={() => (pestana = p)}>{es.pestanas[p]}</button>
+      <button role="tab" class="aparece" aria-selected={pestana === p} onclick={() => (pestana = p)}>{txt.pestanas[p]}</button>
     {/each}
   </div>
 {/if}
 
 <div class="cabeza">
   {#if enTienda}
-    <div class="modos" role="radiogroup" aria-label={es.modo}>
-      {#each Object.keys(es.modos) as Modo[] as m}
-        <button role="radio" aria-checked={modo === m} onclick={() => (modo = m)}>{es.modos[m]}</button>
+    <div class="modos" role="radiogroup" aria-label={txt.modo}>
+      {#each Object.keys(txt.modos) as Modo[] as m}
+        <button role="radio" aria-checked={modo === m} onclick={() => (modo = m)}>{txt.modos[m]}</button>
       {/each}
     </div>
   {:else}
-    <p class="explica">{es.explicacion[pestana]}</p>
+    <p class="explica">{txt.explicacion[pestana]}</p>
   {/if}
 </div>
 
@@ -110,18 +110,18 @@
     {@const k = claveAuto(id)}
     <li style:--c={i >= 0 ? COLOR_CSS[ALTURA_DE_COLOR[i]] : 'var(--tinta)'}>
       <button class="fila" class:puede={o.puede && !tope} disabled={!o.puede || tope} onclick={() => compra(id)}
-        aria-label="{es.comprar} {nombre(id)} · {tope ? es.nivelMaximo : hablado(formato(o.c))}">
+        aria-label="{txt.comprar} {nombre(id)} · {tope ? txt.nivelMaximo : hablado(formato(o.c))}">
         <span class="muestra" class:caudal={i < 0} aria-hidden="true"></span>
-        <span class="nombre">{nombre(id)} <span class="nv num">{es.nivel(nivel(juego.s, id))}</span></span>
+        <span class="nombre">{nombre(id)} <span class="nv num">{txt.nivel(nivel(juego.s, id))}</span></span>
         <span class="costo num">
-          {#if tope}{es.nivelMaximo}{:else}{#if o.n > 1}<span class="cuantos">{es.comprarCuantos(o.n)}</span> {/if}{formato(o.c)}{/if}
+          {#if tope}{txt.nivelMaximo}{:else}{#if o.n > 1}<span class="cuantos">{txt.comprarCuantos(o.n)}</span> {/if}{formato(o.c)}{/if}
         </span>
         <span class="efecto num">{efecto(juego.s, id)}</span>
       </button>
       {#if k && juego.vistos[`auto_${k}`]}
         <!-- SPEC 4.8: interruptor del autocomprador, fuera del botón de la fila. -->
-        <button class="auto aparece" role="switch" aria-checked={juego.s.auto[k]} aria-label={es.autoDe(nombreAuto(k))}
-          onclick={() => alternarAuto(k)}>{es.auto}</button>
+        <button class="auto aparece" role="switch" aria-checked={juego.s.auto[k]} aria-label={txt.autoDe(nombreAuto(k))}
+          onclick={() => alternarAuto(k)}>{txt.auto}</button>
       {/if}
     </li>
   {/each}
@@ -129,7 +129,7 @@
 
 {#if enTienda}
   <button class="todo" onclick={todo} aria-keyshortcuts="M">
-    {es.comprarTodo} <kbd>{es.teclaComprarTodo}</kbd>
+    {txt.comprarTodo} <kbd>{txt.teclaComprarTodo}</kbd>
   </button>
 {/if}
 

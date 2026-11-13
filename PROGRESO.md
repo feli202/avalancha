@@ -600,3 +600,16 @@ Ajustes deja el panel translúcido y pasa a pantalla completa, con el mismo arma
 4. **Objetivos de 44 px en todas las pantallas**, también con mouse. Las filas de la tienda con interruptor "auto" crecen de ~62 a 76 px.
 5. **Tablet vertical (hasta 1100 px de ancho) usa el diseño del móvil.** Las pantallas completas (Logros, Estadísticas, Ajustes) siguen cambiando a 768 px.
 6. **No toqué** las animaciones de anillos y colores del hito 6 de la spec: ya estaban (ola de color, anillo con texto).
+
+## Inglés como segundo idioma
+
+- `src/strings/en.ts`: la traducción completa, con el tipo de `es.ts` (`typeof es`), así que si falta una clave no compila. Un test en `tests/logros.test.ts` compara además las claves de los dos archivos.
+- Nombres: Energy, Flow, Amber, Coral, Jade, Violet, Rings, Cascade, Compression, Density, Mutations, Infinity, Handful, Avalanche. "Derrumbe" quedó como *topple* (el término de la pila abeliana). El título del juego sigue siendo "Avalancha".
+- `src/strings/index.ts` elige el idioma al cargar: el guardado en los ajustes o, si no hay, el del navegador (español si empieza con "es", si no, inglés). Todos los componentes importan `txt` de ahí. `es.ts` y `en.ts` llevan `locale` (`es-AR` / `en-US`) y `decimal`: los números salen 1.234 / 1,23e45 en español y 1,234 / 1.23e45 en inglés. El lector de pantalla lee la potencia en los dos.
+- **Selector en Ajustes → Juego**, arriba de Notación. Cambiar el idioma **recarga la página** (la partida se guarda en el `pagehide`): hay textos que se arman una sola vez al cargar y así ninguno queda en el idioma viejo. `<html lang>` sigue al idioma.
+
+### Verificación
+
+- Script que recorre la pantalla principal, las tres pestañas de la tienda y cada pestaña de Logros, Estadísticas y Ajustes buscando texto cortado o fuera de la pantalla, en inglés, con una partida avanzada (Compresión 15): **nada en escritorio (1024×768) ni en móvil (375×812)**. Lo único que encontró fue el último número del eje del gráfico de avalanchas, que se cortaba 3 px en móvil también en español; ahora va alineado a la derecha.
+- Cambiar de English a Español desde Ajustes recarga y conserva la partida.
+- No revisé a ojo cada pantalla en inglés (el navegador integrado estaba oculto y casi no dibujaba la pila); sí vi Ajustes → Juego en móvil.

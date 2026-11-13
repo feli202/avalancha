@@ -4,7 +4,7 @@
   import Decimal from 'break_infinity.js'
   import { produccion } from '../core'
   import { POR_DECADA } from '../guardado/historial'
-  import { es } from '../strings/es'
+  import { txt } from '../strings'
   import { desglose } from './desglose'
   import { formato, formatoMult } from './formato'
   import { historial, juego } from './juego.svelte'
@@ -25,7 +25,7 @@
   let resaltado = $state<string | null>(null)
   let abiertos = $state<Record<string, boolean>>({})
   const mult = (log: number) => `×${formatoMult(Decimal.pow10(log))}`
-  const n = (x: number) => x.toLocaleString('es-AR', { maximumFractionDigits: 2 })
+  const n = (x: number) => x.toLocaleString(txt.locale, { maximumFractionDigits: 2 })
 
   // ---------- historial (se relee una vez por segundo) ----------
   const h = $derived.by(() => {
@@ -74,14 +74,14 @@
 </script>
 
 {#if juego.panel === 'estadisticas'}
-  <Pantalla titulo={es.estadisticas.titulo} bind:activa pestanas={PESTANAS.map((id) => ({ id, texto: es.estadisticas.pestanas[id] }))}>
+  <Pantalla titulo={txt.estadisticas.titulo} bind:activa pestanas={PESTANAS.map((id) => ({ id, texto: txt.estadisticas.pestanas[id] }))}>
     <div class="contenido">
       {#if PESTANAS[activa] === 'produccion'}
         <section class="produccion">
           <div class="total">
-            <p class="rotulo">{es.estadisticas.energiaPorSegundo}</p>
+            <p class="rotulo">{txt.estadisticas.energiaPorSegundo}</p>
             <p class="cifra num">{formato(produccion(s))}</p>
-            <p class="ayuda">{es.estadisticas.ayudaBarra}</p>
+            <p class="ayuda">{txt.estadisticas.ayudaBarra}</p>
           </div>
           <div class="desglose">
             <div class="barra" aria-hidden="true">
@@ -98,10 +98,10 @@
             <ul class="factores">
               {#each factores as f (f.id)}
                 <li class:resaltado={resaltado === f.id} onpointerenter={() => (resaltado = f.id)} onpointerleave={() => (resaltado = null)}>
-                  <button class="fila" aria-expanded={!!abiertos[f.id]} aria-label={es.estadisticas.expandir(es.estadisticas.factores[f.id])}
+                  <button class="fila" aria-expanded={!!abiertos[f.id]} aria-label={txt.estadisticas.expandir(txt.estadisticas.factores[f.id])}
                     onclick={() => (abiertos[f.id] = !abiertos[f.id])}>
                     <span class="punto" style:background={COLOR[f.id]}></span>
-                    <span class="nombre">{es.estadisticas.factores[f.id]}</span>
+                    <span class="nombre">{txt.estadisticas.factores[f.id]}</span>
                     <span class="parte num">{Math.round((Math.max(0, f.log) / positivo) * 100)} %</span>
                     <span class="valor num">{mult(f.log)}</span>
                     <svg class="flecha" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 2l3 3-3 3" /></svg>
@@ -109,7 +109,7 @@
                   {#if abiertos[f.id] && f.partes}
                     <ul class="partes">
                       {#each f.partes as p (p.id)}
-                        <li><span>{es.estadisticas.partes[p.id](n(p.n ?? 0))}</span><span class="valor num">{mult(p.log)}</span></li>
+                        <li><span>{txt.estadisticas.partes[p.id](n(p.n ?? 0))}</span><span class="valor num">{mult(p.log)}</span></li>
                       {/each}
                     </ul>
                   {/if}
@@ -122,11 +122,11 @@
       {:else if PESTANAS[activa] === 'corridas'}
         <section class="seccion">
           {#if corridas.length}
-            <p class="rotulo">{es.estadisticas.ultimas(corridas.length)}</p>
+            <p class="rotulo">{txt.estadisticas.ultimas(corridas.length)}</p>
             <table class="tabla num">
               <thead>
-                <tr><th>{es.estadisticas.numero}</th><th class="ancha">{es.estadisticas.duracion}</th><th>{es.estadisticas.energia}</th>
-                  <th>{es.estadisticas.densidad}</th><th>{es.estadisticas.porMinuto}</th></tr>
+                <tr><th>{txt.estadisticas.numero}</th><th class="ancha">{txt.estadisticas.duracion}</th><th>{txt.estadisticas.energia}</th>
+                  <th>{txt.estadisticas.densidad}</th><th>{txt.estadisticas.porMinuto}</th></tr>
               </thead>
               <tbody>
                 {#each corridas as c, i (c.numero)}
@@ -136,7 +136,7 @@
                     <td class="ancha">
                       <span class="dur">
                         <span class="raya" style:width="{(c.duracion / masLarga) * 100}%"></span>
-                        <span>{es.duracion(c.duracion)}{#if rapida}<small> · {es.estadisticas.masRapida}</small>{/if}</span>
+                        <span>{txt.duracion(c.duracion)}{#if rapida}<small> · {txt.estadisticas.masRapida}</small>{/if}</span>
                       </span>
                     </td>
                     <td>{formato(Decimal.pow10(c.energia))}</td>
@@ -147,21 +147,21 @@
               </tbody>
             </table>
           {:else}
-            <p class="vacio">{es.estadisticas.sinCorridas}</p>
+            <p class="vacio">{txt.estadisticas.sinCorridas}</p>
           {/if}
         </section>
 
       {:else if PESTANAS[activa] === 'avalanchas'}
         <section class="seccion">
-          <p class="lema">{es.estadisticas.leyPotencias}</p>
+          <p class="lema">{txt.estadisticas.leyPotencias}</p>
           {#if casillas.length}
-            <svg class="grafico" viewBox="0 0 {AV.w} {AV.h}" role="img" aria-label={es.estadisticas.leyPotencias}>
+            <svg class="grafico" viewBox="0 0 {AV.w} {AV.h}" role="img" aria-label={txt.estadisticas.leyPotencias}>
               {#each { length: yMax + 1 } as _, d}
                 <line class="guia" x1={AV.izq} x2={AV.w - AV.der} y1={ay(d)} y2={ay(d)} />
                 <text class="eje" x={AV.izq - 8} y={ay(d) + 4} text-anchor="end">{formato(10 ** d)}</text>
               {/each}
               {#each { length: xMax + 1 } as _, d}
-                <text class="eje" class:par={d % 2 === 1} x={ax(d)} y={AV.h - AV.abajo + 18} text-anchor="middle">{formato(10 ** d)}</text>
+                <text class="eje" class:par={d % 2 === 1} x={ax(d)} y={AV.h - AV.abajo + 18} text-anchor={d === xMax ? 'end' : 'middle'}>{formato(10 ** d)}</text>
               {/each}
               {#each casillas as p, i (p.k)}
                 {@const x = ax(p.k / POR_DECADA)}
@@ -172,37 +172,37 @@
               {#if recta}
                 <line class="recta" x1={ax(recta.x0)} y1={ay(recta.y0)} x2={ax(recta.x1)} y2={ay(recta.y1)} />
                 <text class="eje recta-t" x={ax(recta.x1)} y={ay(recta.y1) - 8} text-anchor="end">
-                  {es.estadisticas.pendiente(n(recta.m))}
+                  {txt.estadisticas.pendiente(n(recta.m))}
                 </text>
               {/if}
-              <text class="eje titulo-eje" x={AV.w - AV.der} y={AV.h - 2} text-anchor="end">{es.estadisticas.ejeTamano} →</text>
+              <text class="eje titulo-eje" x={AV.w - AV.der} y={AV.h - 2} text-anchor="end">{txt.estadisticas.ejeTamano} →</text>
             </svg>
           {:else}
-            <p class="vacio">{es.estadisticas.sinAvalanchas}</p>
+            <p class="vacio">{txt.estadisticas.sinAvalanchas}</p>
           {/if}
           <dl class="cifras">
-            <div><dt>{es.estadisticas.record}</dt><dd class="num">{formato(juego.record)}</dd></div>
-            <div><dt>{es.estadisticas.mayorCorrida}</dt><dd class="num">{formato(h.mayorCorrida)}</dd></div>
-            <div><dt>{es.estadisticas.contadas}</dt><dd class="num">{formato(contadas)}</dd></div>
-            <div><dt>{es.estadisticas.derrumbesPila}</dt><dd class="num">{formato(h.derrumbesPila)}</dd></div>
+            <div><dt>{txt.estadisticas.record}</dt><dd class="num">{formato(juego.record)}</dd></div>
+            <div><dt>{txt.estadisticas.mayorCorrida}</dt><dd class="num">{formato(h.mayorCorrida)}</dd></div>
+            <div><dt>{txt.estadisticas.contadas}</dt><dd class="num">{formato(contadas)}</dd></div>
+            <div><dt>{txt.estadisticas.derrumbesPila}</dt><dd class="num">{formato(h.derrumbesPila)}</dd></div>
           </dl>
         </section>
 
       {:else}
         <section class="seccion">
           <dl class="cifras">
-            <div class="destacada"><dt>{es.estadisticas.tiempoTotal}</dt><dd class="num">{es.duracion(s.tiempoTotal)}</dd></div>
-            <div><dt>{es.estadisticas.tiempoCorrida}</dt><dd class="num">{es.duracion(s.tiempoCorrida)}</dd></div>
-            <div><dt>{es.estadisticas.partida}</dt><dd class="num">{es.duracion(Math.max(0, (ahoraMs - h.inicio) / 1000))}</dd></div>
-            <div><dt>{es.estadisticas.mejorCorrida}</dt>
-              <dd class="num">{s.mejorCorrida > 0 ? es.duracion(s.mejorCorrida) : es.estadisticas.ninguna}</dd></div>
-            <div><dt>{es.estadisticas.compresiones}</dt><dd class="num">{s.compresiones}</dd></div>
-            <div><dt>{es.estadisticas.granosTotales}</dt><dd class="num">{formato(s.granosTotales)}</dd></div>
-            <div><dt>{es.estadisticas.derrumbesTotales}</dt><dd class="num">{formato(h.derrumbes)}</dd></div>
+            <div class="destacada"><dt>{txt.estadisticas.tiempoTotal}</dt><dd class="num">{txt.duracion(s.tiempoTotal)}</dd></div>
+            <div><dt>{txt.estadisticas.tiempoCorrida}</dt><dd class="num">{txt.duracion(s.tiempoCorrida)}</dd></div>
+            <div><dt>{txt.estadisticas.partida}</dt><dd class="num">{txt.duracion(Math.max(0, (ahoraMs - h.inicio) / 1000))}</dd></div>
+            <div><dt>{txt.estadisticas.mejorCorrida}</dt>
+              <dd class="num">{s.mejorCorrida > 0 ? txt.duracion(s.mejorCorrida) : txt.estadisticas.ninguna}</dd></div>
+            <div><dt>{txt.estadisticas.compresiones}</dt><dd class="num">{s.compresiones}</dd></div>
+            <div><dt>{txt.estadisticas.granosTotales}</dt><dd class="num">{formato(s.granosTotales)}</dd></div>
+            <div><dt>{txt.estadisticas.derrumbesTotales}</dt><dd class="num">{formato(h.derrumbes)}</dd></div>
           </dl>
-          <p class="rotulo">{es.estadisticas.graficoEnergia}</p>
+          <p class="rotulo">{txt.estadisticas.graficoEnergia}</p>
           {#if h.serie.length > 1}
-            <svg class="grafico" viewBox="0 0 {EN.w} {EN.h}" role="img" aria-label={es.estadisticas.graficoEnergia}>
+            <svg class="grafico" viewBox="0 0 {EN.w} {EN.h}" role="img" aria-label={txt.estadisticas.graficoEnergia}>
               <defs>
                 <linearGradient id="relleno" x1="0" x2="0" y1="0" y2="1">
                   <stop offset="0" stop-color="var(--ambar)" stop-opacity="0.28" />
@@ -217,7 +217,7 @@
               {#each [0, 0.5, 1] as f}
                 {@const t = t0 + f * (tMax - t0)}
                 <text class="eje" x={ex(t)} y={EN.h - 8} text-anchor={f === 0 ? 'start' : f === 1 ? 'end' : 'middle'}>
-                  {es.duracion(t)}
+                  {txt.duracion(t)}
                 </text>
               {/each}
               <path class="area" d={area} fill="url(#relleno)" />

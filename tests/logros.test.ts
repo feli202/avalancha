@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { estadoInicial } from '../src/core'
 import { EFECTOS, MARCOS, PALETAS } from '../src/render/paletas'
 import { ESCENAS } from '../src/render/miniPilas'
+import { en } from '../src/strings/en'
 import { es } from '../src/strings/es'
 import { LOGROS, RECOMPENSA, desbloqueados, elegido, nuevosLogros } from '../src/ui/logros'
 
@@ -38,4 +39,11 @@ describe('logros', () => {
     expect(desbloqueados('paleta', Object.keys(PALETAS), { granos: true })).toEqual(['arena', 'brasa'])
     expect(elegido('paleta', Object.keys(PALETAS), 'brasa', {})).toBe('arena') // elegida pero no ganada
   })
+})
+
+// shortcut: solo compara claves, no que el texto esté bien traducido.
+describe('en.ts', () => {
+  const claves = (o: unknown, p = ''): string[] =>
+    o && typeof o === 'object' ? Object.entries(o).flatMap(([k, v]) => [p + k, ...claves(v, `${p}${k}.`)]) : []
+  it('tiene las mismas claves que es.ts', () => expect(claves(en).sort()).toEqual(claves(es).sort()))
 })

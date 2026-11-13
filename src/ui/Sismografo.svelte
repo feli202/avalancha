@@ -2,7 +2,7 @@
   // Sismógrafo: una línea continua que corre de derecha a izquierda (últimos 20 s). Cada avalancha de la pila visual
   // la levanta a log10(derrumbes) y después decae suave, como la aguja de un sismógrafo.
   import { onMount } from 'svelte'
-  import { es } from '../strings/es'
+  import { txt } from '../strings'
   import { sismo } from './juego.svelte'
 
   const VENTANA_MS = 20_000
@@ -54,7 +54,7 @@
 
 <!-- Un canvas que solo dibuja es una imagen; el aviso de Svelte lo trata como interactivo. -->
 <!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role -->
-<canvas bind:this={canvas} role="img" aria-label={es.sismografo}></canvas>
+<canvas bind:this={canvas} role="img" aria-label={txt.sismografo}></canvas>
 
 <style>
   canvas { display: block; width: 100%; height: 3rem; }

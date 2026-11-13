@@ -4,7 +4,7 @@ import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
 import type { Medidas } from '../render/pilaVisual'
-import { es } from '../strings/es'
+import { txt } from '../strings'
 import { nuevosLogros } from './logros'
 
 const PASO = 0.05 // s: paso fijo de la economía (SPEC 8)
@@ -104,7 +104,7 @@ function condiciones(s: State): Record<string, boolean> {
 }
 
 /** Nombre de lo que compra cada autocomprador (claves de CFG.autocompradores). */
-export const nombreAuto = (k: string) => (k === 'caudal' ? es.caudal : es.colores[CFG.colores.findIndex((c) => c.id === k)])
+export const nombreAuto = (k: string) => (k === 'caudal' ? txt.caudal : txt.colores[CFG.colores.findIndex((c) => c.id === k)])
 
 let avisos = 0
 const AVISOS_JUNTOS = 2
@@ -114,9 +114,9 @@ function revelar(s: State) {
   if (!nuevos.length) return
   juego.vistos = { ...juego.vistos, ...Object.fromEntries(nuevos.map((k) => [k, true])) }
   // Los autocompradores que llegan juntos van en una sola frase; si aparecen muchas cosas juntas (saltos de debug), las últimas dos.
-  const autos = nuevos.filter((k) => k.startsWith('auto_') && !(k in es.revelado)).map((k) => nombreAuto(k.slice(5)))
-  const frases = nuevos.filter((k) => k in es.revelado).map((k) => es.revelado[k])
-  if (autos.length) frases.push(es.autocompradores(autos))
+  const autos = nuevos.filter((k) => k.startsWith('auto_') && !(k in txt.revelado)).map((k) => nombreAuto(k.slice(5)))
+  const frases = nuevos.filter((k) => k in txt.revelado).map((k) => txt.revelado[k])
+  if (autos.length) frases.push(txt.autocompradores(autos))
   juego.aviso = { id: avisos++, texto: frases.slice(-AVISOS_JUNTOS).join(' ') }
 }
 

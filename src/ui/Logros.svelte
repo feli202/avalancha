@@ -3,7 +3,7 @@
   // y una grilla de tarjetas con la mini pila de cada logro. Y la notificación al conseguir uno.
   import { miniPila, paletaBase } from '../render/miniPilas'
   import { PALETAS, css } from '../render/paletas'
-  import { es } from '../strings/es'
+  import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import { juego } from './juego.svelte'
   import { CAPAS, RECOMPENSA, descLogro, nombreLogro } from './logros'
@@ -35,13 +35,13 @@
         {:else}<circle cx="7" cy="7" r="5.5" /><circle cx="7" cy="7" r="3" />{/if}
       </svg>
     {/if}
-    <span><span class="tipo">{es.logros.recompensa[tipo]}</span> {es.cosmeticos[tipo][id]}</span>
+    <span><span class="tipo">{txt.logros.recompensa[tipo]}</span> {txt.cosmeticos[tipo][id]}</span>
   </span>
 {/snippet}
 
 {#if juego.panel === 'logros'}
-  <Pantalla titulo={es.logros.titulo} bind:activa={capa}
-    pestanas={CAPAS.map((c, i) => ({ id: c.id, texto: es.logros.capas[c.id], bloqueada: abierta(i) ? undefined : es.logros.bloqueada }))}>
+  <Pantalla titulo={txt.logros.titulo} bind:activa={capa}
+    pestanas={CAPAS.map((c, i) => ({ id: c.id, texto: txt.logros.capas[c.id], bloqueada: abierta(i) ? undefined : txt.logros.bloqueada }))}>
     {#snippet extra()}
       <div class="cuenta">
         <span class="num"><b>{hechos}</b> / {lista.length}</span>
@@ -58,7 +58,7 @@
             <p>{desc(k)}</p>
           </div>
           {@render recompensa(k)}
-          <span class="sr">{si ? es.logros.conseguido : es.logros.pendiente}</span>
+          <span class="sr">{si ? txt.logros.conseguido : txt.logros.pendiente}</span>
         </li>
       {/each}
     </ol>
@@ -72,7 +72,7 @@
         <div class="aviso" style:--i={i}>
           <canvas class="mini" use:miniPila={{ clave: k, quieta: true }} aria-hidden="true"></canvas>
           <div>
-            <p class="rotulo">{es.logros.nuevo}</p>
+            <p class="rotulo">{txt.logros.nuevo}</p>
             <p class="nombre">{nombre(k)}</p>
           </div>
         </div>
