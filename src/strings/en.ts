@@ -98,6 +98,9 @@ export const en: typeof es = {
     titulo: "We couldn't load your save",
     texto: "The save is corrupted. A backup copy stays in this browser and we won't delete it.",
     empezar: 'Start over',
+    copiar: 'Copy the damaged save',
+    copiado: 'Copied. Keep it somewhere before starting over.',
+    copiaAMano: "Couldn't copy it automatically: select the text and copy it.",
   },
 
   menu: {

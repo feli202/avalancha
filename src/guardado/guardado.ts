@@ -6,7 +6,7 @@ import { limpiarHistorial, type Historial } from './historial'
 
 export const VERSION = 2
 export const CLAVE = 'avalancha.guardado'
-/** Copia del último guardado que no se pudo leer. Nunca se borra sola. */
+/** Copia del último guardado que no se pudo leer. Nunca se borra sola: uno distinto mueve el anterior a RESPALDO.<fecha>. */
 export const RESPALDO = 'avalancha.respaldo'
 /** Ajustes del jugador: aparte de la partida, así "Borrar partida" no los toca. */
 export const AJUSTES = 'avalancha.ajustes'
@@ -56,13 +56,27 @@ function mismaForma(modelo: unknown, x: unknown): boolean {
   if (typeof x !== 'object' || x === null || Array.isArray(x) !== Array.isArray(modelo)) return false
   return Object.keys(modelo).every((k) => mismaForma((modelo as any)[k], (x as any)[k]))
 }
-// shortcut: un guardado sin algún campo del estado actual se rechaza; si config.json suma un color o un autocomprador, va una migración.
 const MODELO = plano({ estado: estadoInicial(), guardadoEn: 0, vistos: {}, record: 0, logros: {} })
 
-/** Tira un error si el texto no es un guardado válido. */
+/** Completa con el modelo los campos que faltan (un campo nuevo sin migración, un color o autocomprador nuevo). */
+function completar(modelo: any, x: any): any {
+  if (typeof modelo !== 'object' || modelo === null || Array.isArray(modelo)) return x === undefined ? modelo : x
+  if (typeof x !== 'object' || x === null || Array.isArray(x)) return x
+  const r = { ...x }
+  for (const k of Object.keys(modelo)) r[k] = completar(modelo[k], x[k])
+  return r
+}
+
+/** Tira un error si el texto no es un guardado válido. Lo que falta se completa; un tipo equivocado se rechaza. */
 export function deserializar(texto: string): Partida {
-  const d: Plano = migrar(JSON.parse(texto))
-  if (d?.version !== VERSION || !mismaForma(MODELO, d)) throw new Error('guardado inválido')
+  let d: Plano = migrar(JSON.parse(texto))
+  // Sin estado o sin fecha no es una partida: no se inventa una entera.
+  if (d?.version !== VERSION || typeof d.estado !== 'object' || d.estado === null || typeof d.guardadoEn !== 'number') throw new Error('guardado inválido')
+  d = completar(MODELO, d)
+  // Un arreglo que se acortó (un color que falta al final): se completa con los del modelo.
+  const c = d.estado.colores
+  if (Array.isArray(c) && c.length < MODELO.estado.colores.length) d.estado.colores = [...c, ...MODELO.estado.colores.slice(c.length)]
+  if (!mismaForma(MODELO, d)) throw new Error('guardado inválido')
   const e = d.estado
   const deDec = ([m, x]: number[]) => Decimal.fromMantissaExponent_noNormalize(m, x)
   return {
@@ -87,14 +101,19 @@ export function importar(texto: string): Partida {
 
 export const guardar = (a: Almacen, p: Partida) => a.escribir(CLAVE, serializar(p))
 
-/** null: no hay guardado. 'corrupto': no se pudo leer; el texto queda copiado en RESPALDO y el guardado, sin tocar. */
-export function cargar(a: Almacen): Partida | null | 'corrupto' {
+/** null: no hay guardado. 'corrupto': no se pudo leer; el texto queda copiado en RESPALDO y el guardado, sin tocar.
+ * `ahora` (ms) nombra la copia del respaldo anterior si había otro distinto. */
+export function cargar(a: Almacen, ahora: number): Partida | null | 'corrupto' {
   const texto = a.leer(CLAVE)
   if (texto === null) return null
   try {
     return deserializar(texto)
   } catch {
-    try { a.escribir(RESPALDO, texto) } catch { /* sin lugar: el original sigue en CLAVE hasta que se empiece de nuevo */ }
+    try {
+      const viejo = a.leer(RESPALDO)
+      if (viejo !== null && viejo !== texto) a.escribir(`${RESPALDO}.${ahora}`, viejo)
+      a.escribir(RESPALDO, texto)
+    } catch { /* sin lugar: el original sigue en CLAVE hasta que se empiece de nuevo */ }
     return 'corrupto'
   }
 }

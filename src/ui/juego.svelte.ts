@@ -217,7 +217,7 @@ export function arrancar() {
   let antes = Date.now()
   let acum = 0
   let p: ReturnType<typeof cargar> = null
-  try { p = cargar(almacenLocal) } catch (e) { console.warn(e) } // sin almacenamiento: se juega sin guardar
+  try { p = cargar(almacenLocal, Date.now()) } catch (e) { console.warn(e) } // sin almacenamiento: se juega sin guardar
   if (p === 'corrupto') juego.guardadoRoto = true
   else if (p) {
     juego.s = p.estado

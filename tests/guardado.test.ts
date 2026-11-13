@@ -81,13 +81,13 @@ describe('guardado', () => {
     return { a, m }
   }
 
-  it('sin guardado: null', () => expect(cargar(memoria().a)).toBeNull())
+  it('sin guardado: null', () => expect(cargar(memoria().a, 0)).toBeNull())
 
   it('guardar y cargar por el almacén', () => {
     const { a } = memoria()
     const p = partida(jugar(estadoInicial(), 60))
     guardar(a, p)
-    expect(cargar(a)).toEqual(p)
+    expect(cargar(a, 0)).toEqual(p)
   })
 
   const bueno = serializar(partida(jugar(estadoInicial(), 60)))
@@ -100,21 +100,47 @@ describe('guardado', () => {
     null: 'null',
     'versión del futuro': bueno.replace(`"version":${VERSION}`, '"version":99'),
     'un campo con otro tipo': bueno.replace(/"caudal":\d+/, '"caudal":"mucho"'),
-    'falta un campo': bueno.replace(/"granos":[^,]+,/, ''),
+    'sin estado': bueno.replace(/"estado":\{.*\},"guardadoEn"/, '"guardadoEn"'),
     'un número que no es número': bueno.replace(/"granos":[^,]+,/, '"granos":null,'),
   }
   for (const [nombre, texto] of Object.entries(rotos)) {
     it(`un guardado corrupto (${nombre}) no rompe nada y queda de respaldo`, () => {
       const { a, m } = memoria({ [CLAVE]: texto })
-      expect(cargar(a)).toBe('corrupto')
+      expect(cargar(a, 0)).toBe('corrupto')
       expect(m.get(RESPALDO)).toBe(texto)
       expect(m.get(CLAVE)).toBe(texto) // cargar no pisa el guardado
       // Empezar de nuevo: el guardado nuevo no borra el respaldo.
       guardar(a, partida(estadoInicial()))
       expect(m.get(RESPALDO)).toBe(texto)
-      expect(cargar(a)).toEqual(partida(estadoInicial()))
+      expect(cargar(a, 0)).toEqual(partida(estadoInicial()))
     })
   }
+})
+
+describe('campos que faltan (I2)', () => {
+  const p = partida(jugar(estadoInicial(), 60))
+  const sin = (f: (d: any) => void) => { const d = JSON.parse(serializar(p)); f(d); return deserializar(JSON.stringify(d)) }
+  it('un campo del estado que falta se completa con el inicial', () =>
+    expect(sin((d) => delete d.estado.compresionesSinAmbar)).toEqual({ ...p, estado: { ...p.estado, compresionesSinAmbar: 0 } }))
+  it('un autocomprador que falta, también', () =>
+    expect(sin((d) => delete d.estado.auto.caudal).estado.auto.caudal).toBe(true))
+  it('un color que falta al final, en nivel 0', () =>
+    expect(sin((d) => d.estado.colores.pop()).estado.colores).toEqual([...p.estado.colores.slice(0, -1), 0]))
+  it('un tipo equivocado sigue rechazado', () => expect(() => sin((d) => (d.estado.granos = 'mucho'))).toThrow())
+})
+
+describe('respaldos (I2)', () => {
+  it('un segundo guardado dañado no pisa el respaldo del primero', () => {
+    const m = new Map([[CLAVE, 'roto 1']])
+    const a: Almacen = { leer: (k) => m.get(k) ?? null, escribir: (k, t) => void m.set(k, t) }
+    expect(cargar(a, 1)).toBe('corrupto')
+    expect(cargar(a, 2)).toBe('corrupto') // el mismo: no duplica
+    m.set(CLAVE, 'roto 2')
+    expect(cargar(a, 3)).toBe('corrupto')
+    expect(m.get(RESPALDO)).toBe('roto 2')
+    expect(m.get(`${RESPALDO}.3`)).toBe('roto 1')
+    expect(m.has(`${RESPALDO}.2`)).toBe(false)
+  })
 })
 
 describe('versión 1 → 2 (hito 5b)', () => {

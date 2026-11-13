@@ -104,6 +104,9 @@ export const es = {
     titulo: 'No pudimos leer tu partida',
     texto: 'El guardado está dañado. Queda una copia de respaldo en este navegador y no la vamos a borrar.',
     empezar: 'Empezar de nuevo',
+    copiar: 'Copiar la partida dañada',
+    copiado: 'Copiada. Guardala en algún lado antes de empezar de nuevo.',
+    copiaAMano: 'No pudimos copiarla sola: seleccioná el texto y copialo.',
   },
 
   // Estadísticas, logros y ajustes (SPEC 6.4: pestañas; acá flotan sobre la pila)

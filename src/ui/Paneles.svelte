@@ -3,6 +3,8 @@
   // Un solo lenguaje: velo oscuro translúcido, sin cajas, jerarquía por tamaño, números con cifras tabulares.
   import { untrack } from 'svelte'
   import { CFG } from '../core'
+  import { almacenLocal } from '../guardado/almacen'
+  import { RESPALDO } from '../guardado/guardado'
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import { formato } from './formato'
@@ -19,6 +21,14 @@
     untrack(() => { previo?.focus(); previo = null })
   })
   const enfocar = (el: HTMLElement, si = true) => void (si && el.focus())
+
+  // I2: el texto del guardado dañado, para copiarlo antes de empezar de nuevo (el respaldo queda igual en el navegador).
+  let danado = $state<{ texto: string; copiado: boolean } | null>(null)
+  async function copiarDanado() {
+    const texto = almacenLocal.leer(RESPALDO) ?? ''
+    danado = { texto, copiado: false }
+    try { await navigator.clipboard.writeText(texto); danado = { texto, copiado: true } } catch { /* queda el texto para copiar a mano */ }
+  }
 
   function cerrar() {
     juego.panel = null
@@ -45,7 +55,14 @@
     <div class="centro" role="alertdialog" aria-modal="true" aria-labelledby="roto-t" aria-describedby="roto-d">
       <h2 id="roto-t" class="titulo">{txt.guardadoRoto.titulo}</h2>
       <p id="roto-d" class="texto">{txt.guardadoRoto.texto}</p>
-      <button class="accion" use:enfocar onclick={() => (juego.guardadoRoto = false)}>{txt.guardadoRoto.empezar}</button>
+      <div class="acciones">
+        <button class="accion" use:enfocar onclick={() => (juego.guardadoRoto = false)}>{txt.guardadoRoto.empezar}</button>
+        <button class="accion" onclick={copiarDanado}>{txt.guardadoRoto.copiar}</button>
+      </div>
+      {#if danado}
+        <p class="texto chico" role="status">{danado.copiado ? txt.guardadoRoto.copiado : txt.guardadoRoto.copiaAMano}</p>
+        <textarea class="codigo seleccionable" readonly rows="3" aria-label={txt.guardadoRoto.copiar} onfocus={(e) => e.currentTarget.select()}>{danado.texto}</textarea>
+      {/if}
     </div>
   </div>
 {:else if juego.ausencia}
@@ -80,6 +97,13 @@
   .rotulo { margin: 0; font-size: 1rem; color: var(--tenue); }
   .titulo { margin: 0 0 0.75rem; font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 600; letter-spacing: -0.02em; text-wrap: balance; }
   .texto { margin: 0 0 2rem; font-size: 1rem; line-height: 1.5; color: var(--tenue); text-wrap: pretty; }
+
+  .acciones { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; }
+  .chico { margin: 1.5rem 0 0.5rem; font-size: 0.875rem; }
+  .codigo {
+    width: 100%; padding: 0.5rem 0; border: 0; border-bottom: 1px solid var(--borde); background: none; color: var(--tenue);
+    font: 0.75rem/1.4 ui-monospace, monospace; resize: none; word-break: break-all;
+  }
 
   /* "Mientras no estabas": la Energía es el premio. */
   .grande { display: grid; justify-items: center; margin: 0.5rem 0 1rem; }

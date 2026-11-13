@@ -76,7 +76,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Cómo reproducirlo:** abrir el juego en dos pestañas, jugar 5 minutos en una, cerrarla y recargar la otra: vuelve al estado de hace 5 minutos.
 - **Arreglo propuesto:** `navigator.locks.request('avalancha', …)` al arrancar; la pestaña que no consigue el candado muestra "El juego está abierto en otra pestaña" y no guarda. Alternativa más corta: escuchar `storage` y dejar de guardar si otra pestaña escribió.
 
-### I2. Un guardado al que le falta un campo se trata como dañado, y la única salida es empezar de nuevo
+### I2. Un guardado al que le falta un campo se trata como dañado, y la única salida es empezar de nuevo — ✅ resuelto
+
+- **Resuelto:** `deserializar` completa con `estadoInicial()` los campos que faltan (también autocompradores y colores al final) y rechaza solo tipos equivocados, o un guardado sin estado o sin fecha. Un respaldo distinto mueve el anterior a `avalancha.respaldo.<fecha>`. El cartel tiene "Copiar la partida dañada". Tests en `tests/guardado.test.ts`.
 
 - **Dónde:** `src/guardado/guardado.ts:53-65` (`mismaForma` contra `MODELO`), `src/ui/Paneles.svelte:34-42`.
 - **Qué pasa:** si el estado suma un campo (la Capa 1 lo va a hacer) y alguien se olvida de la migración, todos los guardados existentes pasan a "No pudimos leer tu partida" con un solo botón, "Empezar de nuevo". El respaldo queda en `avalancha.respaldo`, pero no hay forma de verlo ni de exportarlo desde el juego, y es uno solo (el segundo dañado pisa al primero). Lo mismo con un guardado de una versión más nueva.
