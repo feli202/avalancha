@@ -72,3 +72,16 @@ describe('historial', () => {
     expect(p.historial).toEqual(h)
   })
 })
+
+describe('Compresión fuera de línea (M3)', async () => {
+  const { CFG } = await import('../src/core')
+  const Decimal = (await import('break_infinity.js')).default
+  it('la corrida se anota con la Energía del umbral, no la del comienzo de la ausencia', () => {
+    const antes = { ...estadoInicial(), compresiones: 3 } // Energía 0 al irse
+    const u = CFG.compresion.umbrales_log10[3]
+    const despues = comprimir({ ...antes, energia: Decimal.pow(10, u + 0.5) }) // lo que hizo fueraDeLinea
+    const h = historialVacio(0)
+    registrar(h, antes, despues)
+    expect(h.corridas.at(-1)!.energia).toBe(u)
+  })
+})

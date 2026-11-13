@@ -211,7 +211,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Cómo reproducirlo:** abrir Logros (L), Ajustes (A) y comparar con la tienda.
 - **Arreglo propuesto:** una sola familia de controles, la de `Paneles.svelte` y la tienda. Pestañas: texto con línea de 1 px. Tarjetas: la mini pila sin marco, con nombre y estado debajo, separadas por espacio; el estado ("En uso", bloqueado) por color y peso del texto. Botones: texto con línea de 1 px, sin píldoras ni vidrio. Notificación: una línea de texto con la mini pila al lado, como los avisos.
 
-### M3. Una Compresión hecha en ausencia se anota con la Energía equivocada
+### M3. Una Compresión hecha en ausencia se anota con la Energía equivocada — ✅ resuelto
+
+- **Resuelto:** `registrar` anota la corrida con `max(log10 E antes, umbral)`: en una ausencia es el umbral; a mano, la Energía exacta. Test en `tests/estadisticas.test.ts`.
 
 - **Dónde:** `src/guardado/historial.ts:47-51`.
 - **Qué pasa:** si en una ausencia hubo exactamente una Compresión, la corrida se anota con `log10E(antes)`, la Energía del comienzo de la ausencia, que puede estar muy por debajo del umbral.
