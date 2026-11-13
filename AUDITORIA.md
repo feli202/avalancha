@@ -255,6 +255,8 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 
 ### M8. `objetivo_minutos` de `config.json` está viejo
 
+- **⚠️ Pendiente, te toca decidir:** cambiarlo es editar `balance/config.json` y lo dejé sin tocar. La economía no cambia (solo es la referencia del test del ±5 %); el cambio sería `194 / 228 / 376`.
+
 - **Dónde:** `balance/config.json:51`, `tests/balance.test.ts:85-88`, `PROGRESO.md` (dice 229).
 - **Qué pasa:** dice 193 / 226 / 397 y `sim.py` da 194 / 228 / 376 (SPEC 2 dice 194 / 228 / 376). El test del ±5 % compara contra 193. Hoy pasa igual.
 - **Arreglo propuesto:** actualizar los tres valores con la salida de `sim.py` y corregir el 229 de `PROGRESO.md`.
