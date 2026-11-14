@@ -59,16 +59,21 @@
     // Los granos iniciales derrumban al montar, antes del primer toque: esos no cuentan.
     let primera = invitaTocar()
     pila.alMedir = (m) => (juego.medidas = m)
+    // Después del Infinito la pila colapsó: nada de textos, sonidos ni récords nuevos sobre la pantalla final.
+    const fin = () => juego.s.infinitos > 0
     pila.alAvalancha = (n) => {
+      if (fin()) return
       efecto({ texto: txt.avalancha(n) })
       sonido.avalancha(n)
     }
     // I9: el récord (y sus logros) es la avalancha de un grano solo; las tandas suman muchas y no cuentan.
     pila.alMuestra = (n) => {
+      if (fin()) return
       muestraAvalancha(historial, n)
       if (n > juego.record) juego.record = n
     }
     pila.alTamano = (n) => {
+      if (fin()) return
       if (primera && juego.vistos.punado) {
         primera = false
         juego.primera = true
@@ -135,7 +140,7 @@
       else {
         // juego.nivelColores: nivel simulado desde el panel de debug (0 = el real)
         s.colores.forEach((nivel, i) => (brillos[ALTURA_DE_COLOR[i]] = brillo(multColor(i, juego.nivelColores || nivel).log10())))
-        pila.cuadro(ahora, s.granos, juego.titulo ? 0 : caudal(s), brillos)
+        pila.cuadro(ahora, s.granos, juego.titulo || s.infinitos > 0 ? 0 : caudal(s), brillos)
         granosAntes = s.granos
       }
       juego.escalaK = pila.escalaK

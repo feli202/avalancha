@@ -737,3 +737,5 @@ Además: el test de 8 h fuera de línea tiene timeout de 30 s (estaba al borde d
 ### Verificación
 
 - `npm test`: 138 tests en verde. `npm run typecheck` y `npm run build` bien. `python balance/sim.py`: 187 / 194 / 228 / 376 min, sin cambios.
+- Partida completa a ×50 con `scripts/partida50.mjs` (Edge headless, 1280×720): pasa por el título, 17 compresiones e Infinito a los 303 s reales, sin errores en la consola. El script se quedó esperando la segunda captura del final (`Page.captureScreenshot` no contestó); repetido aparte con el debug, el final se captura bien a 0,3–4 s y la página sigue respondiendo, así que lo atribuyo al Edge headless después de 5 min con la pila llena, no al juego.
+- De esa prueba salió un arreglo más: después del Infinito la pila seguía simulando y sobre la pantalla final aparecían "Avalancha ×N" y logros nuevos. Ahora, con `infinitos > 0`, la pila no recibe arena ni dispara textos, sonidos ni récords.
