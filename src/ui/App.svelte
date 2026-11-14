@@ -233,7 +233,9 @@
      en dos columnas del mismo ancho (simetría alrededor de la pila). */
   .juego { --col: clamp(16rem, 21vw, 21rem); --margen: 2rem; }
   /* Ventanas poco anchas (4:3, 16:10, 16:9): la pila no se corre, se achica para no quedar debajo de las columnas. */
-  .juego { --pila-radio-max: calc(50vw - var(--col) - 2 * var(--margen)); }
+  .juego { --pila-radio-max: max(4rem, calc(50vw - var(--col) - 2 * var(--margen))); } /* con 0 la pila no tendría límite */
+  /* Apaisada y chica (reproductor de itch.io, 640×360): columnas y márgenes más chicos para que la pila entre en el medio. */
+  @media (orientation: landscape) and (max-width: 900px) { .juego { --col: 12.5rem; --margen: 1rem; font-size: 0.875rem; } }
 
   /* I5: en el título solo está la pila; al entrar, la interfaz aparece en orden mientras la cámara se acerca (Pila.svelte). */
   .en-titulo :is(.izq, .ajustes, .sismo, .der, .pista, .aviso) { visibility: hidden; }
@@ -375,9 +377,10 @@
   @keyframes aviso { 0% { opacity: 0; } 8%, 80% { opacity: 1; } 100% { opacity: 0; } }
   @keyframes latir { 50% { opacity: 0.45; } }
 
+  /* Solo en vertical: una ventana apaisada y chica (el reproductor de itch.io, 640×360, o un celular acostado) usa el diseño de escritorio. */
   /* Móvil (vertical): pila arriba centrada, Energía arriba, tienda como hoja inferior deslizable. */
   /* También tablet en vertical: con las columnas a los costados la pila quedaría debajo de la tienda. */
-  @media (max-width: 767px), (orientation: portrait) and (max-width: 1100px) {
+  @media (orientation: portrait) and (max-width: 1100px) {
     .juego { --margen: 1rem; --col: auto; --pila-radio-max: 100vw; --pila-arriba: 7rem; --pila-abajo: calc(45dvh + 3.5rem); --hoja: 88dvh; }
     .izq { right: var(--margen); }
     .energia { font-size: 2.25rem; margin-bottom: 0.25rem; }

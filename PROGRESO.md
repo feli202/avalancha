@@ -763,3 +763,13 @@ Página anfitriona en `127.0.0.1:8765` con un iframe a `localhost:8765/juegos/su
 | Consola | Sin errores. |
 
 `npm test` (138), `npm run typecheck` y `npm run build` en verde.
+
+### Ventanas apaisadas chicas (reproductor de itch.io)
+
+El reproductor de itch.io mide 640×360 por defecto, y el diseño de celular entraba con cualquier ancho menor de 768 px, aunque la ventana fuera apaisada: la pila quedaba en una franja y la tienda como hoja abajo. Ahora:
+
+- El diseño de celular entra solo en vertical (`orientation: portrait` hasta 1100 px), en `App.svelte` y `Tienda.svelte`. Un celular acostado usa el de escritorio.
+- Apaisada hasta 900 px de ancho: columnas de 12,5rem, márgenes de 1rem y letra al 87,5 %.
+- `--pila-radio-max` nunca baja de 4rem: a 640 px daba 0, y 0 se leía como "sin límite" (la pila salía gigante, debajo de la tienda).
+
+Visto en Edge headless a 640×360, 800×450, 812×375 y 375×812: la pila entra entre las columnas y el vertical no cambia. `npm test` (138) y typecheck en verde; zip rearmado (241.021 bytes).

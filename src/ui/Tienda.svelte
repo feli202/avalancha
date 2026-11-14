@@ -178,7 +178,7 @@
   .todo:hover { color: var(--tinta); }
   kbd { font: inherit; font-size: 0.8125rem; color: var(--apagado); }
 
-  @media (max-width: 767px), (orientation: portrait) and (max-width: 1100px) { .cabeza { padding-right: 0; } } /* en móvil Ajustes queda arriba de la pantalla */
+  @media (orientation: portrait) and (max-width: 1100px) { .cabeza { padding-right: 0; } } /* en móvil Ajustes queda arriba de la pantalla */
   @keyframes entrar { from { opacity: 0; transform: translateY(6px); } }
   :global(.quieto) li { animation-name: fundido; }
   @keyframes fundido { from { opacity: 0; } }
