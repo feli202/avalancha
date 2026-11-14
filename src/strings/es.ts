@@ -244,7 +244,8 @@ export const es = {
     },
   } as Record<string, Record<string, string>>,
   opciones: {
-    pestanas: { aspecto: 'Aspecto', juego: 'Juego', partida: 'Partida', teclado: 'Teclado' } as Record<string, string>,
+    creditos: [['Hecho por', 'feli202'], ['Inspirado en', 'Antimatter Dimensions y Revolution Idle']] as [string, string][],
+    pestanas: { aspecto: 'Aspecto', juego: 'Juego', partida: 'Partida', teclado: 'Teclado', creditos: 'Créditos' } as Record<string, string>,
     /** "3 / 9" desbloqueados de un tipo de cosmético. */
     cuantos: (n: number, total: number) => `${n} / ${total}`,
     bloqueadoPor: (logro: string) => `Logro: ${logro}`,

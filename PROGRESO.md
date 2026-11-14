@@ -739,3 +739,26 @@ Además: el test de 8 h fuera de línea tiene timeout de 30 s (estaba al borde d
 - `npm test`: 138 tests en verde. `npm run typecheck` y `npm run build` bien. `python balance/sim.py`: 187 / 194 / 228 / 376 min, sin cambios.
 - Partida completa a ×50 con `scripts/partida50.mjs` (Edge headless, 1280×720): pasa por el título, 17 compresiones e Infinito a los 303 s reales, sin errores en la consola. El script se quedó esperando la segunda captura del final (`Page.captureScreenshot` no contestó); repetido aparte con el debug, el final se captura bien a 0,3–4 s y la página sigue respondiendo, así que lo atribuyo al Edge headless después de 5 min con la pila llena, no al juego.
 - De esa prueba salió un arreglo más: después del Infinito la pila seguía simulando y sobre la pantalla final aparecían "Avalancha ×N" y logros nuevos. Ahora, con `infinitos > 0`, la pila no recibe arena ni dispara textos, sonidos ni récords.
+
+## Demo para publicar (galaxy.click, itch.io)
+
+- **Panel de debug**: ya se montaba solo con `import.meta.env.DEV` (`App.svelte`). Verificado en la build: ninguno de sus textos ni botones está en `dist/` (quedan solo sus cadenas en `strings/`).
+- **Rutas relativas**: `base: './'` en `vite.config.ts`. `dist/index.html` pide `./assets/…` y `./logo.svg`; el worker y `pilas.bin` cargan con rutas relativas.
+- **Créditos**: pestaña nueva "Créditos" en Ajustes ("Hecho por feli202" e "Inspirado en Antimatter Dimensions y Revolution Idle"), textos en `strings/es.ts` y `en.ts`. En móvil las cinco pestañas pasan a dos renglones.
+- **`avalancha-demo.zip`**: el contenido de `dist/` con `index.html` en la raíz, **241 KB** (240.996 bytes, 14 archivos). Está en `.gitignore`: se regenera con `npm run build` y comprimiendo `dist/*`.
+- **`PUBLICACION.md`**: título, descripción corta y larga y etiquetas, en inglés.
+- **Capturas** en `marketing/` a 1920×1080, sacadas de una partida a ×50 en Edge headless (panel de debug, tooltips e indicadores de guía ocultos por CSS solo para la foto; 17 compresiones e Infinito en 326 s reales, sin errores en la consola): `1-pila-chica.png` (primera corrida, ~6.000 granos), `2-pila-grande-avalancha.png` (Compresión 9, pila llena), `3-compresion.png` (el destello de la Compresión 5 con la pila nueva) y `4-infinito.png` (la pila volviéndose blanca desde el centro). 6,7 MB en total.
+
+### Verificación dentro de un iframe
+
+Página anfitriona en `127.0.0.1:8765` con un iframe a `localhost:8765/juegos/sub/avalancha/` (otro origen y una subcarpeta), `allow="fullscreen; autoplay"`:
+
+| Qué | Resultado |
+| --- | --- |
+| Carga, clics, Puñado, worker y pila | Bien (navegador integrado, clics reales). |
+| Guardado | Bien: al recargar la anfitriona el título dice "Continuar"; `avalancha.guardado` y `avalancha.ajustes` en el `localStorage` del iframe. |
+| Sonido | El `AudioContext` queda `running` después del clic en Jugar (Edge headless, mismo origen, clic real por CDP). |
+| Pantalla completa | **No se pudo probar de verdad**: el navegador integrado y Edge headless rechazan `requestFullscreen` ("Permissions check failed" / "not granted"). Simulado agrandando el iframe a 1920×1080: el canvas pasa a 1920×1080 y la interfaz se reacomoda. El juego no tiene botón propio de pantalla completa; usa el del sitio. |
+| Consola | Sin errores. |
+
+`npm test` (138), `npm run typecheck` y `npm run build` en verde.

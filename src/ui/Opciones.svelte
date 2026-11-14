@@ -12,7 +12,7 @@
   import Pantalla from './Pantalla.svelte'
   import { guardarImagen } from './foto.svelte'
 
-  const PESTANAS = ['aspecto', 'juego', 'partida', 'teclado'] as const
+  const PESTANAS = ['aspecto', 'juego', 'partida', 'teclado', 'creditos'] as const
   let activa = $state(0)
   /** Recarga para que todo (también lo armado al cargar) salga en el idioma nuevo; la partida se guarda en el pagehide. */
   function cambiarIdioma(i: string) {
@@ -259,6 +259,13 @@
             {/if}
           </div>
           {#if noSeEscribio}<p class="nota mal" role="alert">{txt.opciones.noSeEscribio}</p>{/if}
+        </section>
+
+      {:else if PESTANAS[activa] === 'creditos'}
+        <section class="lista">
+          {#each txt.opciones.creditos as [rotulo, texto]}
+            <div class="resumen"><p class="rotulo">{rotulo}</p><p class="grande">{texto}</p></div>
+          {/each}
         </section>
 
       {:else}

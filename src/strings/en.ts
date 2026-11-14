@@ -226,7 +226,8 @@ export const en: typeof es = {
     },
   },
   opciones: {
-    pestanas: { aspecto: 'Look', juego: 'Game', partida: 'Save', teclado: 'Keys' },
+    creditos: [['Made by', 'feli202'], ['Inspired by', 'Antimatter Dimensions and Revolution Idle']] as [string, string][],
+    pestanas: { aspecto: 'Look', juego: 'Game', partida: 'Save', teclado: 'Keys', creditos: 'Credits' },
     cuantos: (n: number, total: number) => `${n} / ${total}`,
     bloqueadoPor: (logro: string) => `Achievement: ${logro}`,
     enUso: 'Equipped',
