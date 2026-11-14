@@ -53,7 +53,7 @@ La diferencia aparece desde la Compresión 2 (cuando llegan los autocompradores)
 
 1. **Constantes que faltaban en `config.json`.** Los efectos de las Mutaciones (×3, ×10, +0,02, +0,03) y el Puñado (5 granos, 8 por segundo) estaban solo en `SPEC.md` y escritos a mano en `sim.py`. Agregué `mutaciones.*.por_nivel` y `punado` a `config.json` con los valores de la spec. `sim.py` ahora lee los `por_nivel` de `config.json` (su salida quedó idéntica); el Puñado no está en el simulador.
 2. **Puñado (SPEC 4.10).** La spec no dice si da Energía. Lo implementé como 5 granos de Caudal: suman a G y cada uno rinde `K × G × V^D`. El límite de 8 por segundo es un enfriamiento en el estado.
-3. **`objetivo_minutos` de `config.json` está desactualizado** (193 / 226 / 397) frente a `sim.py` y SPEC 2 (194 / 229 / 376). El test usa el de 15 s (193) como referencia del ±5 %; los otros dos no se usan.
+3. **`objetivo_minutos` de `config.json` está desactualizado** (193 / 226 / 397) frente a `sim.py` y SPEC 2 (194 / 228 / 376; el 229 era un error). **Resuelto (M8 de la auditoría): ahora dice 194 / 228 / 376.** El test usa el de 15 s (193) como referencia del ±5 %; los otros dos no se usan.
 4. **Paso de 50 ms en el juego real.** Con Euler, un paso más chico da un poco más de Energía que el paso de 1 s del simulador, así que el juego real va a ser algo más rápido que el test. No lo medí.
 
 ## Cómo correr y probar
@@ -450,7 +450,7 @@ En las corridas tardías la pila se veía como un punto: la de pantalla arrancab
 
 ### Verificación
 
-- `npm test`: 60 tests en verde (50 de antes + migración 1 → 2, exportar/importar con espacios y 4 textos inválidos, contadores del núcleo, notación de ingeniería en `tests/formato.test.ts`). tsc y svelte-check sin errores; `npm run build` bien; `python balance/sim.py` igual que antes (194 / 229 / 376 min).
+- `npm test`: 60 tests en verde (50 de antes + migración 1 → 2, exportar/importar con espacios y 4 textos inválidos, contadores del núcleo, notación de ingeniería en `tests/formato.test.ts`). tsc y svelte-check sin errores; `npm run build` bien; `python balance/sim.py` igual que antes (194 / 228 / 376 min).
 - En el navegador integrado (1280×720 y 375×812, sin errores en la consola): exportar → cambiar `guardadoEn` 8 h atrás → importar (texto inválido rechazado; confirmación; recarga) → "Mientras no estabas" con +1,22e98, "8 h 0 min afuera · 2 compresiones" y el foco en Seguir; estadísticas; logros; ingeniería ("86,21e96") y daltonismo en la pila y la tienda, guardados al recargar; guardado dañado en móvil; borrar con teclado (Enter en cada paso: las dos confirmaciones, recarga en cero, ajustes intactos); C comprime; abrir el panel con Enter desde el ícono, flechas entre pestañas, Esc devuelve el foco al ícono.
 - **No medí los 60 fps** (el navegador integrado sigue oculto, 1–3 fps). Por cuadro se suma revisar 16 condiciones de logros; los paneles no tienen `backdrop-filter`.
 
@@ -728,7 +728,7 @@ Además: el test de 8 h fuera de línea tiene timeout de 30 s (estaba al borde d
 
 ### Sin resolver (necesitan una decisión o permiso)
 
-1. **M8** — `objetivo_minutos` de `balance/config.json` sigue en 193 / 226 / 397; debería ser 194 / 228 / 376. No toqué el archivo de balance.
+1. ~~**M8**~~ — resuelto con tu OK: `objetivo_minutos` = 194 / 228 / 376.
 2. **M13** — la fuente sigue viniendo de Google Fonts: falta agregar `@fontsource/space-grotesk` (o los `.woff2` en `public/`).
 3. **M17** — `balance/pila.c` sigue sin compilar: no hay compilador de C en esta máquina.
 4. **Pila en móvil (I4)** — SPEC 6.4 dice "pila arriba (55 %)" y `PENDIENTES.md` pedía el centro exacto. Quedó como la spec.

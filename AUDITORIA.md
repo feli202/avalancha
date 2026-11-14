@@ -4,8 +4,7 @@ Fecha: 13/11/2026 · commit auditado: `395d3aa` · no se cambió código.
 
 ## Resumen
 
-> **Estado al 13/11/2026 (después de la auditoría):** resueltos el bloqueante, los 11 importantes y 14 de los 17 menores (M15 sale con I5). Quedan tres, que no podía cerrar solo:
-> - **M8**: actualizar `objetivo_minutos` en `balance/config.json` (no cambia la economía, pero es el archivo de balance).
+> **Estado al 13/11/2026 (después de la auditoría):** resueltos el bloqueante, los 11 importantes y 15 de los 17 menores (M15 sale con I5). Quedan dos, que no podía cerrar solo:
 > - **M13**: servir la fuente desde el proyecto (hay que agregar `@fontsource/space-grotesk` o los `.woff2`).
 > - **M17**: compilar `balance/pila.c` (no hay compilador de C en esta máquina).
 > Decisiones abiertas: la pila en móvil (I4, contra SPEC 6.4) y si el logro de avalancha récord se vuelve más raro (I9, balance).
@@ -261,9 +260,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Qué pasa:** `String.fromCharCode(...bytes)` falla si los bytes pasan el máximo de argumentos del motor (unos 65.000 en Safari). Hoy el guardado llega a 16–25 KB (medido) y anda; si el historial crece, deja de exportar.
 - **Arreglo propuesto:** armar el texto en trozos de 8.192 bytes.
 
-### M8. `objetivo_minutos` de `config.json` está viejo
+### M8. `objetivo_minutos` de `config.json` está viejo — ✅ resuelto
 
-- **⚠️ Pendiente, te toca decidir:** cambiarlo es editar `balance/config.json` y lo dejé sin tocar. La economía no cambia (solo es la referencia del test del ±5 %); el cambio sería `194 / 228 / 376`.
+- **Resuelto (con OK del usuario):** `objetivo_minutos` = 194 / 228 / 376, lo que da `sim.py` y dice SPEC 2. La economía no cambia; el test de balance sigue en verde. Corregido el 229 de `PROGRESO.md`.
 
 - **Dónde:** `balance/config.json:51`, `tests/balance.test.ts:85-88`, `PROGRESO.md` (dice 229).
 - **Qué pasa:** dice 193 / 226 / 397 y `sim.py` da 194 / 228 / 376 (SPEC 2 dice 194 / 228 / 376). El test del ±5 % compara contra 193. Hoy pasa igual.
