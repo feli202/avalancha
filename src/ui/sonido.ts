@@ -30,6 +30,7 @@ function abrir() {
   lim.threshold.value = -12
   lim.ratio.value = 6
   lim.connect(c.destination)
+  limitador = lim
   general = c.createGain()
   general.connect(lim)
   efectos = c.createGain()
@@ -56,6 +57,15 @@ function abrir() {
 addEventListener('pointerdown', abrir)
 addEventListener('keydown', abrir)
 document.addEventListener('visibilitychange', () => ctx && (document.hidden ? ctx.suspend() : ctx.resume()))
+
+let limitador: DynamicsCompressorNode
+/** Modo grabación: la salida del juego como MediaStream (null si el audio todavía no arrancó). */
+export function salida(): MediaStream | null {
+  if (!ctx) return null
+  const d = ctx.createMediaStreamDestination()
+  limitador.connect(d)
+  return d.stream
+}
 
 export function aplicarVolumen() {
   if (!ctx) return

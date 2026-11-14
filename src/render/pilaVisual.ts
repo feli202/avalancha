@@ -103,9 +103,12 @@ export class PilaVisual {
   /** Granos que entran hasta que el primero cae al sumidero. */
   private capacidad = FOTOS.capacidad
 
+  /** Velocidad del reloj de la pila: 1 normal, menos de 1 cámara lenta (destellos, granos y worker). Modo grabación. */
+  ritmo = 1
+
   // --- tiempo y medidas ---
-  private inicio = performance.now() - 1000 // ahora ≥ 1 s: un derrumbe en t = 0 ya no destella (las fotos lo usan)
-  private ahora = 0
+  private antesMs = performance.now()
+  private ahora = 1 // ≥ 1 s: un derrumbe en t = 0 ya no destella (las fotos lo usan)
   private m: Medidas = { fps: 0, peorCuadro: 0, granosSeg: 0, derrumbesSeg: 0, workerMs: 0, cuadroMs: 0 }
   private mDesde = 0
 
@@ -174,12 +177,13 @@ export class PilaVisual {
    * @param brillos brillo 0..1 de cada altura de celda (0 a 3)
    */
   cuadro(ahoraMs: number, granos: number, caudal: number, brillos: number[]) {
-    const ahora = (ahoraMs - this.inicio) / 1000
     const t0 = performance.now()
-    const real = ahora - this.ahora
+    const real = Math.max(0, ahoraMs - this.antesMs) / 1000
+    this.antesMs = ahoraMs
     const dt = Math.min(0.1, real) // para las animaciones
     this.medir(ahoraMs, real * 1000)
-    this.ahora = ahora
+    this.ahora += real * this.ritmo
+    const ahora = this.ahora
 
     if (granos < this.gAntes) this.vaciar() // Compresión: la pila arranca de cero
     this.gAntes = granos
@@ -190,7 +194,7 @@ export class PilaVisual {
     if (falta >= 1 || this.soltados < this.capacidad) this.pendientes = Math.max(falta, 0)
     else {
       // Estado estacionario: sigue cayendo arena al ritmo del Caudal; si el worker no da abasto, no se acumula.
-      this.pendientes = Math.min(this.pendientes + Math.min(caudal, RITMO_MAX) * real, RITMO_MAX)
+      this.pendientes = Math.min(this.pendientes + Math.min(caudal, RITMO_MAX) * real * this.ritmo, RITMO_MAX)
       const k = Math.max(0, Math.floor(Math.log10(granos / this.capacidad)))
       // Con una foto recién cargada el salto no es de escala sino de la pila entera: ya lo cubre el fundido.
       if (k > this.escalaK && this.destello && !this.fundir && this.fundidoDesde < 0) this.alejarDesde = ahora
@@ -199,6 +203,11 @@ export class PilaVisual {
     this.pedir()
     this.dibujar(dt, brillos)
     this.m.cuadroMs += performance.now() - t0
+  }
+
+  /** Con la pila llena: suelta de golpe n granos más en el centro (hasta RITMO_MAX), una avalancha gigante. */
+  echar(n: number) {
+    this.pendientes += n
   }
 
   destruir() {
@@ -225,7 +234,7 @@ export class PilaVisual {
     const llena = this.soltados >= this.capacidad
     const p: Pedido = {
       granos: Math.floor(this.pendientes), reiniciar: this.reiniciar, gen: this.gen, foto,
-      presupuesto: this.ahorro && llena ? PRESUPUESTO_AHORRO_MS : PRESUPUESTO_MS,
+      presupuesto: (this.ahorro && llena ? PRESUPUESTO_AHORRO_MS : PRESUPUESTO_MS) * this.ritmo,
       ...(this.devolver && { devuelto: this.devolver }),
     }
     this.worker.postMessage(p, this.devolver ? [this.devolver.buffer] : [])

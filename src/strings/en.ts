@@ -466,5 +466,20 @@ export const en: typeof es = {
     derrumbesSeg: 'topples/s',
     workerMs: 'worker (ms per second)',
     cuadroMs: 'main thread (ms per frame)',
+    grabar: 'Record 9:16 clips',
+    grabarTodo: 'All',
+    grabando: (i: number, n: number, nombre: string) => `Recording ${i}/${n}: ${nombre}`,
+    convirtiendo: 'Converting to MP4…',
+    grabado: (n: number) => `Done: ${n} clips in marketing/clips/`,
+    falloClip: (e: string) => `Failed: ${e}`,
+  },
+
+  clips: {
+    lema: 'An incremental sandpile game',
+    regla: ['1 rule.', '4 grains and it topples.'],
+    avalancha: ['One grain too many…', '…and it all comes down.', 'Any grain can do it.'],
+    compresion: ['Compress.', 'Start over.', 'Stronger.'],
+    infinito: { compresion: (n: number) => `Compression ${n}`, fin: 'You reached Infinity' },
+    unica: ['Every pile is unique.', 'Same rule. New shape.'],
   },
 }

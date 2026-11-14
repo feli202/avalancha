@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). **Hito 6** (pulido técnico): sonido, móvil y tablet, accesibilidad (Lighthouse 100) y rendimiento (60 fps en GPU integrada). **Primeros 10 segundos**: pantalla de título, logo y primera avalancha con el primer toque. **Guardar imagen**: PNG de 2048×2048 de la pila (botón de cámara, tecla P, "Guardá tu mandala" en el Infinito). **Sonido sintetizado**: todo el audio generado por código con Web Audio (sin archivos), con música generativa. **Guías**: indicadores de sistema nuevo, tooltips y la pantalla "Cómo funciona". La Capa 0 está completa.
+Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). **Hito 6** (pulido técnico): sonido, móvil y tablet, accesibilidad (Lighthouse 100) y rendimiento (60 fps en GPU integrada). **Primeros 10 segundos**: pantalla de título, logo y primera avalancha con el primer toque. **Guardar imagen**: PNG de 2048×2048 de la pila (botón de cámara, tecla P, "Guardá tu mandala" en el Infinito). **Sonido sintetizado**: todo el audio generado por código con Web Audio (sin archivos), con música generativa. **Guías**: indicadores de sistema nuevo, tooltips y la pantalla "Cómo funciona". La Capa 0 está completa. **Clips verticales** para redes en `marketing/clips/` (modo grabación del panel de debug).
 
 ## Qué se hizo
 
@@ -779,3 +779,38 @@ Visto en Edge headless a 640×360, 800×450, 812×375 y 375×812: la pila entra 
 - Repo público **github.com/feli202/avalancha** con **solo la build** (el contenido de `dist/` más `.nojekyll`, rama `main`); el código fuente no está ahí. Pages publica desde `main` / raíz.
 - Link: **https://feli202.github.io/avalancha/**. Probado: todos los recursos dan 200 (también `pilas.bin` y el worker), entra, el Puñado hace la primera avalancha y al recargar dice "Continuar".
 - Para actualizarlo: `npm run build`, copiar `dist/*` a un clon de ese repo (dejando `.nojekyll`), commit y push. Este proyecto no tiene remoto: el repo de Pages es aparte.
+
+## Clips verticales (TikTok, Reels, Shorts)
+
+Diez MP4 de 1080×1920, H.264 + AAC, en **`marketing/clips/`** (~245 MB, en `.gitignore`: se regeneran). Cinco guiones, cada uno en español (`-es`) y en inglés (`-en`):
+
+| Clip | Dura | Qué pasa |
+| --- | --- | --- |
+| `regla` | 15 s | "1 regla. 4 granos y se derrumba.": un grano cada 0,6 s (el cuarto derrumba) y timelapse hasta la pila llena, con la cámara alejándose. |
+| `avalancha` | 10 s | Pila llena: 3.000 granos de golpe en el centro (onda de luz + golpe grave), y otra tanda en cámara lenta (×0,2) mientras la cámara se acerca. |
+| `compresion` | 8 s | La pila llena implota (giro, remolino de colores, destello) y renace de cero hasta llenarse. |
+| `infinito` | 15 s | Compresiones 15, 16 y 17 rápidas, la última pila, el blanco desde el centro, el colapso y la pantalla blanca con ∞. Con el sonido del Infinito. |
+| `unica` | 12 s | Cuatro mandalas (30.000, 100.000, 300.000 granos y llena) con las paletas Brasa, Glaciar, Aurora y Oro viejo, girando, con un golpe de luz en cada cambio. |
+
+Todos: texto grande desde el primer cuadro, dentro de la zona segura (arriba, centro en y = 330, de x = 140 a 940; nada en los 480 px de abajo), el nombre del juego y "Un incremental de arena" los últimos 2,5 s, y los últimos 0,5 s funden hacia el primer cuadro para que el loop no corte.
+
+**Cómo se graban**
+
+- Panel de debug → "Grabar clips 9:16" (un botón por clip o "Todos"; cada uno en los dos idiomas). O, mejor, en un Edge aparte que no frene los cuadros (con el servidor en el puerto que diga `npm run dev`):
+  ```
+  msedge --user-data-dir=D:\tmp\edge-clips --autoplay-policy=no-user-gesture-required --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --app=http://localhost:5173/?grabar=todos
+  ```
+  `?grabar=todos` (o `?grabar=regla,unica`) arranca solo al cargar; al terminar recarga sin el parámetro. ~4,5 min para los diez.
+- `src/ui/clips.ts`: los guiones. Granos, Caudal, cámara (`zoom`), cámara lenta (`ritmo`) y transformación del disco salen del tiempo, así que el clip sale igual cada vez (la música de fondo es generativa: esa sí cambia). Un canvas 2D de 1080×1920 compone la pila (WebGL, el canvas del juego agrandado a 1080×1920 px reales) con los textos y los efectos que en el juego son CSS (implosión, blanco del Infinito, destellos); `captureStream` solo vería el canvas. Audio: `sonido.salida()` (un `MediaStreamDestination` después del limitador). `MediaRecorder` → WebM.
+- `scripts/clips.mjs` (plugin de Vite, solo `npm run dev`, solo pedidos de esta máquina): guarda el WebM, ffmpeg `-preset veryfast -crf 18`, a 60 fps, corta desde el inicio exacto del clip (`-ss`), borra el WebM y revisa con ffprobe que el video dure lo que tiene que durar; si quedó corto contesta 409 y el navegador graba ese clip de nuevo (hasta 3 veces).
+- `pilaVisual.ts`: `ritmo` (velocidad del reloj de la pila: destellos, granos y presupuesto del worker) y `echar(n)` (tanda de granos de golpe con la pila llena). En el juego `ritmo` es siempre 1.
+- La economía no se toca: el modo grabación pone la velocidad en 0, maneja la pila él solo (Pila.svelte le cede el cuadro con `grabacion.cuadro`) y recarga al final. Textos de los clips en `strings/es.ts` y `en.ts` (`clips`).
+
+**Verificación**
+
+- Los diez: video y audio de la duración exacta; 1080×1920.
+- Cuadros distintos: entre 44 y 58 por segundo según el clip (la pantalla blanca y el cierre son quietos a propósito; la máquina no llega siempre a 60 con la pila llena a 1080×1920).
+- Empalme último cuadro / primer cuadro: PSNR 21–47 dB (la diferencia es el brillo de la arena, que nunca está quieta; el fundido de 0,5 s lo tapa).
+- Revisado con hojas de contacto: textos sin pisarse, el primer cuadro con el texto, el cierre bien.
+- **Ojo:** en el panel del navegador integrado oculto la página corre a ~1 fps y los clips salen trabados; con la ventana chica a la vista, a 30. Por eso el Edge aparte.
+- `npm test` (138), typecheck y svelte-check en verde.

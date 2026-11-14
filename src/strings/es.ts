@@ -497,5 +497,21 @@ export const es = {
     derrumbesSeg: 'derrumbes/s',
     workerMs: 'worker (ms por segundo)',
     cuadroMs: 'hilo principal (ms por cuadro)',
+    grabar: 'Grabar clips 9:16',
+    grabarTodo: 'Todos',
+    grabando: (i: number, n: number, nombre: string) => `Grabando ${i}/${n}: ${nombre}`,
+    convirtiendo: 'Convirtiendo a MP4…',
+    grabado: (n: number) => `Listo: ${n} clips en marketing/clips/`,
+    falloClip: (e: string) => `Falló: ${e}`,
+  },
+
+  /** Clips verticales (modo grabación del debug). */
+  clips: {
+    lema: 'Un incremental de arena',
+    regla: ['1 regla.', '4 granos y se derrumba.'],
+    avalancha: ['Un grano de más…', '…y se cae todo.', 'Cada grano puede hacerlo.'],
+    compresion: ['Comprimí.', 'Empezá de cero.', 'Más fuerte.'],
+    infinito: { compresion: (n: number) => `Compresión ${n}`, fin: 'Llegaste al Infinito' },
+    unica: ['Cada pila es única.', 'Misma regla. Otra forma.'],
   },
 }

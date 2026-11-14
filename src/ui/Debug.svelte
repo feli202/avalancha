@@ -4,6 +4,14 @@
   import { CFG, estadoInicial } from '../core'
   import { txt } from '../strings'
   import { borrarPartida, juego } from './juego.svelte'
+  import { IDS, grabarClips } from './clips'
+
+  // ?grabar=todos (o ?grabar=regla,unica): graba solo al cargar, para un navegador aparte que no frene los cuadros.
+  const pedidos = new URLSearchParams(location.search).get('grabar')
+  if (pedidos) {
+    dispatchEvent(new Event('pointerdown')) // arranca el audio (el navegador se abre con autoplay permitido)
+    setTimeout(() => grabarClips(pedidos === 'todos' ? IDS : pedidos.split(',')), 2000)
+  }
 
   const umbrales = CFG.compresion.umbrales_log10
   let n = $state(1)
@@ -64,6 +72,12 @@
     {txt.debug.nivelColores} ({juego.nivelColores})
     <input type="range" min="0" max="200" step="5" bind:value={juego.nivelColores} />
   </label>
+  <!-- Modo grabación: cada clip en español e inglés, a marketing/clips/ (clips.ts). -->
+  <div>
+    {txt.debug.grabar}
+    <button onclick={() => grabarClips(IDS)}>{txt.debug.grabarTodo}</button>
+    {#each IDS as id}<button onclick={() => grabarClips([id])}>{id}</button>{/each}
+  </div>
   {#if juego.medidas}
     <dl>
       {#each ['fps', 'peorCuadro', 'cuadroMs', 'granosSeg', 'derrumbesSeg', 'workerMs'] as const as k}

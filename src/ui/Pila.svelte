@@ -11,6 +11,7 @@
   import { camara, hayPanel, historial, invitaTocar, juego, progresoCompresion, sismo } from './juego.svelte'
   import { elegido } from './logros'
   import * as sonido from './sonido'
+  import { grabacion } from './grabacion'
 
   const ANILLO_SEP = 8 // px CSS entre la pila y el anillo de Compresión
   const LEJOS = 0.5 // cámara de la pantalla de título
@@ -106,7 +107,10 @@
     // SPEC 6.7: acorde en cada hito ×4 de un color (cada CFG.hito_colores.cada niveles).
     const hitos = (s: typeof juego.s) => s.colores.reduce((t, n) => t + Math.floor(n / CFG.hito_colores.cada), 0)
     let hitosAntes = hitos(juego.s)
+    grabacion.pila = pila
     let raf = requestAnimationFrame(function cuadro(ahora) {
+      // Modo grabación (debug): el guion maneja la pila; acá no pasa nada más.
+      if (grabacion.cuadro) return void ((raf = requestAnimationFrame(cuadro)), grabacion.cuadro(ahora))
       const s = juego.s
       // Título: la pila quieta y lejos. Al entrar, la cámara se acerca.
       if (!juego.titulo && entro < 0) entro = ahora
