@@ -773,3 +773,9 @@ El reproductor de itch.io mide 640×360 por defecto, y el diseño de celular ent
 - `--pila-radio-max` nunca baja de 4rem: a 640 px daba 0, y 0 se leía como "sin límite" (la pila salía gigante, debajo de la tienda).
 
 Visto en Edge headless a 640×360, 800×450, 812×375 y 375×812: la pila entra entre las columnas y el vertical no cambia. `npm test` (138) y typecheck en verde; zip rearmado (241.021 bytes).
+
+### GitHub Pages (para galaxy.click)
+
+- Repo público **github.com/feli202/avalancha** con **solo la build** (el contenido de `dist/` más `.nojekyll`, rama `main`); el código fuente no está ahí. Pages publica desde `main` / raíz.
+- Link: **https://feli202.github.io/avalancha/**. Probado: todos los recursos dan 200 (también `pilas.bin` y el worker), entra, el Puñado hace la primera avalancha y al recargar dice "Continuar".
+- Para actualizarlo: `npm run build`, copiar `dist/*` a un clon de ese repo (dejando `.nojekyll`), commit y push. Este proyecto no tiene remoto: el repo de Pages es aparte.
