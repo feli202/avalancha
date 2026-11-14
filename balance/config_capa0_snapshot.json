@@ -1,0 +1,37 @@
+{
+  "_doc": "Constantes de balance de la Capa 0. Costos en log10. Ver SPEC.md seccion 4.",
+  "K_derrumbes_por_grano": 0.035,
+  "infinito_log10": 308.2547,
+
+  "caudal": { "granos_base": 1, "mult_por_nivel": 2, "c0": 1.0, "g": 0.6, "s": 0.15 },
+
+  "colores": [
+    { "id": "ambar",   "mult_por_nivel": 1.25, "c0": 1.0,  "g": 0.35, "s": 0.04, "desbloqueo_log10": 0 },
+    { "id": "coral",   "mult_por_nivel": 1.5,  "c0": 4.0,  "g": 0.50, "s": 0.08, "desbloqueo_log10": 4 },
+    { "id": "jade",    "mult_por_nivel": 2.0,  "c0": 9.0,  "g": 0.70, "s": 0.15, "desbloqueo_log10": 9 },
+    { "id": "violeta", "mult_por_nivel": 3.0,  "c0": 16.0, "g": 1.00, "s": 0.25, "desbloqueo_log10": 16 }
+  ],
+  "hito_colores": { "cada": 25, "mult": 4 },
+
+  "anillos": { "granos_primer_anillo": 64, "mult_por_anillo": 1.10 },
+
+  "cascada": { "compresiones_para_desbloquear": 2, "c0": 40, "g": 6, "c_por_nivel": 0.04, "nivel_max": 10,
+               "exp_G": 0.478, "exp_penal": 0.131 },
+
+  "compresion": {
+    "umbrales_log10": [17, 28, 36, 46, 56, 65, 80, 91, 102, 117, 148, 172, 205, 233, 253, 275, 295],
+    "densidad_por_nivel": 0.12
+  },
+
+  "mutaciones": {
+    "compresiones_para_desbloquear": 5, "energia_para_desbloquear_log10": 120, "nivel_max": 5,
+    "caudal":    { "c0": 120, "g": 18, "efecto": "caudal x3 por nivel" },
+    "colores":   { "c0": 130, "g": 22, "efecto": "valor x10 por nivel" },
+    "expansion": { "c0": 125, "g": 20, "efecto": "+0.02 al mult de cada anillo por nivel" },
+    "cascada":   { "c0": 140, "g": 28, "efecto": "+0.03 a c por nivel (si Cascada >= 1)" }
+  },
+
+  "autocompradores": { "caudal": 2, "ambar": 3, "coral": 3, "jade": 4, "violeta": 4, "compresion_auto": 6 },
+
+  "objetivo_minutos": { "jugador_activo_revisa_cada_15s": 193, "revisa_cada_60s": 226, "revisa_cada_5min": 397 }
+}

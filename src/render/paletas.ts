@@ -1,5 +1,6 @@
 // Colores de la arena por altura de celda (0 a 3) y los cosméticos de los logros: paletas, efectos de avalancha y marcos.
 // Son de diseño, no de balance. Los nombres van en es.cosmeticos.
+import { CFG } from '../core/config'
 
 /**
  * Colores de la arena por altura, distintos de los de la interfaz: el brillo va al revés de la frecuencia, así se leen
@@ -24,12 +25,21 @@ export const PALETAS: Record<string, number[]> = {
   tinta: [0x6aa0ff, 0xf2e6c8, 0x34407a, 0x14182e],
   negativo: COLORES_PILA.map((c) => 0xffffff ^ c),
   oroViejo: [0xffd36b, 0xfff6d6, 0xb07a2a, 0x4a3210],
+  // Logros secretos (CFG.secretos).
+  papelViejo: [0xc9a46c, 0xf6ead0, 0x8f6c42, 0x3d2c1a],
+  todoAmbar: [0xffb347, 0xffe0a0, 0xc97a22, 0x5c3610],
+  simetria: [0x5fd3e6, 0xfaf4ff, 0xe65f9e, 0x26213d],
 }
 
 /** Efectos de avalancha: el índice es el u_efecto del shader (lienzo.ts). */
-export const EFECTOS = ['normal', 'blanco', 'estela', 'chispas', 'cascada', 'relampago', 'mutante', 'arcoiris', 'oro']
+export const EFECTOS = ['normal', 'blanco', 'estela', 'chispas', 'cascada', 'relampago', 'mutante', 'arcoiris', 'oro',
+  'rayo', 'lupa', 'arcoirisVivo', 'espejo', 'horizonte']
 
 /** Marcos para la foto del mandala (marco.ts los dibuja). */
-export const MARCOS = ['ninguno', 'fino', 'doble', 'anillos', 'orbitas', 'muescas', 'denso', 'rosa', 'infinito']
+export const MARCOS = ['ninguno', 'fino', 'doble', 'anillos', 'orbitas', 'muescas', 'denso', 'rosa', 'infinito',
+  'galleta', 'polaroid', 'arenaDorada', 'exponent']
+
+/** Fondos detrás de la pila, en el orden de CFG.fondos (el primero, de inicio). lienzo.ts los dibuja en el shader. */
+export const FONDOS = Object.keys(CFG.fondos)
 
 export const css = (c: number) => `#${c.toString(16).padStart(6, '0')}`

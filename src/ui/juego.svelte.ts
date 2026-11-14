@@ -4,9 +4,10 @@ import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
 import type { Toma } from '../render/marcos'
-import type { Medidas } from '../render/pilaVisual'
+import { PX_MAX, type Medidas } from '../render/pilaVisual'
 import { txt } from '../strings'
 import { nuevosLogros, primerDerrumbe } from './logros'
+import { Vigia, contadoresVacios, transicion, volviste } from './secretos'
 
 const PASO = 0.05 // s: paso fijo de la economía (SPEC 8)
 const MAX_PASOS = 200 // por cuadro; con más tiempo acumulado (pestaña oculta, carga) va la simulación fuera de línea
@@ -56,8 +57,16 @@ class Juego {
   hayPartida = $state(false)
   /** La primera avalancha después del primer toque ya pasó (Pila.svelte; el contador de Energía salta). */
   primera = $state(false)
+  /** Zoom de la pila en px CSS por celda; 0 = encuadre automático. Se guarda con la partida. */
+  zoom = $state(0)
+  /** px CSS por celda del encuadre automático, el zoom mínimo (lo escribe Pila.svelte). */
+  zoomMin = $state(PX_MAX)
+  /** Segundos reales con el zoom al máximo en la Compresión actual (logro Microscopio). Sin $state: sube cada cuadro. */
+  zoomMaxS = 0
   /** Sube con cada salto fuera de línea: Pila.svelte no anima lo que pasó en la ausencia. */
   saltos = 0
+  /** Logro secreto Arena: la lluvia de granos que se ve ahora (Pila.svelte), o null. */
+  lluvia = $state.raw<{ id: number } | null>(null)
 }
 export const juego = new Juego()
 
@@ -69,6 +78,16 @@ export const sismo: number[] = []
 
 /** La pila del juego para la foto del mandala (la pone Pila.svelte). */
 export const camara: { foto: (() => Toma) | null } = { foto: null }
+
+/** El zoom que se ve, en px CSS por celda. */
+export const zoomActual = () => Math.min(Math.max(juego.zoom, juego.zoomMin), PX_MAX)
+/** Pegado al mínimo vuelve al encuadre automático (que sigue a la pila cuando crece). */
+export const ponerZoom = (z: number) => (juego.zoom = z <= juego.zoomMin * 1.02 ? 0 : Math.min(z, PX_MAX))
+/** La barra: 0 = la pila entera, 1 = zoom máximo, en escala logarítmica. */
+export const zoomT = () => (juego.zoomMin < PX_MAX ? Math.log(zoomActual() / juego.zoomMin) / Math.log(PX_MAX / juego.zoomMin) : 0)
+export const ponerZoomT = (t: number) => ponerZoom(juego.zoomMin * (PX_MAX / juego.zoomMin) ** t)
+/** Zoom al máximo elegido por el jugador (con 5 granos el encuadre ya está ahí: eso no cuenta). */
+export const enZoomMaximo = () => juego.zoom >= PX_MAX
 
 const log10E = (s: State) => (s.energia.gt(1) ? s.energia.log10() : 0)
 
@@ -139,6 +158,23 @@ function revelar(s: State) {
 }
 
 let logrosAvisados = 0
+/** Un logro secreto cumplido: se anota y se avisa una sola vez. */
+function ganarSecreto(k: string) {
+  if (juego.logros[k]) return
+  juego.logros = { ...juego.logros, [k]: true }
+  juego.logro = { id: logrosAvisados++, claves: [k] }
+}
+/** Los logros secretos que dependen del tiempo, los clics y las teclas (secretos.ts). */
+export const vigia = new Vigia(contadoresVacios(), ganarSecreto)
+/** Logro secreto «e»: el logo del estudio en Créditos. */
+export const tocarLogo = () => ganarSecreto('firma')
+let lluvias = 0
+let finLluvia: ReturnType<typeof setTimeout>
+function llover() {
+  juego.lluvia = { id: lluvias++ }
+  clearTimeout(finLluvia)
+  finLluvia = setTimeout(() => (juego.lluvia = null), (CFG.secretos.arena.lluvia_s as number) * 1000)
+}
 function revisarLogros(s: State) {
   const nuevos = nuevosLogros(s, juego.record, juego.logros)
   if (!nuevos.length) return
@@ -153,6 +189,7 @@ let previo = juego.s
 export function comprimirYa() {
   const antes = juego.s
   juego.s = comprimir(antes)
+  transicion(antes, juego.s, juego.zoomMaxS).forEach(ganarSecreto)
   registrar(historial, antes, juego.s)
   previo = juego.s
 }
@@ -168,7 +205,8 @@ export const hayPanel = (): boolean => juego.titulo || juego.panel !== null || j
 let simuladoHasta = Date.now()
 
 export const partidaActual = (): Partida =>
-  ({ estado: juego.s, guardadoEn: simuladoHasta, vistos: juego.vistos, record: juego.record, logros: juego.logros, historial })
+  ({ estado: juego.s, guardadoEn: simuladoHasta, vistos: juego.vistos, record: juego.record, logros: juego.logros, historial,
+    zoom: juego.zoom, zoomMaxS: juego.zoomMaxS, secretos: vigia.c })
 
 let reemplazando = false
 let fallos = 0
@@ -200,7 +238,30 @@ export function reemplazarPartida(p: Partida) {
 export const borrarPartida = () =>
   reemplazarPartida({ estado: estadoInicial(), guardadoEn: Date.now(), vistos: {}, record: 0, logros: {}, historial: historialVacio(Date.now()) })
 
+/** Toques, teclas y rueda en toda la página (Paciencia, Konami, Arena). */
+function escucharSecretos() {
+  const tocar = () => vigia.tocar(Date.now())
+  for (const ev of ['pointerdown', 'wheel'] as const) addEventListener(ev, tocar, { capture: true, passive: true })
+  const paneles: (typeof juego.panel)[] = [] // el panel antes de cada tecla
+  // Antes que las teclas de App.svelte (se registra primero): la última tecla de un código no abre su panel (la A de Konami).
+  addEventListener('keydown', (e) => {
+    tocar()
+    if (e.repeat || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+    paneles.push(juego.panel)
+    if (paneles.length > 16) paneles.shift()
+    const konami = juego.logros.konami
+    const largo = vigia.tecla(e.code, e.key)
+    if (largo) {
+      llover()
+      // La primera letra (la A de «arena») abrió Ajustes: se cierra, así se ve la lluvia.
+      if (paneles[paneles.length - largo] === null) juego.panel = null
+    }
+    if (largo || (!konami && juego.logros.konami)) e.stopImmediatePropagation()
+  })
+}
+
 const CANDADO = 'avalancha'
+
 /** I1: una sola pestaña juega. `robar`: "Jugar acá" en la otra; la que lo pierde guarda una vez y queda quieta. */
 export function tomarCandado(robar = false) {
   if (!navigator.locks) return // sin Web Locks (navegadores viejos): como antes
@@ -226,6 +287,10 @@ export function arrancar() {
     juego.vistos = p.vistos
     juego.record = p.record
     juego.logros = p.logros
+    juego.zoom = p.zoom ?? 0
+    juego.zoomMaxS = p.zoomMaxS ?? 0
+    vigia.c = p.secretos ?? contadoresVacios()
+    if (volviste(Date.now(), p.guardadoEn)) ganarSecreto('volviste')
     historial = p.historial ?? historialVacio(p.guardadoEn - p.estado.tiempoTotal * 1000)
     antes = p.guardadoEn // el primer cuadro simula lo que pasó desde el guardado
   }
@@ -236,6 +301,7 @@ export function arrancar() {
   if (p !== 'corrupto') juego.titulo = true
   previo = juego.s
   tomarCandado()
+  escucharSecretos()
   setInterval(guardarYa, GUARDAR_CADA)
   addEventListener('pagehide', guardarYa)
   document.addEventListener('visibilitychange', () => document.hidden && guardarYa())
@@ -259,7 +325,11 @@ export function arrancar() {
       juego.saltos++
       s = a.s
       acum = 0
-    } else for (; acum >= PASO; acum -= PASO) s = tick(s, PASO)
+    } else {
+      const a = s
+      for (; acum >= PASO; acum -= PASO) s = tick(s, PASO)
+      transicion(a, s, juego.zoomMaxS).forEach(ganarSecreto)
+    }
     // Contra el último estado que vio el bucle, no juego.s: comprimir a mano (botón, tecla C) lo reemplaza entre cuadros.
     registrar(historial, previo, s)
     previo = s
@@ -268,6 +338,7 @@ export function arrancar() {
     simuladoHasta = ahora
     revelar(s)
     revisarLogros(s)
+    vigia.cuadro(ahora, s, !hayPanel(), new Date(ahora).getHours())
     medirEta(s)
     requestAnimationFrame(cuadro)
   }

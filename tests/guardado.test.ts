@@ -217,3 +217,23 @@ describe('rangos al importar (M5) y exportar grande (M7)', () => {
     expect(importar(exportar(grande))).toEqual(grande)
   })
 })
+
+describe('zoom de la pila', () => {
+  it('se guarda con la partida; lo que no es un número positivo se descarta', () => {
+    const p = { estado: estadoInicial(), guardadoEn: 1e12, vistos: {}, record: 0, logros: {} }
+    expect(deserializar(serializar({ ...p, zoom: 12.5, zoomMaxS: 61 }))).toMatchObject({ zoom: 12.5, zoomMaxS: 61 })
+    const raro = deserializar(JSON.stringify({ ...JSON.parse(serializar(p)), zoom: 'x', zoomMaxS: -3 }))
+    expect(raro.zoom).toBeUndefined()
+    expect(raro.zoomMaxS).toBeUndefined()
+  })
+})
+
+describe('contadores de los logros secretos', () => {
+  const p = { estado: estadoInicial(), guardadoEn: 1e12, vistos: {}, record: 0, logros: {} }
+  it('se guardan; un guardado de antes no los tiene y uno editado mal se corrige', () => {
+    expect(deserializar(serializar({ ...p, secretos: { capturas: 37, horas: 0b1011 } })).secretos).toEqual({ capturas: 37, horas: 0b1011 })
+    expect(deserializar(serializar(p)).secretos).toBeUndefined()
+    const raro = deserializar(JSON.stringify({ ...JSON.parse(serializar(p)), secretos: { capturas: -2, horas: 2 ** 30 } }))
+    expect(raro.secretos).toEqual({ capturas: 0, horas: 0 })
+  })
+})

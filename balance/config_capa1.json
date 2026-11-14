@@ -1,0 +1,579 @@
+{
+ "_doc": "Constantes de la Capa 1 (Cristalizacion). Costos y valores grandes en log10. Ver SPEC_CAPA1.md.",
+ "cristales": {
+  "primer_infinito": 1,
+  "base_log10": 0.35,
+  "Q_ordenes_por_x10": 150,
+  "_formula": "log10(ganancia) = log10(mult) + 0.35 + ((log10E - 308.25) / Q) ^ beta   (solo si log10E > 308.25)",
+  "beta": 1.0,
+  "blando_desde_log10": 50,
+  "blando_factor": 0.3,
+  "_blando": "por encima de 1e50 por Infinito, cada orden de magnitud extra cuenta blando_factor"
+ },
+ "relicario": {
+  "tipos": [
+   "cauce",
+   "cascada",
+   "mutaciones"
+  ],
+  "ofertas_por_infinito": 3,
+  "semilla": 20261114,
+  "cascada_c_por_nivel": 0.02,
+  "mutaciones_efecto_por_nivel": 0.08,
+  "_nivel": "nivel = floor(log3(reliquias del tipo)); escalera Ambar0, Coral0, Jade0, Violeta0, Ambar+1 ...",
+  "cauce_colores_pct_por_nivel": 0.015
+ },
+ "red": {
+  "costo_anillo_log10": [
+   0,
+   0.0,
+   1.6,
+   40.0
+  ],
+  "paso_nivel_log10": [
+   0.0,
+   0.15,
+   0.3,
+   5
+  ],
+  "nodos": {
+   "memoria": {
+    "pos": [
+     0,
+     0
+    ],
+    "efectos": [
+     "autocompradores y compresion automatica desde el inicio",
+     "Cascada automatica",
+     "Mutaciones automaticas",
+     "Infinito automatico"
+    ],
+    "conservar_compresiones": [
+     3,
+     5,
+     7,
+     9
+    ]
+   },
+   "eco": {
+    "pos": [
+     0,
+     1
+    ],
+    "p": [
+     0.5,
+     1.5,
+     3.0,
+     5.0
+    ]
+   },
+   "sedimentacion": {
+    "pos": [
+     1,
+     0
+    ],
+    "conservar_compresiones": [
+     11,
+     13,
+     15,
+     17
+    ]
+   },
+   "estratos": {
+    "pos": [
+     0,
+     -1
+    ],
+    "flujo_x": [
+     1,
+     1.5,
+     2,
+     3
+    ]
+   },
+   "defectos": {
+    "pos": [
+     -1,
+     0
+    ],
+    "desbloquea": [
+     "vacancia",
+     "dislocacion",
+     "macla",
+     "impureza"
+    ]
+   },
+   "ruptura": {
+    "pos": [
+     0,
+     2
+    ],
+    "cristales_log10": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "_n1": "Romper el Infinito"
+   },
+   "compactacion": {
+    "pos": [
+     2,
+     0
+    ],
+    "densidad": [
+     0.08,
+     0.16,
+     0.24,
+     0.32
+    ]
+   },
+   "presion": {
+    "pos": [
+     0,
+     -2
+    ],
+    "w_x": [
+     1.2,
+     1.44,
+     1.73,
+     2.07
+    ]
+   },
+   "engarces": {
+    "pos": [
+     -2,
+     0
+    ],
+    "espacios": [
+     2,
+     2,
+     3,
+     3
+    ],
+    "ofertas": [
+     3,
+     4,
+     4,
+     4
+    ]
+   },
+   "cascada_plus": {
+    "pos": [
+     1,
+     1
+    ],
+    "nivel_max_extra": [
+     5,
+     10,
+     15,
+     20
+    ]
+   },
+   "mutacion_plus": {
+    "pos": [
+     1,
+     -1
+    ],
+    "nivel_max_extra": [
+     1,
+     2,
+     3,
+     5
+    ]
+   },
+   "inercia": {
+    "pos": [
+     -1,
+     -1
+    ],
+    "flujo_x": [
+     1.2,
+     1.4,
+     1.6,
+     2
+    ]
+   },
+   "cristalografia": {
+    "pos": [
+     -1,
+     1
+    ],
+    "cristales_log10": [
+     0.5,
+     1.0,
+     1.5,
+     2.0
+    ]
+   }
+  },
+  "anillo3_1.2": {
+   "eco2": {
+    "pos": [
+     0,
+     3
+    ],
+    "p_extra": [
+     0.5,
+     1.0,
+     1.5,
+     2.0
+    ],
+    "costo_base_log10": 45
+   },
+   "germen": {
+    "pos": [
+     1,
+     2
+    ],
+    "escarcha_g_x": [
+     1.5,
+     2.25,
+     3.4,
+     5.1
+    ],
+    "costo_base_log10": 65
+   },
+   "frio": {
+    "pos": [
+     2,
+     1
+    ],
+    "escarcha_H_x": [
+     1.5,
+     2.25,
+     3.4,
+     5.1
+    ],
+    "costo_base_log10": 92
+   },
+   "compactacion2": {
+    "pos": [
+     3,
+     0
+    ],
+    "densidad": [
+     0.1,
+     0.2,
+     0.3,
+     0.4
+    ],
+    "costo_base_log10": 78
+   },
+   "sedimento2": {
+    "pos": [
+     2,
+     -1
+    ],
+    "w_x": [
+     1.15,
+     1.3,
+     1.45,
+     1.6
+    ],
+    "costo_base_log10": 108
+   },
+   "capilaridad": {
+    "pos": [
+     1,
+     -2
+    ],
+    "flujo_x": [
+     1.1,
+     1.2,
+     1.3,
+     1.4
+    ],
+    "costo_base_log10": 126
+   },
+   "abismo": {
+    "pos": [
+     0,
+     -3
+    ],
+    "w_x": [
+     1.1,
+     1.2,
+     1.3,
+     1.4
+    ],
+    "costo_base_log10": 168
+   },
+   "defectos2": {
+    "pos": [
+     -1,
+     -2
+    ],
+    "desbloquea": [
+     "fatiga",
+     "frontera",
+     "inclusion",
+     "vidrio"
+    ],
+    "costo_base_log10": 55
+   },
+   "engarces2": {
+    "pos": [
+     -2,
+     -1
+    ],
+    "espacios": [
+     3,
+     3,
+     3,
+     3
+    ],
+    "pulido_x": [
+     0.7,
+     0.5,
+     0.35,
+     0.25
+    ],
+    "costo_base_log10": 192
+   },
+   "cristalografia2": {
+    "pos": [
+     -3,
+     0
+    ],
+    "cristales_log10": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "costo_base_log10": 146
+   },
+   "deshielo": {
+    "pos": [
+     -2,
+     1
+    ],
+    "auto_ruptura": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "esquirlas_x": [
+     1,
+     2,
+     4,
+     8
+    ],
+    "costo_base_log10": 220
+   },
+   "ruptura2": {
+    "pos": [
+     -1,
+     2
+    ],
+    "Q_resta": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "costo_base_log10": 250
+   }
+  },
+  "prioridad_bot": {
+   "sedimentacion": 0.7,
+   "estratos": 0.7,
+   "ruptura": 0.6
+  }
+ },
+ "estratos": {
+  "cantidad": 8,
+  "gamma_log10_por_s": 0.0013,
+  "factor_caudal": {
+   "div": 30,
+   "min": 0.5,
+   "max": 3
+  },
+  "separacion_log10": 2,
+  "w_base_por_profundidad": 0.009,
+  "abrir_log10": [
+   0,
+   2,
+   4,
+   7,
+   11,
+   16,
+   22,
+   29
+  ],
+  "permeabilidad": {
+   "c0": 1,
+   "por_profundidad": 1,
+   "paso": 0.6,
+   "suma_gamma": 0.3,
+   "cub": 0.1
+  },
+  "presion": {
+   "c0": 1,
+   "por_profundidad": 1,
+   "paso": 0.6,
+   "suma_w": 0.25,
+   "cub": 0.1
+  },
+  "meta_1_1_estrato8_log10": 100,
+  "exponente_presion": 1.0,
+  "capacidad_log10": [
+   1000000000.0,
+   1000000000.0,
+   1000000000.0,
+   1000000000.0,
+   1000000000.0,
+   1000000000.0,
+   1000000000.0,
+   1000000000.0
+  ]
+ },
+ "defectos": {
+  "vacancia": {
+   "regla": "Violeta no multiplica",
+   "meta_log10": 200,
+   "recompensa": "hito de color x4 -> x6"
+  },
+  "dislocacion": {
+   "regla": "la Cascada no funciona y la Presion vale la mitad",
+   "meta_log10": 1250,
+   "recompensa": "anillo x1,10 -> x1,12"
+  },
+  "macla": {
+   "regla": "no hay Mutaciones y la Densidad vale x0,85",
+   "meta_log10": 1800,
+   "recompensa": "crecimiento cuadratico de colores x0,9"
+  },
+  "impureza": {
+   "regla": "derrumbes por grano tope 1e4 y colores a la mitad",
+   "meta_log10": 2900,
+   "recompensa": "Cascada +0,1 de c"
+  },
+  "fatiga": {
+   "regla": "produccion x10^(-t/600)",
+   "meta_log10": 1200,
+   "recompensa": "crecimiento de Escarcha x2"
+  },
+  "frontera": {
+   "regla": "Densidad = 1",
+   "meta_log10": 700,
+   "recompensa": "Densidad +0,2"
+  },
+  "inclusion": {
+   "regla": "la Presion de los Estratos no funciona",
+   "meta_log10": 1800,
+   "recompensa": "la Escarcha crece x1,5"
+  },
+  "vidrio": {
+   "regla": "sin Relicario, sin Eco y sin Escarcha",
+   "meta_log10": 25000,
+   "recompensa": "cristales x1e3",
+   "cristales_log10": 3
+  },
+  "abandono_min": 45,
+  "requisitos": {
+   "vacancia": {
+    "red": [
+     "defectos",
+     1
+    ]
+   },
+   "dislocacion": {
+    "red": [
+     "defectos",
+     2
+    ],
+    "estratos_abiertos": 3
+   },
+   "macla": {
+    "red": [
+     "defectos",
+     3
+    ],
+    "estratos_abiertos": 5
+   },
+   "impureza": {
+    "red": [
+     "defectos",
+     4
+    ],
+    "estratos_abiertos": 7
+   },
+   "fatiga": {
+    "red": [
+     "defectos2",
+     1
+    ],
+    "cristales_totales_log10": 60
+   },
+   "frontera": {
+    "red": [
+     "defectos2",
+     2
+    ],
+    "cristales_totales_log10": 80
+   },
+   "inclusion": {
+    "red": [
+     "defectos2",
+     3
+    ],
+    "cristales_totales_log10": 105
+   },
+   "vidrio": {
+    "red": [
+     "defectos2",
+     4
+    ],
+    "cristales_totales_log10": 150,
+    "_nota": "meta calibrada con probe.py a las 12.4 h"
+   }
+  }
+ },
+ "escarcha": {
+  "g_log10_por_s": 0.004,
+  "m": 1.0,
+  "H": 50,
+  "esquirlas_por_ruptura_div": 10,
+  "ruptura_bot_min": 30,
+  "mejoras": {
+   "crecimiento": {
+    "c0": 0,
+    "paso": 0.4,
+    "x": 1.12
+   },
+   "brillo": {
+    "c0": 0.5,
+    "paso": 0.5,
+    "suma_m": 0.04
+   },
+   "aguante": {
+    "c0": 0.5,
+    "paso": 0.4,
+    "x_H": 1.5
+   }
+  },
+  "pulido": {
+   "c0": 1,
+   "paso": 0.477
+  },
+  "dentro_de_densidad": true,
+  "conserva_al_romper": 0.5,
+  "_g": "g = g_base * (1 + g_por_presion * Presion) * crecimiento.x^nivel * germen * recompensas",
+  "g_por_presion": 0.003
+ },
+ "fuera_de_linea_eficiencia": 0.7,
+ "objetivos_horas_desde_primer_infinito": {
+  "segundo_infinito": 1.0,
+  "memoria_completa": 1.75,
+  "estratos": 2.0,
+  "vacancia": 2.75,
+  "romper_infinito": 3.25,
+  "fin_1_1_estrato8": 7.0,
+  "escarcha": 7.0,
+  "fin_capa_1e308": 15.0
+ },
+ "autocompradores_umbral_log10": 1.0
+}

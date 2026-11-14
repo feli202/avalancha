@@ -17,7 +17,8 @@
   import Titulo from './Titulo.svelte'
   import { formato, formatoMult, hablado } from './formato'
   import { fade } from 'svelte/transition'
-  import { borrarPartida, comprimirYa, hayPanel, invitaTocar, juego, progresoCompresion } from './juego.svelte'
+  import { borrarPartida, comprimirYa, hayPanel, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
+  import { PX_MAX } from '../render/pilaVisual'
   import { foto, guardarImagen } from './foto.svelte'
 
   const v = $derived(juego.vistos)
@@ -144,6 +145,15 @@
     </footer>
   {/if}
 
+  {#if v.tienda && !fin}
+    <!-- Zoom de la pila: de la pila entera (izquierda, encuadre automático) al tamaño del primer grano. -->
+    <input
+      class="zoom aparece" type="range" min="0" max="1" step="0.01" value={zoomT()} disabled={juego.zoomMin >= PX_MAX}
+      aria-label={txt.zoom.nombre} title={txt.zoom.pista}
+      oninput={(e) => ponerZoomT(+e.currentTarget.value)} ondblclick={() => (juego.zoom = 0)}
+    />
+  {/if}
+
   {#if v.tienda}
     <section
       class="der aparece"
@@ -238,12 +248,12 @@
   @media (orientation: landscape) and (max-width: 900px) { .juego { --col: 12.5rem; --margen: 1rem; font-size: 0.875rem; } }
 
   /* I5: en el título solo está la pila; al entrar, la interfaz aparece en orden mientras la cámara se acerca (Pila.svelte). */
-  .en-titulo :is(.izq, .ajustes, .sismo, .der, .pista, .aviso) { visibility: hidden; }
+  .en-titulo :is(.izq, .ajustes, .sismo, .der, .pista, .aviso, .zoom) { visibility: hidden; }
   .entrando .izq { animation: aparecer 0.8s 0.9s ease-out backwards; }
   .entrando .sismo { animation: aparecer 0.8s 1.3s ease-out backwards; }
   .entrando .pista { animation: aparecer 0.8s 1.5s ease-out backwards, latir 2.4s 2.3s ease-in-out infinite; }
   .entrando .der { animation: fundido 0.8s 1.7s ease-out backwards; }
-  .entrando .ajustes { animation: fundido 0.8s 2.1s ease-out backwards; }
+  .entrando :is(.ajustes, .zoom) { animation: fundido 0.8s 2.1s ease-out backwards; }
 
   .izq, .sismo, .der, .aviso, .pista, .sin-guardar { text-shadow: 0 0 0.75rem var(--fondo), 0 0 0.25rem var(--fondo); }
   b { font-weight: 600; color: var(--tinta); }
@@ -277,6 +287,13 @@
   }
 
   .sismo { position: fixed; left: var(--margen); bottom: var(--margen); width: var(--col); pointer-events: none; }
+  /* Abajo a la derecha de la pila, pegada a la columna de la tienda. */
+  .zoom {
+    position: fixed; right: calc(var(--col) + 2 * var(--margen)); bottom: calc(var(--margen) - 0.875rem); z-index: 2;
+    width: 7rem; height: 2.75rem; margin: 0; accent-color: var(--tinta); cursor: pointer; opacity: 0.45; transition: opacity 0.15s;
+  }
+  .zoom:hover, .zoom:focus-visible { opacity: 1; }
+  .zoom:disabled { opacity: 0.2; cursor: default; }
   .chico { display: flex; flex-wrap: wrap; gap: 0 1rem; margin: 0.5rem 0 0; font-size: 0.8125rem; color: var(--tenue); }
 
   /* La tienda arranca debajo de la fila de íconos (.ajustes): con cuatro no entran al lado de los modos. */
@@ -392,6 +409,7 @@
       right: var(--margen); bottom: calc(45dvh + 0.5rem);
       display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 1rem;
     }
+    .zoom { right: var(--margen); bottom: calc(45dvh + 3rem); }
     .sismo :global(canvas) { height: 2rem; }
     .chico { flex-direction: column; align-items: end; margin: 0; font-size: 0.75rem; }
     .der {

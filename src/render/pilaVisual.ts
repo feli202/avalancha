@@ -6,6 +6,8 @@ import type { Pedido, Respuesta } from './pila.worker'
 import { Lienzo } from './lienzo'
 import type { Toma } from './marcos'
 import { COLORES_PILA } from './paletas'
+import { celdasLlena } from './miniPilas'
+
 
 /** SPEC 6.3: tope de granos por segundo de la simulación visual. */
 export const RITMO_MAX = 3000
@@ -13,7 +15,8 @@ const ENTERO_DESDE = 3 // px reales por celda desde los que se redondea a un ent
 /** Granos de la pila llena y redonda (la última foto: capacidad + 12 %, ver scripts/snapshots.mjs). */
 const LLENA = FOTOS.granos[FOTOS.granos.length - 1]
 const FUNDIDO_S = 0.2 // fundido al saltar a una foto
-const PX_MAX = 28 // tamaño máximo de una celda, en px CSS (para que el primer grano no ocupe la pantalla)
+/** Tamaño máximo de una celda, en px CSS (para que el primer grano no ocupe la pantalla). Es también el zoom máximo. */
+export const PX_MAX = 28
 /** SPEC 6.2: una avalancha es "grande" si supera esta cantidad de veces el promedio. */
 const AVALANCHA_GRANDE = 30
 const AVALANCHAS_PARA_PROMEDIO = 20 // avalanchas antes de confiar en el promedio
@@ -56,6 +59,10 @@ export class PilaVisual {
   alTamano?: (derrumbes: number) => void
   /** Cámara: 1 = encuadre normal; menos de 1, más lejos (la pantalla de título). */
   zoom = 1
+  /** Zoom del jugador: px CSS por celda; 0 = encuadre automático (la pila entera, que es también el zoom mínimo). */
+  acercar = 0
+  /** px CSS por celda del encuadre automático: el zoom mínimo. */
+  pxAuto = PX_MAX
   /** I11 "Ahorrar batería": con la pila llena, el worker trabaja un tercio. */
   ahorro = false
   /** Radio máximo de la pila en px CSS (que no la tapen las columnas de la interfaz). */
@@ -71,6 +78,8 @@ export class PilaVisual {
   private radio = 0
   private escala = 0
   private px = 0
+  /** Radio en px reales del círculo donde la pila se ve nítida (el tamaño de la pila encuadrada). */
+  private foco = 0
   private ultimas: Uint8Array = new Uint8Array(LADO * LADO)
   /** El arreglo de la última respuesta, ya copiado en `ultimas`: vuelve al worker con el próximo pedido. */
   private devolver: Uint8Array | null = null
@@ -146,6 +155,12 @@ export class PilaVisual {
     this.lz.efecto = n
   }
 
+  /** Fondo detrás de la pila (FONDOS). El Fractal carga la pila llena la primera vez. */
+  set fondo(id: string) {
+    this.lz.fondo = id
+    if (id === 'fractal') celdasLlena().then((c) => this.lz.fondoPila(c), () => {}) // sin las fotos (sin red): Noche
+  }
+
   /** SPEC 6.8 "Reducir destellos": apaga destellos de derrumbe, mica y el alejamiento de cámara. */
   set destellos(reducir: boolean) {
     this.destello = reducir ? 0 : 1
@@ -160,7 +175,8 @@ export class PilaVisual {
   /** Radio de la pila en pantalla, en px CSS. */
   get radioCss() {
     // Por el tamaño real del canvas y no devicePixelRatio: con zoom o emulación no siempre coinciden.
-    return ((this.radio + 0.5) * this.escala * this.canvas.clientWidth) / (this.canvas.width || 1)
+    // Con zoom, lo que se ve nítido: el anillo de Compresión y los efectos rodean el foco.
+    return (Math.min((this.radio + 0.5) * this.escala, this.foco) * this.canvas.clientWidth) / (this.canvas.width || 1)
   }
 
   /** Color CSS de la altura más frecuente dentro de la pila. */
@@ -315,7 +331,7 @@ export class PilaVisual {
     if (this.fundir) {
       // Lo que se veía hasta ahora (texturas y escala viejas) queda en u_viejo y se funde con la foto nueva.
       this.fundir = false
-      lz.pintar(pxAntes || px, brillos, 0, this.ahora, devicePixelRatio)
+      lz.pintar(pxAntes || px, brillos, 0, this.ahora, devicePixelRatio, this.focoDe(pxAntes || px))
       lz.guardarViejo()
       this.fundidoDesde = this.ahora
     }
@@ -330,8 +346,11 @@ export class PilaVisual {
       if (f <= 0) (this.fundidoDesde = -1), (f = 0)
     }
     this.ultimosBrillos = brillos
-    lz.pintar(px, brillos, f, this.ahora, devicePixelRatio)
+    lz.pintar(px, brillos, f, this.ahora, devicePixelRatio, this.focoDe(px))
   }
+
+  /** El foco para el shader, solo si la pila se sale de él: encuadrada entra entera y no hay nada que desenfocar. */
+  private focoDe = (px: number) => ((this.radio + 1) * px > this.foco ? this.foco : 0)
 
   private ultimosBrillos = [0, 0, 0, 0]
   private colores = COLORES_PILA
@@ -351,7 +370,12 @@ export class PilaVisual {
     const diametro = Math.min(0.8 * Math.min(canvas.width, canvas.height), (2 * this.radioMax * canvas.width) / (canvas.clientWidth || 1))
     const entra = diametro / (2 * Math.min(this.radio + 2, LADO / 2) + 1)
     // Celdas de menos de ENTERO_DESDE px: tamaño fraccionario (la pila en el 80 % aunque no entren 2 px por celda).
-    const objetivo = entra >= ENTERO_DESDE ? Math.min(Math.floor(entra), Math.round(PX_MAX * devicePixelRatio)) : entra
+    const max = Math.round(PX_MAX * devicePixelRatio)
+    const auto = entra >= ENTERO_DESDE ? Math.min(Math.floor(entra), max) : entra
+    this.foco = diametro / 2
+    this.pxAuto = auto / devicePixelRatio
+    // Zoom: siempre un número entero de px reales por celda (bordes de celda estables), entre el encuadre y el máximo.
+    const objetivo = Math.min(Math.max(auto, Math.round(this.acercar * devicePixelRatio)), max)
     this.escala = this.escala ? this.escala + (objetivo - this.escala) * (1 - Math.exp(-dt * 6)) : objetivo
     if (Math.abs(objetivo - this.escala) < 0.02) this.escala = objetivo
     // Salto de escala (SPEC 6.3): la cámara arranca cerca y se aleja.

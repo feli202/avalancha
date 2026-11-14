@@ -6,7 +6,7 @@
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import { juego } from './juego.svelte'
-  import { CAPAS, RECOMPENSA, descLogro, nombreLogro, secreto } from './logros'
+  import { CAPAS, RECOMPENSA, SECRETOS, descLogro, nombreLogro, premioSecreto, secreto } from './logros'
   import Pantalla from './Pantalla.svelte'
 
   $effect.pre(() => paletaBase(ajustes.daltonismo))
@@ -15,9 +15,16 @@
   const desc = descLogro
 
   let capa = $state(0)
-  const lista = $derived(CAPAS[capa].logros)
+  /** La última pestaña, después de las capas: los logros secretos. */
+  const enSecretos = $derived(capa === CAPAS.length)
+  const lista = $derived(enSecretos ? SECRETOS : CAPAS[capa].logros)
   const hechos = $derived(lista.filter((k) => juego.logros[k]).length)
   const abierta = (i: number) => CAPAS[i].abierta(juego.s)
+  const pestanas = $derived([
+    ...CAPAS.map((c, i) => ({ id: c.id, texto: txt.logros.capas[c.id], bloqueada: abierta(i) ? undefined : txt.logros.bloqueada })),
+    { id: 'secretos', texto: txt.logros.secretos, bloqueada: undefined },
+  ])
+  const premio = (k: string) => (SECRETOS.includes(k) ? premioSecreto(k) : RECOMPENSA[k])
 
 
   // Notificación: las tarjetas en miniatura de lo último conseguido (hasta 3), se van solas.
@@ -25,23 +32,24 @@
 </script>
 
 {#snippet recompensa(k: string)}
-  {@const [tipo, id] = RECOMPENSA[k]}
+  {@const [tipo, id] = premio(k)}
   <span class="premio">
     {#if tipo === 'paleta'}
       <span class="muestras" aria-hidden="true">{#each PALETAS[id] as c}<i style:background={css(c)}></i>{/each}</span>
     {:else}
-      <svg class="icono-premio" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-        {#if tipo === 'efecto'}<path d="M7 1v3M7 10v3M1 7h3M10 7h3M2.8 2.8l2 2M9.2 9.2l2 2M2.8 11.2l2-2M9.2 4.8l2-2" />
+      <svg class="icono-premio" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true">
+        {#if tipo === 'efecto' || tipo === 'especial'}<path d="M7 1v3M7 10v3M1 7h3M10 7h3M2.8 2.8l2 2M9.2 9.2l2 2M2.8 11.2l2-2M9.2 4.8l2-2" />
+        {:else if tipo === 'fondo'}<rect x="1.5" y="2.5" width="11" height="9" rx="1" />
         {:else}<circle cx="7" cy="7" r="5.5" /><circle cx="7" cy="7" r="3" />{/if}
       </svg>
     {/if}
+
     <span><span class="tipo">{txt.logros.recompensa[tipo]}</span> {txt.cosmeticos[tipo][id]}</span>
   </span>
 {/snippet}
 
 {#if juego.panel === 'logros'}
-  <Pantalla titulo={txt.logros.titulo} bind:activa={capa}
-    pestanas={CAPAS.map((c, i) => ({ id: c.id, texto: txt.logros.capas[c.id], bloqueada: abierta(i) ? undefined : txt.logros.bloqueada }))}>
+  <Pantalla titulo={txt.logros.titulo} bind:activa={capa} {pestanas}>
     {#snippet extra()}
       <div class="cuenta">
         <span class="num"><b>{hechos}</b> / {lista.length}</span>
@@ -51,12 +59,13 @@
     <ol class="grilla">
       {#each lista as k, i (k)}
         {@const si = !!juego.logros[k]}
-        {@const oculto = secreto(k, juego.logros, juego.vistos)}
+        {@const oculto = enSecretos ? !si : secreto(k, juego.logros, juego.vistos)}
         <li class="tarjeta" class:si class:oculto data-tarjeta style:--i={i}>
           <canvas class="imagen" use:miniPila={{ clave: k, quieta: ajustes.reducirDestellos || oculto }} aria-hidden="true"></canvas>
           <div class="texto">
             <h3>{oculto ? txt.secreto : nombre(k)}</h3>
-            {#if !oculto}<p>{desc(k)}</p>{/if}
+            {#if !oculto}<p>{desc(k)}</p>
+            {:else if enSecretos}<p class="pista">{txt.logros.secretosLista[k][2]}</p>{/if}
           </div>
           {#if !oculto}{@render recompensa(k)}{/if}
           <span class="sr">{si ? txt.logros.conseguido : txt.logros.pendiente}</span>
@@ -111,7 +120,8 @@
   .tarjeta:not(.si) .imagen, .tarjeta:not(.si) .premio { filter: grayscale(1) brightness(0.5); }
   .tarjeta:not(.si) h3 { color: var(--tenue); }
   .tarjeta:not(.si) .texto p { color: var(--apagado); }
-  .oculto .imagen { opacity: 0.25; }
+  .tarjeta.oculto .imagen { opacity: 0.4; filter: grayscale(1) brightness(0.5) blur(6px); } /* silueta borrosa hasta conseguirlo */
+  .texto p.pista { font-style: italic; color: var(--tenue); }
 
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 

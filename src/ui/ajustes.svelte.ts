@@ -21,7 +21,9 @@ const base = {
   paleta: 'arena',
   efecto: 'normal',
   marco: 'ninguno',
+  fondo: 'noche',
 }
+
 
 /** Lo guardado, campo por campo: lo que falta o tiene otro tipo queda como en `base`. */
 function leer() {

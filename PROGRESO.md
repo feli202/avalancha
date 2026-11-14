@@ -780,6 +780,17 @@ Visto en Edge headless a 640×360, 800×450, 812×375 y 375×812: la pila entra 
 - Link: **https://feli202.github.io/avalancha/**. Probado: todos los recursos dan 200 (también `pilas.bin` y el worker), entra, el Puñado hace la primera avalancha y al recargar dice "Continuar".
 - Para actualizarlo: `npm run build`, copiar `dist/*` a un clon de ese repo (dejando `.nojekyll`), commit y push. Este proyecto no tiene remoto: el repo de Pages es aparte.
 
+### Vistas previas vacías en itch.io (Logros y Ajustes → Aspecto)
+
+**Causa:** `pilas.bin` es un gzip y el juego lo abría siempre con `DecompressionStream`. itch.io sirve los archivos gzip con `Content-Encoding: gzip`, el navegador los entrega ya abiertos y descomprimir de nuevo falla ("Failed to fetch"). Sin fotos solo se dibujaba lo que se calcula sin ellas: los 2 primeros logros (4 y 100 granos). El worker de la pila perdía las fotos igual (quedaba en `sinFotos`). No era ninguna de las otras sospechas: `base` ya es `./`, no hay nombres con mayúsculas cruzadas, el archivo entra al build y da 200, hay 3 contextos WebGL en total (la pila, uno compartido para las miniaturas, uno para la foto) y nada de origen cruzado.
+
+- **Arreglo:** `src/render/fotos.ts` (`leerFotos`) mira la firma `1f 8b`: si es gzip lo descomprime, si no lo usa tal cual. Lo usan `miniPilas.ts` y `pila.worker.ts`. Test: `tests/fotos.test.ts`.
+- **Diferido:** `imagen()` genera una miniatura por rato libre (`requestIdleCallback`, `setTimeout` en Safari), en el orden de las tarjetas. Antes, la primera apertura de un panel hacía tareas de hasta ~300 ms; ahora ninguna de más de 50 ms y las 24 de Logros están en menos de 1 s.
+- **Secretos sin conseguir:** la silueta sale borrosa (`blur` en `Logros.svelte`).
+- **`scripts/itch-falso.mjs`**: sirve `dist/` como itch (subcarpeta, iframe de otro origen, `Content-Encoding: gzip` para los gzip). `npm run build && node scripts/itch-falso.mjs dist` y abrir `http://localhost:4180/`. Con el código viejo reproduce el bug.
+- **Verificado** en `npm run preview` y en el itch falso (directo y dentro del iframe): 24/24 en Logros, 47/47 en Aspecto (paletas, efectos, marcos nuevos, fondos), 40 aperturas y cierres sin errores, sin `webglcontextlost`. `npm test` (161), typecheck y build en verde; zip rearmado (252.262 bytes).
+- **No se hizo:** no se reescribió el generador (ya era un solo renderizador offscreen con caché por clave, y la paleta de daltonismo la vacía); la vista de Marcos sigue usando la pila llena con la paleta en uso, no la foto del mandala actual. **Falta:** medir fps con la ventana visible (el navegador de prueba estaba oculto y no corre `requestAnimationFrame`) y subir el zip a itch como borrador para confirmarlo ahí.
+
 ## Clips verticales (TikTok, Reels, Shorts)
 
 Diez MP4 de 1080×1920, H.264 + AAC, en **`marketing/clips/`** (~245 MB, en `.gitignore`: se regeneran). Cinco guiones, cada uno en español (`-es`) y en inglés (`-en`):
@@ -814,3 +825,142 @@ Todos: texto grande desde el primer cuadro, dentro de la zona segura (arriba, ce
 - Revisado con hojas de contacto: textos sin pisarse, el primer cuadro con el texto, el cierre bien.
 - **Ojo:** en el panel del navegador integrado oculto la página corre a ~1 fps y los clips salen trabados; con la ventana chica a la vista, a 30. Por eso el Edge aparte.
 - `npm test` (138), typecheck y svelte-check en verde.
+
+---
+
+# Capa 1 — Cristalización
+
+Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `balance/sim_capa1.py`.
+
+**Hito actual: C1 (sin empezar).**
+
+## Plan (SPEC_CAPA1 §16)
+
+**Actualización 1.1**
+
+- [ ] C1 — Guardado v2 + migración, Cristales, Infinito nuevo, barra lateral de capas y de Cristalización (pantallas vacías)
+- [ ] C2 — Red: datos desde config, forma de rombo, compra, apertura de vecinos, Memoria (automatización)
+- [ ] C3 — Relicario: ofertas con semilla, fusión, engarces, efectos
+- [ ] C4 — Estratos: lógica (`s_k`, Presión, compras) + interfaz 2D provisoria
+- [ ] C5 — Estratos: escena three.js descendente + optimización
+- [ ] C6 — Romper el Infinito + fórmula de Cristales + Infinito automático óptimo
+- [ ] C7 — Defectos 1–4 + visuales
+- [ ] C8 — Test de balance de la 1.1 + offline + estadísticas
+- [ ] C9 — Pulido y auditoría 1.1 → publicar
+
+**Actualización 1.2**
+
+- [ ] C10 — Escarcha (lógica + visual)
+- [ ] C11 — Anillo 3 de la Red, Pulido, Deshielo
+- [ ] C12 — Defectos 5–8
+- [ ] C13 — Fin de la Capa 1 (hito + pantalla) + test de balance completo
+- [ ] C14 — Pulido y auditoría 1.2 → publicar
+
+## Simulador con la Capa 0 real (2026-11-14)
+
+`python balance/sim_capa1.py --robustez` con `balance/config.json` (la Capa 0 del juego). Tarda ~1 min.
+Da **exactamente** la tabla de SPEC_CAPA1 §2 en las tres columnas (diferencia 0,00 h en todos los hitos).
+
+| Hito | cada 15 s | cada 60 s | cada 5 min |
+|---|---|---|---|
+| Segundo Infinito | 1,10 h | 1,25 h | 2,25 h |
+| Romper el Infinito | 2,35 h | 2,51 h | 3,54 h |
+| Memoria completa | 1,64 h | 1,80 h | 2,83 h |
+| Estratos | 2,26 h | 2,42 h | 3,45 h |
+| Defecto Vacancia | 2,44 h | 2,60 h | 3,63 h |
+| Defecto Dislocación | 4,34 h | 4,49 h | 5,53 h |
+| Defecto Macla | 5,21 h | 5,37 h | 6,40 h |
+| Defecto Impureza | 6,04 h | 6,20 h | 7,24 h |
+| **FIN 1.1** | **6,96 h** | 7,12 h | 8,15 h |
+| Defecto Fatiga | 9,43 h | 9,59 h | 10,63 h |
+| Defecto Frontera | 11,89 h | 12,05 h | 13,08 h |
+| Defecto Inclusión | 12,44 h | 12,60 h | 13,64 h |
+| Defecto Vidrio | 13,49 h | 13,68 h | 14,74 h |
+| **FIN CAPA 1** | **14,99 h** | 15,20 h | 16,27 h |
+
+- Hueco máximo entre compras (desde 1,5 h): 32,3 min (35,0 min cada 5 min). Pesos de log V iguales a la spec (Presión 55 % / 59 %, Escarcha 26 %).
+- `config.json` tiene todas las claves de `config_capa0_snapshot.json` con los mismos valores de balance; solo agrega claves nuevas (`granos_iniciales`, `punado`, `logros`, `revelado`, `fuera_de_linea.*`, `mutaciones.*.por_nivel`) y cambian los `objetivo_minutos` (metas informativas, el simulador no los lee). No hizo falta tocar `sim_capa1.py`.
+- Ojo: `_load` cae al snapshot solo si falta el **archivo** `config.json`, no por clave suelta. Hoy no importa (no falta ninguna).
+- En Windows `python3` es el alias de la Store y no anda: usar `python` o `py`.
+
+## Zoom de la pila (2026-11-14)
+
+Cosmético: no se tocó `src/core/`, `balance/` ni el worker. Tests: 139 en verde (incluido el de balance), svelte-check y tsc sin errores, `npm run build` bien.
+
+- **Control**: barra (`input.zoom` en `App.svelte`) abajo a la derecha de la pila; rueda del mouse (y pellizco de trackpad, que llega como rueda con Ctrl); pellizco con dos dedos sobre la pila (el canvas pasó a `touch-action: none`; el segundo dedo no suelta un Puñado). Doble clic en la barra = encuadre automático. La barra aparece con la tienda y queda deshabilitada mientras la pila es tan chica que el encuadre ya es el máximo.
+- **Límites**: `juego.zoom` son px CSS por celda; 0 = encuadre automático (el de siempre, que es también el mínimo y sigue a la pila cuando crece). Máximo = `PX_MAX` (28 px CSS por celda: la escala de la pila con 5 granos). La barra va en escala logarítmica entre los dos.
+- **Bordes estables**: el zoom elegido siempre se redondea a un número entero de px reales por celda (`encuadre()` en `pilaVisual.ts`); solo durante la transición (~0,5 s) la escala es fraccionaria.
+- **Desenfoque, en el shader** (`lienzo.ts`, sin `backdrop-filter`): `u_foco` = radio en px del círculo nítido (el tamaño de la pila encuadrada: 40 % del lado corto, o `--pila-radio-max`). Afuera, con borde suave (`smoothstep` de 1 a 1,3 radios), se lee un mip de la textura de celdas (ahora con mipmaps, que se generan solo si la pila se sale del foco) a ~8 px CSS de grano, al 30 % de luz, y se apaga hacia el borde del canvas (en móvil el canvas no llega al borde de la ventana). Fuera del foco no se calcula la arena nítida: con zoom el shader hace menos trabajo, no más.
+- El anillo de Compresión y los efectos (ola, implosión) rodean el foco cuando la pila es más grande que él (`radioCss`).
+- **Guardado**: `zoom` y `zoomMaxS` en la partida (opcionales; un valor raro se descarta). `juego.zoomMaxS` = segundos reales con el zoom elegido al máximo en la Compresión actual (se pone en 0 al comprimir; no cuenta el título ni la pestaña oculta). Para el logro secreto Microscopio del paso B: leer `juego.zoomMaxS`.
+
+### Verificación
+
+Edge headless con la GPU real de la notebook (Radeon integrada), pila llena y 3.000 granos/s, 5 s por caso:
+
+| Ventana | Zoom mínimo | Medio | Máximo |
+| --- | --- | --- | --- |
+| 1366×768 | 60,3 fps (peor cuadro 20,6 ms) | 60,2 (19,0) | 60,3 (18,8) |
+| 1920×1080 | 60,3 (19,9) | 60,3 (22,1) | 60,3 (21,2) |
+| 390×844 emulado | 60,3 (19,7) | 60,3 (21,2) | 60,4 (18,7) |
+
+- **Celular real: sin medir.** La fila de 390×844 es emulación en la notebook, y encima el canvas quedó en 390×296 px reales (la emulación no aplica el dpr al canvas): no dice nada de la GPU de un teléfono. Falta abrirlo en el celular y mirar los fps del panel de debug con zoom mínimo y máximo.
+- Probado en la página: barra, doble clic, rueda (eventos sintéticos), guardado (`zoom 28` en `localStorage`). **El pellizco con dos dedos no se probó** (hace falta una pantalla táctil).
+
+### Decisiones (revisar)
+
+1. **No hay botón de pantalla completa en el juego** (se usa el del sitio, ver "Demo para publicar"), así que la barra quedó sola abajo a la derecha de la pila, pegada a la columna de la tienda; en móvil, abajo a la derecha del canvas, arriba del sismógrafo.
+2. El tiempo en zoom máximo cuenta solo si el jugador eligió el máximo; al principio de una corrida el encuadre automático tiene esa misma escala y no cuenta.
+3. Un zoom elegido es una escala fija: cuando la pila crece no se aleja (para eso está el automático).
+
+## Arreglo: el halo se cortaba en líneas rectas (2026-11-14)
+
+Solo `src/render/lienzo.ts` (shader de pantalla) y un botón de debug. La pila no cambió de lugar ni de tamaño.
+
+- **Causa**: no era CSS ni el canvas. El bloom sale de los mipmaps de la textura de luz, que mide justo la grilla de 513×513 (el cuadrado que circunscribe la pila llena), sin margen. Fuera de la grilla `halo()` apagaba el resplandor en ~5 celdas (`enGrilla`, el arreglo de la "cruz de luz" del Pulido 3). Con la pila llena el círculo toca ese cuadrado en los cuatro ejes: el halo de una avalancha que llega al borde terminaba en una recta arriba, abajo y a los costados. El desenfoque del zoom usaba el mismo corte.
+- **Arreglo**: `redondo(q, lod)` reemplaza a `enGrilla`. Fuera de la grilla se lee la fila del borde (`CLAMP_TO_EDGE`, lo que la textura tiene de margen) y cada mip del halo se apaga en forma radial alrededor del círculo de la pila, a 1,5 texeles suyos (3 celdas el mip 1, 48 el mip 5: el alcance real de cada uno). Lo mismo para la pila desenfocada del zoom. Además el halo y el desenfoque se apagan en el último 8 % antes del borde del canvas (en móvil el canvas no llega al borde de la ventana; también vale para la foto con marcos, que usa el mismo `Lienzo`).
+- Fuera del foco del zoom la luz de las celdas pesa la mitad, para que un destello grande no tape la interfaz.
+- Panel de debug: botón **"Avalancha grande"** (`pila.echar(RITMO_MAX)`).
+
+### Verificación
+
+- Edge headless 1366×768, pila llena, avalancha de 3.000 granos con cada uno de los 9 efectos, captura del borde antes y después: zoom mínimo (borde de arriba), primer paso de zoom (2 px por celda, borde izquierdo dentro del desenfoque) y zoom máximo. Antes: recta horizontal sobre la pila y recta vertical en el desenfoque. Después: degradado redondo en los 9 efectos, sin rectas. Con zoom máximo y la pila llena el borde queda fuera de pantalla: ahí solo se ve el centro.
+- 60,3 fps con una avalancha grande por segundo, a zoom mínimo y máximo (peor cuadro 19,2 y 19,6 ms). 139 tests en verde, tsc y svelte-check sin errores, build bien.
+- **Sin mirar**: las otras paletas (solo cambian los colores que entran al mismo shader), la foto con marcos, y un celular real.
+
+## Fondos y logros secretos (paso B, 2026-11-14)
+
+Cosmético: no se tocó `src/core/` (salvo los tipos de `config.ts`), `balance/` (salvo datos nuevos que `sim.py` no lee; su salida no cambió) ni el worker. 158 tests en verde (incluido el de balance), tsc y svelte-check sin errores, build bien. **Las miniaturas de lo nuevo quedan para el paso C**: los secretos usan una mini pila genérica (`escena()` en `miniPilas.ts`) y no hay ícono de galleta dibujado (el dato `icono: "galleta"` está en config).
+
+| Archivo | Contenido |
+| --- | --- |
+| `balance/config.json` | `secretos`: los 16, con umbrales, `api` (nombre del logro oculto en Steam) y `recompensa` [tipo, id]. `fondos`: id → logro que lo da, en orden (`null` = de inicio). |
+| `src/ui/secretos.ts` | Nuevo. Condiciones puras (sin DOM ni reloj): `capicua`, `monocromo`, `volviste`, `transicion(antes, después, zoomMaxS)` (Conmutativo, Minimalista, Microscopio, Monocromo) y la clase `Vigia` (clics, quietud, horas, Al borde, avalanchas, teclas, fotos). |
+| `src/ui/logros.ts` | `Cosmetico` suma `fondo`. `PREMIOS` junta las recompensas de los 24, de los secretos y de los fondos: `desbloqueados` y `logroDe` las leen de ahí. `SECRETOS`, `premioSecreto`. `nombreLogro`/`descLogro` también para secretos. |
+| `src/ui/juego.svelte.ts` | `vigia`, `ganarSecreto` (anota en `juego.logros` y avisa una vez), `tocarLogo`, la lluvia (`juego.lluvia`), escuchas globales de toques, rueda y teclas. `transicion` después de cada cuadro normal (no en saltos fuera de línea) y al comprimir a mano. Volviste al cargar (`guardadoEn` de hace 7 días o más). |
+| `src/guardado/guardado.ts` | `secretos?: { capturas, horas }` opcional (sin cambio de versión: un guardado de antes no lo tiene y arranca en cero); se valida (enteros, horas en 24 bits). |
+| `src/render/lienzo.ts` | `fondoEn()` en el shader de pantalla: Noche, Arena seca, Papel milimetrado, Desierto de noche, Fractal (la pila llena en una textura R8 aparte, muy tenue), Hielo (Voronoi), Aurora (quieta con Reducir destellos) y Vacío. Efectos 9–13: Rayo, Lupa, Arcoíris vivo, Estela espejo, Estela horizonte. |
+| `src/render/paletas.ts`, `marcos.ts` | Paletas Papel viejo, Todo Ámbar, Simetría; marcos Galleta, Polaroid, Arena dorada, Exponent; `FONDOS` (de config). |
+| `src/ui/Opciones.svelte` | Aspecto suma **Fondo** (mismo sistema: "En uso", candado con el logro; un secreto sin conseguir dice "Logro: secreto"). Créditos suma "Estudio" con el logo de Exponent (logro «e»). |
+| `src/ui/Logros.svelte` | Pestaña **Secretos** después de las capas: "???" con la pista en cursiva; conseguido, nombre, descripción, miniatura y recompensa. |
+| `src/ui/Pila.svelte`, `Tienda.svelte`, `foto.svelte.ts` | Clics (todos, aunque el Puñado tenga tope), avalanchas, fondo elegido, la lluvia (80 granos de CSS de un color al azar de la paleta en uso, 10 s, no se muestra con Reducir destellos); compra manual (cada fila y "Comprar todo"); fotos. |
+| `tests/secretos.test.ts` | Nuevo: datos (16, textos en los dos idiomas, nombres de Steam únicos, recompensas existentes y sin repetir, fondos coherentes) y la condición de cada secreto, incluido que Capicúa no cuenta con autocompradores. `tests/guardado.test.ts`: los contadores. |
+
+### Verificación
+
+- En el navegador (1024×768): «arena» y «sand» con teclas reales (logro, lluvia, Ajustes abierto por la A se cierra solo); Konami (la A final no abre Ajustes); 10 clics reales en 110 ms contados todos; logo de Exponent en Créditos; Capicúa con un clic real en Caudal (2·1·0·1·2) y su notificación; la pestaña Secretos (ocultos con pista, conseguidos con recompensa) en escritorio y en 375×812; las tarjetas de Fondo, efectos y marcos nuevos; los 8 fondos detrás de la pila; los contadores y logros siguen después de recargar.
+- **60,3 fps** con Noche, Hielo, Aurora y Fractal (1024×768, dpr 1,25, pila chica). Sin medir con la pila llena ni en un celular real.
+- No probados en vivo (solo con tests): Paciencia (10 min), Insomnio (24 h), Volviste (7 días), Al borde, Microscopio, Minimalista, Monocromo, Conmutativo, Tormenta, 1987, Fotógrafo (111 fotos).
+- De paso: los íconos de recompensa de Logros (marco, efecto) salían como un círculo negro relleno (sin `stroke`): arreglado. En móvil las pestañas de las pantallas completas ya no dejan 1,5 rem entre filas (con Secretos eran tres filas).
+
+### Decisiones (revisar)
+
+1. **Ids**: `anio1987` (1987) y `firma` («e»), porque una clave que empieza con número o de una letra es incómoda. Los nombres que se ven son los pedidos.
+2. **Ya existía un efecto "Arcoíris"** (récord de 1.000.000): el de Konami se llama **Arcoíris vivo** (el tono gira con el tiempo y el ángulo). **"Estelas"** no era una categoría: Espejo y Horizonte son efectos de avalancha con estela larga (×3), en la misma lista.
+3. **Volviste usa `guardadoEn`** (el guardado ya trae cuándo se cerró la pestaña); no hizo falta guardar "último día abierto" aparte.
+4. **Microscopio**: segundos con el zoom al máximo elegido ≥ tiempo de la corrida − 3 s (`margen_s`). El tiempo de corrida es de juego: con velocidad de debug o fuera de línea no se puede.
+5. **Paciencia**: cuenta con la pila sin título ni paneles encima; un hueco de más de 1 s entre cuadros (pestaña oculta) reinicia. **Insomnio** marca la hora en cada cuadro del juego (pestaña visible, fuera del título).
+6. **Tormenta perfecta**: contra el promedio de las avalanchas de un grano de la corrida (las mismas del récord), desde 100 avalanchas (`muestras_min`).
+7. **Los textos de los secretos llevan los números escritos** (50, 10 min, 111…): si cambia un umbral en config hay que cambiar el texto.
+8. **Logo de Exponent y marco Exponent**: marca de texto «eˣ» provisoria (no hay archivo del logo). Hielo (Capa 1) queda bloqueado con "Logro: Primer Cristal" (`cristal` en `txt.logros.lista`).
+9. La foto del mandala sigue con fondo Noche (no lleva el fondo elegido).

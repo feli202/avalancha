@@ -5,7 +5,8 @@ import { MARCOS } from '../render/paletas'
 import { txt } from '../strings'
 import { ajustes } from './ajustes.svelte'
 import { formato, formatoMult } from './formato'
-import { camara, juego } from './juego.svelte'
+import { camara, juego, vigia } from './juego.svelte'
+
 import { elegido } from './logros'
 
 /** El destello (sube al tocar) y el aviso de guardada (sube al terminar): App.svelte los anima con {#key}. */
@@ -23,6 +24,7 @@ export async function guardarImagen() {
     const pie = txt.foto.pie(energia, formatoMult(densidad(s)), txt.anillos(anillos(s.granos)))
     const marco = elegido('marco', MARCOS, ajustes.marco, juego.logros)
     const png = await sacarFoto(toma, marco, pie, `${import.meta.env.BASE_URL}logo.svg`, getComputedStyle(document.body).fontFamily)
+    if (png) vigia.captura() // Fotógrafo
     if (png && (await entregar(new File([png], txt.opciones.archivoFoto, { type: 'image/png' })))) foto.guardada++
   } finally {
     ocupada = false

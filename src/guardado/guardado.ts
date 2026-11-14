@@ -3,6 +3,8 @@ import Decimal from 'break_infinity.js'
 import { CFG, MUTACIONES, estadoInicial, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
+import type { Contadores } from '../ui/secretos'
+
 
 export const VERSION = 2
 export const CLAVE = 'avalancha.guardado'
@@ -23,6 +25,12 @@ export interface Partida {
   logros: Record<string, boolean>
   /** Para Estadísticas (historial.ts). Opcional: los guardados de antes no lo tienen. */
   historial?: Historial
+  /** Zoom de la pila en px CSS por celda (0 o nada: encuadre automático). Cosmético. */
+  zoom?: number
+  /** Segundos con el zoom al máximo en la Compresión actual (logro secreto Microscopio). */
+  zoomMaxS?: number
+  /** Contadores de los logros secretos (secretos.ts): fotos sacadas y horas del reloj jugadas. Opcional: los de antes no lo tienen. */
+  secretos?: Contadores
 }
 
 // Decimal como [mantisa, exponente]: dos doubles, que JSON guarda sin perder un dígito.
@@ -95,10 +103,23 @@ export function deserializar(texto: string): Partida {
     vistos: d.vistos,
     record: d.record,
     logros: d.logros,
+    zoom: positivo((d as any).zoom),
+    zoomMaxS: positivo((d as any).zoomMaxS),
+    secretos: contadores((d as any).secretos),
     // Partidas de antes del historial: no viene, y el juego arranca uno con el comienzo estimado por el tiempo de juego.
     ...((d as any).historial !== undefined && { historial: limpiarHistorial((d as any).historial, d.guardadoEn - e.tiempoTotal * 1000) }),
   }
 }
+
+/** Contadores de secretos válidos (enteros, horas en 24 bits), o nada. */
+function contadores(x: any): Contadores | undefined {
+  if (typeof x !== 'object' || x === null) return undefined
+  const ent = (v: unknown, max: number) => (Number.isInteger(v) && (v as number) >= 0 && (v as number) <= max ? (v as number) : 0)
+  return { capturas: ent(x.capturas, Number.MAX_SAFE_INTEGER), horas: ent(x.horas, 2 ** 24 - 1) }
+}
+
+/** Opcionales (guardados de antes, o editados a mano): un número finito mayor que 0, o nada. */
+const positivo = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) && x > 0 ? x : undefined)
 
 // Exportar / importar (SPEC 8): el mismo JSON en base64, para copiar y pegar. Por bytes UTF-8: btoa solo acepta latin-1.
 export function exportar(p: Partida) {

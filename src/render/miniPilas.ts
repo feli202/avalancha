@@ -3,6 +3,7 @@
 import { LADO, Pila } from './pila'
 import url from '../assets/pilas.bin?url'
 import FOTOS from '../assets/pilas.json'
+import { leerFotos } from './fotos'
 import { Lienzo } from './lienzo'
 import { COLORES_DALTONISMO, COLORES_PILA, EFECTOS, PALETAS } from './paletas'
 
@@ -31,6 +32,8 @@ interface Escena {
   /** Instante de la imagen quieta dentro del ciclo. */
   t?: number
   efecto?: string
+  /** Fondo detrás de la pila (FONDOS); si no, Noche. */
+  fondo?: string
   trazos?: Trazos
 }
 
@@ -106,7 +109,9 @@ function escena(clave: string): Escena {
   const [tipo, id] = clave.split(':')
   if (tipo === 'paleta') return { granos: -1, entera: true, brillos: todo(0.45), colores: () => PALETAS[id] }
   if (tipo === 'efecto') return { granos: 10000, onda: expansiva(45), t: 0.45, efecto: id, brillos: todo(0.3) }
-  return ESCENAS[clave]
+  if (tipo === 'fondo') return { granos: 3000, zoom: 0.35, fondo: id, brillos: todo(0.3) }
+  // shortcut: los logros secretos todavía no tienen escena propia (paso C); usan una genérica.
+  return ESCENAS[clave] ?? { granos: 3000, brillos: todo(0.4) }
 }
 /** Radio de la pila entera en la imagen, en px reales (para dibujar alrededor, como los marcos). */
 export const RADIO_ENTERA = 0.41 * ALTO
@@ -115,9 +120,7 @@ export const RADIO_ENTERA = 0.41 * ALTO
 
 let fotos: Promise<Uint8Array> | null = null
 async function foto(n: number): Promise<Estado> {
-  fotos ??= fetch(url)
-    .then((r) => new Response(r.body!.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer())
-    .then((b) => new Uint8Array(b))
+  fotos ??= leerFotos(url)
     .catch((e) => { fotos = null; throw e }) // sin red: se reintenta la próxima vez
   const q = await fotos
   const Q = FOTOS.lado, base = n * Q * Q
@@ -153,6 +156,9 @@ function pila(granos: number) {
   return pilas.get(granos)!
 }
 
+/** La pila llena para el fondo Fractal (Lienzo.fondoPila): altura + 1 por celda, 0 afuera. */
+export const celdasLlena = () => pila(-1).then((e) => e.alturas.map((h, i) => (e.dentro[i] ? h + 1 : 0)))
+
 // ---------- el dibujo ----------
 
 let lz: Lienzo | null = null
@@ -187,6 +193,7 @@ function preparar(clave: string, e: Estado) {
   lz.subir(e.alturas, t)
   lz.colores = esc.colores?.(base) ?? base
   lz.efecto = Math.max(0, EFECTOS.indexOf(esc.efecto ?? 'normal'))
+  lz.fondo = esc.fondo ?? 'noche'
 }
 
 /** Dibuja la escena en el instante `s` del ciclo y devuelve el lienzo 2D con los trazos encima. */
@@ -206,13 +213,22 @@ function dibujar(clave: string, e: Estado, s: number, destello: number) {
 }
 
 const cache = new Map<string, Promise<ImageBitmap>>()
+// Una imagen por rato libre, en el orden en que se piden (las tarjetas de arriba primero): abrir un panel
+// con 40 vistas previas no traba la pila. Safari no tiene requestIdleCallback.
+let cola: Promise<unknown> = Promise.resolve()
+const libre = () => new Promise<void>((ok) => ('requestIdleCallback' in window ? requestIdleCallback(() => ok(), { timeout: 50 }) : setTimeout(ok)))
 /** La imagen quieta de un logro. */
 export function imagen(clave: string): Promise<ImageBitmap> {
-  if (!cache.has(clave))
-    cache.set(clave, pila(escena(clave).granos).then((e) => {
+  if (!cache.has(clave)) {
+    const p = cola.then(libre).then(() => Promise.all([pila(escena(clave).granos), escena(clave).fondo === 'fractal' && celdasLlena()])).then(([e, llena]) => {
+      if (llena) (lz ??= new Lienzo(new OffscreenCanvas(ANCHO, ALTO))).fondoPila(llena)
+
       listas.set(clave, e)
       return dibujar(clave, e, escena(clave).t ?? 0, 1).transferToImageBitmap()
-    }).catch((e) => { cache.delete(clave); throw e }))
+    })
+    cola = p.catch(() => {})
+    cache.set(clave, p.catch((e) => { cache.delete(clave); throw e }))
+  }
   return cache.get(clave)!
 }
 

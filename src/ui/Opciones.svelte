@@ -4,11 +4,11 @@
   import { exportar, importar, type Partida } from '../guardado/guardado'
   import { marco } from '../render/marcos'
   import { ALTO, ANCHO, RADIO_ENTERA, imagen, miniPila } from '../render/miniPilas'
-  import { COLORES_DALTONISMO, EFECTOS, MARCOS, PALETAS, css } from '../render/paletas'
+  import { COLORES_DALTONISMO, EFECTOS, FONDOS, MARCOS, PALETAS, css } from '../render/paletas'
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
-  import { borrarPartida, guardarYa, juego, partidaActual, reemplazarPartida } from './juego.svelte'
-  import { desbloqueados, elegido, logroDe, nombreLogro, type Cosmetico } from './logros'
+  import { borrarPartida, guardarYa, juego, partidaActual, reemplazarPartida, tocarLogo } from './juego.svelte'
+  import { SECRETOS, desbloqueados, elegido, logroDe, nombreLogro, type Cosmetico } from './logros'
   import Pantalla from './Pantalla.svelte'
   import { guardarImagen } from './foto.svelte'
 
@@ -24,17 +24,12 @@
   const enfocar = (el: HTMLElement) => el.focus()
 
   // ---------- Aspecto ----------
-  const TODOS: Record<Cosmetico, string[]> = { paleta: Object.keys(PALETAS), efecto: EFECTOS, marco: MARCOS }
-  const libres = $derived({
-    paleta: desbloqueados('paleta', TODOS.paleta, juego.logros),
-    efecto: desbloqueados('efecto', TODOS.efecto, juego.logros),
-    marco: desbloqueados('marco', TODOS.marco, juego.logros),
-  })
-  const actual = $derived({
-    paleta: elegido('paleta', TODOS.paleta, ajustes.paleta, juego.logros),
-    efecto: elegido('efecto', TODOS.efecto, ajustes.efecto, juego.logros),
-    marco: elegido('marco', TODOS.marco, ajustes.marco, juego.logros),
-  })
+  const TODOS: Record<Cosmetico, string[]> = { paleta: Object.keys(PALETAS), efecto: EFECTOS, marco: MARCOS, fondo: FONDOS }
+  const TIPOS = Object.keys(TODOS) as Cosmetico[]
+  const libres = $derived(Object.fromEntries(TIPOS.map((t) => [t, desbloqueados(t, TODOS[t], juego.logros)])) as Record<Cosmetico, string[]>)
+  const actual = $derived(Object.fromEntries(TIPOS.map((t) => [t, elegido(t, TODOS[t], ajustes[t], juego.logros)])) as Record<Cosmetico, string>)
+  /** El logro que da un cosmético, como se lee en la tarjeta bloqueada: un secreto sin conseguir no dice su nombre. */
+  const nombreBloqueo = (k: string) => (SECRETOS.includes(k) && !juego.logros[k] ? txt.logros.secretoOculto : nombreLogro(k))
   const elegir = (tipo: Cosmetico, id: string) => libres[tipo].includes(id) && (ajustes[tipo] = id)
   const coloresActuales = $derived(ajustes.daltonismo ? COLORES_DALTONISMO : PALETAS[actual.paleta])
 
@@ -110,7 +105,7 @@
           {#if tipo === 'marco'}
             <canvas class="vista cuadrada" use:vistaMarco={{ id, paleta: actual.paleta, colores: coloresActuales }} aria-hidden="true"></canvas>
           {:else}
-            <canvas class="vista" use:miniPila={{ clave: `${tipo}:${id}`, quieta: ajustes.reducirDestellos || tipo === 'paleta' }} aria-hidden="true"></canvas>
+            <canvas class="vista" use:miniPila={{ clave: `${tipo}:${id}`, quieta: ajustes.reducirDestellos || tipo === 'paleta' || tipo === 'fondo' }} aria-hidden="true"></canvas>
           {/if}
           <span class="pie">
             <span class="nombre">
@@ -121,7 +116,7 @@
             {:else if !libre && logro}
               <span class="bloqueo">
                 <svg width="10" height="12" viewBox="0 0 12 14" aria-hidden="true"><rect x="1.5" y="6" width="9" height="7" rx="1" /><path d="M3.5 6V4a2.5 2.5 0 0 1 5 0v2" /></svg>
-                {txt.opciones.bloqueadoPor(nombreLogro(logro))}
+                {txt.opciones.bloqueadoPor(nombreBloqueo(logro))}
               </span>
             {/if}
           </span>
@@ -139,6 +134,7 @@
         {@render cosmeticos('paleta', txt.opciones.paleta, txt.opciones.paletaDesc)}
         {@render cosmeticos('efecto', txt.opciones.efecto, txt.opciones.efectoDesc)}
         {@render cosmeticos('marco', txt.opciones.marco, txt.opciones.marcoDesc)}
+        {@render cosmeticos('fondo', txt.opciones.fondo, txt.opciones.fondoDesc)}
         <div class="foto">
           <button class="accion" onclick={guardarImagen}>{txt.opciones.foto}</button>
           <p class="desc">{txt.opciones.fotoDesc}</p>
@@ -266,6 +262,11 @@
           {#each txt.opciones.creditos as [rotulo, texto]}
             <div class="resumen"><p class="rotulo">{rotulo}</p><p class="grande">{texto}</p></div>
           {/each}
+          <div class="resumen">
+            <p class="rotulo">{txt.opciones.estudio}</p>
+            <!-- shortcut: marca de texto en lugar del logo del estudio; cambiarla cuando haya archivo. Logro secreto «e». -->
+            <button class="logo-estudio" onclick={tocarLogo}><span aria-hidden="true">e<sup>x</sup></span>{txt.opciones.logoEstudio}</button>
+          </div>
         </section>
 
       {:else}
@@ -282,6 +283,12 @@
   .desc { margin: 0 0 1rem; font-size: 0.875rem; color: var(--tenue); text-wrap: pretty; }
   .aviso { margin: 0 0 1.5rem; font-size: 0.9375rem; color: var(--ambar); }
   .rotulo { margin: 0 0 0.25rem; font-size: 0.875rem; color: var(--tenue); }
+  .logo-estudio {
+    display: inline-flex; align-items: baseline; gap: 0.5rem; min-height: 44px; padding: 0; border: 0; background: none;
+    color: var(--tinta); font: inherit; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; cursor: pointer;
+  }
+  .logo-estudio span { font-size: 1.5rem; color: var(--ambar); font-style: italic; }
+
 
   /* Aspecto: una grilla de tarjetas por tipo, con la vista previa hecha con el motor de la pila. */
   .grupo { margin-bottom: 2.5rem; }

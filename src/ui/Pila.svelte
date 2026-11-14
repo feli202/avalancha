@@ -6,9 +6,9 @@
   import { txt } from '../strings'
   import { formatoMult } from './formato'
   import { ajustes } from './ajustes.svelte'
-  import { COLORES_DALTONISMO, EFECTOS, PALETAS } from '../render/paletas'
+  import { COLORES_DALTONISMO, EFECTOS, FONDOS, PALETAS, css } from '../render/paletas'
   import { contarAvalancha, muestraAvalancha } from '../guardado/historial'
-  import { camara, hayPanel, historial, invitaTocar, juego, progresoCompresion, sismo } from './juego.svelte'
+  import { camara, enZoomMaximo, hayPanel, historial, invitaTocar, juego, ponerZoom, progresoCompresion, sismo, vigia, zoomActual } from './juego.svelte'
   import { elegido } from './logros'
   import * as sonido from './sonido'
   import { grabacion } from './grabacion'
@@ -19,6 +19,13 @@
   const IMPLOSION_MS = 900 // lo que dura la animación implotar del CSS
 
   let canvas: HTMLCanvasElement
+  /** Logro secreto Arena: granos de un solo color de la paleta en uso, elegido al azar en cada lluvia. */
+  const GRANOS_LLUVIA = 80
+  const colorLluvia = $derived.by(() => {
+    if (!juego.lluvia) return ''
+    const p = ajustes.daltonismo ? COLORES_DALTONISMO : PALETAS[elegido('paleta', Object.keys(PALETAS), ajustes.paleta, juego.logros)]
+    return css(p[Math.floor(Math.random() * p.length)])
+  })
   /** Radio máximo de la pila en px CSS: el ancho de .tope (App.svelte fija --pila-radio-max). */
   let radioMax = $state(0)
   let sinWebGL = $state(false)
@@ -43,9 +50,34 @@
   const quitar = (id: number) => (efectos = efectos.filter((e) => e.id !== id))
 
   function soltar() {
+    vigia.clic(Date.now()) // Esto no es un clicker: cuentan todos, también los que el tope del Puñado no deja pasar
     juego.s = punado(juego.s)
     if (!juego.vistos.punado) juego.vistos = { ...juego.vistos, punado: true }
   }
+
+  // Zoom: rueda (y el pellizco del trackpad, que llega como rueda con Ctrl) y pellizco con dos dedos.
+  function rueda(e: WheelEvent) {
+    e.preventDefault() // con Ctrl, el navegador haría zoom de la página
+    ponerZoom(zoomActual() * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.002)))
+  }
+  const dedos = new Map<number, PointerEvent>()
+  let pellizco = { d: 0, z: 0 }
+  const distancia = () => {
+    const [a, b] = [...dedos.values()]
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+  }
+  function bajar(e: PointerEvent) {
+    dedos.set(e.pointerId, e)
+    canvas.setPointerCapture(e.pointerId)
+    if (dedos.size === 2) pellizco = { d: distancia(), z: zoomActual() }
+    else if (dedos.size === 1) soltar() // el segundo dedo de un pellizco no es un Puñado
+  }
+  function mover(e: PointerEvent) {
+    if (!dedos.has(e.pointerId)) return
+    dedos.set(e.pointerId, e)
+    if (dedos.size === 2 && pellizco.d > 0) ponerZoom((pellizco.z * distancia()) / pellizco.d)
+  }
+  const levantar = (e: PointerEvent) => dedos.delete(e.pointerId)
 
   function tecla(e: KeyboardEvent) {
     // En un botón o un campo, la barra hace lo suyo.
@@ -71,6 +103,7 @@
     pila.alMuestra = (n) => {
       if (fin()) return
       muestraAvalancha(historial, n)
+      vigia.avalancha(n)
       if (n > juego.record) juego.record = n
     }
     pila.alTamano = (n) => {
@@ -92,7 +125,12 @@
       ? COLORES_DALTONISMO
       : PALETAS[elegido('paleta', Object.keys(PALETAS), ajustes.paleta, juego.logros)]))
     $effect(() => void (pila.efecto = EFECTOS.indexOf(elegido('efecto', EFECTOS, ajustes.efecto, juego.logros))))
+    $effect(() => void (pila.fondo = elegido('fondo', FONDOS, ajustes.fondo, juego.logros)))
     $effect(() => void (pila.radioMax = radioMax || Infinity))
+    $effect(() => void (pila.acercar = juego.zoom))
+    canvas.addEventListener('wheel', rueda, { passive: false })
+    let cuadroAntes = 0
+    let compZoom = juego.s.compresiones
     camara.foto = () => pila.foto()
     let entro = juego.titulo ? -1 : 0 // ms en que se tocó Jugar (0: no hubo título)
     let anillosAntes = anillos(juego.s.granos)
@@ -112,6 +150,10 @@
       // Modo grabación (debug): el guion maneja la pila; acá no pasa nada más.
       if (grabacion.cuadro) return void ((raf = requestAnimationFrame(cuadro)), grabacion.cuadro(ahora))
       const s = juego.s
+      // Microscopio: tiempo real con el zoom al máximo en esta Compresión (sin contar el título ni la pestaña oculta).
+      if (s.compresiones !== compZoom) (compZoom = s.compresiones), (juego.zoomMaxS = 0)
+      if (enZoomMaximo() && !juego.titulo) juego.zoomMaxS += Math.min(0.1, (ahora - cuadroAntes) / 1000)
+      cuadroAntes = ahora
       // Título: la pila quieta y lejos. Al entrar, la cámara se acerca.
       if (!juego.titulo && entro < 0) entro = ahora
       const t = entro < 0 ? 0 : ajustes.reducirDestellos || !entro ? 1 : Math.min(1, (ahora - entro) / ACERCAR_MS)
@@ -148,6 +190,8 @@
         granosAntes = s.granos
       }
       juego.escalaK = pila.escalaK
+      const zm = Math.round(pila.pxAuto * 100) / 100
+      if (zm !== juego.zoomMin) juego.zoomMin = zm
       const r = Math.round(pila.radioCss)
       if (r !== juego.radioPila) juego.radioPila = r
       // SPEC 5: el color nuevo recorre la pila, del centro al borde.
@@ -176,9 +220,16 @@
 <svelte:window onkeydown={tecla} />
 
 <div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:colapsa={juego.s.infinitos > 0} class:quieto={ajustes.reducirDestellos}>
-  <canvas bind:this={canvas} onpointerdown={soltar} aria-label={txt.pila}></canvas>
+  <canvas bind:this={canvas} onpointerdown={bajar} onpointermove={mover} onpointerup={levantar} onpointercancel={levantar} aria-label={txt.pila}></canvas>
   <div class="tope" bind:clientWidth={radioMax}></div>
   {#if sinWebGL}<p class="sin-webgl" role="alert">{txt.sinWebGL}</p>{/if}
+  {#if juego.lluvia && !ajustes.reducirDestellos}
+    {#key juego.lluvia.id}
+      <div class="lluvia" style:--c={colorLluvia} aria-hidden="true">
+        {#each { length: GRANOS_LLUVIA } as _, i}<i style:left="{(i * 37.3) % 100}%" style:--d="{(i * 0.173) % 1.7}s" style:--v="{1.1 + ((i * 0.29) % 0.9)}s"></i>{/each}
+      </div>
+    {/key}
+  {/if}
   <div class="efectos" class:quieto={ajustes.reducirDestellos} aria-hidden="true">
     {#if juego.vistos.compresion && comp.meta !== undefined}
       <!-- Compresión: el anillo se cierra con el progreso (escala logarítmica); al 100 % brilla. -->
@@ -218,7 +269,7 @@
   .pila { position: fixed; inset: var(--pila-arriba, 0) 0 var(--pila-abajo, 0) 0; transition: top 0.6s ease, bottom 0.6s ease; }
   .sin-webgl { position: absolute; left: 50%; top: 50%; translate: -50% -50%; max-width: 20rem; white-space: normal; text-align: center; color: var(--tenue); }
   .tope { position: absolute; width: var(--pila-radio-max, 100vw); height: 0; pointer-events: none; }
-  canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: manipulation; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; } /* none: el pellizco es el zoom de la pila, no el de la página */
   p { margin: 0; font-variant-numeric: tabular-nums; pointer-events: none; white-space: nowrap; }
   .efectos { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
   .compresion { position: absolute; translate: -50% -50%; overflow: visible; transition: width 0.6s, height 0.6s; }
@@ -272,6 +323,15 @@
   @keyframes desvanecer { from { opacity: 1; } to { opacity: 0; } }
   @keyframes ola { from { transform: scale(0.05); opacity: 0.9; } 70% { opacity: 0.7; } to { transform: scale(1.08); opacity: 0; } }
   @keyframes tenir { from { opacity: 0.25; } to { opacity: 0; } }
+
+  /* Logro secreto Arena: granos de un color que caen sobre toda la pila (10 s, juego.svelte.ts). */
+  .lluvia { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .lluvia i {
+    position: absolute; top: -8px; width: 3px; height: 3px; background: var(--c); box-shadow: 0 0 6px var(--c);
+    animation: caer var(--v) var(--d) linear infinite backwards;
+  }
+  @keyframes caer { from { transform: translateY(0); } to { transform: translateY(calc(100vh + 16px)); } }
+
 
   /* SPEC 6.5, Compresión (1,5 s): la pila implota hacia el centro (0,9 s) dentro de un remolino de los cuatro colores,
      destello blanco que tapa el vaciado, y la Densidad nueva sube. */

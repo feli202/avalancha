@@ -57,7 +57,51 @@ export function marco(g: Ctx, id: string, c: number, r: number, color: string) {
       g.fillStyle = '#07080f'; g.fillRect(c - r * 0.12, c + r * 1.06 - r * 0.07, r * 0.24, r * 0.14)
       g.fillStyle = color; g.fillText('∞', c, c + r * 1.06)
       break
+    // Logros secretos.
+    case 'galleta': { // borde ondulado de galleta con chispas de chocolate
+      g.globalAlpha = 1; g.fillStyle = '#c98a4b'
+      g.beginPath()
+      for (let j = 0; j <= 240; j++) {
+        const a = (j / 240) * Math.PI * 2, rr = r * (1.12 + 0.025 * Math.sin(a * 18) + 0.01 * Math.sin(a * 47))
+        g.lineTo(c + Math.cos(a) * rr, c + Math.sin(a) * rr)
+      }
+      g.arc(c, c, r * 1.03, 0, Math.PI * 2, true) // el agujero de la pila
+      g.fill('evenodd')
+      g.fillStyle = '#3b2314'
+      for (let j = 0; j < 22; j++) {
+        const a = j * 2.39996, rr = r * (1.065 + ((j * 37) % 5) * 0.012)
+        g.beginPath(); g.arc(c + Math.cos(a) * rr, c + Math.sin(a) * rr, r * (0.014 + (j % 3) * 0.005), 0, Math.PI * 2); g.fill()
+      }
+      break
+    }
+    case 'polaroid': { // marco blanco cuadrado, más ancho abajo
+      const m = r * 1.12
+      g.globalAlpha = 1; g.fillStyle = '#ece8df'
+      g.beginPath(); g.rect(c - m - r * 0.08, c - m - r * 0.08, 2 * m + r * 0.16, 2 * m + r * 0.5); g.rect(c - m, c - m, 2 * m, 2 * m); g.fill('evenodd')
+      break
+    }
+    case 'arenaDorada': { // anillo de arena dorada con brillos
+      const gr = g.createLinearGradient(c - r, c - r, c + r, c + r)
+      gr.addColorStop(0, '#fff1b8'); gr.addColorStop(0.5, '#d9a53a'); gr.addColorStop(1, '#8a5a12')
+      g.strokeStyle = gr; g.lineWidth = Math.max(3, r * 0.05); g.globalAlpha = 0.95
+      circulo(g, c, r * 1.08)
+      g.fillStyle = '#fff6d0'
+      for (let j = 0; j < 40; j++) {
+        const a = j * 2.39996, rr = r * (1.08 + (((j * 53) % 9) - 4) * 0.008)
+        g.globalAlpha = 0.4 + ((j * 29) % 6) / 10
+        g.beginPath(); g.arc(c + Math.cos(a) * rr, c + Math.sin(a) * rr, Math.max(1, r * 0.006), 0, Math.PI * 2); g.fill()
+      }
+      break
+    }
+    case 'exponent': // firma del estudio: anillo fino y la marca "eˣ" abajo
+      // shortcut: marca de texto, no el logo real del estudio; cambiarla cuando haya archivo del logo.
+      circulo(g, c, r * 1.06)
+      g.font = `600 ${Math.round(r * 0.13)}px system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'
+      g.fillStyle = '#07080f'; g.fillRect(c - r * 0.13, c + r * 1.06 - r * 0.08, r * 0.26, r * 0.16)
+      g.fillStyle = color; g.fillText('eˣ', c, c + r * 1.06)
+      break
   }
+
   g.globalAlpha = 1
 }
 

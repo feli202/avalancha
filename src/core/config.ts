@@ -35,6 +35,10 @@ export interface Config {
     avalancha_record: number; infinito_rapido_horas: number
     alud: number; anillo_medio: number; compresiones: number; corrida_rapida_min: number; densidad_alta: number
   }
+  /** Logros secretos (cosméticos): umbrales, nombre para Steam y recompensa [tipo, id]. Los lee src/ui/secretos.ts. */
+  secretos: Record<string, { api: string; recompensa: string[] } & Record<string, unknown>>
+  /** Fondos de la pila en orden: id -> logro que lo da (null = de inicio). */
+  fondos: Record<string, string | null>
   objetivo_minutos: Record<string, number>
 }
 

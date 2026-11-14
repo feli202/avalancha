@@ -50,8 +50,8 @@ export const UMBRAL: Record<string, number> = {
 const conNumero = (t: string | ((n: string) => string), k: string) =>
   typeof t === 'string' ? t : t(UMBRAL[k]?.toLocaleString(txt.locale) ?? '')
 /** Nombre y descripción de un logro, con su número. */
-export const nombreLogro = (k: string) => conNumero(txt.logros.lista[k][0], k)
-export const descLogro = (k: string) => conNumero(txt.logros.lista[k][1], k)
+export const nombreLogro = (k: string) => txt.logros.secretosLista[k]?.[0] ?? conNumero(txt.logros.lista[k][0], k)
+export const descLogro = (k: string) => txt.logros.secretosLista[k]?.[1] ?? conNumero(txt.logros.lista[k][1], k)
 
 /** I10: el sistema (clave de juego.vistos) que nombra cada logro; sin conseguir y sin ese sistema visto, se muestra como ???. */
 export const SISTEMA: Record<string, string> = {
@@ -63,7 +63,7 @@ export const SISTEMA: Record<string, string> = {
 export const secreto = (k: string, logros: Record<string, boolean>, vistos: Record<string, boolean>) =>
   !logros[k] && !!SISTEMA[k] && !vistos[SISTEMA[k]]
 
-export type Cosmetico = 'paleta' | 'efecto' | 'marco'
+export type Cosmetico = 'paleta' | 'efecto' | 'marco' | 'fondo'
 /** Recompensa de cada logro: solo cosmética (paletas.ts), sin efecto en el balance. */
 export const RECOMPENSA: Record<string, [Cosmetico, string]> = {
   derrumbe: ['efecto', 'blanco'], granos: ['paleta', 'brasa'], avalancha: ['efecto', 'estela'], colores: ['paleta', 'aurora'],
@@ -74,13 +74,25 @@ export const RECOMPENSA: Record<string, [Cosmetico, string]> = {
   mutaciones: ['paleta', 'negativo'], densidadAlta: ['efecto', 'oro'], infinito: ['marco', 'infinito'], infinitoRapido: ['paleta', 'oroViejo'],
 }
 
+/** Logros secretos, en el orden de la pantalla (las condiciones, en secretos.ts). */
+export const SECRETOS = Object.keys(CFG.secretos)
+/** Recompensa de un logro secreto: [tipo, id]; 'especial' no se elige en Ajustes. */
+export const premioSecreto = (k: string) => CFG.secretos[k].recompensa as [Cosmetico | 'especial', string]
+
+/** [logro, tipo, id]: lo que da cada logro, de los 24, de los secretos y de los fondos (CFG.fondos). */
+const PREMIOS: [string, string, string][] = [
+  ...Object.entries(RECOMPENSA).map(([k, [t, id]]): [string, string, string] => [k, t, id]),
+  ...SECRETOS.map((k): [string, string, string] => [k, ...premioSecreto(k)]),
+  ...Object.entries(CFG.fondos).flatMap(([id, k]): [string, string, string][] => (k ? [[k, 'fondo', id]] : [])),
+]
+
 /** Los cosméticos de un tipo que ya se pueden usar: el de siempre (el primero de la lista) y los de los logros conseguidos. */
 export const desbloqueados = (tipo: Cosmetico, todos: string[], tiene: Record<string, boolean>) =>
-  todos.filter((id, i) => i === 0 || Object.entries(RECOMPENSA).some(([k, [t, r]]) => t === tipo && r === id && tiene[k]))
+  todos.filter((id, i) => i === 0 || PREMIOS.some(([k, t, r]) => t === tipo && r === id && tiene[k]))
 
 /** El logro que da un cosmético (undefined para el de siempre). */
-export const logroDe = (tipo: Cosmetico, id: string) =>
-  Object.keys(RECOMPENSA).find((k) => RECOMPENSA[k][0] === tipo && RECOMPENSA[k][1] === id)
+export const logroDe = (tipo: Cosmetico, id: string) => PREMIOS.find(([, t, r]) => t === tipo && r === id)?.[0]
+
 
 /** El cosmético elegido si está desbloqueado; si no, el de siempre. */
 export const elegido = (tipo: Cosmetico, todos: string[], id: string, tiene: Record<string, boolean>) =>

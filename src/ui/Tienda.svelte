@@ -9,7 +9,7 @@
   import { txt } from '../strings'
   import { ayuda, ayudaItem, ayudaSimple, colorDe as color, efecto, maximo, nombre } from './ayudas.svelte'
   import { formato, hablado } from './formato'
-  import { hayPanel, juego, nombreAuto } from './juego.svelte'
+  import { hayPanel, juego, nombreAuto, vigia } from './juego.svelte'
   import * as sonido from './sonido'
 
   type Modo = keyof typeof txt.modos
@@ -47,11 +47,17 @@
     const s = juego.s
     juego.s = modo === 'x1' || !enTienda ? comprar(s, id) : modo === 'x10' ? comprarN(s, id, DIEZ) : comprarMax(s, id)
     if (juego.s !== s) sonido.compra(claveAuto(id) ?? 'other')
+    if (juego.s !== s) vigia.compraManual(juego.s)
   }
 
   const alternarAuto = (k: string) => (juego.s = { ...juego.s, auto: { ...juego.s.auto, [k]: !juego.s.auto[k] } })
 
-  const todo = () => (juego.s = comprarTodo(juego.s, items))
+  const todo = () => {
+    const s = juego.s
+    juego.s = comprarTodo(s, items)
+    if (juego.s !== s) vigia.compraManual(juego.s)
+  }
+
 
   function tecla(e: KeyboardEvent) {
     if (e.code !== 'KeyM' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || hayPanel() || e.target instanceof HTMLInputElement) return

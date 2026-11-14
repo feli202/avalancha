@@ -90,6 +90,6 @@
 
   @media (max-width: 767px) {
     .barra { flex-wrap: wrap; gap: 0.75rem 1rem; padding: 0.75rem 1rem; }
-    .pestanas { order: 3; flex-basis: 100%; flex-wrap: wrap; }
+    .pestanas { order: 3; flex-basis: 100%; flex-wrap: wrap; gap: 0 1.25rem; }
   }
 </style>

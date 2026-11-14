@@ -97,6 +97,7 @@ export const es = {
     compresiones: (n: number) => (n === 1 ? '1 compresión' : `${n.toLocaleString('es-AR')} compresiones`),
     seguir: 'Seguir',
   },
+  zoom: { nombre: 'Zoom de la pila', pista: 'Zoom de la pila. Doble clic: encuadre automático.' },
   sinWebGL: 'Este navegador no puede dibujar la pila (falta WebGL2). El juego sigue andando: probá con otro navegador o activá la aceleración por hardware.',
   /** Lo que todavía no apareció (logros, Cómo funciona). */
   secreto: '???',
@@ -199,7 +200,7 @@ export const es = {
     pendiente: 'Sin conseguir',
     /** La notificación al conseguir uno. */
     nuevo: 'Logro conseguido',
-    recompensa: { paleta: 'Paleta', efecto: 'Efecto', marco: 'Marco' } as Record<string, string>,
+    recompensa: { paleta: 'Paleta', efecto: 'Efecto', marco: 'Marco', fondo: 'Fondo', especial: 'Especial' } as Record<string, string>,
     /** Nombre y descripción; n es el número del logro (logros.ts, UMBRAL), ya con formato. */
     lista: {
       derrumbe: ['Primer derrumbe', () => 'Una celda junta 4 granos y se derrumba.'],
@@ -226,22 +227,54 @@ export const es = {
       relampago: ['Corrida relámpago', (n) => `Comprimir en menos de ${n} minutos de corrida.`],
       piloto: ['Piloto automático', () => 'Todos los autocompradores desbloqueados y encendidos a la vez.'],
       densidadAlta: [(n) => `Densidad ^${n}`, (n) => `Llegar a Densidad ^${n}.`],
+      /** Capa 1 (todavía no existe): lo nombra el fondo Hielo. */
+      cristal: ['Primer Cristal', () => 'Conseguir el primer Cristal.'],
     } as Record<string, [string | ((n: string) => string), (n: string) => string]>,
+    /** Logros secretos (CFG.secretos): nombre, descripción y la pista que se ve mientras están ocultos. */
+    secretos: 'Secretos',
+    secretosLista: {
+      galleta: ['Esto no es un clicker', 'Tocar la pila 50 veces en menos de 10 segundos.', 'Tanto va el dedo a la arena, que al final se hornea.'],
+      paciencia: ['Paciencia geológica', 'Mirar la pila 10 minutos sin tocar nada.', 'Quien no mueve un dedo ve crecer la montaña.'],
+      anio1987: ['1987', 'Una sola avalancha de 1.987 derrumbes o más.', 'Toda avalancha tiene su año.'],
+      tormenta: ['Tormenta perfecta', 'Una avalancha 300 veces más grande que el promedio de la corrida.', 'No hay mal que por bien no caiga.'],
+      conmutativo: ['Conmutativo', 'Comprar Coral antes que Ámbar en una misma corrida.', 'El orden de los factores no altera la arena.'],
+      minimalista: ['Minimalista', 'Comprimir sin haber comprado Caudal en esa corrida.', 'Sin río también se hace montaña.'],
+      monocromo: ['Monocromo', 'Llegar a 1e12 de Energía en una corrida con solo Ámbar comprado.', 'Del color que se lo mire, todo es ámbar.'],
+      microscopio: ['Microscopio', 'Una corrida entera, del principio a la Compresión, con el zoom al máximo.', 'El que mira de cerca no ve la montaña.'],
+      fotografo: ['Fotógrafo', 'Sacar 111 fotos del mandala.', 'Una imagen vale más que mil granos.'],
+      insomnio: ['Insomnio', 'Jugar en cada una de las 24 horas del reloj.', 'No hay hora que no tenga su grano.'],
+      capicua: ['Capicúa', 'Después de una compra a mano, los niveles de Caudal y de los colores forman un capicúa.', 'Al derecho y al revés, la misma pila es.'],
+      volviste: ['Volviste', 'Volver después de 7 días sin abrir el juego.', 'El que se va sin que lo echen vuelve sin que lo llamen.'],
+      borde: ['Al borde', 'Tener 1e307 de Energía y esperar 10 minutos sin llegar al Infinito.', 'Al borde del abismo, el apuro es mal consejero.'],
+      konami: ['Arriba arriba abajo abajo', 'El código Konami.', 'Quien conoce el camino lo recorre de memoria.'],
+      arena: ['Arena', 'Escribir «arena» (se repite cada vez).', 'En boca cerrada no entra arena.'],
+      firma: ['e', 'Tocar el logo de Exponent en Créditos.', 'Detrás de todo número hay una firma.'],
+    } as Record<string, [string, string, string]>,
+    /** Lo que dice un cosmético bloqueado por un logro secreto todavía oculto. */
+    secretoOculto: 'secreto',
   },
   /** Nombres de las recompensas de los logros (paletas.ts). */
   cosmeticos: {
     paleta: {
       arena: 'Arena', brasa: 'Brasa', aurora: 'Aurora', glaciar: 'Glaciar', ceniza: 'Ceniza', musgo: 'Musgo',
       tinta: 'Tinta', negativo: 'Negativo', oroViejo: 'Oro viejo',
+      papelViejo: 'Papel viejo', todoAmbar: 'Todo Ámbar', simetria: 'Simetría',
     },
     efecto: {
       normal: 'Del color de la celda', blanco: 'Destello blanco', estela: 'Estela larga', chispas: 'Chispas',
       cascada: 'Onda doble', relampago: 'Relámpago', mutante: 'Mutante', arcoiris: 'Arcoíris', oro: 'Oro',
+      rayo: 'Rayo', lupa: 'Lupa', arcoirisVivo: 'Arcoíris vivo', espejo: 'Estela espejo', horizonte: 'Estela horizonte',
     },
     marco: {
       ninguno: 'Sin marco', fino: 'Fino', doble: 'Doble', anillos: 'Anillos', orbitas: 'Órbitas', muescas: 'Muescas',
       denso: 'Denso', rosa: 'Rosa de los vientos', infinito: 'Infinito',
+      galleta: 'Galleta', polaroid: 'Polaroid', arenaDorada: 'Arena dorada', exponent: 'Exponent',
     },
+    fondo: {
+      noche: 'Noche', arenaSeca: 'Arena seca', milimetrado: 'Papel milimetrado', desierto: 'Desierto de noche',
+      fractal: 'Fractal', hielo: 'Hielo', aurora: 'Aurora', vacio: 'Vacío',
+    },
+    especial: { lluvia: 'Lluvia de granos al escribir «arena»' },
   } as Record<string, Record<string, string>>,
   opciones: {
     creditos: [['Hecho por', 'feli202'], ['Inspirado en', 'Antimatter Dimensions y Revolution Idle']] as [string, string][],
@@ -253,6 +286,12 @@ export const es = {
     paletaDesc: 'Los colores de la arena, de la celda más común a la más rara.',
     efectoDesc: 'Cómo destellan las celdas que se derrumban. Pasá el mouse para verlo.',
     marcoDesc: 'El marco de la foto del mandala, que se descarga como imagen.',
+    fondo: 'Fondo',
+    fondoDesc: 'Lo que se ve detrás de la pila.',
+    /** Créditos: el logo del estudio (logro secreto «e»). */
+    estudio: 'Estudio',
+    logoEstudio: 'Exponent',
+
     fotoDesc: 'Guarda la pila tal como está ahora, con el marco elegido.',
     notacionDesc: 'Cómo se escriben los números grandes.',
     /** El mismo número, 1,23 × 10^46, en cada notación. */
@@ -489,6 +528,7 @@ export const es = {
     caudalMas: 'Caudal +1 nivel',
     pilaA: (n: number) => `Pila a ${n.toLocaleString('es-AR')}`,
     pilaLlena: 'Pila llena (redonda)',
+    avalancha: 'Avalancha grande',
     borrar: 'Borrar partida',
     nivelColores: 'Nivel de los colores (0 = real)',
     fps: 'fps',

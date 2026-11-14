@@ -1,5 +1,6 @@
 // Worker de la pila visual: recibe cuántos granos soltar y devuelve qué se derrumbó.
 import { LADO, LOTE, Pila } from './pila'
+import { leerFotos } from './fotos'
 import url from '../assets/pilas.bin?url'
 import FOTOS from '../assets/pilas.json'
 
@@ -42,9 +43,7 @@ let pila = new Pila()
 let midiendo = false // el grano de muestra todavía se está derrumbando (puede seguir en el próximo pedido)
 let muestra = 0
 // null si fallan (I6): sin esto el pedido de foto no contesta nunca y la pila queda congelada.
-const fotos: Promise<Uint8Array | null> = fetch(url)
-  .then((r) => { if (!r.ok) throw new Error(`pilas.bin: ${r.status}`); return new Response(r.body!.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer() })
-  .then((b) => new Uint8Array(b))
+const fotos: Promise<Uint8Array | null> = leerFotos(url)
   .catch((e) => { console.warn(e); return null })
 
 /** Arma la pila entera espejando el cuadrante guardado; devuelve las celdas de adentro con 0 granos. */

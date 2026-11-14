@@ -48,5 +48,29 @@
               "avalancha_record": 1000000, "infinito_rapido_horas": 2,
               "alud": 10000, "anillo_medio": 25, "compresiones": 10, "corrida_rapida_min": 8, "densidad_alta": 3 },
 
+  "_secretos": "Logros secretos (cosméticos: sim.py no los lee). api: nombre del logro oculto en Steam. recompensa: [tipo, id] de paletas.ts o de fondos; 'especial' no se elige.",
+  "secretos": {
+    "galleta":     { "api": "SECRET_COOKIE", "icono": "galleta", "clics": 50, "segundos": 10, "recompensa": ["marco", "galleta"] },
+    "paciencia":   { "api": "SECRET_PATIENCE", "minutos": 10, "recompensa": ["fondo", "desierto"] },
+    "anio1987":    { "api": "SECRET_1987", "derrumbes": 1987, "recompensa": ["paleta", "papelViejo"] },
+    "tormenta":    { "api": "SECRET_PERFECT_STORM", "veces_promedio": 300, "muestras_min": 100, "recompensa": ["efecto", "rayo"] },
+    "conmutativo": { "api": "SECRET_COMMUTATIVE", "recompensa": ["efecto", "espejo"] },
+    "minimalista": { "api": "SECRET_MINIMALIST", "recompensa": ["fondo", "vacio"] },
+    "monocromo":   { "api": "SECRET_MONOCHROME", "energia_log10": 12, "recompensa": ["paleta", "todoAmbar"] },
+    "microscopio": { "api": "SECRET_MICROSCOPE", "margen_s": 3, "recompensa": ["efecto", "lupa"] },
+    "fotografo":   { "api": "SECRET_PHOTOGRAPHER", "capturas": 111, "recompensa": ["marco", "polaroid"] },
+    "insomnio":    { "api": "SECRET_INSOMNIA", "recompensa": ["fondo", "aurora"] },
+    "capicua":     { "api": "SECRET_PALINDROME", "distintos_de_cero": 3, "recompensa": ["paleta", "simetria"] },
+    "volviste":    { "api": "SECRET_WELCOME_BACK", "dias": 7, "recompensa": ["marco", "arenaDorada"] },
+    "borde":       { "api": "SECRET_ON_THE_EDGE", "energia_log10": 307, "minutos": 10, "recompensa": ["efecto", "horizonte"] },
+    "konami":      { "api": "SECRET_KONAMI", "teclas": ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "KeyB", "KeyA"], "recompensa": ["efecto", "arcoirisVivo"] },
+    "arena":       { "api": "SECRET_SAND", "palabras": ["arena", "sand"], "lluvia_s": 10, "recompensa": ["especial", "lluvia"] },
+    "firma":       { "api": "SECRET_SIGNATURE", "recompensa": ["marco", "exponent"] }
+  },
+
+  "_fondos": "Fondos de la pila (Ajustes > Aspecto), en orden: id -> logro que lo da (null = de inicio). 'cristal' es de la Capa 1: queda bloqueado.",
+  "fondos": { "noche": null, "arenaSeca": "compresion", "milimetrado": "anillo", "desierto": "paciencia", "fractal": "infinito",
+              "hielo": "cristal", "aurora": "insomnio", "vacio": "minimalista" },
+
   "objetivo_minutos": { "jugador_activo_revisa_cada_15s": 194, "revisa_cada_60s": 228, "revisa_cada_5min": 376 }
 }

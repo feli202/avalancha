@@ -5,6 +5,8 @@
   import { txt } from '../strings'
   import { borrarPartida, juego } from './juego.svelte'
   import { IDS, grabarClips } from './clips'
+  import { grabacion } from './grabacion'
+  import { RITMO_MAX } from '../render/pilaVisual'
 
   // ?grabar=todos (o ?grabar=regla,unica): graba solo al cargar, para un navegador aparte que no frene los cuadros.
   const pedidos = new URLSearchParams(location.search).get('grabar')
@@ -67,6 +69,7 @@
     {/each}
     <!-- Más que la capacidad (~463.000) más el relleno del 12 %: la pila llega al círculo y queda redonda. -->
     <button onclick={() => (juego.s = { ...juego.s, granos: Math.max(juego.s.granos, 600_000) })}>{txt.debug.pilaLlena}</button>
+    <button onclick={() => grabacion.pila?.echar(RITMO_MAX)}>{txt.debug.avalancha}</button>
   </div>
   <label>
     {txt.debug.nivelColores} ({juego.nivelColores})
