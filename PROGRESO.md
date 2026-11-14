@@ -729,7 +729,7 @@ Además: el test de 8 h fuera de línea tiene timeout de 30 s (estaba al borde d
 ### Sin resolver (necesitan una decisión o permiso)
 
 1. ~~**M8**~~ — resuelto con tu OK: `objetivo_minutos` = 194 / 228 / 376.
-2. **M13** — la fuente sigue viniendo de Google Fonts: falta agregar `@fontsource/space-grotesk` (o los `.woff2` en `public/`).
+2. ~~**M13**~~ — resuelto con tu OK: la fuente viene de `@fontsource/space-grotesk`, sin Google Fonts.
 3. **M17** — `balance/pila.c` sigue sin compilar: no hay compilador de C en esta máquina.
 4. **Pila en móvil (I4)** — SPEC 6.4 dice "pila arriba (55 %)" y `PENDIENTES.md` pedía el centro exacto. Quedó como la spec.
 5. **Logro de avalancha récord (I9)** — con avalanchas reales, 1e6 derrumbes sale en segundos con la pila llena. Si se quiere más raro, subir `logros.avalancha_record` (balance).

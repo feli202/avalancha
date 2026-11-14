@@ -4,8 +4,7 @@ Fecha: 13/11/2026 · commit auditado: `395d3aa` · no se cambió código.
 
 ## Resumen
 
-> **Estado al 13/11/2026 (después de la auditoría):** resueltos el bloqueante, los 11 importantes y 15 de los 17 menores (M15 sale con I5). Quedan dos, que no podía cerrar solo:
-> - **M13**: servir la fuente desde el proyecto (hay que agregar `@fontsource/space-grotesk` o los `.woff2`).
+> **Estado al 13/11/2026 (después de la auditoría):** resueltos el bloqueante, los 11 importantes y 16 de los 17 menores (M15 sale con I5). Queda uno, que no podía cerrar solo:
 > - **M17**: compilar `balance/pila.c` (no hay compilador de C en esta máquina).
 > Decisiones abiertas: la pila en móvil (I4, contra SPEC 6.4) y si el logro de avalancha récord se vuelve más raro (I9, balance).
 
@@ -300,9 +299,9 @@ Limitaciones: no escuché el sonido, no probé en un celular real ni en Safari o
 - **Qué pasa:** `midiendo` queda como estaba; el primer pedido después de la foto puede anotar una muestra vieja en el histograma. Un dato falso por foto.
 - **Arreglo propuesto:** `midiendo = false` en el camino de la foto.
 
-### M13. La fuente viene de Google Fonts
+### M13. La fuente viene de Google Fonts — ✅ resuelto
 
-- **⚠️ Pendiente, necesita tu permiso:** el arreglo es `npm i @fontsource/space-grotesk` (o bajar los `.woff2` a `public/`) e importarla en `src/main.ts`; no agregué la dependencia sin tu OK.
+- **Resuelto (con OK del usuario):** `@fontsource/space-grotesk` (subconjunto latino, pesos 400–700) importada en `src/main.ts`; fuera los enlaces a Google Fonts de `index.html`. El build empaqueta cuatro `.woff2` de ~13 KB. Verificado en Edge headless: carga desde el proyecto, ningún pedido a Google.
 
 - **Dónde:** `index.html:8-10`. Anotado como pendiente en el hito 3.
 - **Qué pasa:** sin conexión (o empaquetado) cae a la fuente del sistema, y las cifras tabulares y los anchos cambian. SPEC 8 pide no depender del navegador fuera del almacenamiento.
