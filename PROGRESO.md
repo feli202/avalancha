@@ -746,6 +746,7 @@ Además: el test de 8 h fuera de línea tiene timeout de 30 s (estaba al borde d
 - **Rutas relativas**: `base: './'` en `vite.config.ts`. `dist/index.html` pide `./assets/…` y `./logo.svg`; el worker y `pilas.bin` cargan con rutas relativas.
 - **Créditos**: pestaña nueva "Créditos" en Ajustes ("Hecho por feli202" e "Inspirado en Antimatter Dimensions y Revolution Idle"), textos en `strings/es.ts` y `en.ts`. En móvil las cinco pestañas pasan a dos renglones.
 - **`avalancha-demo.zip`**: el contenido de `dist/` con `index.html` en la raíz, **241 KB** (240.996 bytes, 14 archivos). Está en `.gitignore`: se regenera con `npm run build` y comprimiendo `dist/*`.
+- **Portada** (`marketing/portada.png`, 1260×1000, la proporción 630×500 que pide itch.io): la pila grande de la captura 2, el logo y "Avalancha" en Space Grotesk 700, armada en HTML y capturada con Edge headless.
 - **`PUBLICACION.md`**: título, descripción corta y larga y etiquetas, en inglés.
 - **Capturas** en `marketing/` a 1920×1080, sacadas de una partida a ×50 en Edge headless (panel de debug, tooltips e indicadores de guía ocultos por CSS solo para la foto; 17 compresiones e Infinito en 326 s reales, sin errores en la consola): `1-pila-chica.png` (primera corrida, ~6.000 granos), `2-pila-grande-avalancha.png` (Compresión 9, pila llena), `3-compresion.png` (el destello de la Compresión 5 con la pila nueva) y `4-infinito.png` (la pila volviéndose blanca desde el centro). 6,7 MB en total.
 
