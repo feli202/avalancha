@@ -833,13 +833,13 @@ Todos: texto grande desde el primer cuadro, dentro de la zona segura (arriba, ce
 
 Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `balance/sim_capa1.py`.
 
-**Hito actual: C1 (sin empezar).**
+**Hito actual: C2 (sin empezar). C1 terminado el 2026-11-15.**
 
 ## Plan (SPEC_CAPA1 §16)
 
 **Actualización 1.1**
 
-- [ ] C1 — Guardado v2 + migración, Cristales, Infinito nuevo, barra lateral de capas y de Cristalización (pantallas vacías)
+- [x] C1 — Guardado v2 + migración, Cristales, Infinito nuevo, barra lateral de capas y de Cristalización (pantallas vacías)
 - [ ] C2 — Red: datos desde config, forma de rombo, compra, apertura de vecinos, Memoria (automatización)
 - [ ] C3 — Relicario: ofertas con semilla, fusión, engarces, efectos
 - [ ] C4 — Estratos: lógica (`s_k`, Presión, compras) + interfaz 2D provisoria
@@ -856,6 +856,53 @@ Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `bala
 - [ ] C12 — Defectos 5–8
 - [ ] C13 — Fin de la Capa 1 (hito + pantalla) + test de balance completo
 - [ ] C14 — Pulido y auditoría 1.2 → publicar
+
+## C1 — Guardado, Cristales, Infinito nuevo y barras de capas (2026-11-15)
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/core/config1.ts` | Única puerta a `balance/config_capa1.json` (`CFG1`). Tipa solo lo que el código ya usa (`cristales.primer_infinito`, `cristales.base_log10`); cada hito agrega lo suyo. |
+| `src/core/infinito.ts` | `cristalesAlInfinito(s)` y `infinito(s)`: cobra los Cristales y reinicia la Arena. |
+| `src/core/state.ts` | `cristales` y `cristalesTotales` (`Decimal`). `infinitos` ahora **cuenta** los Infinitos hechos. |
+| `src/core/formulas.ts` | `enInfinito(s)`: la Energía llegó a 1e308 y la economía espera el Infinito. Reemplaza a todos los `infinitos > 0` que querían decir "congelado" (tick, puñado, tienda, Compresión, fuera de línea, secretos, foto, test de balance). |
+| `src/core/tick.ts` | La Energía se frena en 1e308 (`Decimal.min`), también con el Puñado. Ya no pone `infinitos = 1`. |
+| `src/guardado/guardado.ts` | `VERSION = 3`, Cristales serializados como `[mantisa, exponente]`, migración. |
+| `src/ui/Capas.svelte` | Nuevo. Barra lateral de capas y la pantalla de Cristalización con su segunda barra. |
+| `src/ui/juego.svelte.ts` | `juego.capa`, `juego.cinematica`, `infinitoYa()`, la cinemática del primer Infinito (`CINEMATICA_MS`), `hayCartel()`. |
+| `src/ui/Pila.svelte` | La cinemática (reemplaza el blanco y el colapso de SPEC 6.6). |
+| `src/ui/App.svelte` | Botón Infinito, línea de Cristales, lugar para la barra. Se fue la pantalla "Llegaste al Infinito". |
+| `tests/fixtures/guardado_capa0_infinito.json` | Guardado real de la Capa 0 para el test de migración. |
+
+- **Infinito (SPEC_CAPA1 §4, sin Romper).** Al llegar a 1e308 la Energía se frena y la Arena queda quieta. El **primer** Infinito llega solo, con la cinemática; los siguientes se hacen con el botón (donde estaba Comprimir; tecla C), que muestra cuántos Cristales da. El primero da `primer_infinito` (1, igual que `sim_capa1.py`, que arranca con 1 Cristal); después `floor(10^(mult + base_log10))` = 2, con `mult = 0` hasta que exista la Red.
+- **Reinicio (§3).** Vuelve a `estadoInicial()` con 0 granos: Energía, granos, Caudal, colores, Cascada, Mutaciones, compresiones, Energía máxima y colores desbloqueados. Se conservan Cristales, Cristales totales, número de Infinitos, tiempo total, granos totales, mejor corrida, compresiones sin Ámbar y los interruptores de los autocompradores.
+- **Guardado.** La spec lo llama "v2", pero el 2 ya lo había usado el hito 5b de la Capa 0: en el archivo es **versión 3**. Los campos nuevos los completa `completar()` desde el modelo. Migración: si el guardado es anterior a la 3 y tenía el Infinito de la Capa 0 (`infinitos > 0`), al cargar se cobra ese Infinito: 1 Cristal y la Arena reiniciada. Entra directo a Cristalización, con la presentación.
+- **Barras (§11).** Barra angosta a la izquierda (Arena / Cristalización), solo después del primer Infinito; en vertical va a la esquina de arriba de la región de la pila. La columna izquierda de la Arena se corre 2,75 rem para dejarle lugar; **la pila no se mueve**. Cristalización es una pantalla completa con los contadores (Cristales, Cristales totales, Energía de la Arena) y la segunda barra: Red · Estratos · Defectos · Escarcha · Relicario, por ahora vacías con el nombre. La Arena sigue corriendo detrás.
+- **Cinemática (3,2 s).** 0–1,8 s el hielo sube desde abajo sobre la pila (seis facetas de 60° con arista fina; la pila se ve debajo sin color); 1,8–2,9 s la pila se apaga y 18 cristales (rombos de 60°) salen del centro; a los 3,2 s se cobra el Infinito y Cristalización entra desde abajo, con tres líneas que explican los Cristales y "Seguir". La pila no se mueve ni se escala en ningún momento. Con Reducir destellos: el hielo aparece y se va, sin cristales, y la pantalla entra con un fundido. Si se cierra la página a mitad, se repite al volver.
+- **Estética helada.** Tokens nuevos en `index.html`: `--hielo`, `--escarcha`, `--noche`. Sin desenfoque: líneas de grieta a 60° sobre azul noche.
+- **Debug.** "Energía a 1e307 (casi Infinito)" en el panel de debug (solo en desarrollo, plegado): 1e307 de Energía con las 17 compresiones, Cascada y Mutaciones al máximo. Los autocompradores gastan la Energía y el Infinito llega en ~30 s. Con solo la Energía no alcanzaba: sin Mutaciones la producción quedaba en 1e259/s.
+
+### Verificación
+
+- `npm test`: **167 en verde** (antes 158). Nuevos: freno en 1e308, Infinito (primero 1, después 2, reinicio campo por campo), ida y vuelta con Cristales (también exportar/importar), migración con el guardado real y migración de una partida sin Infinito. `tsc`, `svelte-check` y `npm run build` sin errores. `python balance/sim_capa1.py`: igual que antes (no se tocó el balance).
+- **Guardado real de la Capa 0**: lo escribió el código de antes de este hito (versión 2 del archivo), con el bot de 15 s jugando el núcleo hasta el Infinito (3,3 h de juego, 17 compresiones).
+- En el navegador integrado (1280×720 y 375×812), sin errores de consola del juego:
+  - Partida nueva → botón de debug → ∞ → cinemática → Cristalización con 1 Cristal → Seguir → las cinco pantallas.
+  - Segunda corrida: "Cristales 1" bajo la Energía, botón "Infinito · +2 Cristales", clic → 3 Cristales, Arena en cero, guardado con `infinitos: 2`.
+  - Migración: el guardado real puesto en `localStorage` → Continuar → 1 Cristal, Arena reiniciada, entra por Cristalización y se vuelve a guardar como versión 3.
+  - La cinemática se miró congelada en 1,3 s y 2,2 s (hielo a media altura, cristales en vuelo).
+- **No medí los 60 fps ni vi la cinemática en movimiento**: la ventana estaba oculta y el navegador integrado solo dibuja un cuadro por captura. Lo nuevo por cuadro es CSS (un `backdrop-filter` de saturación sobre el disco de la pila durante 1,8 s y 18 elementos con `transform`).
+- Con la ventana oculta (tamaño 0) la consola muestra `<svg> attribute width: NaN` del anillo de Compresión. Sale del radio de la pila sin tamaño de canvas, código que este hito no tocó; no lo investigué.
+
+### Decisiones (revisar)
+
+1. **El primer Infinito es automático y los siguientes manuales.** La spec no lo dice; §12 ("Infinitos offline solo con Memoria nv4") implica que sin Memoria es a mano.
+2. **Se reinician también la Energía máxima y los colores desbloqueados** ("todo lo de la Arena"). Los colores vuelven a aparecer con sus umbrales de siempre.
+3. **Los Infinitos siguientes no tienen animación**: aviso "+2 Cristales" arriba, el mismo texto flotando sobre la pila y el sonido de hito. Lo vistoso queda para el pulido (C9) o C6.
+4. **Se fue la pantalla final de la Capa 0** (tiempo total, compresiones, récord, "Guardá tu mandala", "Empezar de nuevo"). El botón de cámara y "Borrar partida" siguen en su lugar. Quedó sin usar `txt.foto.mandala`.
+5. **Desde Cristalización no se abren Logros, Estadísticas ni Ajustes** (los íconos y las teclas son de la Arena). Falta decidir dónde van cuando haya más de una capa.
+6. **Al volver de una ausencia con la Energía ya en 1e308 no se muestra "Mientras no estabas"** (igual que antes con el Infinito). El offline de la Capa 1 es de C8.
+7. **`dist/` quedó compilado con la Capa 1** (por el `npm run build` de la verificación): no subirlo como demo de la Capa 0.
+8. Quedan para sus hitos: la primera oferta del Relicario al llegar (C3), "???" en los sistemas cerrados y ocultar Escarcha hasta la 1.2, el logro "Primer Cristal" y la pestaña de logros de la Capa 1.
 
 ## Simulador con la Capa 0 real (2026-11-14)
 

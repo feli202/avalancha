@@ -1,6 +1,6 @@
 import type Decimal from 'break_infinity.js'
 import { CFG, MUTACIONES, type MutId } from './config'
-import { costoCaudal, costoCascada, costoColor, costoMutacion } from './formulas'
+import { enInfinito, costoCaudal, costoCascada, costoColor, costoMutacion } from './formulas'
 import type { State } from './state'
 
 /** `color0`…`color3` siguen el orden de CFG.colores. */
@@ -51,7 +51,7 @@ export function aplicar(s: State, id: ItemId): State {
 }
 
 export const puedeComprar = (s: State, id: ItemId) =>
-  s.infinitos === 0 && disponibles(s).includes(id) && s.energia.gte(costo(s, id))
+  !enInfinito(s) && disponibles(s).includes(id) && s.energia.gte(costo(s, id))
 
 /** Compra un nivel; si no se puede, devuelve el mismo estado. */
 export const comprar = (s: State, id: ItemId): State =>

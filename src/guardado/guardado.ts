@@ -1,12 +1,13 @@
 // Guardado (SPEC 8): la partida como JSON con versión. Puro: el almacenamiento entra como Almacen.
 import Decimal from 'break_infinity.js'
-import { CFG, MUTACIONES, estadoInicial, type State } from '../core'
+import { CFG, MUTACIONES, estadoInicial, infinito, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
 import type { Contadores } from '../ui/secretos'
 
 
-export const VERSION = 2
+// 3 es el "v2" de SPEC_CAPA1 §13 (el 2 ya lo usó el hito 5b de la Capa 0).
+export const VERSION = 3
 export const CLAVE = 'avalancha.guardado'
 /** Copia del último guardado que no se pudo leer. Nunca se borra sola: uno distinto mueve el anterior a RESPALDO.<fecha>. */
 export const RESPALDO = 'avalancha.respaldo'
@@ -38,7 +39,8 @@ const dec = (d: Decimal) => [d.mantissa, d.exponent]
 const plano = (p: Partida) => ({
   version: VERSION,
   ...p,
-  estado: { ...p.estado, energia: dec(p.estado.energia), maxEnergia: dec(p.estado.maxEnergia) },
+  estado: { ...p.estado, energia: dec(p.estado.energia), maxEnergia: dec(p.estado.maxEnergia),
+    cristales: dec(p.estado.cristales), cristalesTotales: dec(p.estado.cristalesTotales) },
 })
 type Plano = ReturnType<typeof plano>
 
@@ -54,6 +56,8 @@ function migrar(d: any): any {
   }
   // Guardados del desarrollo del hito 5b (código a medio recargar): versión 2 sin logros.
   if (d?.version === 2 && typeof d === 'object' && d.logros === undefined) d.logros = {}
+  // 3: Capa 1. Los campos nuevos los pone completar(); el Infinito de la Capa 0 se cobra en deserializar.
+  if (d?.version === 2) d.version = 3
   return d
 }
 
@@ -77,7 +81,9 @@ function completar(modelo: any, x: any): any {
 
 /** Tira un error si el texto no es un guardado válido. Lo que falta se completa; un tipo equivocado se rechaza. */
 export function deserializar(texto: string): Partida {
-  let d: Plano = migrar(JSON.parse(texto))
+  const crudo = JSON.parse(texto)
+  const deCapa0 = crudo?.version < 3
+  let d: Plano = migrar(crudo)
   // Sin estado o sin fecha no es una partida: no se inventa una entera.
   if (d?.version !== VERSION || typeof d.estado !== 'object' || d.estado === null || typeof d.guardadoEn !== 'number') throw new Error('guardado inválido')
   d = completar(MODELO, d)
@@ -90,15 +96,18 @@ export function deserializar(texto: string): Partida {
   // M5: rangos posibles (un guardado editado a mano o importado no deja estados imposibles).
   const ent = (x: number, max = Infinity) => Math.min(max, Math.max(0, Math.floor(x)))
   const pos = (x: number) => Math.max(0, x)
-  return {
-    estado: {
+  const estado: State = {
       ...e, energia: deDec(e.energia), maxEnergia: deDec(e.maxEnergia),
+      cristales: deDec(e.cristales), cristalesTotales: deDec(e.cristalesTotales),
       granos: pos(e.granos), granosTotales: pos(e.granosTotales), caudal: ent(e.caudal), colores: e.colores.map((n) => ent(n)),
       cascada: ent(e.cascada, CFG.cascada.nivel_max), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
       mutaciones: Object.fromEntries(MUTACIONES.map((m) => [m, ent(e.mutaciones[m], CFG.mutaciones.nivel_max)])) as State['mutaciones'],
       coloresDesbloqueados: ent(e.coloresDesbloqueados, CFG.colores.length), infinitos: ent(e.infinitos),
       tiempoTotal: pos(e.tiempoTotal), tiempoCorrida: pos(e.tiempoCorrida),
-    },
+  }
+  return {
+    // SPEC_CAPA1 §13: quien ya tenía el Infinito de la Capa 0 arranca la Capa 1 con ese Infinito cobrado (1 Cristal).
+    estado: deCapa0 && estado.infinitos > 0 ? infinito({ ...estado, infinitos: 0 }) : estado,
     guardadoEn: d.guardadoEn,
     vistos: d.vistos,
     record: d.record,

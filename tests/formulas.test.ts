@@ -2,7 +2,7 @@
 import Decimal from 'break_infinity.js'
 import { describe, expect, it } from 'vitest'
 import {
-  CFG, INFINITO, anillos, aplicar, autocomprar, cascadaC, caudal, comprar, comprarMax, comprimir, costoCascada,
+  CFG, CFG1, INFINITO, infinito, anillos, aplicar, autocomprar, cascadaC, caudal, comprar, comprarMax, comprimir, costoCascada,
   costoCaudal, costoColor, costoMutacion, densidad, disponibles, estadoInicial, multAnillos, multCascada,
   multColor, produccion, puedeComprimir, punado, tick, valor, type State,
 } from '../src/core'
@@ -139,11 +139,45 @@ describe('tick', () => {
     expect(tick(con({ ...listo, compresiones: 5 }), 0.05).compresiones).toBe(5)
     expect(tick(con({ ...listo, compresiones: 6 }), 0.05).compresiones).toBe(7)
   })
-  it('Infinito congela la economía', () => {
-    const s = tick(con({ energia: INFINITO, compresiones: 17 }), 1)
-    expect(s.infinitos).toBe(1)
+  it('la Energía se frena en 1e308 y la economía espera el Infinito', () => {
+    const s = tick(con({ energia: INFINITO.div(2), granos: 1e22, caudal: 60, colores: [116, 82, 59, 45], cascada: 10, compresiones: 17, mutaciones: { caudal: 5, colores: 5, expansion: 5, cascada: 5 } }), 1e6)
+    expect(s.energia.eq(INFINITO)).toBe(true)
+    expect(s.infinitos).toBe(0)
     expect(tick(s, 100)).toBe(s)
     expect(comprar(s, 'caudal')).toBe(s)
+    expect(punado(s)).toBe(s)
+  })
+})
+
+describe('Infinito (SPEC_CAPA1 §3 y §4, sin Romper)', () => {
+  const lleno = con({
+    energia: INFINITO, granos: 1e20, caudal: 50, colores: [100, 80, 60, 40], cascada: 10, compresiones: 17,
+    mutaciones: { caudal: 5, colores: 5, expansion: 5, cascada: 5 }, maxEnergia: INFINITO, coloresDesbloqueados: 4,
+    tiempoTotal: 9000, tiempoCorrida: 100, granosTotales: 1e21, auto: { ...estadoInicial().auto, caudal: false },
+  })
+  it('sin llegar a 1e308 no pasa nada', () => {
+    const s = con({ energia: INFINITO.div(10) })
+    expect(infinito(s)).toBe(s)
+  })
+  it('el primero da primer_infinito; los siguientes, floor(10^base)', () => {
+    const uno = infinito(lleno)
+    expect(uno.cristales.toNumber()).toBe(CFG1.cristales.primer_infinito)
+    expect(uno.infinitos).toBe(1)
+    const dos = infinito({ ...uno, energia: INFINITO })
+    const gana = Math.floor(10 ** CFG1.cristales.base_log10)
+    expect(gana).toBe(2) // SPEC_CAPA1 §4: "2 al principio"
+    expect(dos.cristales.toNumber()).toBe(CFG1.cristales.primer_infinito + gana)
+    expect(dos.cristalesTotales.eq(dos.cristales)).toBe(true)
+    expect(dos.infinitos).toBe(2)
+  })
+  it('reinicia todo lo de la Arena y conserva lo demás', () => {
+    const s = infinito(lleno)
+    const { cristales, cristalesTotales, ...resto } = s
+    expect(resto).toEqual({
+      ...estadoInicial(), cristales: undefined, cristalesTotales: undefined, granos: 0, infinitos: 1,
+      tiempoTotal: 9000, granosTotales: 1e21, auto: lleno.auto,
+    })
+    expect(tick(s, 1).energia.lt(INFINITO)).toBe(true) // la Arena vuelve a andar
   })
 })
 

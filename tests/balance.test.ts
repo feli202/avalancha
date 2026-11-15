@@ -2,7 +2,7 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import {
   CFG, aplicar, comprar, comprimir, costo, disponibles, estadoInicial, produccion, puedeComprimir, tick,
-  type ItemId,
+  enInfinito, type ItemId,
 } from '../src/core'
 
 interface Partida { infinito: number; compresiones: number[]; primeraMutacion: number; corridas: number[] }
@@ -29,7 +29,7 @@ function jugar(revisaCada: number, tmax = 30 * 3600): Partida {
     const antes = s.compresiones
     s = tick(s, dt)
     t += dt
-    if (s.infinitos > 0) return fin(t)
+    if (enInfinito(s)) return fin(t)
     if (s.compresiones > antes) comps.push(t)
     if (t < proxima) continue
     proxima = t + revisaCada

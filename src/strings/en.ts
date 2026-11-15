@@ -72,15 +72,22 @@ export const en: typeof es = {
   nivelMaximo: 'Max',
 
   infinito: '∞',
-  fin: {
-    titulo: 'You reached Infinity',
-    tiempo: 'Total time',
-    compresiones: 'Compressions',
-    record: 'Record avalanche',
-    derrumbes: (n: string) => `${n} topples`,
-    adelanto: 'Layer 1: Crystallization — coming soon',
-    empezar: 'Start over',
-    empezarSi: 'Yes, erase and start over',
+
+  // Layer 1: Crystallization
+  capas: { barra: 'Layers', arena: 'Sand', cristalizacion: 'Crystallization' },
+  cristal: {
+    cristales: 'Crystals',
+    totales: 'Total Crystals',
+    sistemas: 'Crystallization systems',
+    pantallas: { red: 'Lattice', estratos: 'Strata', defectos: 'Defects', escarcha: 'Frost', relicario: 'Reliquary' },
+    vacia: 'Nothing here yet.',
+    ganados: (n: number) => (n === 1 ? '+1 Crystal' : `+${n.toLocaleString('en-US')} Crystals`),
+    intro: [
+      'The pile reached Infinity and crystallized.',
+      'Every Infinity gives you Crystals, and this is where you spend them.',
+      'The Sand starts over, and it gets faster every time.',
+    ],
+    seguir: 'Continue',
   },
 
   ausencia: {
@@ -487,6 +494,7 @@ export const en: typeof es = {
     titulo: 'Debug',
     velocidad: 'Speed',
     darEnergia: 'Give Energy',
+    casiInfinito: 'Energy to 1e307 (almost Infinity)',
     saltar: 'Jump to Compression',
     ir: 'Go',
     exportar: 'Export state (JSON)',

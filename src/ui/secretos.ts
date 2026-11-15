@@ -1,6 +1,6 @@
 // Logros secretos (CFG.secretos): las condiciones. Sin DOM ni reloj propio: el tiempo (ms) entra como argumento.
 // juego.svelte.ts las conecta con el bucle, la pila, la tienda, el teclado y la cámara.
-import { CFG, type State } from '../core'
+import { CFG, type State , enInfinito } from '../core'
 
 const S = CFG.secretos
 const num = (k: string, campo: string) => S[k][campo] as number
@@ -82,7 +82,7 @@ export class Vigia {
     this.c.horas |= 1 << hora // el bucle no llama con la pestaña oculta ni en el título
     if (this.c.horas === TODAS_LAS_HORAS) this.ganar('insomnio')
 
-    if (s.infinitos > 0 || s.energia.lt(10 ** num('borde', 'energia_log10'))) this.alBorde = null
+    if (enInfinito(s) || s.energia.lt(10 ** num('borde', 'energia_log10'))) this.alBorde = null
     else if (this.alBorde === null) this.alBorde = ms
 
     else if (ms - this.alBorde >= num('borde', 'minutos') * MIN) this.ganar('borde')

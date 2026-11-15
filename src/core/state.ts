@@ -18,7 +18,12 @@ export interface State {
   coloresDesbloqueados: number
   /** Interruptores de los autocompradores, con las claves de CFG.autocompradores. */
   auto: Record<string, boolean>
+  /** Infinitos hechos (SPEC_CAPA1 §3). */
   infinitos: number
+  // --- Capa 1: se conserva en un Infinito ---
+  cristales: Decimal
+  /** Nunca bajan. */
+  cristalesTotales: Decimal
   tiempoTotal: number
   // --- estadísticas (SPEC 7: logros que pasan dentro del tick, también fuera de línea) ---
   /** Granos soltados en toda la partida (Caudal y Puñados). */
@@ -45,6 +50,8 @@ export const estadoInicial = (): State => ({
   coloresDesbloqueados: CFG.colores.filter((c) => c.desbloqueo_log10 <= 0).length,
   auto: Object.fromEntries(Object.keys(CFG.autocompradores).map((k) => [k, true])),
   infinitos: 0,
+  cristales: new Decimal(0),
+  cristalesTotales: new Decimal(0),
   tiempoTotal: 0,
   granosTotales: 0,
   mejorCorrida: 0,

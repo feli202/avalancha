@@ -77,15 +77,22 @@ export const es = {
 
   // Infinito (SPEC 6.6)
   infinito: '∞',
-  fin: {
-    titulo: 'Llegaste al Infinito',
-    tiempo: 'Tiempo total',
-    compresiones: 'Compresiones',
-    record: 'Avalancha récord',
-    derrumbes: (n: string) => `${n} derrumbes`,
-    adelanto: 'Capa 1: Cristalización — próximamente',
-    empezar: 'Empezar de nuevo',
-    empezarSi: 'Sí, borrar y empezar',
+
+  // Capa 1: Cristalización (SPEC_CAPA1 §11)
+  capas: { barra: 'Capas', arena: 'Arena', cristalizacion: 'Cristalización' },
+  cristal: {
+    cristales: 'Cristales',
+    totales: 'Cristales totales',
+    sistemas: 'Sistemas de Cristalización',
+    pantallas: { red: 'Red', estratos: 'Estratos', defectos: 'Defectos', escarcha: 'Escarcha', relicario: 'Relicario' } as Record<string, string>,
+    vacia: 'Todavía no hay nada acá.',
+    ganados: (n: number) => (n === 1 ? '+1 Cristal' : `+${n.toLocaleString('es-AR')} Cristales`),
+    intro: [
+      'La pila llegó al Infinito y se cristalizó.',
+      'Cada Infinito te da Cristales, que se gastan acá.',
+      'La Arena empieza de nuevo, y cada vez va a ir más rápido.',
+    ],
+    seguir: 'Seguir',
   },
 
   // Fuera de línea y guardado (SPEC 8)
@@ -522,6 +529,7 @@ export const es = {
     titulo: 'Debug',
     velocidad: 'Velocidad',
     darEnergia: 'Dar Energía',
+    casiInfinito: 'Energía a 1e307 (casi Infinito)',
     saltar: 'Saltar a la Compresión',
     ir: 'Ir',
     exportar: 'Exportar estado (JSON)',

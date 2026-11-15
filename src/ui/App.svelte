@@ -1,10 +1,11 @@
 <script lang="ts">
   // Interfaz principal (SPEC 6.4). Cada parte aparece recién cuando juego.vistos lo dice (SPEC 5).
-  import { anillos, densidad, multAnillos, produccion, puedeComprimir } from '../core'
+  import { anillos, cristalesAlInfinito, densidad, enInfinito, multAnillos, produccion, puedeComprimir } from '../core'
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import Ayuda from './Ayuda.svelte'
   import { ayuda, ayudaAnillos, ayudaComprimir, ayudaDensidad, ayudaEnergia, ayudaProduccion, ayudaSimple } from './ayudas.svelte'
+  import Capas from './Capas.svelte'
   import ComoFunciona from './ComoFunciona.svelte'
   import Debug from './Debug.svelte'
   import Opciones from './Opciones.svelte'
@@ -17,7 +18,7 @@
   import Titulo from './Titulo.svelte'
   import { formato, formatoMult, hablado } from './formato'
   import { fade } from 'svelte/transition'
-  import { borrarPartida, comprimirYa, hayPanel, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
+  import { comprimirYa, hayPanel, infinitoYa, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
   import { PX_MAX } from '../render/pilaVisual'
   import { foto, guardarImagen } from './foto.svelte'
 
@@ -26,12 +27,12 @@
 
   // Compresión: el anillo alrededor de la pila (Pila.svelte) muestra el progreso; acá, el botón con meta y porcentaje.
   const comp = $derived(progresoCompresion(s))
-  const lista = $derived(puedeComprimir(s))
-  const fin = $derived(s.infinitos > 0)
-  // M14: el final ya se vio en otra carga: aparece directo, sin repetir la secuencia.
-  const finVisto = !!juego.vistos.fin && juego.s.infinitos > 0
-  $effect(() => { if (fin && !juego.vistos.fin) juego.vistos = { ...juego.vistos, fin: true } })
-  let empezar = $state(false)
+  // SPEC_CAPA1 §4: con la Energía en 1e308 el botón pasa a Infinito. El primero llega solo, con su cinemática (juego.svelte.ts).
+  const alInf = $derived(enInfinito(s))
+  const infinitoListo = $derived(alInf && s.infinitos > 0)
+  const lista = $derived(puedeComprimir(s) || infinitoListo)
+  const accion = () => (infinitoListo ? infinitoYa() : comprimirYa())
+  const fin = $derived(juego.cinematica)
   const alternarAutoComp = () =>
     (juego.s = { ...juego.s, auto: { ...juego.s.auto, compresion_auto: !juego.s.auto.compresion_auto } })
 
@@ -48,7 +49,7 @@
     if (conTienda && e.code === 'KeyH') juego.panel = 'ayuda'
     if (e.code !== 'KeyC' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || hayPanel()) return
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-    if (juego.vistos.compresion && lista) comprimirYa()
+    if (juego.vistos.compresion && lista) accion()
   }
 
   // Al dejar el título, la clase .entrando escalona la aparición; después se saca (lo que aparezca más tarde usa .aparece).
@@ -85,16 +86,17 @@
 
 <!-- .lista: se puede comprimir; el botón y el anillo de la pila laten juntos (arrancan en el mismo cuadro). -->
 <!-- inert con un panel encima: el foco y los clics quedan en el panel. -->
-<div class="juego" class:ya={finVisto} class:en-titulo={juego.titulo} class:entrando class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel !== null} inert={hayPanel()}>
+<div class="juego" class:con-capas={s.infinitos > 0} class:en-titulo={juego.titulo} class:entrando class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel !== null} inert={hayPanel()}>
   <Pila />
 
   <header class="izq">
     <span class="etiqueta">{txt.energia}</span>
-    {#if fin}<span class="energia infinito">{txt.infinito}</span>{:else}{#key juego.primera}<span use:ayuda={ayudaEnergia} class="energia num" class:salta={juego.primera} aria-hidden="true">{formato(s.energia)}</span>{/key}<span class="sr">{hablado(formato(s.energia))}</span>{/if}
+    {#if alInf}<span class="energia infinito">{txt.infinito}</span>{:else}{#key juego.primera}<span use:ayuda={ayudaEnergia} class="energia num" class:salta={juego.primera} aria-hidden="true">{formato(s.energia)}</span>{/key}<span class="sr">{hablado(formato(s.energia))}</span>{/if}
     {#if v.tienda}<span class="linea num aparece" use:ayuda={() => ayudaProduccion(juego.s)}><b class="ambar" aria-hidden="true">+{formato(produccion(s))}</b><span class="sr">{hablado(formato(produccion(s)))}</span> {txt.energiaPorSegundo}</span>{/if}
     {#if s.compresiones > 0}
       <span class="linea num aparece" use:ayuda={() => ayudaDensidad(juego.s)}>{txt.densidad} <b>^{formatoMult(densidad(s))}</b></span>
     {/if}
+    {#if s.infinitos > 0}<span class="linea num aparece">{txt.cristal.cristales} <b class="hielo">{formato(s.cristales)}</b></span>{/if}
   </header>
 
   <div class="ajustes">
@@ -174,12 +176,13 @@
       <div class="contenido">
         <Tienda />
         {#if v.compresion}
-          <!-- Después de la última Compresión la meta es el Infinito: llega solo. -->
-          <button class="comprimir aparece" data-guia="compresion" use:ayuda={() => ayudaComprimir(juego.s)} disabled={!lista} onclick={comprimirYa} aria-keyshortcuts="C">
-            <span class="nombre">{comp.final ? txt.haciaInfinito : txt.comprimir}</span>
+          <!-- Después de la última Compresión la meta es el Infinito: el primero llega solo; los siguientes, con este botón. -->
+          <button class="comprimir aparece" data-guia="compresion" use:ayuda={() => ayudaComprimir(juego.s)} disabled={!lista} onclick={accion} aria-keyshortcuts="C">
+            <span class="nombre">{comp.final || alInf ? txt.haciaInfinito : txt.comprimir}</span>
             <span class="meta num">
               {#if !comp.final}{txt.compresion(s.compresiones + 1)}{' · '}{/if}{txt.meta(comp.meta)} · <b>{txt.progreso(comp.p)}</b>
               {#if !lista && juego.eta !== null} · {txt.eta(txt.duracion(juego.eta))}{/if}
+              {#if s.infinitos > 0 && (comp.final || alInf)} · <b class="hielo">{txt.cristal.ganados(cristalesAlInfinito(s))}</b>{/if}
             </span>
           </button>
           {#if v.auto_compresion_auto && !comp.final}
@@ -193,35 +196,7 @@
   {/if}
 </div>
 
-{#if fin}
-  <!-- SPEC 6.6: después del blanco, el colapso y un segundo de silencio, el final de la capa. -->
-  <section class="final" class:ya={finVisto} aria-label={txt.fin.titulo}>
-    <p class="simbolo" aria-hidden="true">{txt.infinito}</p>
-    <h1>{txt.fin.titulo}</h1>
-    <dl class="num">
-      <dt>{txt.fin.tiempo}</dt><dd>{txt.duracion(s.tiempoTotal)}</dd>
-      <dt>{txt.fin.compresiones}</dt><dd>{s.compresiones}</dd>
-      <dt>{txt.fin.record}</dt><dd>{txt.fin.derrumbes(formato(juego.record))}</dd>
-    </dl>
-    <p class="adelanto">{txt.fin.adelanto}</p>
-    <button class="mandala" onclick={guardarImagen} aria-keyshortcuts="P">
-      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-        <path d="M1.5 6a1.5 1.5 0 0 1 1.5-1.5h2.2L6.7 2.5h4.6l1.5 2H15A1.5 1.5 0 0 1 16.5 6v8a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 14z" /><circle cx="9" cy="9.75" r="3" />
-      </svg>
-      {txt.foto.mandala}
-    </button>
-    <nav class="salidas">
-      <button onclick={() => (juego.panel = 'logros')} aria-keyshortcuts="L">{txt.menu.logros}</button>
-      <button onclick={() => (juego.panel = 'estadisticas')} aria-keyshortcuts="E">{txt.menu.estadisticas}</button>
-      {#if empezar}
-        <button class="peligro" onclick={borrarPartida}>{txt.fin.empezarSi}</button>
-        <button onclick={() => (empezar = false)}>{txt.opciones.cancelar}</button>
-      {:else}
-        <button onclick={() => (empezar = true)}>{txt.fin.empezar}</button>
-      {/if}
-    </nav>
-  </section>
-{/if}
+<Capas />
 
 <!-- La foto: un destello suave al tocar y el aviso al terminar. -->
 {#key foto.destello}{#if foto.destello}<div class="destello" class:quieto={ajustes.reducirDestellos} aria-hidden="true"></div>{/if}{/key}
@@ -264,8 +239,10 @@
   @keyframes salta { 30% { transform: scale(1.3); color: var(--ambar); text-shadow: 0 0 1.5rem var(--ambar); } }
   @keyframes encender { 30% { color: var(--ambar); } }
 
+  /* Con la barra de capas (Capas.svelte) la columna izquierda le deja lugar; la pila no se mueve. */
+  .juego.con-capas { --barra: 2.75rem; }
   .izq {
-    position: fixed; top: var(--margen); left: var(--margen); width: var(--col);
+    position: fixed; top: var(--margen); left: calc(var(--margen) + var(--barra, 0px)); width: var(--col);
     display: grid; justify-items: start; pointer-events: none;
   }
   .etiqueta { font-size: 0.875rem; color: var(--tenue); }
@@ -286,7 +263,7 @@
     font-size: 1.1rem; color: var(--tenue); pointer-events: none; animation: latir 2.4s ease-in-out infinite;
   }
 
-  .sismo { position: fixed; left: var(--margen); bottom: var(--margen); width: var(--col); pointer-events: none; }
+  .sismo { position: fixed; left: calc(var(--margen) + var(--barra, 0px)); bottom: var(--margen); width: var(--col); pointer-events: none; }
   /* Abajo a la derecha de la pila, pegada a la columna de la tienda. */
   .zoom {
     position: fixed; right: calc(var(--col) + 2 * var(--margen)); bottom: calc(var(--margen) - 0.875rem); z-index: 2;
@@ -323,43 +300,12 @@
   .autocomp { display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; font-size: 0.8125rem; color: var(--tenue); cursor: pointer; }
   .autocomp input { width: 1.25rem; height: 1.25rem; margin: 0; accent-color: var(--tinta); }
 
-  /* SPEC 6.6, Infinito. Pila.svelte hace el blanco (0–2 s) y el colapso (2–2,8 s); el número ya es ∞; el resto se apaga,
-     un segundo de silencio y aparece el final (3,8 s). */
+  /* SPEC_CAPA1 §11, cinemática del primer Infinito (Pila.svelte): el número ya es ∞ y el resto de la Arena se apaga. */
   .infinito { animation: fundido 1.2s ease-out; text-shadow: 0 0 1.5rem rgb(255 255 255 / 0.7); }
   .juego.fin .der, .fin .sismo, .fin .aviso, .fin .ajustes { pointer-events: none; animation: irse 0.8s 1.2s ease-in forwards; }
   .fin .izq { animation: irse 0.8s 2.2s ease-in forwards; }
   @keyframes irse { to { opacity: 0; visibility: hidden; } }
-  .final {
-    position: fixed; inset: 0; z-index: 5; display: grid; place-content: center; justify-items: center; gap: 0.5rem;
-    padding: 2rem; text-align: center; background: radial-gradient(circle, rgb(20 22 40 / 0.6), transparent 70%);
-    opacity: 0; animation: llegar 1.2s 3.8s ease-out forwards;
-  }
-  .simbolo { margin: 0; font-size: clamp(4rem, 12vw, 7rem); font-weight: 300; line-height: 1; text-shadow: 0 0 2rem rgb(255 255 255 / 0.5); }
-  .final h1 { margin: 0 0 1.5rem; font-size: 1.5rem; font-weight: 600; }
-  .final dl { display: grid; grid-template-columns: auto auto; gap: 0.5rem 2rem; margin: 0 0 2rem; text-align: left; }
-  .final dt { color: var(--tenue); }
-  .final dd { margin: 0; font-weight: 600; text-align: right; }
-  .adelanto { margin: 0; font-size: 0.9375rem; color: var(--violeta); letter-spacing: 0.01em; }
-  @keyframes llegar { to { opacity: 1; } }
-  .mandala {
-    display: flex; align-items: center; gap: 0.625rem; margin-top: 2rem; min-height: 2.75rem; padding: 0 0.25rem;
-    border: 0; border-bottom: 1px solid var(--apagado); background: none; color: var(--tinta);
-    font: inherit; font-size: 1.0625rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s;
-  }
-  .mandala:hover, .mandala:focus-visible { border-color: var(--tinta); }
-  .mandala svg { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
-
-  /* Salidas del final: texto con una línea de 1 px. */
-  .salidas { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.5rem; margin-top: 1.5rem; }
-  .salidas button {
-    min-height: 2.75rem; padding: 0 0.25rem; border: 0; border-bottom: 1px solid var(--borde); background: none;
-    color: var(--tenue); font: inherit; font-size: 0.9375rem; cursor: pointer; transition: color 0.15s, border-color 0.15s;
-  }
-  .salidas button:hover, .salidas button:focus-visible { color: var(--tinta); border-color: var(--tinta); }
-  .salidas .peligro { color: var(--coral); }
-  /* Ya visto: todo en su lugar final, sin la secuencia. */
-  .final.ya { animation: none; opacity: 1; }
-  .ya.fin :is(.izq, .der, .sismo, .aviso, .ajustes) { animation-duration: 0s; animation-delay: 0s; }
+  .hielo { color: var(--hielo); }
 
   .destello { position: fixed; inset: 0; z-index: 20; background: #fff; pointer-events: none; opacity: 0; animation: destello 0.6s ease-out; }
   .destello.quieto { animation-duration: 0.9s; animation-name: destelloSuave; }
@@ -398,6 +344,7 @@
   /* Móvil (vertical): pila arriba centrada, Energía arriba, tienda como hoja inferior deslizable. */
   /* También tablet en vertical: con las columnas a los costados la pila quedaría debajo de la tienda. */
   @media (orientation: portrait) and (max-width: 1100px) {
+    .juego.juego { --barra: 0px; }
     .juego { --margen: 1rem; --col: auto; --pila-radio-max: 100vw; --pila-arriba: 7rem; --pila-abajo: calc(45dvh + 3.5rem); --hoja: 88dvh; }
     .izq { right: var(--margen); }
     .energia { font-size: 2.25rem; margin-bottom: 0.25rem; }

@@ -20,6 +20,7 @@
 
   let canvas: HTMLCanvasElement
   /** Logro secreto Arena: granos de un solo color de la paleta en uso, elegido al azar en cada lluvia. */
+  const ESQUIRLAS = 18 // cristales de la cinemática del Infinito
   const GRANOS_LLUVIA = 80
   const colorLluvia = $derived.by(() => {
     if (!juego.lluvia) return ''
@@ -92,8 +93,8 @@
     // Los granos iniciales derrumban al montar, antes del primer toque: esos no cuentan.
     let primera = invitaTocar()
     pila.alMedir = (m) => (juego.medidas = m)
-    // Después del Infinito la pila colapsó: nada de textos, sonidos ni récords nuevos sobre la pantalla final.
-    const fin = () => juego.s.infinitos > 0
+    // Durante la cinemática del Infinito: nada de textos, sonidos ni récords nuevos.
+    const fin = () => juego.cinematica
     pila.alAvalancha = (n) => {
       if (fin()) return
       efecto({ texto: txt.avalancha(n) })
@@ -140,6 +141,8 @@
     const brillos = [0, 0, 0, 0]
     let compAntes = juego.s.compresiones
     let infAntes = juego.s.infinitos
+    let cineAntes = false
+    let cristalesAntes = juego.s.cristales
     let granosAntes = juego.s.granos
     let saltosAntes = juego.saltos
     // SPEC 6.7: acorde en cada hito ×4 de un color (cada CFG.hito_colores.cada niveles).
@@ -178,15 +181,21 @@
         efecto({ compresion: { r: Math.max(pila.radioCss, 48), densidad: formatoMult(densidad(s)) } })
       }
       compAntes = s.compresiones
-      // SPEC 6.6: blanco y colapso (2,8 s, CSS de abajo), un segundo de silencio y el final.
-      if (s.infinitos > infAntes) sonido.infinito(2.8, 1)
+      // SPEC_CAPA1 §11: el primer Infinito es la cinemática (CSS de abajo); los siguientes, los Cristales sobre la pila.
+      if (juego.cinematica && !cineAntes) sonido.infinito(1.8, 0.6)
+      cineAntes = juego.cinematica
+      if (s.infinitos > infAntes && infAntes > 0) {
+        sonido.hito('milestone')
+        efecto({ texto: txt.cristal.ganados(s.cristales.sub(cristalesAntes).toNumber()) })
+      }
+      cristalesAntes = s.cristales
       infAntes = s.infinitos
       if (implotando && ahora >= implotaHasta) implotando = false
       if (implotando) pila.cuadro(ahora, granosAntes, 0, brillos)
       else {
         // juego.nivelColores: nivel simulado desde el panel de debug (0 = el real)
         s.colores.forEach((nivel, i) => (brillos[ALTURA_DE_COLOR[i]] = brillo(multColor(i, juego.nivelColores || nivel).log10())))
-        pila.cuadro(ahora, s.granos, juego.titulo || s.infinitos > 0 ? 0 : caudal(s), brillos)
+        pila.cuadro(ahora, s.granos, juego.titulo || juego.cinematica ? 0 : caudal(s), brillos)
         granosAntes = s.granos
       }
       juego.escalaK = pila.escalaK
@@ -219,7 +228,7 @@
 
 <svelte:window onkeydown={tecla} />
 
-<div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:colapsa={juego.s.infinitos > 0} class:quieto={ajustes.reducirDestellos}>
+<div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:cristaliza={juego.cinematica} class:quieto={ajustes.reducirDestellos}>
   <canvas bind:this={canvas} onpointerdown={bajar} onpointermove={mover} onpointerup={levantar} onpointercancel={levantar} aria-label={txt.pila}></canvas>
   <div class="tope" bind:clientWidth={radioMax}></div>
   {#if sinWebGL}<p class="sin-webgl" role="alert">{txt.sinWebGL}</p>{/if}
@@ -238,9 +247,14 @@
         <circle class="arco" r={ra} pathLength="1" stroke-dashoffset={1 - comp.p} />
       </svg>
     {/if}
-    {#if juego.s.infinitos > 0}
-      <!-- SPEC 6.6: la pila se vuelve blanca desde el centro hacia afuera; después colapsa en un punto (.colapsa). -->
-      <div class="blanco" style:--r="{Math.max(juego.radioPila, 48) + ANILLO_SEP}px"></div>
+    {#if juego.cinematica}
+      <!-- SPEC_CAPA1 §11: el hielo sube desde abajo sobre la pila (que no se mueve), se rompe en cristales y sigue Cristalización. -->
+      <div class="cine" style:--r="{Math.max(juego.radioPila, 48) + ANILLO_SEP}px">
+        <div class="helada"></div>
+        {#each { length: ESQUIRLAS } as _, i}
+          <i style:--a="{(i * 360) / ESQUIRLAS + ((i * 47) % 23)}deg" style:--l={0.35 + ((i * 0.37) % 0.6)} style:--t="{0.9 + ((i * 0.61) % 1.1)}rem"></i>
+        {/each}
+      </div>
     {/if}
     {#if invitaTocar() && !juego.titulo}
       <!-- La pista "Tocá la pila": dos ondas que salen del centro, hasta el primer toque. -->
@@ -336,7 +350,7 @@
   /* SPEC 6.5, Compresión (1,5 s): la pila implota hacia el centro (0,9 s) dentro de un remolino de los cuatro colores,
      destello blanco que tapa el vaciado, y la Densidad nueva sube. */
   /* Solo el disco de la pila gira y se achica: sin la máscara se vería el rectángulo del canvas con su fondo. */
-  .implota canvas, .colapsa canvas { mask: radial-gradient(circle calc(var(--rp) + 16px) at 50% 50%, #000 80%, transparent); }
+  .implota canvas { mask: radial-gradient(circle calc(var(--rp) + 16px) at 50% 50%, #000 80%, transparent); }
   .implota canvas { animation: implotar 0.9s cubic-bezier(0.6, 0, 0.9, 0.4) forwards; }
   .estela {
     position: absolute; width: calc(2.4 * var(--r)); height: calc(2.4 * var(--r)); translate: -50% -50%; border-radius: 50%;
@@ -376,20 +390,36 @@
   @keyframes destellarSuave { 20% { opacity: 0.35; } 100% { opacity: 0; } }
   @keyframes densidadQuieta { 15%, 70% { opacity: 1; } 100% { opacity: 0; } }
 
-  /* SPEC 6.6, Infinito: blanco desde el centro (2 s), colapso en un punto (0,8 s). App.svelte sigue con el silencio y el final. */
-  .blanco {
-    position: absolute; width: calc(2 * var(--r)); height: calc(2 * var(--r)); translate: -50% -50%; border-radius: 50%;
-    background: radial-gradient(circle, #fff 55%, rgb(255 255 255 / 0.6) 66%, transparent 71%);
-    box-shadow: 0 0 4rem rgb(255 255 255 / 0.4); animation: blanquear 2s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  /* SPEC_CAPA1 §11, primer Infinito (3,2 s: CINEMATICA_MS en juego.svelte.ts). La pila no se mueve: el hielo la cubre
+     de abajo hacia arriba (0–1,8 s); después se apaga y los cristales salen del centro (1,8–2,9 s). */
+  .cine { position: absolute; width: calc(2 * var(--r)); height: calc(2 * var(--r)); translate: -50% -50%; }
+  /* Seis facetas de 60°, con un brillo fino en cada arista. */
+  .helada {
+    position: absolute; inset: 0; clip-path: circle(50%); mask: linear-gradient(#000, #000) bottom / 100% 100% no-repeat; backdrop-filter: saturate(0.2) brightness(1.3); /* la pila se ve debajo, sin color: helada */
+    background:
+      repeating-conic-gradient(from 30deg, rgb(234 246 255 / 0.9) 0 0.6deg, transparent 0.6deg 60deg),
+      conic-gradient(from 30deg, rgb(207 238 251 / 0.5), rgb(127 207 232 / 0.3) 60deg, rgb(234 246 255 / 0.55) 60deg, rgb(159 227 245 / 0.3) 120deg, rgb(191 233 247 / 0.5) 120deg, rgb(109 191 220 / 0.3) 180deg,
+        rgb(234 246 255 / 0.55) 180deg, rgb(143 214 236 / 0.3) 240deg, rgb(216 242 252 / 0.5) 240deg, rgb(127 207 232 / 0.3) 300deg, rgb(196 236 249 / 0.5) 300deg, rgb(159 227 245 / 0.3));
+    animation: helar 1.8s cubic-bezier(0.3, 0, 0.5, 1) both, quebrar 0.35s 1.8s ease-in forwards;
   }
-  .colapsa .compresion { animation: apagar 0.6s forwards; }
-  .colapsa canvas { animation: colapsar 0.8s 2s cubic-bezier(0.7, 0, 0.9, 0.3) forwards; }
-  .colapsa .blanco { animation: blanquear 2s cubic-bezier(0.4, 0, 0.6, 1) forwards, colapsar 0.8s 2s cubic-bezier(0.7, 0, 0.9, 0.3) forwards; }
-  .colapsa.quieto canvas { animation-name: apagar; }
-  /* M14: el final ya visto (App.svelte .ya): la pila ya colapsó. */
-  :global(.ya) .colapsa canvas, :global(.ya) .colapsa .blanco, :global(.ya) .colapsa .compresion { animation-duration: 0s; animation-delay: 0s; }
-  .colapsa.quieto .blanco { animation: aparecerBlanco 2s forwards, apagar 0.8s 2s forwards; }
-  @keyframes blanquear { from { transform: scale(0); } to { transform: scale(1); } }
-  @keyframes aparecerBlanco { from { opacity: 0; } }
-  @keyframes colapsar { 90% { transform: scale(0.004); opacity: 1; } to { transform: scale(0); opacity: 0; } }
+  .cristaliza .compresion { animation: apagar 0.6s forwards; }
+  .cristaliza canvas { animation: quebrar 0.35s 1.8s ease-in forwards; }
+  .cine i {
+    position: absolute; left: 50%; top: 50%; width: var(--t); height: calc(var(--t) * 1.732); margin: calc(var(--t) * -0.866) 0 0 calc(var(--t) * -0.5);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); /* rombo de 60° */
+    background: linear-gradient(120deg, var(--escarcha), var(--hielo) 55%, #5bb4d6); opacity: 0;
+    animation: esquirla 1.1s 1.8s cubic-bezier(0.25, 0.6, 0.45, 1) forwards; will-change: transform, opacity;
+  }
+  @keyframes helar { from { mask-size: 100% 0; } }
+  @keyframes quebrar { 40% { filter: brightness(1.8); } to { opacity: 0; } }
+  @keyframes esquirla {
+    from { transform: rotate(var(--a)) translateY(0) scale(0.4); opacity: 1; }
+    70% { opacity: 1; }
+    to { transform: rotate(var(--a)) translateY(calc(var(--l) * -75vmin)) rotate(200deg) scale(1.5); opacity: 0; }
+  }
+  /* Reducir destellos: el hielo aparece y se va, sin subir ni esquirlas. */
+  .quieto .helada { animation: aparecerHielo 1.8s both, apagar 0.35s 1.8s forwards; }
+  .quieto .cine i { display: none; }
+  .cristaliza.quieto canvas { animation: apagar 0.35s 1.8s forwards; }
+  @keyframes aparecerHielo { from { opacity: 0; } }
 </style>

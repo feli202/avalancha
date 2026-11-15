@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, anillos, comprimir, estadoInicial, fueraDeLinea, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
+import { CFG, anillos, comprimir, cristalesAlInfinito, enInfinito, estadoInicial, fueraDeLinea, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
 import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
@@ -67,6 +67,10 @@ class Juego {
   saltos = 0
   /** Logro secreto Arena: la lluvia de granos que se ve ahora (Pila.svelte), o null. */
   lluvia = $state.raw<{ id: number } | null>(null)
+  /** SPEC_CAPA1 §11: la capa que se ve. Cristalización aparece con el primer Infinito (Capas.svelte). */
+  capa = $state<'arena' | 'cristalizacion'>('arena')
+  /** La cinemática del primer Infinito está corriendo (Pila.svelte la dibuja). */
+  cinematica = $state(false)
 }
 export const juego = new Juego()
 
@@ -194,11 +198,37 @@ export function comprimirYa() {
   previo = juego.s
 }
 
+/** Infinito (botón, tecla C o el final de la cinemática): cobra los Cristales y reinicia la Arena. */
+export function infinitoYa() {
+  const antes = juego.s
+  const s = infinito(antes)
+  if (s === antes) return
+  juego.s = s
+  registrar(historial, antes, s)
+  previo = s
+  juego.aviso = { id: avisos++, texto: txt.cristal.ganados(cristalesAlInfinito(antes)) }
+  guardarYa()
+}
+
+/** SPEC_CAPA1 §11: el primer Infinito llega solo, con su cinemática; al terminar se cobra y se pasa a Cristalización.
+ * Si se cierra la página antes, el estado sigue esperando el Infinito y la cinemática se repite al volver. */
+export const CINEMATICA_MS = 3200
+function primerInfinito() {
+  juego.cinematica = true
+  setTimeout(() => {
+    infinitoYa()
+    juego.capa = 'cristalizacion'
+    juego.cinematica = false
+  }, CINEMATICA_MS)
+}
+
 /** La pista "Tocá la pila": hasta el primer Puñado (las partidas de antes no lo anotaban: con la tienda ya visible, tampoco). */
 export const invitaTocar = () => !juego.vistos.punado && !juego.vistos.tienda
 
-/** Hay un cartel o panel encima: las teclas del juego (Espacio, M, C) no hacen nada. */
-export const hayPanel = (): boolean => juego.titulo || juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto || juego.otraPestana
+/** Hay un cartel o panel encima de todo (también de la barra de capas). */
+export const hayCartel = (): boolean => juego.titulo || juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto || juego.otraPestana
+/** La Arena no está al frente: las teclas del juego (Espacio, M, C) no hacen nada. */
+export const hayPanel = (): boolean => hayCartel() || juego.capa !== 'arena'
 
 /** Reloj real (ms) hasta el que llegó la simulación. El guardado lleva esta fecha y no Date.now(): con la pestaña oculta
  * no hay cuadros, juego.s queda quieto y el guardado tiene que seguir diciendo de cuándo es (si no, se pierde la ausencia). */
@@ -292,6 +322,8 @@ export function arrancar() {
     vigia.c = p.secretos ?? contadoresVacios()
     if (volviste(Date.now(), p.guardadoEn)) ganarSecreto('volviste')
     historial = p.historial ?? historialVacio(p.guardadoEn - p.estado.tiempoTotal * 1000)
+    // Recién migrado de la Capa 0 (o se cerró antes de leer la presentación): entra por Cristalización.
+    if (p.estado.infinitos > 0 && !p.vistos.cristales) juego.capa = 'cristalizacion'
     antes = p.guardadoEn // el primer cuadro simula lo que pasó desde el guardado
   }
   simuladoHasta = antes
@@ -321,7 +353,7 @@ export function arrancar() {
     if (acum > MAX_PASOS * PASO) {
       const a = fueraDeLinea(s, acum)
       // Contra el tiempo real (M11): a ×50 un tirón de 1,2 s no es una ausencia.
-      if (real >= AVISAR_DESDE && s.infinitos === 0 && a.s.infinitos === 0) juego.ausencia = a
+      if (real >= AVISAR_DESDE && !enInfinito(s) && !enInfinito(a.s)) juego.ausencia = a
       juego.saltos++
       s = a.s
       acum = 0
@@ -340,6 +372,7 @@ export function arrancar() {
     revisarLogros(s)
     vigia.cuadro(ahora, s, !hayPanel(), new Date(ahora).getHours())
     medirEta(s)
+    if (s.infinitos === 0 && enInfinito(s) && !juego.cinematica && !hayPanel()) primerInfinito()
     requestAnimationFrame(cuadro)
   }
   requestAnimationFrame(cuadro)

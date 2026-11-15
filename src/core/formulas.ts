@@ -13,6 +13,8 @@ export const costoMutacion = (id: MutId, n: number) => curva(CFG.mutaciones[id].
 
 // ---------- producción ----------
 export const INFINITO = Decimal.pow10(CFG.infinito_log10)
+/** La Energía llegó a 1e308: la economía espera el Infinito (SPEC_CAPA1 §4, sin Romper). */
+export const enInfinito = (s: State) => s.energia.gte(INFINITO)
 
 export const densidad = (s: State) => 1 + CFG.compresion.densidad_por_nivel * s.compresiones
 

@@ -22,6 +22,17 @@
     juego.s = { ...juego.s, energia: juego.s.energia.mul(1000).add(1000) }
   }
 
+  // Capa 1: al borde del Infinito, con el final de la Arena comprado (compresiones, Cascada y Mutaciones al máximo);
+  // los autocompradores gastan la Energía y la producción llega a 1e308 en unos segundos.
+  function casiInfinito() {
+    const energia = Decimal.pow10(Math.floor(CFG.infinito_log10) - 1)
+    const m = CFG.mutaciones.nivel_max
+    juego.s = {
+      ...juego.s, energia, maxEnergia: energia, compresiones: umbrales.length, cascada: CFG.cascada.nivel_max,
+      mutaciones: { caudal: m, colores: m, expansion: m, cascada: m },
+    }
+  }
+
   function saltar() {
     const c = Math.max(0, Math.min(umbrales.length, Math.floor(n)))
     const alcanzada = c > 0 ? Decimal.pow10(umbrales[c - 1]) : new Decimal(0)
@@ -54,6 +65,7 @@
     {/each}
   </div>
   <button onclick={darEnergia}>{txt.debug.darEnergia}</button>
+  <button onclick={casiInfinito}>{txt.debug.casiInfinito}</button>
   <label>
     {txt.debug.saltar}
     <input type="number" min="0" max={umbrales.length} bind:value={n} />
@@ -92,7 +104,7 @@
 
 <style>
   details {
-    position: fixed; left: 0.5rem; top: 50%; translate: 0 -50%; z-index: 10; display: grid; gap: 0.5rem; padding: 0.75rem;
+    position: fixed; left: 3.5rem; top: 50%; translate: 0 -50%; z-index: 10; display: grid; gap: 0.5rem; padding: 0.75rem;
     border: 1px solid #ffb547; background: #07080f; font-size: 0.85rem; max-height: 90vh; overflow: auto;
   }
   input { width: 3.5rem; }

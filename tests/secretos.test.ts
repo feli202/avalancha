@@ -1,7 +1,7 @@
 // Logros secretos: la condición de cada uno (secretos.ts) y sus datos (config, cadenas, recompensas).
 import Decimal from 'break_infinity.js'
 import { describe, expect, it } from 'vitest'
-import { CFG, comprar, estadoInicial, tick, type State } from '../src/core'
+import { CFG, INFINITO, comprar, estadoInicial, tick, type State } from '../src/core'
 import { EFECTOS, FONDOS, MARCOS, PALETAS } from '../src/render/paletas'
 import { en } from '../src/strings/en'
 import { es } from '../src/strings/es'
@@ -208,7 +208,7 @@ describe('condiciones', () => {
     for (let t = 0; t <= 10 * MIN; t += 1000) b.v.cuadro(t, t === 5 * MIN ? con({ energia: new Decimal(1e306) }) : borde, true, 0)
     expect(b.ganados).not.toContain('borde')
     const c = vigia()
-    for (let t = 0; t <= 10 * MIN; t += 1000) c.v.cuadro(t, con({ energia: new Decimal(1e307), infinitos: 1 }), true, 0)
+    for (let t = 0; t <= 10 * MIN; t += 1000) c.v.cuadro(t, con({ energia: INFINITO }), true, 0)
     expect(c.ganados).not.toContain('borde')
   })
 

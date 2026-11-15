@@ -1,5 +1,5 @@
 // "Guardar imagen": la foto del mandala en PNG de 2048 px. En móvil, el menú de compartir del sistema; si no, descarga.
-import { anillos, densidad } from '../core'
+import { anillos, densidad, enInfinito } from '../core'
 import { sacarFoto } from '../render/marcos'
 import { MARCOS } from '../render/paletas'
 import { txt } from '../strings'
@@ -20,7 +20,7 @@ export async function guardarImagen() {
   foto.destello++
   try {
     const s = juego.s
-    const energia = s.infinitos > 0 ? txt.infinito : formato(s.energia)
+    const energia = enInfinito(s) ? txt.infinito : formato(s.energia)
     const pie = txt.foto.pie(energia, formatoMult(densidad(s)), txt.anillos(anillos(s.granos)))
     const marco = elegido('marco', MARCOS, ajustes.marco, juego.logros)
     const png = await sacarFoto(toma, marco, pie, `${import.meta.env.BASE_URL}logo.svg`, getComputedStyle(document.body).fontFamily)

@@ -1,7 +1,7 @@
 import Decimal from 'break_infinity.js'
 import { CFG } from './config'
 import { autoActivo, comprimir } from './compress'
-import { INFINITO, caudal, energiaPorGrano, produccion } from './formulas'
+import { INFINITO, caudal, enInfinito, energiaPorGrano, produccion } from './formulas'
 import { comprarMax } from './shop'
 import type { State } from './state'
 
@@ -16,8 +16,8 @@ export function autocomprar(s: State): State {
 
 /** Avanza la economía dt segundos (Euler explícito, igual que balance/sim.py). */
 export function tick(s: State, dt: number): State {
-  if (s.infinitos > 0) return s // SPEC 4.9: economía congelada
-  const energia = s.energia.add(produccion(s).mul(dt))
+  if (enInfinito(s)) return s // economía congelada hasta el Infinito (core/infinito.ts)
+  const energia = Decimal.min(INFINITO, s.energia.add(produccion(s).mul(dt))) // sin Romper, se frena en 1e308
   const granos = caudal(s) * dt
   let n: State = {
     ...s,
@@ -35,7 +35,7 @@ export function tick(s: State, dt: number): State {
     n.maxEnergia.log10() >= CFG.colores[n.coloresDesbloqueados].desbloqueo_log10
   )
     n.coloresDesbloqueados++
-  if (n.energia.gte(INFINITO)) return { ...n, infinitos: 1 }
+  if (enInfinito(n)) return n
   if (n.relojAuto >= 1) {
     n.relojAuto %= 1
     n = autocomprar(n)
@@ -45,8 +45,8 @@ export function tick(s: State, dt: number): State {
 
 /** SPEC 4.10: suelta un puñado de granos; cada uno rinde como un grano del Caudal. */
 export function punado(s: State): State {
-  if (s.infinitos > 0 || s.enfriamientoPunado > 0) return s
-  const energia = s.energia.add(energiaPorGrano(s).mul(CFG.punado.granos))
+  if (enInfinito(s) || s.enfriamientoPunado > 0) return s
+  const energia = Decimal.min(INFINITO, s.energia.add(energiaPorGrano(s).mul(CFG.punado.granos)))
   return {
     ...s,
     energia,

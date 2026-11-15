@@ -1,10 +1,12 @@
 // Hito 5a: progreso fuera de línea y guardado, con el núcleo real.
+import Decimal from 'break_infinity.js'
 import { describe, expect, it } from 'vitest'
-import { CFG, comprar, comprarTodo, comprimir, disponibles, estadoInicial, fueraDeLinea, tick, type State } from '../src/core'
+import { CFG, CFG1, INFINITO, infinito, comprar, comprarTodo, comprimir, disponibles, estadoInicial, fueraDeLinea, tick, type State } from '../src/core'
 import type { Almacen } from '../src/guardado/almacen'
 import {
   CLAVE, RESPALDO, VERSION, cargar, deserializar, exportar, guardar, importar, serializar, type Partida,
 } from '../src/guardado/guardado'
+import guardadoCapa0 from './fixtures/guardado_capa0_infinito.json'
 
 const partida = (estado: State): Partida =>
   ({ estado, guardadoEn: 1.7e12, vistos: { tienda: true }, record: 12345, logros: { derrumbe: true } })
@@ -73,6 +75,48 @@ describe('guardado', () => {
     expect(serializar(p)).toBe(texto)
     // Y sigue igual: 5 min más desde lo cargado dan exactamente lo mismo que sin haber guardado.
     expect(serializar(partida(jugar(p.estado, 300)))).toBe(serializar(partida(jugar(s, 300))))
+  })
+
+  it('Capa 1: ida y vuelta con Cristales (guardar → cargar → igual), también exportando', () => {
+    const s = { ...infinito({ ...jugar(estadoInicial(), 60), energia: INFINITO }), cristales: new Decimal('1.2345678901234e120'), cristalesTotales: new Decimal('9.87e307') }
+    const texto = serializar(partida(s))
+    const p = deserializar(texto)
+    expect(p).toEqual(partida(s))
+    expect(p.estado.cristales.eq(s.cristales)).toBe(true)
+    expect(serializar(p)).toBe(texto)
+    expect(importar(exportar(p))).toEqual(p)
+  })
+
+  // Un guardado real de la Capa 0 (versión 2 del archivo), escrito por el código de antes de la Capa 1:
+  // el bot de 15 s jugando el núcleo hasta el Infinito (3,3 h de juego).
+  const capa0 = JSON.stringify(guardadoCapa0)
+
+  it('migración: quien ya tenía el Infinito de la Capa 0 arranca la Capa 1 con 1 Cristal y la Arena reiniciada', () => {
+    const viejo = JSON.parse(capa0)
+    expect(viejo.version).toBe(2)
+    expect(viejo.estado.infinitos).toBe(1)
+    const p = deserializar(capa0)
+    const e = p.estado
+    expect(e.cristales.toNumber()).toBe(CFG1.cristales.primer_infinito)
+    expect(e.cristalesTotales.toNumber()).toBe(1)
+    expect(e.infinitos).toBe(1)
+    expect([e.energia.toNumber(), e.granos, e.caudal, e.cascada, e.compresiones, e.maxEnergia.toNumber()]).toEqual([0, 0, 0, 0, 0, 0])
+    expect(e.colores).toEqual([0, 0, 0, 0])
+    expect(e.mutaciones).toEqual(estadoInicial().mutaciones)
+    // Lo que no es de la Arena queda como estaba.
+    expect([e.tiempoTotal, e.granosTotales, e.mejorCorrida]).toEqual([viejo.estado.tiempoTotal, viejo.estado.granosTotales, viejo.estado.mejorCorrida])
+    expect([p.record, p.logros, p.vistos, p.secretos]).toEqual([viejo.record, viejo.logros, viejo.vistos, viejo.secretos])
+    // Ya migrado, guardar y cargar no vuelve a cobrar el Infinito, y la Arena anda.
+    expect(deserializar(serializar(p))).toEqual(p)
+    expect(tick(e, 1).granos).toBeGreaterThan(0)
+  })
+
+  it('migración: una partida de la Capa 0 sin Infinito sigue igual, con 0 Cristales', () => {
+    const viejo = JSON.parse(capa0)
+    viejo.estado = { ...viejo.estado, infinitos: 0, energia: [1, 200], maxEnergia: [1, 200] }
+    const e = deserializar(JSON.stringify(viejo)).estado
+    expect(e.cristales.toNumber()).toBe(0)
+    expect([e.infinitos, e.compresiones, e.caudal, e.energia.log10()]).toEqual([0, 17, viejo.estado.caudal, 200])
   })
 
   const memoria = (inicial: Record<string, string> = {}) => {
@@ -163,6 +207,7 @@ describe('versión 2 sin logros', () => {
     const p = partida(jugar(estadoInicial(), 60))
     const d = JSON.parse(serializar(p))
     delete d.logros
+    d.version = 2
     expect(deserializar(JSON.stringify(d))).toEqual({ ...p, logros: {} })
   })
 })
