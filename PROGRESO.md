@@ -778,6 +778,7 @@ Visto en Edge headless a 640×360, 800×450, 812×375 y 375×812: la pila entra 
 
 - Repo público **github.com/feli202/avalancha** con **solo la build** (el contenido de `dist/` más `.nojekyll`, rama `main`); el código fuente no está ahí. Pages publica desde `main` / raíz.
 - Link: **https://feli202.github.io/avalancha/**. Probado: todos los recursos dan 200 (también `pilas.bin` y el worker), entra, el Puñado hace la primera avalancha y al recargar dice "Continuar".
+- **Actualizado el 14/11/2026** (commit `49f362b` de ese repo) con el arreglo de las vistas previas, los logros secretos y los fondos y marcos nuevos. Probado en la página publicada: 47/47 vistas previas en Ajustes → Aspecto, consola sin errores.
 - Para actualizarlo: `npm run build`, copiar `dist/*` a un clon de ese repo (dejando `.nojekyll`), commit y push. Este proyecto no tiene remoto: el repo de Pages es aparte.
 
 ### Vistas previas vacías en itch.io (Logros y Ajustes → Aspecto)
