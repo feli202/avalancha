@@ -10,12 +10,11 @@
   import Relicario from './Relicario.svelte'
 
   const PANTALLAS = ['red', 'estratos', 'defectos', 'escarcha', 'relicario']
-  let pantalla = $state(PANTALLAS[0])
   const s = $derived(juego.s)
   // La presentación de tres líneas, hasta que se toca Seguir (queda en el guardado).
   const visto = () => {
     juego.vistos = { ...juego.vistos, cristales: true }
-    if (hayOferta) pantalla = 'relicario' // la primera oferta, al llegar
+    if (hayOferta) juego.pantalla = 'relicario' // la primera oferta, al llegar
   }
   const hayOferta = $derived(s.relicario.pendiente > 0)
 </script>
@@ -32,14 +31,14 @@
         {#if juego.vistos.cristales}
           <nav class="sistemas" aria-label={txt.cristal.sistemas}>
             {#each PANTALLAS as p}
-              <button aria-current={pantalla === p ? 'page' : undefined} onclick={() => (pantalla = p)}>{txt.cristal.pantallas[p]}{#if p === 'relicario' && hayOferta}<i class="punto" title={txt.cristal.relicario.hay}></i>{/if}</button>
+              <button aria-current={juego.pantalla === p ? 'page' : undefined} onclick={() => (juego.pantalla = p)}>{txt.cristal.pantallas[p]}{#if p === 'relicario' && hayOferta}<i class="punto" title={txt.cristal.relicario.hay}></i>{/if}</button>
             {/each}
           </nav>
-          {#key pantalla}
-            {#if pantalla === 'red'}<Red />{:else if pantalla === 'relicario'}<Relicario />{:else if pantalla === 'estratos'}<Estratos />{:else}
+          {#key juego.pantalla}
+            {#if juego.pantalla === 'red'}<Red />{:else if juego.pantalla === 'relicario'}<Relicario />{:else if juego.pantalla === 'estratos'}<Estratos />{:else}
             <section class="pantalla" aria-labelledby="c1-titulo">
               <svg viewBox="-100 -100 200 200" aria-hidden="true"><path d="M0-90 78-45V45L0 90-78 45V-45ZM0-90V90M-78-45 78 45M-78 45 78-45" /></svg>
-              <h1 id="c1-titulo">{txt.cristal.pantallas[pantalla]}</h1>
+              <h1 id="c1-titulo">{txt.cristal.pantallas[juego.pantalla]}</h1>
               <p>{txt.cristal.vacia}</p>
             </section>
             {/if}

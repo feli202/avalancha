@@ -187,6 +187,9 @@ export class PilaVisual {
     return COLOR_CSS[n.indexOf(Math.max(...n))]
   }
 
+  /** Hay una pantalla opaca encima: la pila sigue recibiendo granos pero no se dibuja (lo pendiente se sube al destaparla). */
+  tapada = false
+
   /**
    * Un cuadro: reparte los granos que tocan y dibuja.
    * @param granos G de la economía  @param caudal F, granos por segundo
@@ -217,7 +220,7 @@ export class PilaVisual {
       this.escalaK = k
     }
     this.pedir()
-    this.dibujar(dt, brillos)
+    if (!this.tapada) this.dibujar(dt, brillos)
     this.m.cuadroMs += performance.now() - t0
   }
 

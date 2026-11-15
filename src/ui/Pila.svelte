@@ -1,7 +1,7 @@
 <script lang="ts">
   // La pila ocupa toda la ventana, detrás de la interfaz. Clic, toque o barra espaciadora = Puñado.
   import { onMount } from 'svelte'
-  import { CFG, anillos, caudal, densidad, multAnillos, multColor, punado } from '../core'
+  import { CFG, anillos, caudal, densidad, hayEstratos, multAnillos, multColor, punado } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS, PilaVisual, brillo } from '../render/pilaVisual'
   import { txt } from '../strings'
   import { formatoMult } from './formato'
@@ -149,6 +149,8 @@
     const hitos = (s: typeof juego.s) => s.colores.reduce((t, n) => t + Math.floor(n / CFG.hito_colores.cada), 0)
     let hitosAntes = hitos(juego.s)
     grabacion.pila = pila
+    const TAPAR_MS = 1500 // más que la animación más larga de entrada de Capas.svelte (1,1 s)
+    let tapadaDesde = 0
     let raf = requestAnimationFrame(function cuadro(ahora) {
       // Modo grabación (debug): el guion maneja la pila; acá no pasa nada más.
       if (grabacion.cuadro) return void ((raf = requestAnimationFrame(cuadro)), grabacion.cuadro(ahora))
@@ -190,6 +192,10 @@
       }
       cristalesAntes = s.cristales
       infAntes = s.infinitos
+      // Cristalización es una pantalla opaca: pasada su entrada (TAPAR_MS), la pila deja de dibujarse hasta volver a la Arena.
+      if (juego.capa === 'arena') tapadaDesde = 0
+      else tapadaDesde ||= ahora
+      pila.tapada = tapadaDesde > 0 && ahora - tapadaDesde > TAPAR_MS
       if (implotando && ahora >= implotaHasta) implotando = false
       if (implotando) pila.cuadro(ahora, granosAntes, 0, brillos)
       else {
@@ -239,6 +245,10 @@
       </div>
     {/key}
   {/if}
+  {#if hayEstratos(juego.s) && !juego.titulo && !juego.cinematica}
+    <!-- SPEC_CAPA1 §7.4: la flecha discreta a los Estratos, debajo de la pila. -->
+    <button class="bajar" onclick={() => { juego.pantalla = 'estratos'; juego.capa = 'cristalizacion' }}>{txt.cristal.estratos.bajar}</button>
+  {/if}
   <div class="efectos" class:quieto={ajustes.reducirDestellos} aria-hidden="true">
     {#if juego.vistos.compresion && comp.meta !== undefined}
       <!-- Compresión: el anillo se cierra con el progreso (escala logarítmica); al 100 % brilla. -->
@@ -285,6 +295,11 @@
   .tope { position: absolute; width: var(--pila-radio-max, 100vw); height: 0; pointer-events: none; }
   canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; } /* none: el pellizco es el zoom de la pila, no el de la página */
   p { margin: 0; font-variant-numeric: tabular-nums; pointer-events: none; white-space: nowrap; }
+  .bajar {
+    position: absolute; left: 50%; top: min(calc(50% + var(--rp) + 1.25rem), calc(100% - 3.25rem)); translate: -50%; min-height: 2.75rem; padding: 0 0.75rem;
+    border: 0; background: none; color: var(--apagado); font: inherit; font-size: 0.875rem; cursor: pointer; text-shadow: 0 0 0.5rem var(--fondo); transition: color 0.15s;
+  }
+  .bajar:hover, .bajar:focus-visible { color: var(--hielo); }
   .efectos { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
   .compresion { position: absolute; translate: -50% -50%; overflow: visible; transition: width 0.6s, height 0.6s; }
   circle { fill: none; stroke-width: 1.5; }

@@ -833,7 +833,7 @@ Todos: texto grande desde el primer cuadro, dentro de la zona segura (arriba, ce
 
 Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `balance/sim_capa1.py`.
 
-**Hito actual: C5 (sin empezar). C4 terminado el 2026-11-15.**
+**Hito actual: C6 (sin empezar). C5 terminado el 2026-11-15; falta probarlo en un celular de verdad (ver abajo).**
 
 ## Plan (SPEC_CAPA1 §16)
 
@@ -843,7 +843,7 @@ Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `bala
 - [x] C2 — Red: datos desde config, forma de rombo, compra, apertura de vecinos, Memoria (automatización)
 - [x] C3 — Relicario: ofertas con semilla, fusión, engarces, efectos
 - [x] C4 — Estratos: lógica (`s_k`, Presión, compras) + interfaz 2D provisoria
-- [ ] C5 — Estratos: escena three.js descendente + optimización
+- [x] C5 — Estratos: escena three.js descendente + optimización
 - [ ] C6 — Romper el Infinito + fórmula de Cristales + Infinito automático óptimo
 - [ ] C7 — Defectos 1–4 + visuales
 - [ ] C8 — Test de balance de la 1.1 + offline + estadísticas
@@ -856,6 +856,103 @@ Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `bala
 - [ ] C12 — Defectos 5–8
 - [ ] C13 — Fin de la Capa 1 (hito + pantalla) + test de balance completo
 - [ ] C14 — Pulido y auditoría 1.2 → publicar
+
+## C5 — Estratos: escena three.js descendente (2026-11-15)
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/render/estratosVisual.ts` | Nuevo. `EstratosVisual`: la escena three.js (sombra de la pila, 8 losas hexagonales, 8 mini pilas de 64×64, un `Points` de 2000 partículas), la cámara que baja y el dibujo a demanda. `soltar()`: la mini pila abeliana de cada estrato. |
+| `src/ui/Estratos.svelte` | Reescrito (reemplaza la tabla provisoria de C4): el canvas con los rótulos HTML de cada losa y, al costado, la interfaz del estrato que mira la cámara (granos, ritmo, aporte a la Presión, Permeabilidad y Presión, o Abrir). |
+| `src/ui/Pila.svelte` | La flecha "↓ Estratos" debajo de la pila (solo con el nodo Estratos comprado). |
+| `src/ui/juego.svelte.ts`, `Capas.svelte` | `juego.pantalla`: la pantalla de Cristalización pasó de estado local de `Capas` a `juego`, para que la flecha pueda abrir Estratos. |
+| `scripts/medir-estratos.mjs` | Nuevo. Mide fps y memoria en Edge headless por CDP (ver abajo). |
+| `tests/estratosVisual.test.ts` | Nuevo, 2 tests de la mini pila (estable, simétrica, conserva granos, sumidero). |
+| `package.json` | `three` **0.187.0** y `@types/three` 0.187.0, versión exacta. |
+
+- **Escena.** Arriba un disco oscuro difuso con un aro tenue (la sombra de la pila, un quad con gradiente). Debajo, cada estrato es un prisma hexagonal (aristas a 60°): abierto es hielo translúcido con brillo fino en los bordes; cerrado es roca oscura con grano. Sobre cada losa abierta, su mini pila: una pila abeliana real de 64×64 con sumidero circular, en una textura R8 que el shader de vértices usa para levantar un montículo (más alto cuanto mayor `s_k`) y el de fragmentos para pintar con los cuatro colores de la pila (o los de daltonismo).
+- **Cámara.** Rueda, arrastre, flechas del teclado (con el canvas enfocado) o los botones ↑ ↓ de la ficha: baja de a un estrato, con una transición corta (con Reducir destellos salta sin animar). El estrato enfocado es el que muestra la ficha del costado.
+- **Rótulos.** El número de cada losa (y el costo en las cerradas) es HTML: la escena avisa la posición proyectada en cada cuadro y se mueven con `translate`, sin pasar por Svelte.
+- **Partículas.** Un solo `Points` con buffer fijo de 2000 (250 por hueco); la posición sale de una fase y del tiempo en el shader, así que el buffer no se toca nunca. Caen `30 × γ_k / γ_base` por hueco, hasta 250. Con Reducir destellos quedan quietas.
+- **Móvil (< 760 px).** La escena arriba (44 % del alto) y la ficha debajo; la cámara se aleja para que entre la losa.
+
+### Lista de optimización de §7.4
+
+| Punto | Cómo quedó |
+| --- | --- |
+| Renderer creado al entrar, destruido al salir | `Estratos.svelte` lo crea en un `$effect` y `destruir()` hace `dispose` de geometrías, materiales, las 8 texturas y el renderer, más `forceContextLoss()` (si no, el contexto queda vivo hasta que pase el recolector). Nunca hay más de un contexto además del de la pila. |
+| Render a demanda | Un cuadro cuando cambia la cámara, el tamaño o los estratos abiertos. Sin partículas (o con Reducir destellos) no hay bucle. |
+| Partículas a 30 fps como máximo | Medido: 27–30 dibujos/s con la cámara quieta (también se salta cuadros en pantallas de 120 Hz). |
+| Nada con la pestaña oculta | No se piden cuadros ni se regeneran heightmaps con `document.hidden`; al volver (`visibilitychange`) se dibuja uno. |
+| Heightmaps a 2 Hz, 64×64, en el shader de vértices | `setInterval` de 500 ms: hasta 8 granos por estrato y se vuelve a subir la textura. 8 mallas de 64×64 que comparten geometría. |
+| Un `Points`, ≤ 2000, sin objetos por cuadro | Sí (ver arriba). |
+| Sombra falsa, sin `shadowMap` | Sí. Tampoco hay luces: el sombreado sale de las derivadas en el shader. |
+| `pixelRatio` tope 1,5 (1 en celular) | "Celular" = `(pointer: coarse)`. Sin antialias en celular. No hay postprocesado en ningún lado. |
+| three.js con versión exacta, solo lo necesario | 0.187.0, importaciones con nombre. Va en un trozo aparte que se baja recién al abrir Estratos: 537 kB (134 kB gzip). |
+
+### Medidas
+
+`node scripts/medir-estratos.mjs http://localhost:5173 <carpeta> [ancho alto]`, Edge headless con GPU (la notebook de siempre, gráfica integrada). Estado de prueba: pila llena con Caudal 12, los 8 estratos abiertos con Permeabilidad 20 (las 2000 partículas cayendo). fps = `requestAnimationFrame` de la página durante 5 s.
+
+| Medida | 1280×720 | 375×812 (DPR 2) |
+| --- | --- | --- |
+| fps en la Arena, antes | 60,4 | 60,6 |
+| **fps en Estratos**, cámara quieta | 58,8 (escena: 27 dibujos/s) | 59,4 (29 dibujos/s) |
+| **fps en Estratos**, cámara bajando sin parar | 59,4 (50 dibujos/s) | 60,4 (52 dibujos/s) |
+| **fps en la Arena después de entrar y salir 10 veces** | **60,6** (no bajó) | **59,6** (60,6 antes: 1 fps menos, con un cuadro de 83 ms en la muestra) |
+| Costo de un cuadro de la escena (con `gl.finish`) | 0,5 ms | 0,6 ms |
+| Costo de regenerar los 8 heightmaps (cada 500 ms) | 1,7 ms | 1,9 ms |
+| Escena | 13 llamadas de dibujo, 63.600 triángulos, 4 geometrías, 8 texturas | igual |
+
+Memoria (heap de JS después de forzar el recolector, por CDP):
+
+| Momento | 1280×720 | 375×812 |
+| --- | --- | --- |
+| Arena, sin haber entrado nunca a Estratos | 6,6 MB | 6,1 MB |
+| Arena, después de la 1.ª visita | 12,2 MB | 12,3 MB |
+| Arena, después de 11 visitas | 13,1 MB | 13,2 MB |
+| Arena, después de 31 visitas | 12,6 MB | 12,7 MB |
+
+- **El salto de ~6 MB de la primera visita es el módulo de three.js**, que se carga una vez y queda. Desde ahí la memoria no acumula: 12,2 → 13,1 → 12,6 MB en 31 visitas (sube y baja; a las 31 visitas está 0,4 MB arriba de la primera). Los nodos del DOM vuelven a la misma cuenta y el contexto WebGL de la pila sigue vivo después de las 31 visitas.
+- La memoria de GPU no se puede leer desde la página; lo que sí se ve es que `renderer.info.memory` queda en 4 geometrías y 8 texturas mientras la escena vive y que todo pasa por `dispose`.
+- Las primeras corridas del script no valen: el Edge de la corrida anterior quedaba vivo y el juego mostraba "abierto en otra pestaña". El script ahora cierra el navegador y corta si lo detecta; los números de arriba son de corridas limpias (una por tamaño).
+
+### Verificación
+
+- `npm test`: **194 en verde** (antes 192). `tsc` y `svelte-check` sin errores ni avisos. `vite build` bien. No se tocó `src/core/` ni el balance.
+- Mirado andando (navegador integrado a 800×600 y capturas de Edge a 1280×720 y 375×812): la flecha en la Arena y el salto a Estratos; sombra, losas, mini pilas y partículas; la rueda baja de estrato y la ficha cambia; estratos cerrados como roca con su costo; los 8 abiertos. Sin errores en la consola.
+
+### Pendiente / no verificado (revisar)
+
+1. **No lo probé en un celular de verdad.** Solo en tamaño de celular en Edge de escritorio, que no dice nada de una GPU de gama media. Probar con `npm run dev` (muestra la dirección de la red local). Tampoco corrió la rama de celular: en headless `(pointer: coarse)` es falso, así que el `pixelRatio` quedó en 1,5 y no en 1.
+2. **Frenar la CPU ÷4 en Edge no sirvió como "celular"**: con ese freno la Arena sola ya cae a 15 fps en headless (y esa corrida además fue de las contaminadas).
+3. ~~La pila principal sigue dibujando detrás de Cristalización~~ (resuelto: ver "La pila no se dibuja tapada", abajo). Su worker sigue trabajando igual (casi un núcleo con el Caudal alto): eso no se tocó.
+4. **Las mini pilas son decorativas**: cada una es una pila abeliana real, pero la cantidad de granos sale de una curva visual de `s_k` (`s/(s+15)`), no de una fórmula de la spec. Lo mismo el `30 × γ` de las partículas. Son constantes visuales en `estratosVisual.ts`, no de balance.
+5. **Arrastre**: no lo probé (ni con mouse ni con el dedo); probé la rueda y `ir()`. Reducir destellos y las flechas del teclado tampoco: están en el código, sin mirar.
+6. La paleta elegida en Ajustes no se usa en las mini pilas (sí la de daltonismo).
+7. El hielo es un material plano translúcido con brillo en las aristas; grietas y escarcha (§11) quedan para el pulido de C9.
+
+### La pila no se dibuja tapada (después de C5, 2026-11-15)
+
+Cristalización es una pantalla opaca y la pila principal seguía dibujándose detrás, en todas sus pantallas (desde C1).
+
+- `PilaVisual.tapada` (`src/render/pilaVisual.ts`): con `true`, `cuadro()` sigue repartiendo granos y hablando con el worker pero no llama a `dibujar()`. Lo pendiente (alturas nuevas, fundido de foto) se sube en el primer cuadro al destaparla.
+- `Pila.svelte` la pone en `true` 1,5 s después de salir de la Arena (la entrada más larga de `Capas.svelte` dura 1,1 s y deja ver la pila) y en `false` en el mismo cuadro en que se vuelve.
+- Los paneles de la Arena (Estadísticas, Logros, Ajustes) no la tapan: ahí la pila se sigue viendo.
+
+Medido de nuevo con `scripts/medir-estratos.mjs` (una corrida por tamaño):
+
+| Medida | 1280×720 | 375×812 (DPR 2) |
+| --- | --- | --- |
+| fps en la Arena, antes | 59,0 (un cuadro de 100 ms en la muestra) | 60,4 |
+| fps en Estratos, cámara quieta | 60,6, peor cuadro 17 ms (antes 58,8 y 83 ms) | 60,2, peor 33 ms (antes 59,4 y 67 ms) |
+| fps en Estratos, cámara bajando | 60,6, peor 17 ms (antes 59,4 y 33 ms) | 60,4, peor 17 ms |
+| fps en la Arena después de entrar y salir 10 veces | 60,4 | 60,4 |
+| Memoria: 1.ª visita → 11 → 31 | 12,3 → 13,0 → 13,1 MB | 11,8 → 13,1 → 13,1 MB |
+
+- En esta notebook la mejora es chica (ya estaba en 60 fps): se nota en el peor cuadro. Donde debería pesar es en un celular, que sigue sin probarse.
+- La memoria entre la visita 11 y la 31 queda plana; entre la 1.ª y la 11 sube ~1 MB en las dos corridas (en las de antes del cambio, lo mismo y después bajaba). No lo investigué más: con 31 visitas no sigue subiendo.
+- Captura de la Arena 300 ms después de volver: la pila entera, sin cuadro negro. 194 tests, `tsc` y `svelte-check` en verde.
+- **No verificado:** volver a la Arena en medio de una Compresión o de un salto de foto ocurridos mientras estaba tapada (el código los deja pendientes; no lo miré), ni el modo grabación.
 
 ## C4 — Estratos: lógica e interfaz 2D provisoria (2026-11-15)
 
@@ -899,7 +996,7 @@ En los dos casos con Caudal fijo el script reemplaza `Arena.lF` por una constant
 1. **La Presión es en vivo.** El simulador la calcula al empezar cada corrida y en cada Compresión (`A.m = P.mods()`); el juego la recalcula en cada tick, como dice §7.2. El juego va apenas más rápido que el simulador dentro de una corrida larga.
 2. **`s_k` arranca en 0** (1 grano) en vez del "vacío" del simulador (`−∞`, que pasa a 0 en el primer paso): da lo mismo en las fórmulas.
 3. **Estado puesto a mano en la prueba**: los niveles de la Red y los `s_k` altos los cargué desde la consola, no jugando.
-4. **Falta para otros hitos**: la escena 3D y la flecha "↓ Estratos" en la Arena (C5); que los estratos no corran en el Defecto Vidrio y las reglas de Dislocación e Inclusión sobre la Presión (C7 y C12); `meta_1_1_estrato8_log10` (C8/C13). El Eco y las reliquias siguen sin aparecer en el desglose de Estadísticas.
+4. **Falta para otros hitos**: ~~la escena 3D y la flecha "↓ Estratos" en la Arena~~ (hecho en C5); que los estratos no corran en el Defecto Vidrio y las reglas de Dislocación e Inclusión sobre la Presión (C7 y C12); `meta_1_1_estrato8_log10` (C8/C13). El Eco y las reliquias siguen sin aparecer en el desglose de Estadísticas.
 
 ## C3 — Relicario (2026-11-15)
 

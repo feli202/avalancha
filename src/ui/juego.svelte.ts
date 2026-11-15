@@ -69,6 +69,8 @@ class Juego {
   lluvia = $state.raw<{ id: number } | null>(null)
   /** SPEC_CAPA1 §11: la capa que se ve. Cristalización aparece con el primer Infinito (Capas.svelte). */
   capa = $state<'arena' | 'cristalizacion'>('arena')
+  /** La pantalla de Cristalización que se ve (Capas.svelte; la flecha "↓ Estratos" de la Arena la cambia). */
+  pantalla = $state('red')
   /** La cinemática del primer Infinito está corriendo (Pila.svelte la dibuja). */
   cinematica = $state(false)
   /** Segundos reales que lleva la oferta del Relicario sin elegir. */
