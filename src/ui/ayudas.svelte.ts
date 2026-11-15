@@ -1,6 +1,6 @@
 // Ayuda integrada: el tooltip global (use:ayuda) y lo que dice cada mejora y número. Los textos, en src/strings.
 import {
-  CFG, aplicar, anillos, caudal, densidad, multAnillos, multCascada, multColor, nivel, produccion, valor,
+  CFG, aplicar, anillos, maxCascada, maxMutacion, caudal, densidad, multAnillos, multCascada, multColor, nivel, produccion, valor,
   type ItemId, type MutId, type State,
 } from '../core'
 import { txt } from '../strings'
@@ -58,8 +58,8 @@ export function ayuda(el: HTMLElement, fn: () => Tip) {
 const mutDe = (id: ItemId) => (id.startsWith('mut_') ? (id.slice(4) as MutId) : null)
 export const colorDe = (id: ItemId) => (id.startsWith('color') ? Number(id.slice(5)) : -1)
 
-export const maximo = (id: ItemId) =>
-  id === 'cascada' ? CFG.cascada.nivel_max : mutDe(id) ? CFG.mutaciones.nivel_max : Infinity
+export const maximo = (s: State, id: ItemId) =>
+  id === 'cascada' ? maxCascada(s) : mutDe(id) ? maxMutacion(s) : Infinity
 
 export function nombre(id: ItemId) {
   const m = mutDe(id)
@@ -90,7 +90,7 @@ export function ayudaItem(s: State, id: ItemId): Tip {
     titulo: `${nombre(id)} · ${txt.nivel(nivel(s, id))}`,
     que: g.que[id],
     ahora: g.ahora(efecto(s, id)),
-    prox: nivel(s, id) >= maximo(id) ? txt.nivelMaximo : g.proximo(efecto(t, id), cambio(s, t)),
+    prox: nivel(s, id) >= maximo(s, id) ? txt.nivelMaximo : g.proximo(efecto(t, id), cambio(s, t)),
   }
 }
 

@@ -1,6 +1,6 @@
 import type Decimal from 'break_infinity.js'
 import { CFG, MUTACIONES, type MutId } from './config'
-import { enInfinito, costoCaudal, costoCascada, costoColor, costoMutacion } from './formulas'
+import { enInfinito, costoCaudal, costoCascada, costoColor, costoMutacion, maxCascada, maxMutacion } from './formulas'
 import type { State } from './state'
 
 /** `color0`…`color3` siguen el orden de CFG.colores. */
@@ -34,9 +34,9 @@ export const mutacionesDisponibles = (s: State) =>
 export function disponibles(s: State): ItemId[] {
   const o: ItemId[] = ['caudal']
   for (let i = 0; i < s.coloresDesbloqueados; i++) o.push(`color${i}`)
-  if (s.compresiones >= CFG.cascada.compresiones_para_desbloquear && s.cascada < CFG.cascada.nivel_max) o.push('cascada')
+  if (s.compresiones >= CFG.cascada.compresiones_para_desbloquear && s.cascada < maxCascada(s)) o.push('cascada')
   if (mutacionesDisponibles(s))
-    for (const m of MUTACIONES) if (s.mutaciones[m] < CFG.mutaciones.nivel_max) o.push(`mut_${m}`)
+    for (const m of MUTACIONES) if (s.mutaciones[m] < maxMutacion(s)) o.push(`mut_${m}`)
   return o
 }
 
@@ -61,7 +61,7 @@ export const comprar = (s: State, id: ItemId): State =>
 export function comprarMax(s: State, id: ItemId): State {
   if (!puedeComprar(s, id)) return s
   // Lo único que cambia la disponibilidad al subir niveles es el nivel máximo: se revisa una vez, no por nivel (I8).
-  const tope = id === 'cascada' ? CFG.cascada.nivel_max : mutDe(id) ? CFG.mutaciones.nivel_max : Infinity
+  const tope = id === 'cascada' ? maxCascada(s) : mutDe(id) ? maxMutacion(s) : Infinity
   let energia = s.energia
   let t = s
   for (let c = costo(t, id); nivel(t, id) < tope && energia.gte(c); c = costo(t, id)) {

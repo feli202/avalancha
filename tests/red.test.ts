@@ -1,0 +1,112 @@
+import Decimal from 'break_infinity.js'
+import { describe, expect, it } from 'vitest'
+import {
+  CFG, CFG1, INFINITO, NODOS, abierto, anillo, autoActivo, comprarRed, costoRed, costoRedLog10, cristalesAlInfinito,
+  densidad, disponibles, estadoInicial, infinito, maxCascada, tick, valor, type State,
+} from '../src/core'
+import { deserializar, serializar } from '../src/guardado/guardado'
+
+const conRed = (red: Record<string, number>, extra: Partial<State> = {}): State => {
+  const s = estadoInicial()
+  return { ...s, ...extra, red: { ...s.red, ...red } }
+}
+const rico = (red: Record<string, number> = {}) => conRed(red, { cristales: new Decimal('1e300') })
+
+describe('Red', () => {
+  it('lee los 25 nodos de config: 13 en los anillos 0–2 y 12 en el anillo 3, en forma de rombo', () => {
+    expect(Object.keys(NODOS)).toHaveLength(25)
+    expect(Object.keys(CFG1.red.nodos).every((k) => anillo(k) <= 2)).toBe(true)
+    expect(Object.keys(CFG1.red['anillo3_1.2']).every((k) => anillo(k) === 3)).toBe(true)
+  })
+
+  it('costos de §6.2 por anillo', () => {
+    expect([0, 1, 2, 3].map((n) => costoRedLog10('memoria', n))).toEqual([0, 0, 0, 0])
+    expect([0, 1, 2, 3].map((n) => costoRedLog10('eco', n))).toEqual([0, 0.15, 0.3, 0.45].map((x) => expect.closeTo(x)))
+    expect([0, 1, 2, 3].map((n) => costoRedLog10('ruptura', n))).toEqual([1.6, 1.9, 2.2, 2.5].map((x) => expect.closeTo(x)))
+    expect([0, 3].map((n) => costoRedLog10('eco2', n))).toEqual([45, 60])
+    expect([0, 3].map((n) => costoRedLog10('ruptura2', n))).toEqual([250, 265])
+    // En Cristales enteros, redondeado para arriba.
+    expect([0, 1, 2, 3].map((n) => costoRed('eco', n).toNumber())).toEqual([1, 2, 2, 3])
+    expect(costoRed('ruptura', 0).toNumber()).toBe(40)
+  })
+
+  it('apertura: un nodo se abre cuando un vecino ortogonal más cercano al centro llega a nivel 4', () => {
+    expect(abierto(estadoInicial(), 'memoria')).toBe(true)
+    expect(abierto(conRed({ memoria: 3 }), 'eco')).toBe(false)
+    const m4 = conRed({ memoria: 4 })
+    expect(['eco', 'sedimentacion', 'estratos', 'defectos'].every((k) => abierto(m4, k))).toBe(true)
+    expect(abierto(m4, 'ruptura')).toBe(false) // anillo 2: hace falta Eco en 4
+    expect(abierto(m4, 'cascada_plus')).toBe(false) // diagonal de Memoria
+    const eco4 = conRed({ memoria: 4, eco: 4 })
+    expect(['ruptura', 'cristalografia', 'cascada_plus'].every((k) => abierto(eco4, k))).toBe(true)
+    // Un vecino más lejos del centro no abre: Ruptura en 4 no abre Eco.
+    expect(abierto(conRed({ ruptura: 4 }), 'eco')).toBe(false)
+    // El anillo 3 queda con el candado de hielo hasta la Escarcha.
+    expect(abierto(conRed({ memoria: 4, eco: 4, ruptura: 4 }), 'germen')).toBe(false)
+  })
+
+  it('comprar cobra Cristales, sube el nivel y no pasa de 4 ni compra cerrados o sin plata', () => {
+    let s = conRed({}, { cristales: new Decimal(5) })
+    expect(comprarRed(s, 'eco')).toBe(s)
+    for (let i = 0; i < 4; i++) s = comprarRed(s, 'memoria')
+    expect(s.red.memoria).toBe(4)
+    expect(s.cristales.toNumber()).toBe(1)
+    expect(comprarRed(s, 'memoria')).toBe(s)
+    s = comprarRed(s, 'eco')
+    expect([s.red.eco, s.cristales.toNumber()]).toEqual([1, 0])
+    expect(comprarRed(s, 'eco')).toBe(s) // cuesta 2
+  })
+
+  it('Memoria nv1: autocompradores y compresión automática desde el inicio', () => {
+    expect(autoActivo(estadoInicial(), 'violeta')).toBe(false)
+    const s = conRed({ memoria: 1 })
+    expect(Object.keys(CFG.autocompradores).every((k) => autoActivo(s, k))).toBe(true)
+    // Primer tick: el autocomprador de Caudal compra con la Energía que haya.
+    const t = tick({ ...s, energia: new Decimal('1e6'), relojAuto: 0.99 }, 0.05)
+    expect(t.caudal).toBeGreaterThan(0)
+  })
+
+  it('Memoria nv2 y nv3: Cascada y Mutaciones automáticas (con margen de Energía)', () => {
+    // Sin los autocompradores de Caudal y colores, que se gastarían la Energía antes.
+    const auto = Object.fromEntries(Object.keys(CFG.autocompradores).map((k) => [k, false]))
+    const base = { energia: new Decimal('1e200'), maxEnergia: new Decimal('1e200'), compresiones: 6, relojAuto: 0.99, auto }
+    const t1 = tick(conRed({ memoria: 1 }, base), 0.05)
+    expect([t1.cascada, t1.mutaciones.caudal]).toEqual([0, 0])
+    const t2 = tick(conRed({ memoria: 2 }, base), 0.05)
+    expect(t2.cascada).toBe(CFG.cascada.nivel_max)
+    expect(t2.mutaciones.caudal).toBe(0)
+    const t3 = tick(conRed({ memoria: 3 }, base), 0.05)
+    expect(Object.values(t3.mutaciones).some((n) => n > 0)).toBe(true)
+  })
+
+  it('Memoria nv4: Infinito automático; y conserva 3/5/7/9 compresiones', () => {
+    const lleno = { energia: INFINITO, maxEnergia: INFINITO, compresiones: 17, infinitos: 1 }
+    expect(tick(conRed({ memoria: 3 }, lleno), 0.05).infinitos).toBe(1)
+    const t = tick(conRed({ memoria: 4 }, lleno), 0.05)
+    expect(t.infinitos).toBe(2)
+    expect(t.energia.toNumber()).toBe(0)
+    expect(t.red.memoria).toBe(4) // la Red se conserva
+    expect([0, 1, 2, 3, 4].map((n) => infinito(conRed({ memoria: n }, lleno)).compresiones)).toEqual([0, 3, 5, 7, 9])
+    // Sedimentación manda si conserva más.
+    expect(infinito(conRed({ memoria: 4, sedimentacion: 2 }, lleno)).compresiones).toBe(13)
+  })
+
+  it('efectos de la Arena: Compactación, Cascada+, Eco y Cristalografía', () => {
+    expect(densidad(conRed({ compactacion: 2 })) - densidad(estadoInicial())).toBeCloseTo(0.16)
+    const c = conRed({ cascada_plus: 1 }, { compresiones: 2, cascada: CFG.cascada.nivel_max })
+    expect(maxCascada(c)).toBe(CFG.cascada.nivel_max + 5)
+    expect(disponibles(c)).toContain('cascada')
+    const eco = conRed({ eco: 1 }, { granos: 100, cristalesTotales: new Decimal(100) })
+    expect(valor(eco).div(valor({ ...eco, red: estadoInicial().red })).log10()).toBeCloseTo(0.5 * 2)
+    expect(cristalesAlInfinito(conRed({ cristalografia: 2 }, { infinitos: 1 }))).toBe(Math.floor(10 ** (1 + CFG1.cristales.base_log10)))
+  })
+
+  it('el guardado conserva la Red y no recorta una Cascada subida por Cascada+', () => {
+    let s = rico()
+    for (const k of ['memoria', 'memoria', 'memoria', 'memoria', 'eco', 'eco', 'eco', 'eco', 'cascada_plus']) s = comprarRed(s, k)
+    s = { ...s, cascada: CFG.cascada.nivel_max + 3, infinitos: 1 }
+    const p = deserializar(serializar({ estado: s, guardadoEn: 0, vistos: {}, record: 0, logros: {} }))
+    expect(p.estado.red).toEqual(s.red)
+    expect(p.estado.cascada).toBe(CFG.cascada.nivel_max + 3)
+  })
+})

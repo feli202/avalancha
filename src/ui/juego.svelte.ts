@@ -364,6 +364,8 @@ export function arrancar() {
     }
     // Contra el último estado que vio el bucle, no juego.s: comprimir a mano (botón, tecla C) lo reemplaza entre cuadros.
     registrar(historial, previo, s)
+    // Infinito automático (Memoria nv4): el mismo aviso que el botón.
+    if (s.infinitos > previo.infinitos) juego.aviso = { id: avisos++, texto: txt.cristal.ganados(s.cristalesTotales.sub(previo.cristalesTotales).toNumber()) }
     previo = s
     if (Math.floor(s.tiempoTotal) !== Math.floor(juego.s.tiempoTotal)) juego.verHistorial++
     juego.s = s

@@ -1,6 +1,7 @@
 import Decimal from 'break_infinity.js'
 import { CFG } from './config'
 import { enInfinito } from './formulas'
+import { memoria } from './red'
 import { estadoInicial, type State } from './state'
 
 /** log10 del umbral de la próxima Compresión (Infinity si ya no quedan). */
@@ -22,4 +23,5 @@ export function comprimir(s: State): State {
   }
 }
 
-export const autoActivo = (s: State, clave: string) => s.compresiones >= CFG.autocompradores[clave] && s.auto[clave]
+/** Memoria nv1 (SPEC_CAPA1 §6.3) los da todos desde el inicio de cada Infinito. */
+export const autoActivo = (s: State, clave: string) => (memoria(s) >= 1 || s.compresiones >= CFG.autocompradores[clave]) && s.auto[clave]

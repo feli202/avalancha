@@ -5,6 +5,7 @@
   import { ajustes } from './ajustes.svelte'
   import { formato } from './formato'
   import { hayCartel, juego } from './juego.svelte'
+  import Red from './Red.svelte'
 
   const PANTALLAS = ['red', 'estratos', 'defectos', 'escarcha', 'relicario']
   let pantalla = $state(PANTALLAS[0])
@@ -29,11 +30,13 @@
             {/each}
           </nav>
           {#key pantalla}
+            {#if pantalla === 'red'}<Red />{:else}
             <section class="pantalla" aria-labelledby="c1-titulo">
               <svg viewBox="-100 -100 200 200" aria-hidden="true"><path d="M0-90 78-45V45L0 90-78 45V-45ZM0-90V90M-78-45 78 45M-78 45 78-45" /></svg>
               <h1 id="c1-titulo">{txt.cristal.pantallas[pantalla]}</h1>
               <p>{txt.cristal.vacia}</p>
             </section>
+            {/if}
           {/key}
         {:else}
           <section class="pantalla intro">

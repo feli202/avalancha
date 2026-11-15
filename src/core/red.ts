@@ -1,0 +1,76 @@
+// SPEC_CAPA1 §6: la Red. Los nodos (posición, efectos por nivel, costo del anillo 3) se leen de config_capa1.json:
+// agregar un nodo no requiere tocar código.
+import Decimal from 'break_infinity.js'
+import { CFG1 } from './config1'
+import type { State } from './state'
+
+/** Un nodo: posición en el rombo y, por cada efecto, un arreglo con el valor de cada nivel (1..4). */
+export type Nodo = { pos: number[]; costo_base_log10?: number } & Record<string, unknown>
+
+export const NODOS: Record<string, Nodo> = { ...CFG1.red.nodos, ...CFG1.red['anillo3_1.2'] }
+/** Los de la 1.2: grises con candado de hielo hasta que se abra la Escarcha. */
+export const ANILLO3 = new Set(Object.keys(CFG1.red['anillo3_1.2']))
+export const NIVEL_MAX_RED = 4
+export const CENTRO = 'memoria'
+
+const POR_POS = new Map(Object.entries(NODOS).map(([id, n]) => [n.pos.join(','), id]))
+export const anillo = (id: string) => Math.abs(NODOS[id].pos[0]) + Math.abs(NODOS[id].pos[1])
+export const nivelRed = (s: State, id: string) => s.red[id] ?? 0
+
+/** Vecinos ortogonales que existen. */
+export const vecinos = (id: string) => {
+  const [x, y] = NODOS[id].pos
+  return [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]].map((p) => POR_POS.get(p.join(','))).filter((v): v is string => !!v)
+}
+
+/** La Escarcha llega en C10; hasta entonces el anillo 3 queda cerrado. */
+export const escarchaAbierta = (_s: State) => false
+
+/** Se puede comprar: Memoria siempre; el resto, con un vecino ortogonal más cercano al centro en nivel 4. */
+export const abierto = (s: State, id: string) =>
+  id === CENTRO ||
+  ((!ANILLO3.has(id) || escarchaAbierta(s)) &&
+    vecinos(id).some((v) => anillo(v) < anillo(id) && nivelRed(s, v) >= NIVEL_MAX_RED))
+
+/** log10 del costo del nivel n → n+1 (§6.2). */
+export function costoRedLog10(id: string, n: number) {
+  const r = anillo(id)
+  return (NODOS[id].costo_base_log10 ?? CFG1.red.costo_anillo_log10[r]) + CFG1.red.paso_nivel_log10[r] * n
+}
+
+// Los Cristales son enteros: un costo chico se redondea para arriba (10^0,15 = 1,41 → 2), como los Cristales del Infinito (§4).
+export function costoRed(id: string, n: number) {
+  const l = costoRedLog10(id, n)
+  return l < 6 ? new Decimal(Math.ceil(10 ** l - 1e-9)) : Decimal.pow10(l)
+}
+
+export const puedeComprarRed = (s: State, id: string) =>
+  id in NODOS && nivelRed(s, id) < NIVEL_MAX_RED && abierto(s, id) && s.cristales.gte(costoRed(id, nivelRed(s, id)))
+
+/** Compra un nivel; si no se puede, devuelve el mismo estado. */
+export function comprarRed(s: State, id: string): State {
+  if (!puedeComprarRed(s, id)) return s
+  const n = nivelRed(s, id)
+  return { ...s, cristales: s.cristales.sub(costoRed(id, n)), red: { ...s.red, [id]: n + 1 } }
+}
+
+/** El valor del efecto `clave` del nodo en su nivel actual, o `def` si está en 0 (como `v()` de sim_capa1.py). */
+export function efectoRed(s: State, id: string, clave: string, def = 0, n = nivelRed(s, id)): number {
+  const v = NODOS[id]?.[clave]
+  return n > 0 && Array.isArray(v) ? v[n - 1] : def
+}
+
+// ---------- efectos que ya usa la Arena (los de Estratos, Defectos, Relicario y Escarcha llegan con su hito) ----------
+export const memoria = (s: State) => nivelRed(s, CENTRO)
+/** Compresiones que conserva el Infinito (Memoria o Sedimentación, la mayor). */
+export const compresionesConservadas = (s: State) =>
+  Math.max(efectoRed(s, CENTRO, 'conservar_compresiones'), efectoRed(s, 'sedimentacion', 'conservar_compresiones'))
+export const densidadRed = (s: State) => efectoRed(s, 'compactacion', 'densidad') + efectoRed(s, 'compactacion2', 'densidad')
+export const cascadaExtra = (s: State) => efectoRed(s, 'cascada_plus', 'nivel_max_extra')
+export const mutacionExtra = (s: State) => efectoRed(s, 'mutacion_plus', 'nivel_max_extra')
+/** Eco: + p × log10(Cristales totales) a log10 V. */
+export const ecoLog10 = (s: State) =>
+  (efectoRed(s, 'eco', 'p') + efectoRed(s, 'eco2', 'p_extra')) * Math.max(0, s.cristalesTotales.log10())
+/** Multiplicador de Cristales en log10 (Ruptura, Cristalografía, Cristalografía II). */
+export const cristalesRedLog10 = (s: State) =>
+  efectoRed(s, 'ruptura', 'cristales_log10') + efectoRed(s, 'cristalografia', 'cristales_log10') + efectoRed(s, 'cristalografia2', 'cristales_log10')

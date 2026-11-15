@@ -4,7 +4,7 @@
   import Decimal from 'break_infinity.js'
   import {
     CFG, MUTACIONES, anillos, caudal, cascadaC, costoCascada, costoCaudal, costoColor, costoMutacion, densidad,
-    multAnillos, multCascada, multColor, produccion, valor, type State,
+    maxMutacion, multAnillos, multCascada, multColor, produccion, valor, type State,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
   import { txt } from '../strings'
@@ -84,7 +84,7 @@
       sec('mutaciones', !!v.mutaciones, '#ff7ad9', MUTACIONES.map((m) => ({
         r: txt.mutaciones[m],
         g: `10^(${d(M[m].c0)} + ${d(M[m].g)}·${V.nivel})`,
-        v: `${txt.nivel(s.mutaciones[m])} · ${efecto(s, `mut_${m}`)} · ${s.mutaciones[m] >= M.nivel_max ? txt.nivelMaximo : formato(costoMutacion(m, s.mutaciones[m]))}`,
+        v: `${txt.nivel(s.mutaciones[m])} · ${efecto(s, `mut_${m}`)} · ${s.mutaciones[m] >= maxMutacion(s) ? txt.nivelMaximo : formato(costoMutacion(m, s.mutaciones[m]))}`,
       }))),
       sec('auto', !!v.auto_caudal, 'var(--tenue)', Object.entries(CFG.autocompradores).map(([k, n]) => ({
         r: k === 'compresion_auto' ? g.compresionAuto : nombreAuto(k),

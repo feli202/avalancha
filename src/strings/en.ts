@@ -1,5 +1,6 @@
 // English UI text. Same keys as es.ts (the type enforces it).
-import type { es } from './es'
+import type { es, NodoTxt } from './es'
+const f = (x: number) => x.toLocaleString('en-US', { maximumFractionDigits: 2 })
 
 const num = (x: number, d = 2) => x.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d })
 const n0 = (x: number) => x.toLocaleString('en-US')
@@ -88,6 +89,43 @@ export const en: typeof es = {
       'The Sand starts over, and it gets faster every time.',
     ],
     seguir: 'Continue',
+    red: {
+      que: 'Each node has four levels: Amber, Coral, Jade and Violet. Completing one topples its sand and opens its neighbors.',
+      nivel: (n: number) => `Level ${n} of 4`,
+      costo: (c: string) => (c === '1' ? 'Costs 1 Crystal' : `Costs ${c} Crystals`),
+      sinComprar: 'Not bought',
+      completo: 'Complete',
+      siguiente: (e: string) => `Next level: ${e}`,
+      cerrado: 'Opens when a neighbor closer to Memory reaches Violet.',
+      hielo: 'Under the ice: opens with the Frost.',
+      nodos: {
+        memoria: ['Memory', 'Mem', (x, n) => `${['Autobuyers and auto-Compression from the start', 'Auto-Cascade', 'Auto-Mutations', 'Auto-Infinity'].slice(0, n).join(' · ')}. Keeps ${x.conservar_compresiones} compressions.`],
+        eco: ['Echo', 'Echo', (x) => `Value × Total Crystals^${f(x.p)}`],
+        sedimentacion: ['Sedimen­tation', 'Sed', (x) => `Keeps ${x.conservar_compresiones} compressions on each Infinity`],
+        estratos: ['Strata', 'Str', (x) => `Opens the Strata · flow ×${f(x.flujo_x)}`],
+        defectos: ['Defects', 'Def', (_, n) => `Opens ${['Vacancy', 'Dislocation', 'Twinning', 'Impurity'].slice(0, n).join(', ')}`],
+        ruptura: ['Rupture', 'Rup', (x) => `Break Infinity · Crystals ×${f(10 ** x.cristales_log10)}`],
+        compactacion: ['Compac­tion', 'Comp', (x) => `Density +${f(x.densidad)}`],
+        presion: ['Pressure', 'Pres', (x) => `Pressure weight ×${f(x.w_x)}`],
+        engarces: ['Settings', 'Set', (x) => `${x.espacios} relic slots · ${x.ofertas} offers`],
+        cascada_plus: ['Cascade+', 'Cas+', (x) => `Cascade max level +${x.nivel_max_extra}`],
+        mutacion_plus: ['Mutation+', 'Mut+', (x) => `Mutations max level +${x.nivel_max_extra}`],
+        inercia: ['Inertia', 'Inr', (x) => `Strata flow ×${f(x.flujo_x)}`],
+        cristalografia: ['Crystallo­graphy', 'Cry', (x) => `Crystals ×${f(10 ** x.cristales_log10)}`],
+        eco2: ['Echo II', 'Echo2', (x) => `Echo exponent +${f(x.p_extra)}`],
+        defectos2: ['Defects II', 'Def2', (_, n) => `Opens ${['Fatigue', 'Boundary', 'Inclusion', 'Glass'].slice(0, n).join(', ')}`],
+        germen: ['Seed', 'Seed', (x) => `Frost growth ×${f(x.escarcha_g_x)}`],
+        frio: ['Cold', 'Cold', (x) => `Frost endurance ×${f(x.escarcha_H_x)}`],
+        compactacion2: ['Compac­tion II', 'Comp2', (x) => `Density +${f(x.densidad)}`],
+        sedimento2: ['Sediment II', 'Sed2', (x) => `Pressure weight ×${f(x.w_x)}`],
+        capilaridad: ['Capil­larity', 'Cap', (x) => `Strata flow ×${f(x.flujo_x)}`],
+        abismo: ['Abyss', 'Abys', (x) => `Pressure weight ×${f(x.w_x)}`],
+        engarces2: ['Settings II', 'Set2', (x) => `${x.espacios} slots · Polish ×${f(x.pulido_x)} in the exponent`],
+        cristalografia2: ['Crystallo­graphy II', 'Cry2', (x) => `Crystals ×${f(10 ** x.cristales_log10)}`],
+        deshielo: ['Thaw', 'Thaw', (x) => `Breaks the Frost by itself every 30 min · Shards ×${x.esquirlas_x}`],
+        ruptura2: ['Rupture II', 'Rup2', (x) => `Q −${x.Q_resta}`],
+      } as Record<string, NodoTxt>,
+    },
   },
 
   ausencia: {
@@ -495,6 +533,7 @@ export const en: typeof es = {
     velocidad: 'Speed',
     darEnergia: 'Give Energy',
     casiInfinito: 'Energy to 1e307 (almost Infinity)',
+    darCristales: 'Crystals ×10 (+10)',
     saltar: 'Jump to Compression',
     ir: 'Go',
     exportar: 'Export state (JSON)',

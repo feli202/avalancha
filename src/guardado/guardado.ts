@@ -1,6 +1,6 @@
 // Guardado (SPEC 8): la partida como JSON con versión. Puro: el almacenamiento entra como Almacen.
 import Decimal from 'break_infinity.js'
-import { CFG, MUTACIONES, estadoInicial, infinito, type State } from '../core'
+import { CFG, MUTACIONES, NIVEL_MAX_RED, estadoInicial, infinito, maxCascada, maxMutacion, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
 import type { Contadores } from '../ui/secretos'
@@ -73,6 +73,7 @@ const MODELO = plano({ estado: estadoInicial(), guardadoEn: 0, vistos: {}, recor
 /** Completa con el modelo los campos que faltan (un campo nuevo sin migración, un color o autocomprador nuevo). */
 function completar(modelo: any, x: any): any {
   if (typeof modelo !== 'object' || modelo === null || Array.isArray(modelo)) return x === undefined ? modelo : x
+  if (x === undefined) return modelo // un objeto nuevo entero (la Red de la Capa 1)
   if (typeof x !== 'object' || x === null || Array.isArray(x)) return x
   const r = { ...x }
   for (const k of Object.keys(modelo)) r[k] = completar(modelo[k], x[k])
@@ -96,12 +97,14 @@ export function deserializar(texto: string): Partida {
   // M5: rangos posibles (un guardado editado a mano o importado no deja estados imposibles).
   const ent = (x: number, max = Infinity) => Math.min(max, Math.max(0, Math.floor(x)))
   const pos = (x: number) => Math.max(0, x)
+  const red = Object.fromEntries(Object.keys(MODELO.estado.red).map((k) => [k, ent(e.red[k], NIVEL_MAX_RED)]))
+  const conRed = { ...estadoInicial(), red } // los topes de Cascada y Mutaciones dependen de la Red
   const estado: State = {
       ...e, energia: deDec(e.energia), maxEnergia: deDec(e.maxEnergia),
       cristales: deDec(e.cristales), cristalesTotales: deDec(e.cristalesTotales),
       granos: pos(e.granos), granosTotales: pos(e.granosTotales), caudal: ent(e.caudal), colores: e.colores.map((n) => ent(n)),
-      cascada: ent(e.cascada, CFG.cascada.nivel_max), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
-      mutaciones: Object.fromEntries(MUTACIONES.map((m) => [m, ent(e.mutaciones[m], CFG.mutaciones.nivel_max)])) as State['mutaciones'],
+      red, cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
+      mutaciones: Object.fromEntries(MUTACIONES.map((m) => [m, ent(e.mutaciones[m], maxMutacion(conRed))])) as State['mutaciones'],
       coloresDesbloqueados: ent(e.coloresDesbloqueados, CFG.colores.length), infinitos: ent(e.infinitos),
       tiempoTotal: pos(e.tiempoTotal), tiempoCorrida: pos(e.tiempoCorrida),
   }

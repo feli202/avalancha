@@ -1,5 +1,8 @@
 // Todos los textos de la interfaz. Nunca escribir textos en los componentes.
 const num = (x: number, d = 2) => x.toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d })
+const f = (x: number) => x.toLocaleString('es-AR', { maximumFractionDigits: 2 })
+/** Nodo de la Red: [nombre, nombre corto (móvil), efecto]. `x` son los valores de config en el nivel `n` (1..4). */
+export type NodoTxt = [string, string, (x: Record<string, any>, n: number) => string]
 
 export const es = {
   /** Formato de números (Intl) y separador decimal de la notación científica. */
@@ -93,6 +96,44 @@ export const es = {
       'La Arena empieza de nuevo, y cada vez va a ir más rápido.',
     ],
     seguir: 'Seguir',
+    // SPEC_CAPA1 §6
+    red: {
+      que: 'Cada nodo tiene cuatro niveles: Ámbar, Coral, Jade y Violeta. Al completar uno, la arena se derrumba y abre a sus vecinos.',
+      nivel: (n: number) => `Nivel ${n} de 4`,
+      costo: (c: string) => (c === '1' ? 'Cuesta 1 Cristal' : `Cuesta ${c} Cristales`),
+      sinComprar: 'Sin comprar',
+      completo: 'Completo',
+      siguiente: (e: string) => `Siguiente nivel: ${e}`,
+      cerrado: 'Se abre cuando un vecino más cerca de Memoria llega a Violeta.',
+      hielo: 'Bajo el hielo: se abre con la Escarcha.',
+      nodos: {
+        memoria: ['Memoria', 'Mem', (x, n) => `${['Autocompradores y Compresión automática desde el inicio', 'Cascada automática', 'Mutaciones automáticas', 'Infinito automático'].slice(0, n).join(' · ')}. Conserva ${x.conservar_compresiones} compresiones.`],
+        eco: ['Eco', 'Eco', (x) => `Valor × Cristales totales^${f(x.p)}`],
+        sedimentacion: ['Sedimen­tación', 'Sed', (x) => `Conserva ${x.conservar_compresiones} compresiones en cada Infinito`],
+        estratos: ['Estratos', 'Est', (x) => `Abre los Estratos · flujo ×${f(x.flujo_x)}`],
+        defectos: ['Defectos', 'Def', (_, n) => `Abre ${['Vacancia', 'Dislocación', 'Macla', 'Impureza'].slice(0, n).join(', ')}`],
+        ruptura: ['Ruptura', 'Rup', (x) => `Romper el Infinito · Cristales ×${f(10 ** x.cristales_log10)}`],
+        compactacion: ['Compac­tación', 'Comp', (x) => `Densidad +${f(x.densidad)}`],
+        presion: ['Presión', 'Pres', (x) => `Peso de la Presión ×${f(x.w_x)}`],
+        engarces: ['Engarces', 'Eng', (x) => `${x.espacios} espacios de reliquia · ${x.ofertas} ofertas`],
+        cascada_plus: ['Cascada+', 'Cas+', (x) => `Nivel máximo de la Cascada +${x.nivel_max_extra}`],
+        mutacion_plus: ['Mutación+', 'Mut+', (x) => `Nivel máximo de las Mutaciones +${x.nivel_max_extra}`],
+        inercia: ['Inercia', 'Iner', (x) => `Flujo de los estratos ×${f(x.flujo_x)}`],
+        cristalografia: ['Cristalo­grafía', 'Crist', (x) => `Cristales ×${f(10 ** x.cristales_log10)}`],
+        eco2: ['Eco II', 'Eco2', (x) => `Exponente del Eco +${f(x.p_extra)}`],
+        defectos2: ['Defectos II', 'Def2', (_, n) => `Abre ${['Fatiga', 'Frontera', 'Inclusión', 'Vidrio'].slice(0, n).join(', ')}`],
+        germen: ['Germen', 'Germ', (x) => `Crecimiento de la Escarcha ×${f(x.escarcha_g_x)}`],
+        frio: ['Frío', 'Frío', (x) => `Aguante de la Escarcha ×${f(x.escarcha_H_x)}`],
+        compactacion2: ['Compac­tación II', 'Comp2', (x) => `Densidad +${f(x.densidad)}`],
+        sedimento2: ['Sedimento II', 'Sed2', (x) => `Peso de la Presión ×${f(x.w_x)}`],
+        capilaridad: ['Capila­ridad', 'Cap', (x) => `Flujo de los estratos ×${f(x.flujo_x)}`],
+        abismo: ['Abismo', 'Abis', (x) => `Peso de la Presión ×${f(x.w_x)}`],
+        engarces2: ['Engarces II', 'Eng2', (x) => `${x.espacios} espacios · Pulido ×${f(x.pulido_x)} en el exponente`],
+        cristalografia2: ['Cristalo­grafía II', 'Crist2', (x) => `Cristales ×${f(10 ** x.cristales_log10)}`],
+        deshielo: ['Deshielo', 'Desh', (x) => `Rompe la Escarcha sola cada 30 min · Esquirlas ×${x.esquirlas_x}`],
+        ruptura2: ['Ruptura II', 'Rup2', (x) => `Q −${x.Q_resta}`],
+      } as Record<string, NodoTxt>,
+    },
   },
 
   // Fuera de línea y guardado (SPEC 8)
@@ -530,6 +571,7 @@ export const es = {
     velocidad: 'Velocidad',
     darEnergia: 'Dar Energía',
     casiInfinito: 'Energía a 1e307 (casi Infinito)',
+    darCristales: 'Cristales ×10 (+10)',
     saltar: 'Saltar a la Compresión',
     ir: 'Ir',
     exportar: 'Exportar estado (JSON)',

@@ -1,8 +1,11 @@
 import Decimal from 'break_infinity.js'
-import { CFG } from './config'
+import { CFG, MUTACIONES } from './config'
+import { CFG1 } from './config1'
+import { infinito } from './infinito'
+import { memoria } from './red'
 import { autoActivo, comprimir } from './compress'
 import { INFINITO, caudal, enInfinito, energiaPorGrano, produccion } from './formulas'
-import { comprarMax } from './shop'
+import { comprar, comprarMax, costo, puedeComprar, type ItemId } from './shop'
 import type { State } from './state'
 
 /** SPEC 4.8: cada autocomprador encendido compra todo lo suyo que se pueda pagar. */
@@ -11,12 +14,26 @@ export function autocomprar(s: State): State {
   CFG.colores.forEach((c, i) => {
     if (autoActivo(s, c.id)) s = comprarMax(s, `color${i}`)
   })
+  // Memoria nv2 y nv3 (SPEC_CAPA1 §6.3): Cascada y Mutaciones automáticas, lo más barato primero y dejando un margen
+  // de Energía (como sim_capa1.py), para no frenar a los colores.
+  if (memoria(s) >= 2) s = comprarConMargen(s, ['cascada'])
+  if (memoria(s) >= 3) s = comprarConMargen(s, MUTACIONES.map((m): ItemId => `mut_${m}`))
   return s
+}
+
+const MARGEN = Decimal.pow10(CFG1.autocompradores_umbral_log10)
+function comprarConMargen(s: State, ids: ItemId[]): State {
+  for (;;) {
+    const ok = ids.filter((id) => puedeComprar(s, id) && s.energia.gte(costo(s, id).mul(MARGEN)))
+    if (!ok.length) return s
+    s = comprar(s, ok.reduce((a, b) => (costo(s, b).lt(costo(s, a)) ? b : a)))
+  }
 }
 
 /** Avanza la economía dt segundos (Euler explícito, igual que balance/sim.py). */
 export function tick(s: State, dt: number): State {
-  if (enInfinito(s)) return s // economía congelada hasta el Infinito (core/infinito.ts)
+  // Economía congelada hasta el Infinito (core/infinito.ts); con Memoria nv4 se hace solo, en el tick siguiente.
+  if (enInfinito(s)) return memoria(s) >= 4 ? infinito(s) : s
   const energia = Decimal.min(INFINITO, s.energia.add(produccion(s).mul(dt))) // sin Romper, se frena en 1e308
   const granos = caudal(s) * dt
   let n: State = {

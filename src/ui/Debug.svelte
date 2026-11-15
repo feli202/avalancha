@@ -66,6 +66,7 @@
   </div>
   <button onclick={darEnergia}>{txt.debug.darEnergia}</button>
   <button onclick={casiInfinito}>{txt.debug.casiInfinito}</button>
+  <button onclick={() => (juego.s = { ...juego.s, cristales: juego.s.cristales.mul(10).add(10), cristalesTotales: juego.s.cristalesTotales.add(juego.s.cristales.mul(9).add(10)) })}>{txt.debug.darCristales}</button>
   <label>
     {txt.debug.saltar}
     <input type="number" min="0" max={umbrales.length} bind:value={n} />

@@ -833,14 +833,14 @@ Todos: texto grande desde el primer cuadro, dentro de la zona segura (arriba, ce
 
 Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `balance/sim_capa1.py`.
 
-**Hito actual: C2 (sin empezar). C1 terminado el 2026-11-15.**
+**Hito actual: C3 (sin empezar). C2 terminado el 2026-11-15.**
 
 ## Plan (SPEC_CAPA1 §16)
 
 **Actualización 1.1**
 
 - [x] C1 — Guardado v2 + migración, Cristales, Infinito nuevo, barra lateral de capas y de Cristalización (pantallas vacías)
-- [ ] C2 — Red: datos desde config, forma de rombo, compra, apertura de vecinos, Memoria (automatización)
+- [x] C2 — Red: datos desde config, forma de rombo, compra, apertura de vecinos, Memoria (automatización)
 - [ ] C3 — Relicario: ofertas con semilla, fusión, engarces, efectos
 - [ ] C4 — Estratos: lógica (`s_k`, Presión, compras) + interfaz 2D provisoria
 - [ ] C5 — Estratos: escena three.js descendente + optimización
@@ -856,6 +856,43 @@ Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `bala
 - [ ] C12 — Defectos 5–8
 - [ ] C13 — Fin de la Capa 1 (hito + pantalla) + test de balance completo
 - [ ] C14 — Pulido y auditoría 1.2 → publicar
+
+## C2 — Red (2026-11-15)
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/core/red.ts` | Nuevo. `NODOS` (`red.nodos` + `red.anillo3_1.2` de config), `anillo`, `vecinos`, `abierto`, `costoRedLog10`/`costoRed`, `puedeComprarRed`, `comprarRed`, `efectoRed` (como `v()` de `sim_capa1.py`) y los efectos que ya usa la Arena. |
+| `src/core/state.ts` | `red`: nivel de cada nodo (las claves salen de `NODOS`, así un nodo nuevo en config entra solo, también en guardados viejos). |
+| `src/core/formulas.ts` | Densidad + Compactación; `maxCascada`/`maxMutacion` (Cascada+ y Mutación+); Eco en `valor`. |
+| `src/core/compress.ts` | `autoActivo`: con Memoria nv1, todos los autocompradores y la Compresión automática desde el inicio. |
+| `src/core/tick.ts` | Memoria nv2/nv3: Cascada y Mutaciones automáticas (lo más barato primero, con el margen `autocompradores_umbral_log10`, igual que el simulador). Memoria nv4: Infinito automático en el tick siguiente a llegar a 1e308. |
+| `src/core/infinito.ts` | Conserva la Red y `max(Memoria, Sedimentación)` compresiones; multiplicador de Cristales de Ruptura y Cristalografía. |
+| `src/guardado/guardado.ts` | Valida la Red (enteros 0..4); los topes de Cascada y Mutaciones al cargar respetan Cascada+/Mutación+. `completar()` ahora completa también un objeto entero que falta (antes devolvía `undefined`). |
+| `src/ui/Red.svelte` | Nuevo. La pantalla de la Red dentro de Cristalización. |
+| `src/strings/es.ts`, `en.ts` | `cristal.red`: nombre, nombre corto y efecto de cada nodo (con los valores de config); `debug.darCristales`. |
+| `tests/red.test.ts` | Nuevo, 9 tests. |
+
+- **Forma.** Grilla de 7×7 con cada nodo en su `pos` de config, Memoria al centro. Cada nodo es una celda de la pila: vacío se ve el borde; con niveles, el relleno es el color del último nivel (Ámbar/Coral/Jade/Violeta, los mismos tokens de la Capa 0, también con daltonismo) y abajo cuatro marcas con los niveles comprados. Lo comprable tiene borde y brillo cian. Lo cerrado, atenuado. El anillo 3 se ve gris, con trama de hielo y un candado.
+- **Apertura.** Memoria siempre; el resto cuando un vecino ortogonal con anillo menor está en nivel 4. El anillo 3, además, espera `escarchaAbierta()` (hoy `false`, llega con C10).
+- **Derrumbe al maxear.** La celda destella y se vacía, cuatro granos violeta salen hacia los vecinos ortogonales (los que existen) y cada vecino se enciende al recibirlo; con el sonido de arena y el acorde de anillo. Con Reducir destellos no hay animación.
+- **Tooltip** (el `use:ayuda` de siempre: mouse, mantener presionado o foco): nombre, nivel (o por qué está cerrado), efecto actual, efecto del siguiente nivel y costo. Clic compra.
+- **Móvil.** Las celdas se achican a ~40 px y muestran el nombre corto (container query). Sin scroll horizontal a 375 px.
+- **Debug.** "Cristales ×10 (+10)" (también suma a Cristales totales).
+
+### Verificación
+
+- `npm test`: **176 en verde** (antes 167). `tsc` y `svelte-check` sin errores. No se tocó el balance de la Capa 0 (con la Red en 0 todo da igual).
+- En el navegador integrado (1280×800 y 375×812): partida nueva → casi Infinito → Cristalización → Red. Con Cristales de debug: Memoria 1→4 (cuesta 1 cada uno) abre Eco, Sedimentación, Estratos y Defectos; Eco 1→4 (1+2+2+3) abre Ruptura, Cristalografía y Cascada+. Los cuatro granos y los cuatro destellos de vecinos aparecen en el DOM con sus direcciones. La Red se conserva al recargar. Con Memoria nv4 y Sedimentación nv4 la Arena hizo 5 Infinitos solos conservando las 17 compresiones.
+- **No vi la animación del derrumbe en movimiento ni medí fps**: la ventana estaba oculta y las capturas se cortaban. Lo nuevo es CSS (9 elementos con `translate`/`opacity` durante 1,1 s).
+
+### Decisiones (revisar)
+
+1. **Costos redondeados para arriba a Cristales enteros** cuando son menores a 1e6 (10^0,15 = 1,41 → 2). El simulador cobra el costo exacto en log10. Anillo 1: 1/2/2/3 en vez de 1/1,41/2/2,82; anillo 2: 40/80/159/317. Diferencia chica, no corrí el simulador con esto.
+2. **Cascada y Mutaciones automáticas no tienen interruptor** (los autocompradores de la Capa 0 sí). Compran después de Caudal y colores, que casi siempre se gastan la Energía antes: igual que el orden del simulador.
+3. **El Infinito automático es inmediato** al llegar a 1e308. El "en el óptimo / al llegar a X Cristales" de §4 es de C6 (con el Infinito roto).
+4. **Efectos que esperan su hito:** Estratos (flujo), Defectos, Engarces, Presión, Inercia y Ruptura nv1 (Romper el Infinito) solo guardan el nivel y muestran el texto; los lee C3, C4, C6 y C7 con `efectoRed`. Ya actúan: Memoria, Sedimentación, Eco, Compactación, Cascada+, Mutación+, Cristalografía y los ×10 de Ruptura nv2+.
+5. **Nombres en inglés** de la Red (Lattice, Echo, Settings…) son provisorios.
+6. Aviso "+N Cristales" también para el Infinito automático.
 
 ## C1 — Guardado, Cristales, Infinito nuevo y barras de capas (2026-11-15)
 

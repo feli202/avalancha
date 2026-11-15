@@ -90,7 +90,7 @@
 <ul>
   {#each filas as id (id)}
     {@const i = color(id)}
-    {@const tope = nivel(juego.s, id) >= maximo(id)}
+    {@const tope = nivel(juego.s, id) >= maximo(juego.s, id)}
     {@const o = oferta(juego.s, id)}
     {@const k = claveAuto(id)}
     <li style:--c={i >= 0 ? COLOR_CSS[ALTURA_DE_COLOR[i]] : 'var(--tinta)'} data-guia={id === 'caudal' ? 'tienda' : id}
