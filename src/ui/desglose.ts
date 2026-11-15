@@ -1,6 +1,6 @@
 // Estadísticas · Producción: Energía/s = F × (K × G) × V^D partida en factores, cada uno en log10 (así se suman).
 // Usa las fórmulas del núcleo; los factores con partes internas las traen en `partes`.
-import { CFG, anillos, cascadaC, densidad, multAnillos, multCascada, multColor, valor, type State } from '../core'
+import { CFG, anillos, cascadaC, densidad, hayEstratos, multAnillos, multCascada, multColor, presion, presionEstrato, valor, type State } from '../core'
 
 export interface Factor {
   id: string
@@ -42,6 +42,10 @@ export function desglose(s: State): Factor[] {
       { id: 'mutCaudal', log: s.mutaciones.caudal * lg(M.caudal.por_nivel), n: s.mutaciones.caudal },
       { id: 'mutColores', log: s.mutaciones.colores * lg(M.colores.por_nivel), n: s.mutaciones.colores },
     ] },
+    // Presión de los Estratos (SPEC_CAPA1 §10): se suma a log10 V. Solo con estratos abiertos.
+    ...(s.estratos.abiertos && hayEstratos(s)
+      ? [{ id: 'presion', log: presion(s), partes: s.estratos.s.slice(0, s.estratos.abiertos).map((_, k) => ({ id: `estrato${k}`, log: presionEstrato(s, k), n: k + 1 })) }]
+      : []),
     // El exponente: V^D = V × V^(D−1). Lo que suma es (D − 1) × log10 V.
     { id: 'densidad', log: (densidad(s) - 1) * logV, partes: [{ id: 'exponente', log: (densidad(s) - 1) * logV, n: densidad(s) }] },
   ]

@@ -5,6 +5,7 @@
   import { ajustes } from './ajustes.svelte'
   import { formato } from './formato'
   import { hayCartel, juego } from './juego.svelte'
+  import Estratos from './Estratos.svelte'
   import Red from './Red.svelte'
   import Relicario from './Relicario.svelte'
 
@@ -35,7 +36,7 @@
             {/each}
           </nav>
           {#key pantalla}
-            {#if pantalla === 'red'}<Red />{:else if pantalla === 'relicario'}<Relicario />{:else}
+            {#if pantalla === 'red'}<Red />{:else if pantalla === 'relicario'}<Relicario />{:else if pantalla === 'estratos'}<Estratos />{:else}
             <section class="pantalla" aria-labelledby="c1-titulo">
               <svg viewBox="-100 -100 200 200" aria-hidden="true"><path d="M0-90 78-45V45L0 90-78 45V-45ZM0-90V90M-78-45 78 45M-78 45 78-45" /></svg>
               <h1 id="c1-titulo">{txt.cristal.pantallas[pantalla]}</h1>

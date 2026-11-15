@@ -31,6 +31,8 @@ export interface State {
   /** SPEC_CAPA1 §5. `pendiente`: número del Infinito cuya oferta espera elección (0 = ninguna).
    * `equipadas`: el tipo de cada Engarce ocupado, en orden. */
   relicario: { semilla: number; reliquias: Record<string, number>; equipadas: string[]; pendiente: number }
+  /** SPEC_CAPA1 §7. `s`: log10 de granos de cada estrato; `perm` y `pres`: niveles de Permeabilidad y Presión. */
+  estratos: { abiertos: number; s: number[]; perm: number[]; pres: number[] }
   tiempoTotal: number
   // --- estadísticas (SPEC 7: logros que pasan dentro del tick, también fuera de línea) ---
   /** Granos soltados en toda la partida (Caudal y Puñados). */
@@ -44,7 +46,9 @@ export interface State {
   enfriamientoPunado: number
 }
 
-export const estadoInicial = (): State => ({
+const ceros = () => Array<number>(CFG1.estratos.cantidad).fill(0)
+
+export const estadoInicial =(): State => ({
   energia: new Decimal(0),
   granos: CFG.granos_iniciales,
   caudal: 0,
@@ -61,6 +65,7 @@ export const estadoInicial = (): State => ({
   cristalesTotales: new Decimal(0),
   red: Object.fromEntries(Object.keys(NODOS).map((k) => [k, 0])),
   relicario: { semilla: CFG1.relicario.semilla, reliquias: Object.fromEntries(CFG1.relicario.tipos.map((t) => [t, 0])), equipadas: [], pendiente: 0 },
+  estratos: { abiertos: 0, s: ceros(), perm: ceros(), pres: ceros() },
   tiempoTotal: 0,
   granosTotales: 0,
   mejorCorrida: 0,

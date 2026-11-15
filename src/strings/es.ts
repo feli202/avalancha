@@ -120,6 +120,25 @@ export const es = {
       quitar: (t: string) => `Quitar ${t}`,
       hay: 'Hay una reliquia para elegir',
     },
+    // SPEC_CAPA1 §7 (interfaz 2D provisoria; la escena 3D es de C5)
+    estratos: {
+      cerrado: 'Los Estratos se abren con el nodo Estratos de la Red.',
+      que: 'La arena que se escurre de la pila llena el estrato 1, y cada estrato alimenta al de abajo. Cuanto más llenos y más profundos, más Presión. No se pierden en el Infinito.',
+      total: (p: string, v: string) => `Presión ${p} · cada derrumbe vale ×${v}`,
+      estrato: (n: number) => `Estrato ${n}`,
+      granos: 'Granos',
+      ritmo: (x: string) => `×${x} por minuto`,
+      tope: 'Frenado por el de arriba',
+      aporte: 'Aporte a la Presión',
+      mejoras: 'Mejoras',
+      abrir: 'Abrir',
+      sinAbrir: 'Sin abrir',
+      perm: 'Permeabilidad',
+      pres: 'Presión',
+      nivel: (n: number) => `nivel ${n}`,
+      permQue: (pct: string) => `Cada nivel: +${pct} % de flujo en este estrato.`,
+      presQue: (pct: string) => `Cada nivel: +${pct} % de peso de este estrato en la Presión.`,
+    },
     // SPEC_CAPA1 §6
     red: {
       que: 'Cada nodo tiene cuatro niveles: Ámbar, Coral, Jade y Violeta. Al completar uno, la arena se derrumba y abre a sus vecinos.',
@@ -211,7 +230,7 @@ export const es = {
     ayudaBarra: 'Cada factor ocupa en la barra lo que aporta en órdenes de magnitud (log10).',
     factores: {
       caudal: 'Caudal', derrumbes: 'Derrumbes por grano', ambar: 'Ámbar', coral: 'Coral', jade: 'Jade', violeta: 'Violeta',
-      anillos: 'Anillos', cascada: 'Cascada', mutaciones: 'Mutaciones', densidad: 'Densidad',
+      anillos: 'Anillos', cascada: 'Cascada', mutaciones: 'Mutaciones', presion: 'Presión', densidad: 'Densidad',
     } as Record<string, string>,
     /** Partes internas de cada factor; n ya viene con formato. */
     partes: {
@@ -225,6 +244,7 @@ export const es = {
       c: (n: string) => `Fuerza de la Cascada: c = ${n}`,
       mutCaudal: (n: string) => `Caudal ×3, nivel ${n}`,
       mutColores: (n: string) => `Colores ×10, nivel ${n}`,
+      ...Object.fromEntries(Array.from({ length: 8 }, (_, k) => [`estrato${k}`, (n: string) => `Estrato ${n}`])),
       exponente: (n: string) => `El exponente ^${n} sobre el valor de cada derrumbe`,
     } as Record<string, (n: string) => string>,
     expandir: (f: string) => `Ver las partes de ${f}`,
@@ -503,6 +523,7 @@ export const es = {
       anillos: 'Un poco más por cada vez que la pila duplicó sus granos.',
       cascada: 'El premio de las pilas grandes.',
       mutaciones: 'Las Mutaciones de Caudal y Colores.',
+      presion: 'La Presión de los Estratos: cuanto más llenos y más profundos, más vale cada derrumbe.',
       densidad: 'Lo que suma el exponente: el valor de cada derrumbe elevado a la Densidad.',
     } as Record<string, string>,
     aporta: (m: string, p: number) => `Aporta ${m}: el ${p} % de la Energía/s, en órdenes de magnitud.`,

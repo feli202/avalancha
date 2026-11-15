@@ -1,6 +1,7 @@
 // SPEC.md sección 4. Cada función es una fórmula de la spec, sin estado propio.
 import Decimal from 'break_infinity.js'
 import { CFG, type MutId } from './config'
+import { presion } from './estratos'
 import { cascadaExtra, densidadRed, ecoLog10, mutacionExtra } from './red'
 import { cascadaRel, cauceRel, mutacionesRel } from './relicario'
 import type { State } from './state'
@@ -61,7 +62,7 @@ export const valor = (s: State) =>
     .mul(multAnillos(s))
     .mul(multCascada(s))
     .mul(Decimal.pow(CFG.mutaciones.colores.por_nivel, s.mutaciones.colores * (1 + mutacionesRel(s))))
-    .mul(Decimal.pow10(ecoLog10(s))) // Eco (SPEC_CAPA1 §6.3)
+    .mul(Decimal.pow10(ecoLog10(s) + presion(s))) // Eco (SPEC_CAPA1 §6.3) y Presión de los Estratos (§7.2, §10)
 
 /** Energía que da un grano que cae ahora: (K × G) × V^D. */
 export const energiaPorGrano = (s: State) => valor(s).pow(densidad(s)).mul(CFG.K_derrumbes_por_grano * s.granos)

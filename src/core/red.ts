@@ -39,10 +39,8 @@ export function costoRedLog10(id: string, n: number) {
 }
 
 // Los Cristales son enteros: un costo chico se redondea para arriba (10^0,15 = 1,41 → 2), como los Cristales del Infinito (§4).
-export function costoRed(id: string, n: number) {
-  const l = costoRedLog10(id, n)
-  return l < 6 ? new Decimal(Math.ceil(10 ** l - 1e-9)) : Decimal.pow10(l)
-}
+export const cristalesDe = (l: number) => (l < 6 ? new Decimal(Math.ceil(10 ** l - 1e-9)) : Decimal.pow10(l))
+export const costoRed = (id: string, n: number) => cristalesDe(costoRedLog10(id, n))
 
 export const puedeComprarRed = (s: State, id: string) =>
   id in NODOS && nivelRed(s, id) < NIVEL_MAX_RED && abierto(s, id) && s.cristales.gte(costoRed(id, nivelRed(s, id)))

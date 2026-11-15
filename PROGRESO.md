@@ -833,7 +833,7 @@ Todos: texto grande desde el primer cuadro, dentro de la zona segura (arriba, ce
 
 Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `balance/sim_capa1.py`.
 
-**Hito actual: C4 (sin empezar). C3 terminado el 2026-11-15.**
+**Hito actual: C5 (sin empezar). C4 terminado el 2026-11-15.**
 
 ## Plan (SPEC_CAPA1 §16)
 
@@ -842,7 +842,7 @@ Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `bala
 - [x] C1 — Guardado v2 + migración, Cristales, Infinito nuevo, barra lateral de capas y de Cristalización (pantallas vacías)
 - [x] C2 — Red: datos desde config, forma de rombo, compra, apertura de vecinos, Memoria (automatización)
 - [x] C3 — Relicario: ofertas con semilla, fusión, engarces, efectos
-- [ ] C4 — Estratos: lógica (`s_k`, Presión, compras) + interfaz 2D provisoria
+- [x] C4 — Estratos: lógica (`s_k`, Presión, compras) + interfaz 2D provisoria
 - [ ] C5 — Estratos: escena three.js descendente + optimización
 - [ ] C6 — Romper el Infinito + fórmula de Cristales + Infinito automático óptimo
 - [ ] C7 — Defectos 1–4 + visuales
@@ -856,6 +856,50 @@ Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `bala
 - [ ] C12 — Defectos 5–8
 - [ ] C13 — Fin de la Capa 1 (hito + pantalla) + test de balance completo
 - [ ] C14 — Pulido y auditoría 1.2 → publicar
+
+## C4 — Estratos: lógica e interfaz 2D provisoria (2026-11-15)
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/core/estratos.ts` | Nuevo. `flujoEstratos`, `factorCaudal` (f1), `gammaEstrato`, `crecerEstratos`, `presionEstrato`/`presion`, costos (`costoAbrirLog10`, `costoMejoraLog10`) y compras (`abrirEstrato`, `mejorarEstrato`). |
+| `src/core/state.ts` | `estratos: { abiertos, s, perm, pres }`: `s` en log10 de granos (0 = vacío), `perm` y `pres` los niveles por estrato. |
+| `src/core/tick.ts` | Los estratos crecen en cada tick de Arena (no con la Energía frenada en el Infinito), con el Caudal del momento. |
+| `src/core/formulas.ts` | `valor`: la Presión se suma a log10 V junto con el Eco, así queda multiplicada por la Densidad (§10). |
+| `src/core/infinito.ts`, `src/guardado/guardado.ts` | Se conservan en el Infinito y en el guardado (sigue en versión 3; un guardado de antes arranca con los estratos vacíos). |
+| `src/core/red.ts` | `cristalesDe(log10)`: el redondeo a Cristales enteros de la Red, ahora compartido con los Estratos. |
+| `src/ui/Estratos.svelte` | Nuevo. La interfaz 2D **provisoria**: Presión total y 8 filas con granos, ritmo, aporte a la Presión y los botones de Permeabilidad y Presión (o Abrir). |
+| `src/ui/desglose.ts`, `Estadisticas.svelte` | Factor "Presión" en el desglose de la producción, con una parte por estrato abierto. |
+| `balance/ref_estratos.py` | Nuevo. Corre el bloque de estratos de `play_arena` (el real, importando `sim_capa1`) 600 s y escribe `tests/fixtures/estratos_sim.json`. |
+| `tests/estratos.test.ts` | Nuevo, 8 tests. |
+
+- **Fórmulas (§7.2).** `flujo = γ × Estratos × Inercia × Capilaridad`; `γ_k = flujo × (1 + 0,3 × Permeabilidad_k)`, por `f1 = clamp(log10(Caudal)/30, 0,5, 3)` en el primero; `s_k` nunca pasa de `s_(k−1) − 2` y nunca baja. Sin el nodo Estratos de la Red no corren ni dan Presión (igual que el simulador).
+- **Compras (§7.3).** Abrir 0/2/4/7/11/16/22/29; Permeabilidad y Presión `1 + k + 0,6 L + 0,1 L³/6`. En Cristales enteros, redondeando para arriba por debajo de 1e6 (como la Red).
+- **Interfaz.** Tabla en escritorio; en móvil cada estrato es un bloque. "Frenado por el de arriba" cuando el estrato está en el tope.
+
+### Comparación con `sim_capa1.py`
+
+`python balance/ref_estratos.py` corre la Arena del simulador hasta juntar 600 s (si llega al Infinito, empieza otra: los estratos persisten) y guarda los `s_k` y la Presión de `Player.mods`. El test juega 600 s con el núcleo desde el mismo estado y compara con ±1 %:
+
+| Caso | Red | Resultado |
+| --- | --- | --- |
+| Recién abiertos | Estratos nv1, 3 abiertos, Arena nueva (f1 en el mínimo) | dentro del ±1 % |
+| A mitad | Estratos nv4, Inercia nv3, Presión nv2, 5 abiertos, niveles desparejos, Caudal fijo (f1 = 0,6) | dentro del ±1 % |
+| Caudal alto | Estratos nv2, 8 abiertos, Caudal fijo (f1 = 1,5) | dentro del ±1 % |
+
+En los dos casos con Caudal fijo el script reemplaza `Arena.lF` por una constante (el Caudal del bot cambia solo y el test no podría seguirlo); el bloque de estratos y los `dt` son los del simulador, sin copiar.
+
+### Verificación
+
+- `npm test`: **192 en verde** (antes 184). `tsc` y `svelte-check` sin errores. No se tocó el balance.
+- En el navegador integrado (1024 y 375 px): sin el nodo, el cartel de cerrado; con Estratos nv1 y Cristales de debug, abrir dos estratos y comprar Permeabilidad y Presión (5.000 → 4.789: 1 + 100 + 10 + 100); con cinco estratos cargados a mano la Presión dio 3,07 y la Arena pasó a 1e84 en segundos; los `s_k` subieron solos y se conservaron al recargar. Sin desborde horizontal en móvil.
+- **No medí fps** (el panel estaba oculto). No corrí `sim_capa1.py` entero: no cambió ninguna constante.
+
+### Decisiones (revisar)
+
+1. **La Presión es en vivo.** El simulador la calcula al empezar cada corrida y en cada Compresión (`A.m = P.mods()`); el juego la recalcula en cada tick, como dice §7.2. El juego va apenas más rápido que el simulador dentro de una corrida larga.
+2. **`s_k` arranca en 0** (1 grano) en vez del "vacío" del simulador (`−∞`, que pasa a 0 en el primer paso): da lo mismo en las fórmulas.
+3. **Estado puesto a mano en la prueba**: los niveles de la Red y los `s_k` altos los cargué desde la consola, no jugando.
+4. **Falta para otros hitos**: la escena 3D y la flecha "↓ Estratos" en la Arena (C5); que los estratos no corran en el Defecto Vidrio y las reglas de Dislocación e Inclusión sobre la Presión (C7 y C12); `meta_1_1_estrato8_log10` (C8/C13). El Eco y las reliquias siguen sin aparecer en el desglose de Estadísticas.
 
 ## C3 — Relicario (2026-11-15)
 

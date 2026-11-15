@@ -16,10 +16,10 @@ export const cristalesAlInfinito = (s: State) => {
 export function infinito(s: State): State {
   if (!enInfinito(s)) return s
   const c = cristalesAlInfinito(s)
-  const { auto, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red } = s
+  const { auto, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red, estratos } = s
   return {
     ...estadoInicial(), granos: 0, // granos_iniciales es solo para la primera corrida
-    auto, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red,
+    auto, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red, estratos,
     // §5: cada Infinito trae una oferta; si quedaba una sin elegir, se elige sola antes.
     relicario: { ...elegirSola(s).relicario, pendiente: s.infinitos + 1 },
     compresiones: Math.min(compresionesConservadas(s), CFG.compresion.umbrales_log10.length),

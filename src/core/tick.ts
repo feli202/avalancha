@@ -1,6 +1,7 @@
 import Decimal from 'break_infinity.js'
 import { CFG, MUTACIONES } from './config'
 import { CFG1 } from './config1'
+import { crecerEstratos } from './estratos'
 import { infinito } from './infinito'
 import { memoria } from './red'
 import { elegirSola } from './relicario'
@@ -46,6 +47,7 @@ export function tick(s: State, dt: number): State {
     tiempoCorrida: s.tiempoCorrida + dt,
     tiempoTotal: s.tiempoTotal + dt,
     maxEnergia: Decimal.max(s.maxEnergia, energia),
+    estratos: crecerEstratos(s, dt, Math.log10(caudal(s))), // §7.2: por segundo de juego de Arena
     relojAuto: s.relojAuto + dt,
     enfriamientoPunado: Math.max(0, s.enfriamientoPunado - dt),
   }

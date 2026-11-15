@@ -19,7 +19,7 @@
   /** Color de cada factor: los cuatro colores del juego y, para el resto, tonos que no se confunden con ellos. */
   const COLOR: Record<string, string> = {
     caudal: '#6ea8ff', derrumbes: '#a3a8c8', ambar: 'var(--ambar)', coral: 'var(--coral)', jade: 'var(--jade)',
-    violeta: 'var(--violeta)', anillos: '#e8e9f3', cascada: '#3cc8e8', mutaciones: '#ff7ad9', densidad: '#ffe36e',
+    violeta: 'var(--violeta)', anillos: '#e8e9f3', cascada: '#3cc8e8', mutaciones: '#ff7ad9', presion: 'var(--hielo)', densidad: '#ffe36e',
   }
   // I10: solo los factores de lo que ya apareció (los ocultos valen ×1, la suma no cambia).
   const VISTO: Record<string, string> = { ...Object.fromEntries(CFG.colores.map((c, i) => [c.id, `color${i}`])), anillos: 'anillos', cascada: 'cascada', mutaciones: 'mutaciones' }

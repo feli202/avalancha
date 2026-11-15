@@ -1,6 +1,6 @@
 // Guardado (SPEC 8): la partida como JSON con versión. Puro: el almacenamiento entra como Almacen.
 import Decimal from 'break_infinity.js'
-import { CFG, MUTACIONES, NIVEL_MAX_RED, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, type State } from '../core'
+import { CFG, ESTRATOS, MUTACIONES, NIVEL_MAX_RED, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
 import type { Contadores } from '../ui/secretos'
@@ -109,7 +109,8 @@ export function deserializar(texto: string): Partida {
       ...e, energia: deDec(e.energia), maxEnergia: deDec(e.maxEnergia),
       cristales: deDec(e.cristales), cristalesTotales: deDec(e.cristalesTotales),
       granos: pos(e.granos), granosTotales: pos(e.granosTotales), caudal: ent(e.caudal), colores: e.colores.map((n) => ent(n)),
-      red, relicario: { semilla: ent(e.relicario.semilla), reliquias, equipadas, pendiente }, cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
+      red, estratos: { abiertos: ent(e.estratos.abiertos, ESTRATOS), s: e.estratos.s.map(pos), perm: e.estratos.perm.map((n) => ent(n)), pres: e.estratos.pres.map((n) => ent(n)) },
+      relicario: { semilla: ent(e.relicario.semilla), reliquias, equipadas, pendiente }, cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
       mutaciones: Object.fromEntries(MUTACIONES.map((m) => [m, ent(e.mutaciones[m], maxMutacion(conRed))])) as State['mutaciones'],
       coloresDesbloqueados: ent(e.coloresDesbloqueados, CFG.colores.length), infinitos,
       tiempoTotal: pos(e.tiempoTotal), tiempoCorrida: pos(e.tiempoCorrida),
