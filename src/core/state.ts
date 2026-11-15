@@ -1,5 +1,6 @@
 import Decimal from 'break_infinity.js'
 import { CFG, type MutId } from './config'
+import { CFG1 } from './config1'
 import { NODOS } from './red'
 
 export interface State {
@@ -27,6 +28,9 @@ export interface State {
   cristalesTotales: Decimal
   /** Nivel (0..4) de cada nodo de la Red, con las claves de NODOS. */
   red: Record<string, number>
+  /** SPEC_CAPA1 §5. `pendiente`: número del Infinito cuya oferta espera elección (0 = ninguna).
+   * `equipadas`: el tipo de cada Engarce ocupado, en orden. */
+  relicario: { semilla: number; reliquias: Record<string, number>; equipadas: string[]; pendiente: number }
   tiempoTotal: number
   // --- estadísticas (SPEC 7: logros que pasan dentro del tick, también fuera de línea) ---
   /** Granos soltados en toda la partida (Caudal y Puñados). */
@@ -56,6 +60,7 @@ export const estadoInicial = (): State => ({
   cristales: new Decimal(0),
   cristalesTotales: new Decimal(0),
   red: Object.fromEntries(Object.keys(NODOS).map((k) => [k, 0])),
+  relicario: { semilla: CFG1.relicario.semilla, reliquias: Object.fromEntries(CFG1.relicario.tipos.map((t) => [t, 0])), equipadas: [], pendiente: 0 },
   tiempoTotal: 0,
   granosTotales: 0,
   mejorCorrida: 0,

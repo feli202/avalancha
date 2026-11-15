@@ -833,7 +833,7 @@ Todos: texto grande desde el primer cuadro, dentro de la zona segura (arriba, ce
 
 Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `balance/sim_capa1.py`.
 
-**Hito actual: C3 (sin empezar). C2 terminado el 2026-11-15.**
+**Hito actual: C4 (sin empezar). C3 terminado el 2026-11-15.**
 
 ## Plan (SPEC_CAPA1 §16)
 
@@ -841,7 +841,7 @@ Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `bala
 
 - [x] C1 — Guardado v2 + migración, Cristales, Infinito nuevo, barra lateral de capas y de Cristalización (pantallas vacías)
 - [x] C2 — Red: datos desde config, forma de rombo, compra, apertura de vecinos, Memoria (automatización)
-- [ ] C3 — Relicario: ofertas con semilla, fusión, engarces, efectos
+- [x] C3 — Relicario: ofertas con semilla, fusión, engarces, efectos
 - [ ] C4 — Estratos: lógica (`s_k`, Presión, compras) + interfaz 2D provisoria
 - [ ] C5 — Estratos: escena three.js descendente + optimización
 - [ ] C6 — Romper el Infinito + fórmula de Cristales + Infinito automático óptimo
@@ -856,6 +856,43 @@ Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `bala
 - [ ] C12 — Defectos 5–8
 - [ ] C13 — Fin de la Capa 1 (hito + pantalla) + test de balance completo
 - [ ] C14 — Pulido y auditoría 1.2 → publicar
+
+## C3 — Relicario (2026-11-15)
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/core/relicario.ts` | Nuevo. `oferta` (mulberry32 con `relicario.semilla` + número de Infinito), `elegir`, `elegirSola`, `nivelFusion`/`escalon`/`faltan`, `espacios`, `equipar`/`desequipar` y los tres efectos (`cauceRel`, `cascadaRel`, `mutacionesRel`). |
+| `src/core/state.ts` | `relicario: { semilla, reliquias, equipadas, pendiente }`. `pendiente` = número del Infinito cuya oferta espera elección (0 = ninguna). |
+| `src/core/formulas.ts` | Cauce: los colores a la `1 + pct×(n+1)`. Cascada: suma a `c` (solo con la Cascada comprada). Mutaciones: el exponente de las de Caudal y Colores × `(1 + pct×(n+1))`. Igual que `mods()` de `sim_capa1.py`. |
+| `src/core/infinito.ts`, `tick.ts` | Cada Infinito deja una oferta (si había una sin elegir, se elige sola antes). El Infinito automático (Memoria nv4) elige solo en el mismo tick. |
+| `src/guardado/guardado.ts` | Valida el Relicario (cantidades enteras; equipadas sin repetir, solo tipos que se tienen, hasta los Engarces). Un guardado de C1–C2 con Infinitos hechos arranca con una oferta pendiente. Sigue en versión 3 (lo completa `completar()`). |
+| `src/ui/Relicario.svelte` | Nuevo. La oferta con su cuenta regresiva, los Engarces y las tres pilas. |
+| `src/ui/juego.svelte.ts` | La espera de 30 s (`juego.ofertaS`), el aviso "Reliquia elegida sola: X" y la semilla al azar de cada partida nueva. |
+| `src/ui/Capas.svelte`, `Debug.svelte` | Rombo ámbar en la barra de capas y en la pestaña Relicario cuando hay oferta; después de la presentación del primer Infinito se entra por el Relicario. Debug: "Infinito ya". |
+| `balance/config_capa1.json` | `relicario.espera_eleccion_s: 30` (el simulador no lo usa). |
+| `tests/relicario.test.ts` | Nuevo, 8 tests. |
+
+- **Ofertas.** 3 (4 con Engarces nv2+), nunca todas iguales (si salen iguales, la última pasa al tipo siguiente, como el simulador). Puede repetirse un tipo dentro de la oferta.
+- **Elección sola.** La que le falten menos reliquias para subir de color; en empate, la del tipo equipado; si sigue el empate, la primera de la oferta.
+- **Fusión.** `floor(log3(n))`; color = nivel mod 4, y cada vuelta completa suma "+1" con un brillo más fuerte. Al subir de color (a mano o sola, con la pantalla abierta) tres rombos del color anterior caen al centro y nace el cristal nuevo; con Reducir destellos, solo cambia el color.
+- **Engarces.** 1 espacio, 2/2/3/3 con el nodo (3 con Engarces II). Se arrastra una pila a un espacio (HTML5) o se toca: tocar la engarza en el primer espacio libre (o reemplaza el último) y tocar de nuevo la saca; tocar un espacio lo vacía. Arrastrar una ya puesta a otro espacio las intercambia.
+- **Formas.** Cauce un rombo largo, Cascada un hexágono facetado, Mutaciones una macla.
+
+### Verificación
+
+- `npm test`: **184 en verde** (antes 176). `tsc` y `svelte-check` sin errores. `python balance/sim_capa1.py`: igual que antes (14,99 h).
+- En el navegador integrado (escritorio y 375×812), sin errores de consola: partida nueva → "Infinito ya" → presentación → Relicario con la oferta. Elegir, engarzar tocando, 3 Cauce → fusión a Coral, 9 → Jade (capturada a mitad), 81 → "Ámbar +1". Recargar con una oferta pendiente: la misma oferta. Sin tocar nada 30 s: se eligió sola la que predecía la regla, con su aviso. Con Engarces nv2: 4 ofertas y 2 espacios; arrastrar a un espacio y cambiar de lugar (eventos de arrastre simulados).
+- **No medí fps ni vi la fusión en movimiento**: el panel estaba oculto y solo dibuja un cuadro por captura. Lo nuevo es CSS (3 elementos, 0,6 s).
+- **No probé arrastrar con un mouse real ni en un teléfono**: el arrastre de HTML5 no anda con el dedo; en móvil se engarza tocando.
+
+### Decisiones (revisar)
+
+1. **La espera de 30 s es tiempo real** (no de juego: a ×50 serían 0,6 s). No corre con un cartel abierto ni durante la presentación, y un cuadro largo cuenta 1 s: al recargar o volver, la cuenta arranca de 30.
+2. **Nada se engarza solo**, ni la primera reliquia (auto-equipar es de la Capa 2, §5). Con Infinito automático y sin engarzar nada, las reliquias no dan efecto.
+3. **Semilla por partida**: `estadoInicial()` usa la de config (el núcleo no tira dados) y la interfaz la cambia por una al azar al empezar una partida nueva.
+4. **Si se compra Engarces nv2 con una oferta abierta**, aparece la cuarta reliquia (y si las tres eran iguales, puede cambiar la tercera).
+5. **Los textos de la Arena no muestran las reliquias**: el efecto de las Mutaciones en la Tienda, las fórmulas de "Cómo funciona" y el desglose de Estadísticas (`desglose.ts`) siguen con los números de la Capa 0 (la producción real sí las usa). Con una reliquia engarzada el desglose no suma lo que dice Energía/s. Queda para C8 (estadísticas).
+6. Pulido (Esquirlas) es de C11; "sin Relicario" del Defecto Vidrio, de C12. Nombres en inglés provisorios (Channel, Sockets).
 
 ## C2 — Red (2026-11-15)
 

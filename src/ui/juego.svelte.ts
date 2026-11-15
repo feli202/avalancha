@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, anillos, comprimir, cristalesAlInfinito, enInfinito, estadoInicial, fueraDeLinea, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
+import { CFG, CFG1, TIPOS, anillos, comprimir, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, fueraDeLinea, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
 import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
@@ -71,6 +71,8 @@ class Juego {
   capa = $state<'arena' | 'cristalizacion'>('arena')
   /** La cinemática del primer Infinito está corriendo (Pila.svelte la dibuja). */
   cinematica = $state(false)
+  /** Segundos reales que lleva la oferta del Relicario sin elegir. */
+  ofertaS = $state(0)
 }
 export const juego = new Juego()
 
@@ -330,6 +332,8 @@ export function arrancar() {
   // Sin partida o sin tiempo jugado (recién borrada, o se recargó en el título): partida nueva, que arranca al entrar.
   const nueva = !p || p === 'corrupto' || p.estado.tiempoTotal === 0
   juego.hayPartida = !nueva
+  // Cada partida nueva, su semilla del Relicario (el núcleo no tira dados: usa la que está en el estado).
+  if (nueva && p !== 'corrupto') juego.s = { ...juego.s, relicario: { ...juego.s.relicario, semilla: Math.floor(Math.random() * 2 ** 31) } }
   if (p !== 'corrupto') juego.titulo = true
   previo = juego.s
   tomarCandado()
@@ -364,6 +368,14 @@ export function arrancar() {
     }
     // Contra el último estado que vio el bucle, no juego.s: comprimir a mano (botón, tecla C) lo reemplaza entre cuadros.
     registrar(historial, previo, s)
+    // SPEC_CAPA1 §5: una oferta sin elegir se elige sola a los 30 s reales (no corre con un cartel ni durante la presentación;
+    // un cuadro largo cuenta 1 s, así al volver o recargar la oferta sigue ahí).
+    if (!s.relicario.pendiente) juego.ofertaS = 0
+    else if (juego.vistos.cristales && !hayCartel() && (juego.ofertaS += Math.min(real, 1)) >= CFG1.relicario.espera_eleccion_s) {
+      const t = TIPOS.find((t) => elegirSola(s).relicario.reliquias[t] > s.relicario.reliquias[t])!
+      s = elegirSola(s)
+      juego.aviso = { id: avisos++, texto: txt.cristal.relicario.sola(txt.cristal.relicario.tipos[t][0]) }
+    }
     // Infinito automático (Memoria nv4): el mismo aviso que el botón.
     if (s.infinitos > previo.infinitos) juego.aviso = { id: avisos++, texto: txt.cristal.ganados(s.cristalesTotales.sub(previo.cristalesTotales).toNumber()) }
     previo = s

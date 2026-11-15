@@ -18,6 +18,7 @@
   ],
   "ofertas_por_infinito": 3,
   "semilla": 20261114,
+  "espera_eleccion_s": 30,
   "cascada_c_por_nivel": 0.02,
   "mutaciones_efecto_por_nivel": 0.08,
   "_nivel": "nivel = floor(log3(reliquias del tipo)); escalera Ambar0, Coral0, Jade0, Violeta0, Ambar+1 ...",

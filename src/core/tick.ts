@@ -3,6 +3,7 @@ import { CFG, MUTACIONES } from './config'
 import { CFG1 } from './config1'
 import { infinito } from './infinito'
 import { memoria } from './red'
+import { elegirSola } from './relicario'
 import { autoActivo, comprimir } from './compress'
 import { INFINITO, caudal, enInfinito, energiaPorGrano, produccion } from './formulas'
 import { comprar, comprarMax, costo, puedeComprar, type ItemId } from './shop'
@@ -33,7 +34,8 @@ function comprarConMargen(s: State, ids: ItemId[]): State {
 /** Avanza la economía dt segundos (Euler explícito, igual que balance/sim.py). */
 export function tick(s: State, dt: number): State {
   // Economía congelada hasta el Infinito (core/infinito.ts); con Memoria nv4 se hace solo, en el tick siguiente.
-  if (enInfinito(s)) return memoria(s) >= 4 ? infinito(s) : s
+  // El Infinito automático elige su reliquia solo (SPEC_CAPA1 §5).
+  if (enInfinito(s)) return memoria(s) >= 4 ? elegirSola(infinito(s)) : s
   const energia = Decimal.min(INFINITO, s.energia.add(produccion(s).mul(dt))) // sin Romper, se frena en 1e308
   const granos = caudal(s) * dt
   let n: State = {

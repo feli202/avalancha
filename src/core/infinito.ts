@@ -3,6 +3,7 @@ import { CFG } from './config'
 import { CFG1 } from './config1'
 import { compresionesConservadas, cristalesRedLog10 } from './red'
 import { enInfinito } from './formulas'
+import { elegirSola } from './relicario'
 import { estadoInicial, type State } from './state'
 
 /** Cristales del próximo Infinito, sin Romper: floor(10^(mult + base)); el primero da primer_infinito. */
@@ -19,6 +20,8 @@ export function infinito(s: State): State {
   return {
     ...estadoInicial(), granos: 0, // granos_iniciales es solo para la primera corrida
     auto, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red,
+    // §5: cada Infinito trae una oferta; si quedaba una sin elegir, se elige sola antes.
+    relicario: { ...elegirSola(s).relicario, pendiente: s.infinitos + 1 },
     compresiones: Math.min(compresionesConservadas(s), CFG.compresion.umbrales_log10.length),
     infinitos: s.infinitos + 1,
     cristales: s.cristales.add(c),

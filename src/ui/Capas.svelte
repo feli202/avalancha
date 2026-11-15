@@ -6,12 +6,17 @@
   import { formato } from './formato'
   import { hayCartel, juego } from './juego.svelte'
   import Red from './Red.svelte'
+  import Relicario from './Relicario.svelte'
 
   const PANTALLAS = ['red', 'estratos', 'defectos', 'escarcha', 'relicario']
   let pantalla = $state(PANTALLAS[0])
   const s = $derived(juego.s)
   // La presentación de tres líneas, hasta que se toca Seguir (queda en el guardado).
-  const visto = () => (juego.vistos = { ...juego.vistos, cristales: true })
+  const visto = () => {
+    juego.vistos = { ...juego.vistos, cristales: true }
+    if (hayOferta) pantalla = 'relicario' // la primera oferta, al llegar
+  }
+  const hayOferta = $derived(s.relicario.pendiente > 0)
 </script>
 
 {#if s.infinitos > 0 && !juego.titulo}
@@ -26,11 +31,11 @@
         {#if juego.vistos.cristales}
           <nav class="sistemas" aria-label={txt.cristal.sistemas}>
             {#each PANTALLAS as p}
-              <button aria-current={pantalla === p ? 'page' : undefined} onclick={() => (pantalla = p)}>{txt.cristal.pantallas[p]}</button>
+              <button aria-current={pantalla === p ? 'page' : undefined} onclick={() => (pantalla = p)}>{txt.cristal.pantallas[p]}{#if p === 'relicario' && hayOferta}<i class="punto" title={txt.cristal.relicario.hay}></i>{/if}</button>
             {/each}
           </nav>
           {#key pantalla}
-            {#if pantalla === 'red'}<Red />{:else}
+            {#if pantalla === 'red'}<Red />{:else if pantalla === 'relicario'}<Relicario />{:else}
             <section class="pantalla" aria-labelledby="c1-titulo">
               <svg viewBox="-100 -100 200 200" aria-hidden="true"><path d="M0-90 78-45V45L0 90-78 45V-45ZM0-90V90M-78-45 78 45M-78 45 78-45" /></svg>
               <h1 id="c1-titulo">{txt.cristal.pantallas[pantalla]}</h1>
@@ -53,6 +58,7 @@
       </button>
       <button aria-current={juego.capa === 'cristalizacion' ? 'page' : undefined} aria-label={txt.capas.cristalizacion} title={txt.capas.cristalizacion} onclick={() => (juego.capa = 'cristalizacion')}>
         <svg width="20" height="20" viewBox="-10 -10 20 20" aria-hidden="true"><path d="M0-8.5 7.4-4.25V4.25L0 8.5-7.4 4.25V-4.25ZM0-8.5V0M7.4 4.25 0 0-7.4 4.25" /></svg>
+        {#if hayOferta}<i class="punto" title={txt.cristal.relicario.hay}></i>{/if}
       </button>
     </nav>
   </div>
@@ -73,6 +79,10 @@
   .capas button:hover, .capas button:focus-visible { color: var(--tinta); }
   .capas [aria-current] { color: var(--hielo); border-left-color: var(--hielo); }
   svg { fill: none; stroke: currentColor; stroke-width: 1.25; stroke-linejoin: round; }
+  /* Hay una reliquia para elegir. */
+  .punto { display: inline-block; width: 0.4rem; height: 0.4rem; margin-left: 0.35rem; vertical-align: super; background: var(--ambar); rotate: 45deg; }
+  .capas button { position: relative; }
+  .capas .punto { position: absolute; right: 0.45rem; top: 0.45rem; margin: 0; }
 
   .cristalizacion {
     position: fixed; inset: 0; z-index: 4; display: grid; grid-template-rows: auto auto 1fr; overflow-y: auto;

@@ -1,6 +1,6 @@
 // Guardado (SPEC 8): la partida como JSON con versión. Puro: el almacenamiento entra como Almacen.
 import Decimal from 'break_infinity.js'
-import { CFG, MUTACIONES, NIVEL_MAX_RED, estadoInicial, infinito, maxCascada, maxMutacion, type State } from '../core'
+import { CFG, MUTACIONES, NIVEL_MAX_RED, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
 import type { Contadores } from '../ui/secretos'
@@ -99,13 +99,19 @@ export function deserializar(texto: string): Partida {
   const pos = (x: number) => Math.max(0, x)
   const red = Object.fromEntries(Object.keys(MODELO.estado.red).map((k) => [k, ent(e.red[k], NIVEL_MAX_RED)]))
   const conRed = { ...estadoInicial(), red } // los topes de Cascada y Mutaciones dependen de la Red
+  // Relicario (SPEC_CAPA1 §5): cantidades enteras; equipadas sin repetir, solo tipos que se tienen, hasta los Engarces de la Red.
+  const reliquias = Object.fromEntries(TIPOS.map((t) => [t, ent(e.relicario.reliquias[t])]))
+  const equipadas = [...new Set(e.relicario.equipadas as unknown[])].filter((t): t is string => typeof t === 'string' && reliquias[t] > 0).slice(0, espacios(conRed))
+  const infinitos = ent(e.infinitos)
+  // Un guardado de antes del Relicario (C1–C2) con Infinitos hechos: le queda una oferta para elegir.
+  const pendiente = crudo.estado.relicario === undefined && !deCapa0 ? infinitos : ent(e.relicario.pendiente, infinitos)
   const estado: State = {
       ...e, energia: deDec(e.energia), maxEnergia: deDec(e.maxEnergia),
       cristales: deDec(e.cristales), cristalesTotales: deDec(e.cristalesTotales),
       granos: pos(e.granos), granosTotales: pos(e.granosTotales), caudal: ent(e.caudal), colores: e.colores.map((n) => ent(n)),
-      red, cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
+      red, relicario: { semilla: ent(e.relicario.semilla), reliquias, equipadas, pendiente }, cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
       mutaciones: Object.fromEntries(MUTACIONES.map((m) => [m, ent(e.mutaciones[m], maxMutacion(conRed))])) as State['mutaciones'],
-      coloresDesbloqueados: ent(e.coloresDesbloqueados, CFG.colores.length), infinitos: ent(e.infinitos),
+      coloresDesbloqueados: ent(e.coloresDesbloqueados, CFG.colores.length), infinitos,
       tiempoTotal: pos(e.tiempoTotal), tiempoCorrida: pos(e.tiempoCorrida),
   }
   return {

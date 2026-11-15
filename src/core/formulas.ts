@@ -2,6 +2,7 @@
 import Decimal from 'break_infinity.js'
 import { CFG, type MutId } from './config'
 import { cascadaExtra, densidadRed, ecoLog10, mutacionExtra } from './red'
+import { cascadaRel, cauceRel, mutacionesRel } from './relicario'
 import type { State } from './state'
 
 const curva = (c0: number, g: number, s: number, n: number) => Decimal.pow10(c0 + g * n + (s * n * n) / 2)
@@ -25,7 +26,8 @@ export const maxMutacion = (s: State) => CFG.mutaciones.nivel_max + mutacionExtr
 
 /** F: granos por segundo. */
 export const caudal = (s: State) =>
-  CFG.caudal.granos_base * CFG.caudal.mult_por_nivel ** s.caudal * CFG.mutaciones.caudal.por_nivel ** s.mutaciones.caudal
+  CFG.caudal.granos_base * CFG.caudal.mult_por_nivel ** s.caudal *
+  CFG.mutaciones.caudal.por_nivel ** (s.mutaciones.caudal * (1 + mutacionesRel(s))) // reliquia Mutaciones (SPEC_CAPA1 §5)
 
 export function anillos(granos: number): number {
   const g0 = CFG.anillos.granos_primer_anillo
@@ -44,7 +46,7 @@ export const multAnillos = (s: State) =>
   )
 
 export const cascadaC = (s: State) =>
-  CFG.cascada.c_por_nivel * s.cascada + (s.cascada >= 1 ? CFG.mutaciones.cascada.por_nivel * s.mutaciones.cascada : 0)
+  CFG.cascada.c_por_nivel * s.cascada + (s.cascada >= 1 ? CFG.mutaciones.cascada.por_nivel * s.mutaciones.cascada + cascadaRel(s) : 0)
 
 export const multCascada = (s: State) =>
   s.granos > 0
@@ -55,9 +57,10 @@ export const multCascada = (s: State) =>
 export const valor = (s: State) =>
   s.colores
     .reduce((v, nivel, i) => v.mul(multColor(i, nivel)), new Decimal(1))
+    .pow(1 + cauceRel(s)) // reliquia Cauce: + colores_log10 × pct a log V
     .mul(multAnillos(s))
     .mul(multCascada(s))
-    .mul(Decimal.pow(CFG.mutaciones.colores.por_nivel, s.mutaciones.colores))
+    .mul(Decimal.pow(CFG.mutaciones.colores.por_nivel, s.mutaciones.colores * (1 + mutacionesRel(s))))
     .mul(Decimal.pow10(ecoLog10(s))) // Eco (SPEC_CAPA1 §6.3)
 
 /** Energía que da un grano que cae ahora: (K × G) × V^D. */

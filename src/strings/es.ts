@@ -96,6 +96,30 @@ export const es = {
       'La Arena empieza de nuevo, y cada vez va a ir más rápido.',
     ],
     seguir: 'Seguir',
+    // SPEC_CAPA1 §5
+    relicario: {
+      que: 'Solo las reliquias engarzadas dan efecto. Cada tres iguales se funden en una del color siguiente.',
+      tipos: {
+        cauce: ['Cauce', (x) => `Los colores valen +${f(x * 100)} % más`],
+        cascada: ['Cascada', (x) => `+${f(x)} al exponente de la Cascada`],
+        mutaciones: ['Mutaciones', (x) => `Las Mutaciones de Caudal y Colores rinden +${f(x * 100)} %`],
+      } as Record<string, [string, (x: number) => string]>,
+      grado: (color: string, vuelta: number) => (vuelta ? `${color} +${vuelta}` : color),
+      oferta: 'Elegí una reliquia',
+      cuenta: (s: number) => `Se elige sola en ${s} s`,
+      sola: (t: string) => `Reliquia elegida sola: ${t}`,
+      espera: 'La próxima oferta llega con el próximo Infinito.',
+      faltan: (n: number, color: string) => (n === 1 ? `Falta 1 para ${color}` : `Faltan ${n} para ${color}`),
+      cantidad: (n: number) => (n === 1 ? '1 reliquia' : `${n.toLocaleString('es-AR')} reliquias`),
+      ninguna: 'Todavía ninguna',
+      engarces: 'Engarces',
+      vacio: 'Espacio vacío',
+      comoEngarzar: 'Arrastrá una reliquia a un espacio, o tocala.',
+      suelta: 'Sin engarzar: no da efecto',
+      engarzar: (t: string) => `Engarzar ${t}`,
+      quitar: (t: string) => `Quitar ${t}`,
+      hay: 'Hay una reliquia para elegir',
+    },
     // SPEC_CAPA1 §6
     red: {
       que: 'Cada nodo tiene cuatro niveles: Ámbar, Coral, Jade y Violeta. Al completar uno, la arena se derrumba y abre a sus vecinos.',
@@ -572,6 +596,7 @@ export const es = {
     darEnergia: 'Dar Energía',
     casiInfinito: 'Energía a 1e307 (casi Infinito)',
     darCristales: 'Cristales ×10 (+10)',
+    infinitoYa: 'Infinito ya',
     saltar: 'Saltar a la Compresión',
     ir: 'Ir',
     exportar: 'Exportar estado (JSON)',

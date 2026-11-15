@@ -176,6 +176,7 @@ describe('Infinito (SPEC_CAPA1 §3 y §4, sin Romper)', () => {
     expect(resto).toEqual({
       ...estadoInicial(), cristales: undefined, cristalesTotales: undefined, granos: 0, infinitos: 1,
       tiempoTotal: 9000, granosTotales: 1e21, auto: lleno.auto,
+      relicario: { ...estadoInicial().relicario, pendiente: 1 }, // la oferta de este Infinito (§5)
     })
     expect(tick(s, 1).energia.lt(INFINITO)).toBe(true) // la Arena vuelve a andar
   })

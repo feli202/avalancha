@@ -1,9 +1,9 @@
 <script lang="ts">
   // Panel de debug: solo se monta en desarrollo (ver App.svelte).
   import Decimal from 'break_infinity.js'
-  import { CFG, estadoInicial } from '../core'
+  import { CFG, INFINITO, estadoInicial } from '../core'
   import { txt } from '../strings'
-  import { borrarPartida, juego } from './juego.svelte'
+  import { borrarPartida, infinitoYa, juego } from './juego.svelte'
   import { IDS, grabarClips } from './clips'
   import { grabacion } from './grabacion'
   import { RITMO_MAX } from '../render/pilaVisual'
@@ -66,6 +66,7 @@
   </div>
   <button onclick={darEnergia}>{txt.debug.darEnergia}</button>
   <button onclick={casiInfinito}>{txt.debug.casiInfinito}</button>
+  <button onclick={() => { juego.s = { ...juego.s, energia: INFINITO }; infinitoYa() }}>{txt.debug.infinitoYa}</button>
   <button onclick={() => (juego.s = { ...juego.s, cristales: juego.s.cristales.mul(10).add(10), cristalesTotales: juego.s.cristalesTotales.add(juego.s.cristales.mul(9).add(10)) })}>{txt.debug.darCristales}</button>
   <label>
     {txt.debug.saltar}
