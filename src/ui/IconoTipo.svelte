@@ -3,7 +3,9 @@
   // Cauce: dos corrientes que se juntan en una. Cascada: un derrumbe abeliano que se abre en anillos de granos.
   // Mutaciones: una doble hélice con un cristal en el centro. Se dibujan con currentColor; con `halo` (un color), van en
   // blanco de escarcha con un halo de ese color debajo (el centro de las reliquias).
-  let { tipo, halo = '' }: { tipo: string; halo?: string } = $props()
+  // `centro`: las cuatro Mutaciones de la Capa 0 cambian el cristal del centro de la hélice por lo que mutan:
+  // Caudal un grano hueco, Colores los cuatro colores, Expansión dos anillos, Cascada un derrumbe en cruz.
+  let { tipo, halo = '', centro = '' }: { tipo: string; halo?: string; centro?: string } = $props()
   const ANILLO_8 = [0, 45, 90, 135, 180, 225, 270, 315].map((a) => [8 * Math.sin((a * Math.PI) / 180), -8 * Math.cos((a * Math.PI) / 180)])
 </script>
 
@@ -20,7 +22,19 @@
   {:else}
     <path d="M-4-8C4-4-4 4 4 8M4-8C-4-4 4 4-4 8" />
     <path class="fino" d="M-2.6-6H2.6M-2.6 6H2.6" />
-    <path class="lleno" d="M0-2.2 2.2 0 0 2.2-2.2 0Z" />
+    <g transform="scale({centro ? 1.35 : 1})">
+    {#if centro === 'caudal'}
+      <circle r="2.3" />
+    {:else if centro === 'colores'}
+      {#each ['--ambar', '--coral', '--jade', '--violeta'] as c, i (c)}<rect class="color" x={i % 2 ? 0.25 : -2.45} y={i < 2 ? -2.45 : 0.25} width="2.2" height="2.2" style:fill="var({c})" />{/each}
+    {:else if centro === 'expansion'}
+      <circle r="1" class="lleno" /><circle r="2.8" class="fino2" />
+    {:else if centro === 'cascada'}
+      {#each [[0, 0], [0, -2.2], [2.2, 0], [0, 2.2], [-2.2, 0]] as [x, y]}<circle class="lleno" cx={x} cy={y} r="0.95" />{/each}
+    {:else}
+      <path class="lleno" d="M0-2.2 2.2 0 0 2.2-2.2 0Z" />
+    {/if}
+    </g>
   {/if}
 {/snippet}
 
@@ -35,6 +49,8 @@
   .trazo .lleno { fill: currentColor; stroke: none; }
   .tenue { opacity: 0.75; }
   .fino { stroke-width: 1; opacity: 0.5; }
+  .fino2 { stroke-width: 1.1; }
+  .trazo .color { stroke: none; }
   /* Escarcha: el emblema en blanco frío, con un halo del color del nivel que lo despega de la pila. */
   .con-halo .trazo { stroke: #eaf6ff; stroke-width: 1.7; }
   .con-halo .trazo .lleno { fill: #eaf6ff; }

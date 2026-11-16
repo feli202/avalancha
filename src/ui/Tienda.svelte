@@ -28,8 +28,16 @@
     pestana === 'cascada' ? ['cascada'] : pestana === 'mutaciones' ? MUTACIONES.map((m): ItemId => `mut_${m}`) : items,
   )
   const enTienda = $derived(pestana === 'tienda')
-  /** El ícono de reliquia del sistema de cada pestaña o fila (el mismo que en el Relicario). */
-  const iconoDe = (id: string) => (id === 'cascada' ? 'cascada' : id === 'mutaciones' || id.startsWith('mut_') ? 'mutaciones' : null)
+  /** El ícono de reliquia de cada pestaña o fila (los mismos que el Relicario): Caudal lleva el de Cauce, Cascada el suyo y
+   * cada Mutación el de Mutaciones con su propio centro y su color. */
+  const MUT_COLOR: Record<string, string> = { caudal: 'var(--tinta)', colores: 'var(--jade)', expansion: 'var(--violeta)', cascada: 'var(--coral)' }
+  function iconoDe(id: string): { tipo: string; centro?: string; color: string } | null {
+    if (id === 'caudal') return { tipo: 'cauce', color: 'var(--tinta)' }
+    if (id === 'cascada') return { tipo: 'cascada', color: 'var(--ambar)' }
+    if (id === 'mutaciones') return { tipo: 'mutaciones', color: 'var(--ambar)' }
+    if (id.startsWith('mut_')) return { tipo: 'mutaciones', centro: id.slice(4), color: MUT_COLOR[id.slice(4)] }
+    return null
+  }
 
   /** Clave del autocomprador de cada fila (CFG.autocompradores), si tiene. */
   const claveAuto = (id: ItemId) => (id === 'caudal' ? 'caudal' : color(id) >= 0 ? CFG.colores[color(id)].id : null)
@@ -86,7 +94,7 @@
 {#if pestanas.length > 1}
   <div class="pestanas" role="tablist">
     {#each pestanas as p (p)}
-      <button role="tab" class="aparece" data-guia={p} aria-selected={pestana === p} onclick={() => (pestana = p)}>{#if iconoDe(p)}<span class="ico"><IconoTipo tipo={iconoDe(p)!} /></span>{/if}{txt.pestanas[p]}</button>
+      <button role="tab" class="aparece" data-guia={p} aria-selected={pestana === p} onclick={() => (pestana = p)}>{#if iconoDe(p) && p !== 'tienda'}<span class="ico"><IconoTipo tipo={iconoDe(p)!.tipo} /></span>{/if}{txt.pestanas[p]}</button>
     {/each}
   </div>
 {/if}
@@ -110,11 +118,12 @@
     {@const o = oferta(juego.ver, id)}
     {@const k = claveAuto(id)}
     {@const sola = ajustes.calma && automatica(juego.ver, id)}
+    {@const ic = iconoDe(id)}
     <li style:--c={i >= 0 ? COLOR_CSS[ALTURA_DE_COLOR[i]] : 'var(--tinta)'} data-guia={id === 'caudal' ? 'tienda' : id}
       use:ayuda={() => ayudaItem(juego.s, id)}>
       <button class="fila" class:puede={o.puede && !tope} class:sola disabled={!o.puede || tope} onclick={() => compra(id)}
         aria-label="{txt.comprar} {nombre(id)} · {tope ? txt.nivelMaximo : hablado(formato(o.c, true))}">
-        {#if iconoDe(id)}<span class="muestra icono"><IconoTipo tipo={iconoDe(id)!} /></span>{:else}<span class="muestra" class:caudal={i < 0} aria-hidden="true"></span>{/if}
+        {#if ic}<span class="muestra icono" style:color={ic.color}><IconoTipo tipo={ic.tipo} centro={ic.centro} /></span>{:else}<span class="muestra" class:caudal={i < 0} aria-hidden="true"></span>{/if}
         <span class="nombre">{nombre(id)} <span class="nv num">{txt.nivel(nivel(juego.ver, id))}</span></span>
         <span class="costo num">
           {#if tope}{txt.nivelMaximo}{:else}{#if o.n > 1}<span class="cuantos">{txt.comprarCuantos(o.n)}</span> {/if}{formato(o.c, true)}{/if}
@@ -162,15 +171,15 @@
   li { position: relative; border-top: 1px solid var(--borde); animation: entrar 0.5s ease-out; }
   li:last-child { border-bottom: 1px solid var(--borde); }
   .fila {
-    display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: 'm n c' '. e e';
+    display: grid; grid-template-columns: 1.375rem 1fr auto; grid-template-areas: 'm n c' '. e e';
     align-items: baseline; column-gap: 0.75rem; row-gap: 0.125rem; width: 100%; min-height: 3.5rem; padding: 0.625rem 0;
     border: 0; background: none; color: var(--tinta); font: inherit; text-align: left; text-shadow: inherit; cursor: default;
   }
   .fila.puede { cursor: pointer; }
   .fila:disabled { pointer-events: none; } /* el tooltip (en el li) tiene que verse también sin poder comprar */
-  .muestra { grid-area: m; align-self: center; width: 0.5rem; height: 0.5rem; border-radius: 1px; background: var(--c); }
+  .muestra { grid-area: m; align-self: center; justify-self: center; width: 0.5rem; height: 0.5rem; border-radius: 1px; background: var(--c); }
   .muestra.caudal { background: none; border: 1px solid var(--tinta); border-radius: 50%; }
-  .muestra.icono { width: 1.375rem; height: 1.375rem; margin-block: -0.4rem; background: none; color: var(--ambar); }
+  .muestra.icono { width: 1.375rem; height: 1.375rem; margin-block: -0.4rem; background: none; }
   .ico { display: inline-block; width: 0.95rem; height: 0.95rem; margin-right: 0.35rem; vertical-align: -0.15rem; }
   .nombre { grid-area: n; font-size: 1rem; font-weight: 600; }
   .nv { margin-left: 0.25rem; font-size: 0.8125rem; font-weight: 400; color: var(--tenue); }

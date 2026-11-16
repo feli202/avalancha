@@ -974,7 +974,7 @@ Balance sin cambios: el simulador ya modelaba el inventario desde la sesión 2 (
 
 - `.cristalizacion.fija` vale para todas las pantallas de sistema: Red se achica con unidades de contenedor (`cqw`/`cqh`) para entrar en el alto y el ancho que quedan; en Estratos la escena toma lo que deja la ficha (en el celular se esconde el párrafo explicativo, que está en "Cómo funciona"). Medido con `capturas-capa1.mjs` en 1366×768 y 390×844: nada scrollea salvo la grilla del Relicario.
 - **Íconos de los tipos, versión C ("sello", elegida entre tres)**: `src/ui/IconoTipo.svelte`, un anillo con un emblema. Cauce dos corrientes que se juntan, Cascada un derrumbe abeliano que se abre en anillos de granos, Mutaciones una doble hélice con un cristal en el centro. En la Capa 0, en ámbar, en las pestañas Cascada y Mutaciones y en sus filas. En el Relicario, en el centro de cada reliquia (engarces, grilla y ficha) en blanco de escarcha con un halo del color del nivel, sobre una placa hexagonal de escarcha; y en las gemas de elección, los totales y el orden de la regla. Reemplazó el símbolo de arriba de la versión anterior.
-- **Cauce no está en la Capa 0** (no es una mejora de la tienda; lo que mejora son los colores): falta decidir dónde va.
+- **Cauce va en la fila de Caudal** (en el color de esa fila). **Cada Mutación tiene su variante** (prop `centro` de `IconoTipo`): la hélice cambia el cristal del centro por lo que muta y toma un color propio. Caudal un grano hueco en blanco, Colores los cuatro colores en jade, Expansión dos anillos en violeta, Cascada un derrumbe en cruz en coral. La columna del ícono de la tienda es fija (1,375 rem) para que las filas queden alineadas.
 
 ### Sesión 4 (2026-11-16) — bloque 7: multiplicadores visibles
 
