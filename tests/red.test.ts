@@ -1,7 +1,7 @@
 import Decimal from 'break_infinity.js'
 import { describe, expect, it } from 'vitest'
 import {
-  CFG, CFG1, INFINITO, NODOS, abierto, anillo, autoActivo, comprarRed, costoRed, costoRedLog10, cristalesAlInfinito,
+  CFG, CFG1, INFINITO, NODOS, abierto, anillo, autoActivo, autoDisponible, comprarRed, costoRed, costoRedLog10, cristalesAlInfinito,
   densidad, disponibles, estadoInicial, infinito, maxCascada, tick, valor, type State,
 } from '../src/core'
 import { deserializar, serializar } from '../src/guardado/guardado'
@@ -64,6 +64,17 @@ describe('Red', () => {
     // Primer tick: el autocomprador de Caudal compra con la Energía que haya.
     const t = tick({ ...s, energia: new Decimal('1e6'), relojAuto: 0.99 }, 0.05)
     expect(t.caudal).toBeGreaterThan(0)
+  })
+
+  // CORRECCIONES 3: la tienda muestra el interruptor "auto" de cada fila con autoDisponible, la misma regla que la economía.
+  it('Memoria nv1: al empezar una corrida todas las filas con autocomprador muestran "auto"', () => {
+    const claves = Object.keys(CFG.autocompradores)
+    expect(claves.some((k) => autoDisponible(estadoInicial(), k))).toBe(false) // sin Memoria ni compresiones, ninguna
+    const corrida = { ...infinito({ ...conRed({ memoria: 1 }), energia: INFINITO }), compresiones: 0 } // ni una Compresión conservada
+    expect(claves.every((k) => autoDisponible(corrida, k) && autoActivo(corrida, k))).toBe(true)
+    // Apagado sigue a la vista (para volver a prenderlo), pero no compra.
+    const apagado = { ...corrida, auto: { ...corrida.auto, caudal: false } }
+    expect([autoDisponible(apagado, 'caudal'), autoActivo(apagado, 'caudal')]).toEqual([true, false])
   })
 
   it('Memoria nv2 y nv3: Cascada y Mutaciones automáticas (con margen de Energía)', () => {

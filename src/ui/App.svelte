@@ -1,6 +1,6 @@
 <script lang="ts">
   // Interfaz principal (SPEC 6.4). Cada parte aparece recién cuando juego.vistos lo dice (SPEC 5).
-  import { anillos, cristalesAlInfinito, densidad, enInfinito, multAnillos, produccion, puedeComprimir } from '../core'
+  import { anillos, autoDisponible, cristalesAlInfinito, densidad, enInfinito, multAnillos, produccion, puedeComprimir } from '../core'
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import Ayuda from './Ayuda.svelte'
@@ -194,7 +194,7 @@
               {#if s.infinitos > 0 && (comp.final || alInf)} · <b class="hielo">{txt.cristal.ganados(cristalesAlInfinito(s))}</b>{/if}
             </span>
           </button>
-          {#if v.auto_compresion_auto && !comp.final}
+          {#if autoDisponible(s, 'compresion_auto') && !comp.final}
             <label class="autocomp aparece" data-guia="auto_compresion_auto" use:ayuda={() => ayudaSimple(txt.compresionAuto, txt.guia.que.auto)}>
               <input type="checkbox" checked={s.auto.compresion_auto} onchange={alternarAutoComp} /> {txt.compresionAuto}
             </label>

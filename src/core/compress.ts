@@ -23,5 +23,8 @@ export function comprimir(s: State): State {
   }
 }
 
-/** Memoria nv1 (SPEC_CAPA1 §6.3) los da todos desde el inicio de cada Infinito. */
-export const autoActivo = (s: State, clave: string) => (memoria(s) >= 1 || s.compresiones >= CFG.autocompradores[clave]) && s.auto[clave]
+/** El jugador tiene el autocomprador `clave`: por sus compresiones, o todos con Memoria nv1 (SPEC_CAPA1 §6.3), desde el
+ * inicio de cada Infinito. La única regla: la usan la economía (autoActivo) y la interfaz (el interruptor "auto"). */
+export const autoDisponible = (s: State, clave: string) => memoria(s) >= 1 || s.compresiones >= CFG.autocompradores[clave]
+/** Lo tiene y está prendido: compra solo. */
+export const autoActivo = (s: State, clave: string) => autoDisponible(s, clave) && s.auto[clave]

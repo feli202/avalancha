@@ -868,6 +868,13 @@ Lista en `correcciones-capa1/correcciones-capa1/CORRECCIONES_CAPA1.md` (13 bloqu
 - **Decisiones (revisar):** (1) el tope de 4 es para compras, acordes e implosión; los derrumbes de la pila siguen con sus 12 voces de SPEC 6.7 más el atenuador (si contaran en los 4, una compra casi nunca sonaría). (2) Anillos y color nuevo siguen sonando aunque lleguen solos: son de la pila, no compras; el límite evita que se encimen. (3) La Compresión automática quedó muda: es un cambio para el jugador de la Capa 0, que antes la escuchaba.
 - Probado en el navegador integrado contando osciladores de Web Audio (no se puede escuchar desde acá): 5 s con los cinco autocompradores y la Compresión automática andando → solo la música de fondo; "Comprar todo" → una campana; 5 clics seguidos en una fila → una campana. **Falta escucharlo con oídos**, sobre todo el volumen de los derrumbes con la pila llena.
 
+**Bloque 3 — el "auto" no aparecía con Memoria**
+
+- Causa: la regla estaba escrita cuatro veces. La economía (`autoActivo`) contaba Memoria nv1; la tienda mostraba el interruptor según `juego.vistos.auto_*`, que salía de `compresiones >= n` (igual que el logro Piloto automático y la tabla de "Cómo funciona").
+- Ahora hay una sola: `autoDisponible(s, clave)` en `src/core/compress.ts` (compresiones o Memoria nv1). `autoActivo` = disponible y prendido. La usan `tick`, el interruptor de cada fila (`Tienda.svelte`), la casilla de Compresión automática (`App.svelte`), el revelado, el logro y "Cómo funciona". El interruptor ya no depende de `vistos`.
+- Test en `tests/red.test.ts`: con Memoria nv1, recién hecho el Infinito y sin ninguna Compresión, todos los autocompradores están disponibles y activos; apagado sigue a la vista pero no compra.
+- Probado en el navegador integrado repitiendo la captura 05 (partida nueva, "Infinito ya" de debug, Memoria nv1, vuelta a la Arena): Caudal, Ámbar, Coral y Jade muestran "auto" prendido.
+
 ## Plan (SPEC_CAPA1 §16)
 
 **Actualización 1.1**

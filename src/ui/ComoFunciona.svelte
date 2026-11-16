@@ -3,7 +3,7 @@
   // "Para curiosos" muestra la fórmula exacta de SPEC 4 con los valores actuales; todo sale de CFG y del núcleo.
   import Decimal from 'break_infinity.js'
   import {
-    CFG, MUTACIONES, anillos, caudal, cascadaC, costoCascada, costoCaudal, costoColor, costoMutacion, densidad,
+    CFG, MUTACIONES, anillos, autoDisponible, caudal, cascadaC, costoCascada, costoCaudal, costoColor, costoMutacion, densidad,
     maxMutacion, multAnillos, multCascada, multColor, produccion, valor, type State,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
@@ -89,7 +89,7 @@
       sec('auto', !!v.auto_caudal, 'var(--tenue)', Object.entries(CFG.autocompradores).map(([k, n]) => ({
         r: k === 'compresion_auto' ? g.compresionAuto : nombreAuto(k),
         g: g.autoEn(n),
-        v: s.compresiones >= n ? '✓' : '—',
+        v: autoDisponible(s, k) ? '✓' : '—',
       }))),
     ]
   }

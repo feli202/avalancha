@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, CFG1, TIPOS, anillos, comprimir, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, fueraDeLinea, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
+import { CFG, CFG1, TIPOS, anillos, autoDisponible, comprimir, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, fueraDeLinea, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
 import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
@@ -143,7 +143,7 @@ function condiciones(s: State): Record<string, boolean> {
     mutaciones: mutacionesDisponibles(s),
   }
   for (let i = 1; i < CFG.colores.length; i++) c[`color${i}`] = s.coloresDesbloqueados > i
-  for (const [k, n] of Object.entries(CFG.autocompradores)) c[`auto_${k}`] = s.compresiones >= n
+  for (const k of Object.keys(CFG.autocompradores)) c[`auto_${k}`] = autoDisponible(s, k)
   return c
 }
 

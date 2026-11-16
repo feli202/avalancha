@@ -1,5 +1,5 @@
 // SPEC 7: los 24 logros de la Capa 0, en el orden de la pantalla. Se miran en cada cuadro; una vez conseguido, queda en el guardado.
-import { CFG, MUTACIONES, anillos, densidad, type State } from '../core'
+import { CFG, MUTACIONES, anillos, autoActivo, densidad, type State } from '../core'
 import FOTOS from '../assets/pilas.json'
 import { txt } from '../strings'
 
@@ -24,7 +24,7 @@ export const LOGROS: Record<string, (s: State, record: number) => boolean> = {
   cascada: (s) => s.cascada >= CFG.cascada.nivel_max,
   diez: (s) => s.compresiones >= L.compresiones,
   relampago: (s) => s.mejorCorrida > 0 && s.mejorCorrida < L.corrida_rapida_min * 60,
-  piloto: (s) => Object.entries(CFG.autocompradores).every(([k, n]) => s.compresiones >= n && s.auto[k]),
+  piloto: (s) => Object.keys(CFG.autocompradores).every((k) => autoActivo(s, k)),
   mutacion: (s) => MUTACIONES.some((m) => s.mutaciones[m] > 0),
   densidad: (s) => densidad(s) >= L.densidad,
   anilloGrande: (s) => anillos(s.granos) >= L.anillo_grande,

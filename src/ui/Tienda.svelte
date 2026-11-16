@@ -3,7 +3,7 @@
   // Pestañas Cascada y Mutaciones cuando aparecen (SPEC 5): ahí se compra de a un nivel, son las decisiones.
   import Decimal from 'break_infinity.js'
   import {
-    CFG, MUTACIONES, aplicar, autoActivo, comprar, comprarMax, comprarN, comprarTodo, costo, memoria, nivel, type ItemId, type State,
+    CFG, MUTACIONES, aplicar, autoActivo, autoDisponible, comprar, comprarMax, comprarN, comprarTodo, costo, memoria, nivel, type ItemId, type State,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
   import { txt } from '../strings'
@@ -118,8 +118,8 @@
         </span>
         <span class="efecto num">{efecto(juego.ver, id)}</span>
       </button>
-      {#if k && juego.vistos[`auto_${k}`]}
-        <!-- SPEC 4.8: interruptor del autocomprador, fuera del botón de la fila. -->
+      {#if k && autoDisponible(juego.ver, k)}
+        <!-- SPEC 4.8: interruptor del autocomprador, fuera del botón de la fila. La misma regla que la economía (no juego.vistos). -->
         <button class="auto aparece" data-guia="auto_{k}" use:ayuda={() => ayudaSimple(txt.autoDe(nombreAuto(k)), txt.guia.que.auto)} role="switch" aria-checked={juego.ver.auto[k]} aria-label={txt.autoDe(nombreAuto(k))}
           onclick={() => alternarAuto(k)}>{txt.auto}</button>
       {/if}
