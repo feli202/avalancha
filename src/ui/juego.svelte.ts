@@ -1,8 +1,9 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, CFG1, TIPOS, anillos, autoDisponible, comprimir, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, fueraDeLinea, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
+import { CFG, CFG1, anillos, autoDisponible, comprimir, conFoto, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, fueraDeLinea, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
 import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
+import { instantanea } from '../render/instantanea'
 import type { Toma } from '../render/marcos'
 import { PX_MAX, type Medidas } from '../render/pilaVisual'
 import { txt } from '../strings'
@@ -205,6 +206,10 @@ function revisarLogros(s: State) {
   juego.logro = { id: logrosAvisados++, claves: nuevos }
 }
 
+/** Bloque 8: la instantánea de la pila visual (la cara de la reliquia de cada Infinito); '' si la pila no está. */
+const fotoPila = () => { const t = camara.foto?.(); return t ? instantanea(t.alturas, t.radio) : '' }
+let fotoActual = '', fotoEn = 0
+
 /** El último estado que vio el bucle (el historial compara contra este). */
 let previo = juego.s
 
@@ -221,8 +226,8 @@ export function comprimirYa() {
 /** Infinito (botón, tecla C o el final de la cinemática): cobra los Cristales y reinicia la Arena. */
 export function infinitoYa() {
   const antes = juego.s
-  const s = infinito(antes)
-  if (s === antes) return
+  if (!enInfinito(antes)) return
+  const s = conFoto(infinito(antes), fotoPila())
   juego.s = s
   juego.aMano++
   registrar(historial, antes, s)
@@ -353,8 +358,6 @@ export function arrancar() {
   const nueva = !p || p === 'corrupto' || p.estado.tiempoTotal === 0
   juego.hayPartida = !nueva
   if (!p || p === 'corrupto') juego.vistos = { guias: true } // partida nueva: nada que migrar
-  // Cada partida nueva, su semilla del Relicario (el núcleo no tira dados: usa la que está en el estado).
-  if (nueva && p !== 'corrupto') juego.s = { ...juego.s, relicario: { ...juego.s.relicario, semilla: Math.floor(Math.random() * 2 ** 31) } }
   if (p !== 'corrupto') juego.titulo = true
   previo = juego.ver = juego.s
   tomarCandado()
@@ -375,6 +378,8 @@ export function arrancar() {
     acum += real * (juego.otraPestana ? 0 : juego.velocidad)
     antes = ahora
     let s = juego.s
+    // Bloque 8: la pila de antes de estos pasos, por si en ellos llega un Infinito automático (una vez por segundo basta).
+    if (ahora - fotoEn > 1000) (fotoActual = fotoPila()), (fotoEn = ahora)
     if (acum > MAX_PASOS * PASO) {
       const a = fueraDeLinea(s, acum)
       // Contra el tiempo real (M11): a ×50 un tirón de 1,2 s no es una ausencia.
@@ -391,11 +396,11 @@ export function arrancar() {
     registrar(historial, previo, s)
     // SPEC_CAPA1 §5: una oferta sin elegir se elige sola a los 30 s reales (no corre con un cartel ni durante la presentación;
     // un cuadro largo cuenta 1 s, así al volver o recargar la oferta sigue ahí).
+    s = conFoto(s, fotoActual)
     if (!s.relicario.pendiente) juego.ofertaS = 0
     else if (juego.vistos.cristales && !hayCartel() && (juego.ofertaS += Math.min(real, 1)) >= CFG1.relicario.espera_eleccion_s) {
-      const t = TIPOS.find((t) => elegirSola(s).relicario.reliquias[t] > s.relicario.reliquias[t])!
       s = elegirSola(s)
-      juego.aviso = { id: avisos++, texto: txt.cristal.relicario.sola(txt.cristal.relicario.tipos[t][0]) }
+      juego.aviso = { id: avisos++, texto: txt.cristal.relicario.sola(txt.cristal.relicario.tipos[s.relicario.ultimo][0]) }
     }
     // Infinito automático (Memoria nv4): el mismo aviso que el botón.
     if (s.infinitos > previo.infinitos) juego.aviso = { id: avisos++, texto: txt.cristal.ganados(s.cristalesTotales.sub(previo.cristalesTotales).toNumber()) }

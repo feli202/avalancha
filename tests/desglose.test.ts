@@ -1,6 +1,6 @@
 // Bloque 7: el número que muestra cada mejora y cada estrato sale del núcleo, no de una cuenta aparte.
 import { describe, expect, it } from 'vitest'
-import { caudal, densidad, estadoInicial, gammaEstrato, presion, produccion, type State } from '../src/core'
+import { caudal, densidad, estadoInicial, gammaEstrato, migrarRelicario, presion, produccion, type State } from '../src/core'
 import { valorMejora, velocidadEstrato } from '../src/ui/desglose'
 
 // Una partida avanzada: Red, reliquias equipadas, Mutaciones, Cascada, Compresiones (Densidad) y estratos abiertos.
@@ -10,7 +10,7 @@ const s: State = {
   energia: base.energia.mul(1e50), granos: 40000, caudal: 37, colores: [41, 22, 13, 5], cascada: 12, compresiones: 9,
   mutaciones: { caudal: 3, colores: 2, expansion: 1, cascada: 2 },
   red: { ...base.red, memoria: 4, compactacion: 3, estratos: 3, inercia: 2, presion: 2, eco: 1, cascada_plus: 1, engarces: 3 },
-  relicario: { ...base.relicario, reliquias: { cauce: 9, cascada: 3, mutaciones: 27 }, equipadas: ['cauce', 'mutaciones', 'cascada'] },
+  relicario: { ...base.relicario, ...migrarRelicario({ cauce: 9, cascada: 3, mutaciones: 27 }, ['cauce', 'mutaciones', 'cascada']) },
   estratos: { abiertos: 3, s: [30, 28, 25, 0, 0, 0, 0, 0], perm: [2, 1, 0, 0, 0, 0, 0, 0], pres: [1, 0, 3, 0, 0, 0, 0, 0] },
   tiempoInfinito: 240,
 }

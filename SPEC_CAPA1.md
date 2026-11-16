@@ -12,7 +12,7 @@ Al llegar al primer Infinito la pila de arena se **cristaliza**. Aparece una seg
 
 | Sistema | Qué hace en una línea | Llega en |
 |---|---|---|
-| **Relicario de Cristal** | Cada Infinito elegís 1 de 3 reliquias; 3 iguales se funden en el color siguiente. | 1.1 (primer Infinito) |
+| **Relicario de Cristal** | Cada Infinito elegís el tipo de una reliquia nueva; 3 iguales se funden en el color siguiente. | 1.1 (primer Infinito) |
 | **Red** | Una "pila" de nodos con 4 niveles de color; maxear un nodo abre sus vecinos. Automatización, mejoras y llaves. | 1.1 |
 | **Estratos** | 8 pilas debajo de la pila principal que se llenan solas con la arena que cae y empujan la producción (Presión). Vista 3D descendente. | 1.1 |
 | **Defectos** | Desafíos: jugar un Infinito con una regla rota. Recompensa permanente. | 1.1 (4) y 1.2 (4) |
@@ -65,7 +65,7 @@ Tiempo de juego **desde el primer Infinito** (la Capa 0 completa dura ~3 h y no 
 ## 3. El bucle
 
 1. Jugás la **Arena** igual que en la Capa 0 hasta 1e308 Energía → **Infinito**.
-2. El Infinito da **Cristales** y te ofrece **3 reliquias** (elegís 1).
+2. El Infinito da **Cristales** y **una reliquia** (elegís su tipo).
 3. En **Cristalización** gastás Cristales en la **Red** y en los **Estratos**.
 4. La Arena vuelve a empezar pero mucho más rápido: la Red conserva compresiones y automatiza; los Estratos y el Relicario multiplican.
 5. Cuando la Red lo permite, entrás a un **Defecto** (un Infinito con una regla rota) para una recompensa permanente.
@@ -106,18 +106,20 @@ Tres tipos de reliquia. Efectos pasivos y moderados:
 | **Cascada** | +0,02 × (n+1) al exponente `c` de la Cascada. |
 | **Mutaciones** | Las Mutaciones de Caudal y Colores rinden +8 % × (n+1). |
 
-**Fusión (escalera de colores)**: cada 3 reliquias iguales suben un color. Nivel = `floor(log3(reliquias del tipo))`:
+**Inventario (correcciones, bloque 8)**: cada Infinito te da **una** reliquia y **vos elegís el tipo** (Cauce, Cascada o Mutaciones); nace Ámbar (nivel 0) y va a una grilla de casilleros (24 al principio; si se llena, crece). La cara de cada reliquia es **la pila de ese Infinito**: una instantánea de 32×32 celdas a 2 bits (256 bytes) teñida con el color de su nivel, dibujada por el generador de miniaturas compartido.
+
+**Fusión (escalera de colores)**: **3 reliquias del mismo tipo y nivel se fusionan en 1 del nivel siguiente** (a mano: arrastrando una sobre otra igual o con "Fusionar"; con Engarces II, sola si está la opción). La nueva conserva la pila de la más vieja. Una reliquia de nivel n sale de 3^n Ámbar:
 
 | Reliquias | 1 | 3 | 9 | 27 | 81 | 243 | … |
 |---|---|---|---|---|---|---|---|
 | Color | Ámbar | Coral | Jade | Violeta | Ámbar +1 | Coral +1 | … |
 | Nivel n | 0 | 1 | 2 | 3 | 4 | 5 | … |
 
-(Los 4 colores son los de la Capa 0. Después de Violeta vuelve Ámbar con un "+1" y un brillo más fuerte.) La fusión es automática y se anima: tres cristales que se juntan en uno del color siguiente.
+(Los 4 colores son los de la Capa 0. Después de Violeta vuelve Ámbar con un "+1" y un brillo más fuerte.) La fusión se anima: las tres vuelan al casillero de la nueva y se cristalizan.
 
-**Ofertas**: cada Infinito aparecen 3 reliquias al azar (4 con Engarces nv2+). Nunca las 3 iguales. Elegís una; si no elegís en 30 s o el Infinito es automático, se elige la que suba de color antes (empate: la del tipo equipado). El azar usa una **semilla guardada en la partida** (`relicario.semilla` + número de Infinito): recargar no cambia la oferta.
+**Elección automática**: si no elegís en 30 s, o con el Infinito automático, elige una regla (se configura en Automatización): *Tipo fijo*, *Rotar*, *Completar fusiones* (al que le falten menos Ámbar para fusionar; empate: el que tiene alguna engarzada), *Subir el más bajo* (el tipo cuya mejor engarzada tiene menor nivel) o *Prioridad* (lista ordenable: el primero va un nivel arriba del segundo y dos arriba del tercero). Opciones: fusionar solas (con Engarces II) y engarzar siempre las mejores (mayor nivel primero). Por defecto: Completar fusiones, fusionar solas sí, engarzar no.
 
-**Engarces (espacios)**: solo las reliquias **equipadas** dan efecto. Empezás con 1 espacio; Engarces da 2/2/3/3. Equipar es gratis (arrastrar). Las guías recomiendan builds:
+**Engarces (espacios)**: solo las reliquias **equipadas** dan efecto, y **dos del mismo tipo se suman**. Empezás con 1 espacio; Engarces da 2/2/3/3. Equipar es gratis (arrastrar del inventario o tocar). Las guías recomiendan builds:
 - *Torrente* (Cauce + Cascada): mejor a mitad de la 1.1, cuando los colores pesan.
 - *Mutante* (Mutaciones + Cauce): en los Defectos sin Cascada (Dislocación).
 - *Avalancha* (Cascada + Mutaciones): con Romper el Infinito y pilas enormes.
@@ -170,7 +172,7 @@ Bases del anillo 3: Eco II 45, Defectos II 55, Germen 65, Compactación II 78, F
 | **Ruptura** | nv1 = **Romper el Infinito**. Cristales ×1 / ×10 / ×100 / ×1000 (log 0/1/2/3). |
 | **Compactación** | Densidad +0,08 / 0,16 / 0,24 / 0,32. |
 | **Presión** | Peso de la Presión de todos los estratos ×1,2 / 1,44 / 1,73 / 2,07. |
-| **Engarces** | Espacios de reliquia 2/2/3/3; ofertas 3/4/4/4. |
+| **Engarces** | Espacios de reliquia 2/2/3/3. |
 | **Cascada+** | Nivel máximo de Cascada +5/10/15/20 (y amplía el panel). |
 | **Mutación+** | Nivel máximo de Mutaciones +1/2/3/5. |
 | **Inercia** | Impulso: dentro de cada Infinito el flujo sube lineal con el tiempo de corrida hasta ×1,2/1,4/1,6/2 a los 10 min, y se queda ahí. |
@@ -325,8 +327,8 @@ El simulador no modela el offline: hay que probarlo con un test aparte (12 h off
 
 ## 13. Guardado
 
-- Versión de guardado nueva (v2) con migración desde v1: un jugador que ya tenía el Infinito de la Capa 0 arranca la Capa 1 con 1 Cristal y la primera oferta del Relicario.
-- Se guarda: Cristales (break_infinity), Cristales totales, niveles de la Red, conteo de reliquias por tipo + pulidos + equipadas, número de Infinito y semilla, estratos abiertos, `s_k` (log10), niveles de Permeabilidad y Presión, Defectos completos, Escarcha `logX`, Esquirlas, mejoras de Escarcha, temporizador de la Escarcha.
+- Versión de guardado nueva (v2) con migración desde v1: un jugador que ya tenía el Infinito de la Capa 0 arranca la Capa 1 con 1 Cristal y la primera reliquia del Relicario.
+- Se guarda: Cristales (break_infinity), Cristales totales, niveles de la Red, inventario de reliquias (tipo, nivel, pila, Infinito) + pulidos + engarzadas + regla automática, número de Infinito, estratos abiertos, `s_k` (log10), niveles de Permeabilidad y Presión, Defectos completos, Escarcha `logX`, Esquirlas, mejoras de Escarcha, temporizador de la Escarcha.
 - Exportar/importar como en la Capa 0. Test de ida y vuelta.
 
 ---
@@ -336,7 +338,7 @@ El simulador no modela el offline: hay que probarlo con un test aparte (12 h off
 1. **Bucles multiplicativos**: Cristales → Presión → más Cristales explota. Por eso: costos cúbicos de los estratos, blando de Cristales sobre 1e50, Escarcha lineal en el tiempo. Cualquier efecto nuevo que escale con Cristales se mete en el simulador antes que en el código.
 2. **Esperas vacías**: hueco máximo 32 min medido. Si un cambio crea un hueco > 40 min, el test de balance falla.
 3. **Defectos imposibles o triviales**: las metas salen de `probe.py`, no a ojo.
-4. **Azar frustrante**: semilla guardada, nunca 3 ofertas iguales, elección automática razonable.
+4. **Elección frustrante**: no hay azar en el Relicario (elegís el tipo); la regla automática es configurable.
 5. **Números**: todo lo grande en log10 o break_infinity. `s_k`, `logX` y Cristales nunca en float lineal.
 6. **Rendimiento**: three.js solo en su pantalla y destruido al salir; la pila sigue a 60 fps.
 7. **Demasiadas monedas juntas**: en la 1.1 solo hay Cristales; Esquirlas recién en la 1.2.

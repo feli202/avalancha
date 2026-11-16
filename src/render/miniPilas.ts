@@ -4,6 +4,7 @@ import { LADO, Pila } from './pila'
 import url from '../assets/pilas.bin?url'
 import FOTOS from '../assets/pilas.json'
 import { leerFotos } from './fotos'
+import { desdeFoto } from './instantanea'
 import { Lienzo } from './lienzo'
 import { COLORES_DALTONISMO, COLORES_PILA, EFECTOS, PALETAS } from './paletas'
 
@@ -110,9 +111,22 @@ function escena(clave: string): Escena {
   if (tipo === 'paleta') return { granos: -1, entera: true, brillos: todo(0.45), colores: () => PALETAS[id] }
   if (tipo === 'efecto') return { granos: 10000, onda: expansiva(45), t: 0.45, efecto: id, brillos: todo(0.3) }
   if (tipo === 'fondo') return { granos: 3000, zoom: 0.35, fondo: id, brillos: todo(0.3) }
+  if (tipo === 'rel') return { granos: 3000, entera: true, brillos: todo(0.35), colores: () => tinte(+id) }
   // shortcut: los logros secretos todavía no tienen escena propia (paso C); usan una genérica.
   return ESCENAS[clave] ?? { granos: 3000, brillos: todo(0.4) }
 }
+// ---------- reliquias (bloque 8): la cara de cada una es la pila de su Infinito ----------
+
+/** Colores de nivel (los de la interfaz: Ámbar, Coral, Jade, Violeta) y los de daltonismo, como en index.html. */
+const NIVELES = [0xffb547, 0xff6b6b, 0x2dd4a7, 0x9b7bff], NIVELES_DALT = [0x56b4e9, 0xe8743b, 0xf0e442, 0xe7a3cf]
+const mezclar = (c: number, o: number, t: number) =>
+  [16, 8, 0].reduce((a, sh) => a | (Math.round(((c >> sh) & 255) * (1 - t) + ((o >> sh) & 255) * t) << sh), 0)
+/** La pila teñida con un color de nivel, con el mismo orden de brillo que la arena (3 granos la más oscura). */
+function tinte(color: number) {
+  const c = (base === COLORES_DALTONISMO ? NIVELES_DALT : NIVELES)[color % 4]
+  return [c, mezclar(c, 0xffffff, 0.5), mezclar(c, 0, 0.42), mezclar(c, 0x04060d, 0.7)]
+}
+
 /** Radio de la pila entera en la imagen, en px reales (para dibujar alrededor, como los marcos). */
 export const RADIO_ENTERA = 0.41 * ALTO
 
@@ -220,7 +234,8 @@ const libre = () => new Promise<void>((ok) => ('requestIdleCallback' in window ?
 /** La imagen quieta de un logro. */
 export function imagen(clave: string): Promise<ImageBitmap> {
   if (!cache.has(clave)) {
-    const p = cola.then(libre).then(() => Promise.all([pila(escena(clave).granos), escena(clave).fondo === 'fractal' && celdasLlena()])).then(([e, llena]) => {
+    const foto = clave.startsWith('rel:') ? clave.split(':')[2] : '' // sin foto (reliquias de antes): una pila genérica
+    const p = cola.then(libre).then(() => Promise.all([foto ? desdeFoto(foto) : pila(escena(clave).granos), escena(clave).fondo === 'fractal' && celdasLlena()])).then(([e, llena]) => {
       if (llena) (lz ??= new Lienzo(new OffscreenCanvas(ANCHO, ALTO))).fondoPila(llena)
 
       listas.set(clave, e)
@@ -272,4 +287,16 @@ export function miniPila(canvas: HTMLCanvasElement, p: { clave: string; quieta: 
       tarjeta.removeEventListener('pointerleave', salir)
     },
   }
+}
+
+/** Acción de Svelte: la cara de una reliquia (su pila teñida con el color del nivel), un cuadrado del centro de la imagen. */
+export function caraReliquia(canvas: HTMLCanvasElement, p: { foto: string; nivel: number }) {
+  canvas.width = canvas.height = ALTO
+  const g = canvas.getContext('2d')!
+  let vivo = true
+  const pintar = () => imagen(`rel:${p.nivel % 4}:${p.foto}`)
+    .then((b) => vivo && (g.clearRect(0, 0, ALTO, ALTO), g.drawImage(b, (ANCHO - ALTO) / 2, 0, ALTO, ALTO, 0, 0, ALTO, ALTO)))
+    .catch(() => {})
+  pintar()
+  return { update(n: typeof p) { if (n.foto !== p.foto || n.nivel % 4 !== p.nivel % 4) { p = n; pintar() } }, destroy() { vivo = false } }
 }

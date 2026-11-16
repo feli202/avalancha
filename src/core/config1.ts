@@ -6,7 +6,7 @@ import type { Nodo } from './red'
 export interface Config1 {
   cristales: { primer_infinito: number; base_log10: number }
   relicario: {
-    tipos: string[]; ofertas_por_infinito: number; semilla: number; espera_eleccion_s: number
+    tipos: string[]; casilleros: number; espera_eleccion_s: number
     cauce_colores_pct_por_nivel: number; cascada_c_por_nivel: number; mutaciones_efecto_por_nivel: number
   }
   estratos: {

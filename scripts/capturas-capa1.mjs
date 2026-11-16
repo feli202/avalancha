@@ -1,6 +1,6 @@
 // Capturas de la Capa 1 para comparar antes/después (correcciones, bloque 13 y cierre). Edge headless por CDP, sin dependencias.
 // uso: node scripts/capturas-capa1.mjs http://localhost:5173 <carpeta-salida>
-// Saca la Arena con la barra de capas, Red, Estratos, Relicario (con oferta) y Defectos, en 1366×800 y en 390×844.
+// Saca la Arena con la barra de capas, Red, Estratos, Relicario (con una reliquia por elegir) y Defectos, en 1366×800 y en 390×844.
 import { spawn } from 'node:child_process'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -45,13 +45,19 @@ for (const [W, H] of [[1366, 800], [390, 844]]) {
   await espera(1500)
   // Estado de prueba: Cristales, tres estratos abiertos, unos nodos de la Red, reliquias y una oferta pendiente.
   // El mismo módulo que cargó el juego (después de un cambio en caliente Vite lo sirve con `?t=`; otra URL sería otra instancia).
+  // Bloque 8: reliquias con pilas de verdad (una pila abeliana de distintos granos cada una).
+  await ev(`Promise.all([import('/src/render/pila.ts'), import('/src/render/instantanea.ts')]).then(([{ Pila }, { instantanea }]) => {
+    window.__fotos = [300, 900, 1700, 2600, 4100, 6000, 9000, 14000].map((n) => { const p = new Pila(); for (let i = 0; i < n; i += 50) { p.soltar(50); while (!p.estable) p.estabilizar(1e6) } let r = 0; p.h.forEach((v, i) => { if (v) r = Math.max(r, Math.hypot((i % 513) - 256, Math.floor(i / 513) - 256)) }); return instantanea(p.h, Math.ceil(r)) })
+  })`)
   await ev(`import(performance.getEntriesByType('resource').map((r) => r.name).find((n) => n.includes('/src/ui/juego.svelte.ts')) ?? '/src/ui/juego.svelte.ts').then(({ juego: j }) => {
     window.__j = j
     const s = j.s, ocho = (f) => Array.from({ length: 8 }, (_, k) => f(k))
     j.vistos = { ...j.vistos, cristales: true }
     j.s = { ...s, infinitos: 4, granos: 300000, caudal: 12, cristales: s.cristales.mul(0).add(5571), cristalesTotales: s.cristalesTotales.mul(0).add(2.75e6),
-      red: { ...s.red, estratos: 4, presion: 2 }, estratos: { abiertos: 3, s: ocho((k) => (k < 3 ? 25 - k * 2 : 0)), perm: ocho((k) => (k < 3 ? 6 : 0)), pres: ocho((k) => (k < 3 ? 4 : 0)) },
-      relicario: { ...s.relicario, reliquias: { cauce: 4, cascada: 1, mutaciones: 0 }, equipadas: ['cauce'], pendiente: 1 } }
+      red: { ...s.red, estratos: 4, presion: 2, engarces: 1 }, estratos: { abiertos: 3, s: ocho((k) => (k < 3 ? 25 - k * 2 : 0)), perm: ocho((k) => (k < 3 ? 6 : 0)), pres: ocho((k) => (k < 3 ? 4 : 0)) },
+      relicario: { ...s.relicario, pendiente: 5, foto: window.__fotos[7], equipadas: [3, 6],
+        piezas: [['cauce', 2], ['cauce', 0], ['cauce', 1], ['cascada', 0], ['cascada', 0], ['mutaciones', 4], ['mutaciones', 0], ['cascada', 1]]
+          .map(([tipo, nivel], i) => ({ id: i + 1, tipo, nivel, foto: window.__fotos[i], inf: i + 1 })) } }
     j.capa = 'arena'
     j.ausencia = null
   })`)

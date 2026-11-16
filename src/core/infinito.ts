@@ -20,8 +20,9 @@ export function infinito(s: State): State {
   return {
     ...estadoInicial(), granos: 0, // granos_iniciales es solo para la primera corrida
     auto, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red, estratos,
-    // §5: cada Infinito trae una oferta; si quedaba una sin elegir, se elige sola antes.
-    relicario: { ...elegirSola(s).relicario, pendiente: s.infinitos + 1 },
+    // Bloque 8: cada Infinito trae una reliquia que espera su tipo; si quedaba una sin elegir, se elige sola antes.
+    // La pila de este Infinito la pone la interfaz (conFoto).
+    relicario: { ...elegirSola(s).relicario, pendiente: s.infinitos + 1, foto: '' },
     cascada: conservaCascada(s) ? s.cascada : 0,
     compresiones: Math.min(compresionesConservadas(s), CFG.compresion.umbrales_log10.length),
     infinitos: s.infinitos + 1,

@@ -1,79 +1,147 @@
-// SPEC_CAPA1 §5: el Relicario. Tipos y números salen de config_capa1.json.
+// SPEC_CAPA1 §5 y CORRECCIONES_CAPA1 bloque 8: el Relicario como inventario de piezas. Tipos y números de config_capa1.json.
+// Cada Infinito el jugador elige el tipo; la pieza nueva es Ámbar (nivel 0). 3 del mismo tipo y nivel se fusionan en una
+// del nivel siguiente. Solo las piezas en los Engarces dan efecto, y dos del mismo tipo se suman (igual que sim_capa1.py).
 import { CFG1 } from './config1'
 import { efectoRed } from './red'
-import type { State } from './state'
+import type { Pieza, Regla, State } from './state'
 
 const R = CFG1.relicario
 export const TIPOS: string[] = R.tipos
+export const MODOS: Regla['modo'][] = ['completar', 'fijo', 'rotar', 'subir', 'prioridad']
 
-/** Nivel de fusión con n reliquias de un tipo: floor(log3(n)); −1 sin ninguna. */
-export const nivelFusion = (n: number) => (n >= 1 ? Math.floor(Math.log(n) / Math.log(3) + 1e-9) : -1)
-export const nivelReliquia = (s: State, t: string) => nivelFusion(s.relicario.reliquias[t] ?? 0)
 /** Escalera: el color (0 Ámbar … 3 Violeta) y cuántas vueltas lleva (el "+1"). */
 export const escalon = (nivel: number) => ({ color: nivel % 4, vuelta: Math.floor(nivel / 4) })
-/** Reliquias que le faltan al tipo para subir de color. */
-export const faltan = (s: State, t: string) => 3 ** (nivelReliquia(s, t) + 1) - (s.relicario.reliquias[t] ?? 0)
-
 export const espacios = (s: State) => Math.max(1, efectoRed(s, 'engarces', 'espacios', 1), efectoRed(s, 'engarces2', 'espacios', 1))
-const cuantas = (s: State) => efectoRed(s, 'engarces', 'ofertas', R.ofertas_por_infinito)
+/** Engarces II: la fusión puede ser automática. */
+export const fusionAutomatica = (s: State) => (s.red.engarces2 ?? 0) >= 1
 
-// mulberry32: chico, determinista y sin estado afuera.
-function azar(semilla: number) {
-  let a = semilla >>> 0
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0
-    let t = Math.imul(a ^ (a >>> 15), a | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+const pieza = (s: State, id: number) => s.relicario.piezas.find((p) => p.id === id)
+const nuevoId = (s: State) => Math.max(0, ...s.relicario.piezas.map((p) => p.id)) + 1
+const conRel = (s: State, rel: Partial<State['relicario']>): State => ({ ...s, relicario: { ...s.relicario, ...rel } })
+/** Las piezas que dan efecto (las de los espacios que existen). */
+export const equipadas = (s: State) => s.relicario.equipadas.slice(0, espacios(s)).map((id) => pieza(s, id)).filter((p): p is Pieza => !!p)
+/** Mejor nivel del tipo en el inventario (o solo entre las equipadas); −1 sin ninguna. */
+export const mejorNivel = (s: State, t: string, soloEquipadas = false) =>
+  Math.max(-1, ...(soloEquipadas ? equipadas(s) : s.relicario.piezas).filter((p) => p.tipo === t).map((p) => p.nivel))
+
+// ---------- fusión ----------
+
+/** Grupos de 3 que se pueden fusionar: las tres más viejas de cada (tipo, nivel) con 3 o más. */
+export function fusionables(s: State): number[][] {
+  const g = new Map<string, Pieza[]>()
+  for (const p of s.relicario.piezas) g.set(`${p.tipo}:${p.nivel}`, [...(g.get(`${p.tipo}:${p.nivel}`) ?? []), p])
+  return [...g.values()].filter((ps) => ps.length >= 3).map((ps) => ps.sort((a, b) => a.inf - b.inf || a.id - b.id).slice(0, 3).map((p) => p.id))
+}
+
+/** Fusiona tres piezas del mismo tipo y nivel en una del nivel siguiente, con la pila de la más vieja.
+ * Si alguna estaba engarzada, la nueva queda en el primer espacio de ellas. Si no se puede, devuelve el mismo estado. */
+export function fusionar(s: State, ids: number[]): State {
+  const ps = [...new Set(ids)].map((id) => pieza(s, id)).filter((p): p is Pieza => !!p)
+  if (ps.length !== 3 || ps.some((p) => p.tipo !== ps[0].tipo || p.nivel !== ps[0].nivel)) return s
+  const vieja = ps.reduce((a, b) => (b.inf < a.inf || (b.inf === a.inf && b.id < a.id) ? b : a))
+  const nueva: Pieza = { id: nuevoId(s), tipo: vieja.tipo, nivel: vieja.nivel + 1, foto: vieja.foto, inf: vieja.inf }
+  const fuera = new Set(ps.map((p) => p.id))
+  const e = s.relicario.equipadas, k = e.findIndex((id) => fuera.has(id))
+  return conRel(s, {
+    piezas: [...s.relicario.piezas.filter((p) => !fuera.has(p.id)), nueva],
+    equipadas: e.map((id, i) => (i === k ? nueva.id : id)).filter((id) => !fuera.has(id)),
+  })
+}
+
+/** Fusiona mientras haya tres iguales (de abajo hacia arriba: tres Ámbar dan una Coral, que puede completar otras tres). */
+export function fusionarTodo(s: State): State {
+  for (let g = fusionables(s); g.length; g = fusionables(s)) s = fusionar(s, g.sort((a, b) => pieza(s, a[0])!.nivel - pieza(s, b[0])!.nivel)[0])
+  return s
+}
+
+// ---------- engarces ----------
+
+/** Pone la pieza en el espacio i (gratis). Si ya estaba engarzada, cambia de lugar con la del espacio. */
+export function equipar(s: State, id: number, i: number): State {
+  if (!pieza(s, id) || i < 0 || i >= espacios(s)) return s
+  const e = s.relicario.equipadas.slice(0, espacios(s)), j = e.indexOf(id)
+  const k = Math.min(i, j < 0 ? e.length : e.length - 1)
+  if (j >= 0) e[j] = e[k]
+  e[k] = id
+  return conRel(s, { equipadas: e })
+}
+export const desequipar = (s: State, id: number): State =>
+  s.relicario.equipadas.includes(id) ? conRel(s, { equipadas: s.relicario.equipadas.filter((x) => x !== id) }) : s
+
+/** Engarza las mejores: mayor nivel primero; en empate, la que ya estaba puesta y después el orden de los tipos. */
+export function equiparMejores(s: State): State {
+  const puesta = new Set(s.relicario.equipadas)
+  const orden = [...s.relicario.piezas].sort((a, b) => b.nivel - a.nivel || +puesta.has(b.id) - +puesta.has(a.id) || TIPOS.indexOf(a.tipo) - TIPOS.indexOf(b.tipo) || a.id - b.id)
+  return conRel(s, { equipadas: orden.slice(0, espacios(s)).map((p) => p.id) })
+}
+
+// ---------- elegir el tipo ----------
+
+/** Ámbar del tipo que hay en el inventario (las que esperan su fusión). */
+const ambar = (s: State, t: string) => s.relicario.piezas.filter((p) => p.tipo === t && p.nivel === 0).length
+
+/** El tipo que elige la regla automática (bloque 8). En empate gana el primero del orden de la regla. */
+export function tipoAutomatico(s: State): string {
+  const { regla, ultimo } = s.relicario
+  const orden = [...regla.orden.filter((t) => TIPOS.includes(t)), ...TIPOS.filter((t) => !regla.orden.includes(t))]
+  const menor = (f: (t: string) => number) => orden.reduce((a, b) => (f(b) < f(a) ? b : a))
+  switch (regla.modo) {
+    case 'fijo': return orden[0]
+    case 'rotar': return TIPOS[(TIPOS.indexOf(ultimo) + 1) % TIPOS.length]
+    // Al que le falte menos para la próxima fusión (3 Ámbar); en empate, el que tiene alguna engarzada.
+    case 'completar': return menor((t) => (3 - (ambar(s, t) % 3)) * 2 - (mejorNivel(s, t, true) >= 0 ? 1 : 0))
+    case 'subir': return menor((t) => mejorNivel(s, t, true))
+    // Prioridad: el primero va un nivel arriba del segundo y dos arriba del tercero.
+    case 'prioridad': return menor((t) => mejorNivel(s, t) + orden.indexOf(t))
   }
 }
 
-/** La oferta del Infinito número n (por defecto, la pendiente): semilla + n, así recargar no la cambia. Nunca todas iguales. */
-export function oferta(s: State, n = s.relicario.pendiente): string[] {
-  if (n <= 0) return []
-  const r = azar(s.relicario.semilla + n)
-  const o = Array.from({ length: cuantas(s) }, () => TIPOS[Math.floor(r() * TIPOS.length)])
-  if (o.every((t) => t === o[0])) o[o.length - 1] = TIPOS[(TIPOS.indexOf(o[0]) + 1) % TIPOS.length]
-  return o
-}
-
-/** Elige la reliquia i de la oferta pendiente; si no hay oferta o no existe, devuelve el mismo estado. */
-export function elegir(s: State, i: number): State {
-  const t = oferta(s)[i]
-  if (!t) return s
+/** Agrega la reliquia del Infinito pendiente, del tipo t (con la pila de ese Infinito). Después, lo que diga la regla:
+ * fusionar solas (con Engarces II) y engarzar las mejores. Sin Infinito pendiente o con un tipo que no existe, el mismo estado. */
+export function elegir(s: State, t: string): State {
   const rel = s.relicario
-  return { ...s, relicario: { ...rel, pendiente: 0, reliquias: { ...rel.reliquias, [t]: (rel.reliquias[t] ?? 0) + 1 } } }
+  if (!rel.pendiente || !TIPOS.includes(t)) return s
+  const p: Pieza = { id: nuevoId(s), tipo: t, nivel: 0, foto: rel.foto, inf: rel.pendiente }
+  s = conRel(s, { piezas: [...rel.piezas, p], pendiente: 0, foto: '', ultimo: t })
+  if (rel.regla.fusionar && fusionAutomatica(s)) s = fusionarTodo(s)
+  return rel.regla.equipar ? equiparMejores(s) : s
+}
+/** Sin elegir a tiempo, o con Infinito automático: la regla. */
+export const elegirSola = (s: State): State => (s.relicario.pendiente ? elegir(s, tipoAutomatico(s)) : s)
+
+/** La interfaz pone la instantánea de la pila (el núcleo no ve la pila): en el Infinito pendiente y en las piezas
+ * del último Infinito que no la tengan (el Infinito automático elige en el mismo tick). */
+export function conFoto(s: State, foto: string): State {
+  const rel = s.relicario
+  const falta = (p: Pieza) => !p.foto && p.inf === s.infinitos
+  if (!foto || ((!rel.pendiente || rel.foto) && !rel.piezas.some(falta))) return s
+  return conRel(s, { foto: rel.pendiente && !rel.foto ? foto : rel.foto, piezas: rel.piezas.map((p) => (falta(p) ? { ...p, foto } : p)) })
 }
 
-/** Sin elegir a tiempo o con Infinito automático: la que suba de color antes; en empate, la del tipo equipado. */
-export function elegirSola(s: State): State {
-  const o = oferta(s)
-  const puntos = (t: string) => faltan(s, t) * 2 - (s.relicario.equipadas.includes(t) ? 1 : 0)
-  return elegir(s, o.indexOf(o.reduce((a, b) => (puntos(b) < puntos(a) ? b : a), o[0])))
-}
-
-/** Pone el tipo en el espacio i (gratis). Solo tipos con alguna reliquia; un tipo ocupa un solo espacio. */
-export function equipar(s: State, t: string, i: number): State {
-  if (nivelReliquia(s, t) < 0 || i < 0 || i >= espacios(s)) return s
-  const e = [...s.relicario.equipadas], j = e.indexOf(t)
-  const k = Math.min(i, j < 0 ? e.length : e.length - 1)
-  if (j >= 0) e[j] = e[k] // ya estaba puesta: cambia de lugar con la del espacio
-  e[k] = t
-  return { ...s, relicario: { ...s.relicario, equipadas: e } }
-}
-export const desequipar = (s: State, t: string): State =>
-  s.relicario.equipadas.includes(t) ? { ...s, relicario: { ...s.relicario, equipadas: s.relicario.equipadas.filter((x) => x !== t) } } : s
-
-// ---------- efectos (solo las equipadas; tabla de §5, igual que mods() de sim_capa1.py) ----------
+// ---------- efectos (solo las equipadas; dos del mismo tipo se suman; tabla de §5, igual que mods() de sim_capa1.py) ----------
 const POR_NIVEL: Record<string, number> = {
   cauce: R.cauce_colores_pct_por_nivel, cascada: R.cascada_c_por_nivel, mutaciones: R.mutaciones_efecto_por_nivel,
 }
-/** El efecto de un tipo en el nivel dado (para mostrar). */
+/** El efecto de una pieza del tipo y nivel dados. */
 export const efectoNivel = (t: string, nivel: number) => (nivel < 0 ? 0 : POR_NIVEL[t] * (nivel + 1))
-const efecto = (s: State, t: string) => (s.relicario.equipadas.slice(0, espacios(s)).includes(t) ? efectoNivel(t, nivelReliquia(s, t)) : 0)
+const efecto = (s: State, t: string) => equipadas(s).reduce((a, p) => a + (p.tipo === t ? efectoNivel(t, p.nivel) : 0), 0)
 /** Cauce: los colores valen (log10) × (1 + esto). */
 export const cauceRel = (s: State) => efecto(s, 'cauce')
 /** Cascada: se suma al exponente c. */
 export const cascadaRel = (s: State) => efecto(s, 'cascada')
 /** Mutaciones: las de Caudal y Colores rinden × (1 + esto). */
 export const mutacionesRel = (s: State) => efecto(s, 'mutaciones')
+
+// ---------- migración ----------
+
+/** Relicario de antes del bloque 8 (cantidad por tipo + tipos engarzados) → piezas. Cada cantidad se fusiona entera
+ * (los dígitos en base 3, como `pieces()` del simulador) y cada tipo que estaba engarzado engarza su mejor pieza:
+ * el efecto viejo era el del nivel floor(log3(n)), que es justo esa pieza. Nadie pierde poder. */
+export function migrarRelicario(reliquias: Record<string, number>, tipos: string[]): Pick<State['relicario'], 'piezas' | 'equipadas'> {
+  const piezas: Pieza[] = []
+  for (const t of TIPOS)
+    for (let c = Math.max(0, Math.floor(reliquias[t] ?? 0)), n = 0; c > 0; c = Math.floor(c / 3), n++)
+      for (let k = 0; k < c % 3; k++) piezas.push({ id: piezas.length + 1, tipo: t, nivel: n, foto: '', inf: 0 })
+  const mejor = (t: string) => piezas.filter((p) => p.tipo === t).reduce<Pieza | undefined>((a, p) => (!a || p.nivel > a.nivel ? p : a), undefined)
+  return { piezas, equipadas: tipos.map(mejor).filter((p): p is Pieza => !!p).map((p) => p.id) }
+}

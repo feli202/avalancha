@@ -843,7 +843,7 @@ Lista en `correcciones-capa1/correcciones-capa1/CORRECCIONES_CAPA1.md` (13 bloqu
 - [x] Sesión 2 — bloques 5 y 6: balance de Estratos y Red (2026-11-16; el Relicario como inventario solo en el simulador, el núcleo va en la sesión 5)
 - [x] Sesión 3 — bloque 13: estética de cristal y escarcha, barra lateral (2026-11-16)
 - [x] Sesión 4 — bloque 7: multiplicadores visibles (2026-11-16)
-- [ ] Sesión 5 — bloque 8: Relicario como inventario
+- [x] Sesión 5 — bloque 8: Relicario como inventario (2026-11-16)
 - [ ] Sesión 6 — bloque 9: Red en 3D de cristal
 - [ ] Sesión 7 — bloque 11: Estratos con físicas
 - [ ] Sesión 8 — bloque 10: panel de Automatización
@@ -930,6 +930,38 @@ Peso al final de la 1.2: Presión 43 %, Escarcha 41 %, Colores 7 % (antes 59 / 2
 6. **Cristalografía II no suma nada todavía**: los Defectos llegan en C7 (`defectosCompletos` devuelve 0). Eco II no tiene dónde actuar hasta la Escarcha (C10).
 7. **El núcleo del Relicario no se tocó** (ofertas con semilla, como en C3): el inventario es la sesión 5. El tooltip de Engarces II ya describe la fusión automática.
 8. En el navegador integrado quedó la partida de prueba con Cristales y nodos puestos a mano.
+
+### Sesión 5 (2026-11-16) — bloque 8: el Relicario como inventario
+
+Balance sin cambios: el simulador ya modelaba el inventario desde la sesión 2 (piezas en base 3, engarzar las mejores, dos del mismo tipo se suman). `python balance/sim_capa1.py` da la misma tabla (FIN 1.1 7,30 h, FIN CAPA 1 14,82 h). De `config_capa1.json` salieron `ofertas_por_infinito`, `semilla` y `engarces.ofertas` (el simulador no los leía) y entró `relicario.casilleros: 24`.
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/core/relicario.ts` | Reescrito. Piezas `{id, tipo, nivel, foto, inf}`. `elegir(s, tipo)` (la pieza nace Ámbar con la pila del Infinito pendiente), `fusionables`, `fusionar` (3 iguales → nivel + 1, pila de la más vieja, hereda el engarce), `fusionarTodo` (en cadena), `equipar`/`desequipar` por id, `equiparMejores`, `tipoAutomatico` (las 5 reglas), `elegirSola`, `conFoto` (la interfaz pone la pila; el núcleo no la ve), efectos sumando las engarzadas, `migrarRelicario`. Sin azar: se fue la semilla. |
+| `src/core/state.ts` | `relicario: { piezas, equipadas (ids), pendiente, foto, ultimo, regla }`, tipos `Pieza` y `Regla`. |
+| `src/core/infinito.ts` | El Infinito deja la reliquia esperando su tipo (`foto: ''` hasta que la interfaz la pone). |
+| `src/guardado/guardado.ts` | `leerRelicario`: valida piezas (tipo existente, id único, nivel ≤ 60, foto de 256 bytes en base64 o vacía), engarzadas que existan y entren, regla. **Migración**: un Relicario viejo (cantidad por tipo + tipos engarzados) pasa a piezas fusionadas (los dígitos en base 3 de cada cantidad) y cada tipo que estaba engarzado engarza su mejor pieza, que es justo el nivel `floor(log3(n))` del efecto viejo: mismo poder. Sin cambio de versión (sigue en 3). |
+| `src/render/instantanea.ts` | Nuevo, puro. `instantanea(alturas, radio)`: la pila en 32×32 celdas de 2 bits (muestrea el círculo de la pila: una chica se agranda, una grande se lee de a saltos). `desdeFoto` la vuelve pila para el `Lienzo`. |
+| `src/render/miniPilas.ts` | Escena `rel:<color>:<foto>` en el generador compartido (un solo `Lienzo`, imágenes en caché y en cola): la pila teñida con el color del nivel (mismo orden de brillo que la arena). Sin foto (reliquias migradas), una pila genérica. Acción `caraReliquia` (un cuadrado del centro). |
+| `src/ui/juego.svelte.ts` | `fotoPila()` desde `camara.foto()`; una instantánea por segundo antes de los pasos (por si llega un Infinito automático) y una justo en `infinitoYa`. El aviso de "elegida sola" usa `ultimo`. |
+| `src/ui/Relicario.svelte` | Reescrito: elegir el tipo (la cara de la nueva, tres gemas, cuánto falta para fusionar, cuenta de 30 s); Engarces hexagonales con la cara y el total de efectos; grilla de 8 (6 en el celular) con caras, sello de tipo en la esquina, "+1", cristal de engarzada, brillo en las que se pueden fusionar; ficha de la elegida (efecto, de qué Infinito es, Engarzar/Quitar, Fusionar); "Fusionar todo"; arrastrar a un engarce o sobre otra igual. Fusión animada: las tres vuelan al casillero de la nueva y nace con un destello. **Regla automática provisoria** en un desplegable (modo, orden para Fijo/Prioridad, las dos opciones). |
+| `src/strings/es.ts`, `en.ts` | Textos nuevos; Engarces ya no habla de ofertas. |
+| `tests/relicario.test.ts` | Reescrito, 17 tests: elegir, foto (también la del Infinito automático), fusión (pila de la más vieja, otro tipo/nivel no, hereda el engarce, en cadena, automática solo con Engarces II y la opción), engarces, efectos por nivel y suma de iguales, equipar las mejores, las 5 reglas, Infinito automático con la regla, guardado (limpieza), migración sin perder poder, guardado de antes del Relicario, instantánea. `desglose.test.ts` usa `migrarRelicario`. |
+| `scripts/capturas-capa1.mjs` | Reliquias de prueba con pilas abelianas de verdad. Capturas en `correcciones-capa1/capturas_despues/bloque8/` (el "antes" es `01_relicario_actual_MAL.png`). |
+| `SPEC_CAPA1.md` | §5 sin ofertas: inventario, fusión, elección automática, engarces que se suman. |
+
+**Verificación**: 222 tests en verde (balance de la Capa 0 incluido), `tsc` y `svelte-check` sin errores. Edge headless (CDP) con el servidor de desarrollo: partida nueva, cinco Infinitos con "Infinito ya" y la pila a distintos granos, eligiendo el tipo con las gemas; cada reliquia con su pila distinta; tres Cauce Ámbar → una Coral con la pila del Infinito 1 (capturada a mitad de la animación), engarzada tocándola; el total de efectos cambia. 60,5 fps en el Relicario con el inventario lleno en 1366×800 y 60,4 en 390×844 (peor cuadro 17 ms). En el navegador integrado (oculto, a 1 fps) se vio la elección con la cara de la pila. **Sin mirar**: arrastrar con un mouse real (solo eventos simulados en la sesión C3; esta vez se probó tocando), un celular real, la migración con una partida vieja real (solo con tests), inglés en pantalla.
+
+**Decisiones (revisar)**
+
+1. **Regla automática provisoria dentro del Relicario** (desplegable "Elección automática"), hasta el panel de Automatización (sesión 8). Por defecto *Completar fusiones*, fusionar solas sí (solo hace algo con Engarces II) y engarzar las mejores no.
+2. **Nada se engarza solo** salvo con "engarzar siempre las mejores" (como en C3). "Las mejores" = mayor nivel; en empate, la que ya estaba y después Cauce, Cascada, Mutaciones (no compara el efecto real de cada tipo).
+3. **Prioridad** no estaba definida en el bloque: elige el tipo que minimiza `mejor nivel + posición en la lista` (el primero queda un nivel arriba del segundo). Sola, una lista sería igual a Tipo fijo.
+4. **Completar fusiones** cuenta Ámbar sueltas (lo que nace siempre es Ámbar).
+5. **El inventario no tiene tope**: 24 casilleros a la vista y, si se llenan, aparece otra fila. Nada se pierde.
+6. **La instantánea es de la pila visual**, no de la economía (el núcleo no tiene pila). Con la pila llena se muestrea de a ~16 celdas: se ve el dibujo grande, no el detalle. Si el Infinito automático llega mientras la Arena no está a la vista, la foto es la de la última vez que se dibujó la pila (shortcut; no lo noté en las pruebas).
+7. **Pulido (C11)** suma "reliquias virtuales" a un tipo según la spec vieja: con piezas hay que redefinirlo (¿sube el nivel de una pieza?). Queda para C11.
+8. Arrastrar una sobre otra igual fusiona esas dos con la más vieja que quede del mismo tipo y nivel.
 
 ### Sesión 4 (2026-11-16) — bloque 7: multiplicadores visibles
 

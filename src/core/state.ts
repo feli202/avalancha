@@ -3,6 +3,13 @@ import { CFG, type MutId } from './config'
 import { CFG1 } from './config1'
 import { NODOS } from './red'
 
+/** Una reliquia del inventario. `foto`: la pila del Infinito en que nació (32×32 celdas, 2 bits, base64; '' = sin foto,
+ * las de antes del bloque 8). `inf`: el número de ese Infinito (al fusionar queda la más vieja). */
+export interface Pieza { id: number; tipo: string; nivel: number; foto: string; inf: number }
+/** La regla de elección automática (bloque 8; se configura en el panel de Automatización). `orden`: Tipo fijo usa el primero;
+ * Prioridad, la lista entera. `fusionar`: fusionar solas con Engarces II. `equipar`: engarzar siempre las mejores. */
+export interface Regla { modo: 'fijo' | 'rotar' | 'completar' | 'subir' | 'prioridad'; orden: string[]; fusionar: boolean; equipar: boolean }
+
 export interface State {
   // --- se reinicia con la Compresión ---
   energia: Decimal
@@ -28,9 +35,9 @@ export interface State {
   cristalesTotales: Decimal
   /** Nivel (0..4) de cada nodo de la Red, con las claves de NODOS. */
   red: Record<string, number>
-  /** SPEC_CAPA1 §5. `pendiente`: número del Infinito cuya oferta espera elección (0 = ninguna).
-   * `equipadas`: el tipo de cada Engarce ocupado, en orden. */
-  relicario: { semilla: number; reliquias: Record<string, number>; equipadas: string[]; pendiente: number }
+  /** SPEC_CAPA1 §5 y bloque 8: el inventario. `equipadas`: el id de la pieza de cada Engarce, en orden. `pendiente`: número del
+   * Infinito cuya reliquia espera que se elija el tipo (0 = ninguna); `foto`, su pila. `ultimo`: el último tipo elegido (Rotar). */
+  relicario: { piezas: Pieza[]; equipadas: number[]; pendiente: number; foto: string; ultimo: string; regla: Regla }
   /** SPEC_CAPA1 §7. `s`: log10 de granos de cada estrato; `perm` y `pres`: niveles de Permeabilidad y Presión. */
   estratos: { abiertos: number; s: number[]; perm: number[]; pres: number[] }
   tiempoTotal: number
@@ -66,7 +73,7 @@ export const estadoInicial =(): State => ({
   cristales: new Decimal(0),
   cristalesTotales: new Decimal(0),
   red: Object.fromEntries(Object.keys(NODOS).map((k) => [k, 0])),
-  relicario: { semilla: CFG1.relicario.semilla, reliquias: Object.fromEntries(CFG1.relicario.tipos.map((t) => [t, 0])), equipadas: [], pendiente: 0 },
+  relicario: { piezas: [], equipadas: [], pendiente: 0, foto: '', ultimo: '', regla: { modo: 'completar', orden: [...CFG1.relicario.tipos], fusionar: true, equipar: false } },
   estratos: { abiertos: 0, s: ceros(), perm: ceros(), pres: ceros() },
   tiempoTotal: 0,
   tiempoInfinito: 0,

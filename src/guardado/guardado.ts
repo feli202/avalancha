@@ -1,6 +1,6 @@
 // Guardado (SPEC 8): la partida como JSON con versión. Puro: el almacenamiento entra como Almacen.
 import Decimal from 'break_infinity.js'
-import { CFG, ESTRATOS, MUTACIONES, NIVEL_MAX_RED, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, type State } from '../core'
+import { CFG, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, type Pieza, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
 import type { Contadores } from '../ui/secretos'
@@ -69,6 +69,8 @@ function mismaForma(modelo: unknown, x: unknown): boolean {
   return Object.keys(modelo).every((k) => mismaForma((modelo as any)[k], (x as any)[k]))
 }
 const MODELO = plano({ estado: estadoInicial(), guardadoEn: 0, vistos: {}, record: 0, logros: {} })
+// El orden de la regla del Relicario lo arregla leerRelicario: que un largo distinto (un tipo nuevo) no invalide la partida.
+MODELO.estado.relicario.regla.orden = []
 
 /** Completa con el modelo los campos que faltan (un campo nuevo sin migración, un color o autocomprador nuevo). */
 function completar(modelo: any, x: any): any {
@@ -99,18 +101,16 @@ export function deserializar(texto: string): Partida {
   const pos = (x: number) => Math.max(0, x)
   const red = Object.fromEntries(Object.keys(MODELO.estado.red).map((k) => [k, ent(e.red[k], NIVEL_MAX_RED)]))
   const conRed = { ...estadoInicial(), red } // los topes de Cascada y Mutaciones dependen de la Red
-  // Relicario (SPEC_CAPA1 §5): cantidades enteras; equipadas sin repetir, solo tipos que se tienen, hasta los Engarces de la Red.
-  const reliquias = Object.fromEntries(TIPOS.map((t) => [t, ent(e.relicario.reliquias[t])]))
-  const equipadas = [...new Set(e.relicario.equipadas as unknown[])].filter((t): t is string => typeof t === 'string' && reliquias[t] > 0).slice(0, espacios(conRed))
   const infinitos = ent(e.infinitos)
-  // Un guardado de antes del Relicario (C1–C2) con Infinitos hechos: le queda una oferta para elegir.
-  const pendiente = crudo.estado.relicario === undefined && !deCapa0 ? infinitos : ent(e.relicario.pendiente, infinitos)
+  const relicario = leerRelicario(e.relicario, infinitos, espacios(conRed))
+  // Un guardado de antes del Relicario (C1–C2) con Infinitos hechos: le queda una reliquia para elegir.
+  if (crudo.estado.relicario === undefined && !deCapa0) relicario.pendiente = infinitos
   const estado: State = {
       ...e, energia: deDec(e.energia), maxEnergia: deDec(e.maxEnergia),
       cristales: deDec(e.cristales), cristalesTotales: deDec(e.cristalesTotales),
       granos: pos(e.granos), granosTotales: pos(e.granosTotales), caudal: ent(e.caudal), colores: e.colores.map((n) => ent(n)),
       red, estratos: { abiertos: ent(e.estratos.abiertos, ESTRATOS), s: e.estratos.s.map(pos), perm: e.estratos.perm.map((n) => ent(n)), pres: e.estratos.pres.map((n) => ent(n)) },
-      relicario: { semilla: ent(e.relicario.semilla), reliquias, equipadas, pendiente }, cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
+      relicario, cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
       mutaciones: Object.fromEntries(MUTACIONES.map((m) => [m, ent(e.mutaciones[m], maxMutacion(conRed))])) as State['mutaciones'],
       coloresDesbloqueados: ent(e.coloresDesbloqueados, CFG.colores.length), infinitos,
       tiempoTotal: pos(e.tiempoTotal), tiempoCorrida: pos(e.tiempoCorrida), tiempoInfinito: pos(e.tiempoInfinito),
@@ -127,6 +127,39 @@ export function deserializar(texto: string): Partida {
     secretos: contadores((d as any).secretos),
     // Partidas de antes del historial: no viene, y el juego arranca uno con el comienzo estimado por el tiempo de juego.
     ...((d as any).historial !== undefined && { historial: limpiarHistorial((d as any).historial, d.guardadoEn - e.tiempoTotal * 1000) }),
+  }
+}
+
+const FOTO = /^[A-Za-z0-9+/]{342}==$/ // 256 bytes en base64
+/** Relicario (bloque 8): piezas válidas y sin ids repetidos; engarzadas sin repetir, que existan, hasta los Engarces de la Red.
+ * Un Relicario de antes (cantidad por tipo y tipos engarzados) se pasa a piezas sin perder poder (migrarRelicario). */
+function leerRelicario(r: any, infinitos: number, espacios: number): State['relicario'] {
+  const ent = (x: unknown, max = Infinity) => (typeof x === 'number' && Number.isFinite(x) ? Math.min(max, Math.max(0, Math.floor(x))) : 0)
+  const foto = (x: unknown) => (typeof x === 'string' && FOTO.test(x) ? x : '')
+  const viejo = typeof r.reliquias === 'object' && r.reliquias !== null && !(Array.isArray(r.piezas) && r.piezas.length)
+  const crudas = viejo
+    ? migrarRelicario(Object.fromEntries(TIPOS.map((t) => [t, ent(r.reliquias[t])])), Array.isArray(r.equipadas) ? r.equipadas.filter((t: unknown) => typeof t === 'string') : [])
+    : { piezas: Array.isArray(r.piezas) ? r.piezas : [], equipadas: Array.isArray(r.equipadas) ? r.equipadas : [] }
+  const ids = new Set<number>()
+  const piezas: Pieza[] = []
+  for (const p of crudas.piezas as any[]) {
+    if (typeof p !== 'object' || p === null || !TIPOS.includes(p.tipo) || !Number.isInteger(p.id) || p.id < 1 || ids.has(p.id)) continue
+    ids.add(p.id)
+    piezas.push({ id: p.id, tipo: p.tipo, nivel: ent(p.nivel, 60), foto: foto(p.foto), inf: ent(p.inf, infinitos) })
+  }
+  const equipadas = [...new Set(crudas.equipadas as unknown[])].filter((id): id is number => ids.has(id as number)).slice(0, espacios)
+  const g = typeof r.regla === 'object' && r.regla !== null ? r.regla : {}
+  const orden = Array.isArray(g.orden) ? [...new Set(g.orden.filter((t: unknown) => TIPOS.includes(t as string)) as string[])] : []
+  const base = estadoInicial().relicario.regla
+  return {
+    piezas, equipadas,
+    pendiente: ent(r.pendiente, infinitos), foto: foto(r.foto), ultimo: TIPOS.includes(r.ultimo) ? r.ultimo : '',
+    regla: {
+      modo: MODOS.includes(g.modo) ? g.modo : base.modo,
+      orden: [...orden, ...TIPOS.filter((t) => !orden.includes(t))],
+      fusionar: typeof g.fusionar === 'boolean' ? g.fusionar : base.fusionar,
+      equipar: typeof g.equipar === 'boolean' ? g.equipar : base.equipar,
+    },
   }
 }
 
