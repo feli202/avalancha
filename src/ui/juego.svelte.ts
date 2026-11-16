@@ -150,21 +150,32 @@ function condiciones(s: State): Record<string, boolean> {
 /** Nombre de lo que compra cada autocomprador (claves de CFG.autocompradores). */
 export const nombreAuto = (k: string) => (k === 'caudal' ? txt.caudal : txt.colores[CFG.colores.findIndex((c) => c.id === k)])
 
+const esAuto = (k: string) => k.startsWith('auto_') && !(k in txt.guia.indicador)
+
+/** CORRECCIONES 4, migración: da por vistas (sin mostrarlas) las guías de todo lo que el jugador ya tiene. Los guardados de
+ * antes no anotaban la guía de los autocompradores (`vistos.auto`); `vistos.guias` marca que esto ya se hizo. */
+export function yaVisto(s: State, vistos: Record<string, boolean>): Record<string, boolean> {
+  const c = condiciones(s)
+  const r = { ...vistos, ...Object.fromEntries(Object.keys(c).filter((k) => c[k]).map((k) => [k, true])), guias: true }
+  return Object.keys(r).some(esAuto) ? { ...r, auto: true } : r
+}
+
 let avisos = 0
 const AVISOS_JUNTOS = 2
-function revelar(s: State) {
+/** Lo que aparece por primera vez: se anota en `juego.vistos` (va al guardado) y se muestra su frase y su guía.
+ * CORRECCIONES 4: una sola vez en la vida de la partida, aunque la corrida se reinicie. Exportada para el test. */
+export function revelar(s: State) {
   const c = condiciones(s)
   const nuevos = Object.keys(c).filter((k) => c[k] && !juego.vistos[k])
   if (!nuevos.length) return
-  juego.vistos = { ...juego.vistos, ...Object.fromEntries(nuevos.map((k) => [k, true])) }
+  // La guía de los autocompradores es una sola para todos (`vistos.auto`): con el primero que llega, y nunca más.
+  const primerAuto = juego.vistos.auto ? undefined : nuevos.find(esAuto)
+  juego.vistos = { ...juego.vistos, ...Object.fromEntries(nuevos.map((k) => [k, true])), ...(primerAuto && { auto: true }) }
   // Los autocompradores que llegan juntos van en una sola frase; si aparecen muchas cosas juntas (saltos de debug), las últimas dos.
   const autos = nuevos.filter((k) => k.startsWith('auto_') && !(k in txt.revelado)).map((k) => nombreAuto(k.slice(5)))
   const frases = nuevos.filter((k) => k in txt.revelado).map((k) => txt.revelado[k])
   if (autos.length) frases.push(txt.autocompradores(autos))
-  // Un indicador por sistema; los autocompradores que llegan juntos, uno solo (el primero).
-  const conGuia = nuevos.filter((k) => k in txt.guia.indicador || k.startsWith('auto_'))
-  const primerAuto = conGuia.find((k) => k.startsWith('auto_') && !(k in txt.guia.indicador))
-  const guias = conGuia.filter((k) => k in txt.guia.indicador || k === primerAuto)
+  const guias = nuevos.filter((k) => k in txt.guia.indicador || k === primerAuto)
   if (guias.length) juego.guias = [...juego.guias, ...guias].slice(-AVISOS_JUNTOS)
   juego.aviso = { id: avisos++, texto: frases.slice(-AVISOS_JUNTOS).join(' ') }
 }
@@ -324,7 +335,8 @@ export function arrancar() {
   if (p === 'corrupto') juego.guardadoRoto = true
   else if (p) {
     juego.s = p.estado
-    juego.vistos = p.vistos
+    // CORRECCIONES 4: un guardado de antes da por vistas las guías de lo que ya tiene (una sola vez).
+    juego.vistos = p.vistos.guias ? p.vistos : yaVisto(p.estado, p.vistos)
     juego.record = p.record
     juego.logros = p.logros
     juego.zoom = p.zoom ?? 0
@@ -340,6 +352,7 @@ export function arrancar() {
   // Sin partida o sin tiempo jugado (recién borrada, o se recargó en el título): partida nueva, que arranca al entrar.
   const nueva = !p || p === 'corrupto' || p.estado.tiempoTotal === 0
   juego.hayPartida = !nueva
+  if (!p || p === 'corrupto') juego.vistos = { guias: true } // partida nueva: nada que migrar
   // Cada partida nueva, su semilla del Relicario (el núcleo no tira dados: usa la que está en el estado).
   if (nueva && p !== 'corrupto') juego.s = { ...juego.s, relicario: { ...juego.s.relicario, semilla: Math.floor(Math.random() * 2 ** 31) } }
   if (p !== 'corrupto') juego.titulo = true

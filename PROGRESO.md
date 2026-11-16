@@ -839,7 +839,7 @@ Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `bala
 
 Lista en `correcciones-capa1/correcciones-capa1/CORRECCIONES_CAPA1.md` (13 bloques); prompts en `PROMPTS.md` de la misma carpeta. Ese archivo manda sobre `SPEC_CAPA1.md` donde se contradigan. Los hitos C6–C14 siguen después.
 
-- [ ] **Sesión 1 — bloques 1 a 4: antiparpadeo, sonido, bug del AUTO, guías una sola vez** ← **en curso** (2026-11-15)
+- [x] Sesión 1 — bloques 1 a 4: antiparpadeo, sonido, bug del AUTO, guías una sola vez (2026-11-15; falta que lo revises jugando: ver abajo)
 - [ ] Sesión 2 — bloques 5 y 6: balance de Estratos y Red
 - [ ] Sesión 3 — bloque 13: estética de cristal y escarcha, barra lateral
 - [ ] Sesión 4 — bloque 7: multiplicadores visibles
@@ -874,6 +874,18 @@ Lista en `correcciones-capa1/correcciones-capa1/CORRECCIONES_CAPA1.md` (13 bloqu
 - Ahora hay una sola: `autoDisponible(s, clave)` en `src/core/compress.ts` (compresiones o Memoria nv1). `autoActivo` = disponible y prendido. La usan `tick`, el interruptor de cada fila (`Tienda.svelte`), la casilla de Compresión automática (`App.svelte`), el revelado, el logro y "Cómo funciona". El interruptor ya no depende de `vistos`.
 - Test en `tests/red.test.ts`: con Memoria nv1, recién hecho el Infinito y sin ninguna Compresión, todos los autocompradores están disponibles y activos; apagado sigue a la vista pero no compra.
 - Probado en el navegador integrado repitiendo la captura 05 (partida nueva, "Infinito ya" de debug, Memoria nv1, vuelta a la Arena): Caudal, Ámbar, Coral y Jade muestran "auto" prendido.
+
+**Bloque 4 — guías: una sola vez**
+
+- Cómo estaba: cada guía ya se anotaba en `vistos` (va en el guardado) y no volvía, **salvo la de los autocompradores**, que salía de nuevo con cada grupo que llegaba (Caudal, después Ámbar y Coral, después Jade y Violeta…) y, con el bloque 3, habría vuelto al comprar Memoria. No encontré otra guía que se repitiera por hacer un Infinito; en una partida con Infinitos hechos con debug, lo que aparece en cada corrida son guías de cosas que esa partida nunca había mostrado.
+- Ahora la guía de los autocompradores tiene su id (`vistos.auto`): sale con el primero y nunca más. Las demás siguen con el id de su sistema (`tienda`, `color0`…`color3`, `anillos`, `compresion`, `cascada`, `mutaciones`, `auto_compresion_auto`). Todo en `revelar()` (`juego.svelte.ts`).
+- **Migración** (`yaVisto`, al cargar, una sola vez; la marca es `vistos.guias`): da por vistas, sin mostrarlas, las guías de todo lo que el jugador ya tiene (lo que cumple su condición en ese momento, y la de los autocompradores si ya tenía alguno). No cambió la versión del guardado: `vistos` es un mapa abierto.
+- Releerlas: "Cómo funciona" (?) ya abre la sección de cada sistema visto; no hubo que tocarlo.
+- Tests en `tests/juego.test.ts` (2): la guía de los autocompradores sale una vez y recorrer de nuevo las 17 compresiones después de un Infinito no muestra ninguna; la migración.
+- Probado en el navegador integrado: el guardado de la prueba del bloque 3 se migró al cargar (`guias` y `auto` en `vistos`); después, cuatro Infinitos seguidos con debug a ×10: en los dos primeros salieron Mutaciones y Violeta (nunca vistas en esa partida), en los dos siguientes ninguna.
+- **Decisión (revisar):** la frase de arriba ("Autocompradores de Ámbar y Coral: compran solos…") sigue saliendo una vez por autocomprador nuevo; lo que quedó en una sola vez es el indicador que señala el interruptor.
+
+**Cierre de la sesión 1:** 200 tests, `tsc` y `svelte-check` en verde. No se tocó el balance (`balance/`, `SPEC_CAPA1.md`, `config_capa1.json`). Las capturas de `correcciones-capa1/correcciones-capa1/capturas/` de las otras sesiones (01–04, 06–08) no las miré: solo la 05.
 
 ## Plan (SPEC_CAPA1 §16)
 
