@@ -11,16 +11,11 @@
   } from '../core'
   import { caraReliquia } from '../render/miniPilas'
   import { txt } from '../strings'
+  import IconoTipo from './IconoTipo.svelte'
   import { juego } from './juego.svelte'
   import * as sonido from './sonido'
 
   const COLORES = ['var(--ambar)', 'var(--coral)', 'var(--jade)', 'var(--violeta)']
-  // El símbolo del tipo, arriba de cada reliquia: tres formas que no se confunden.
-  const SELLOS: Record<string, string> = {
-    cauce: 'M-8-4c2.7-3 5.3 3 8 0s5.3-3 8 0M-8 3c2.7-3 5.3 3 8 0s5.3-3 8 0', // dos ondas: el cauce
-    cascada: 'M-7-8 0-3 7-8M-7-2 0 3 7-2M-7 4 0 9 7 4', // tres escalones que caen
-    mutaciones: 'M-3-8 2 0-3 8-8 0ZM3-8 8 0 3 8-2 0Z', // macla: dos cristales cruzados
-  }
   const r = txt.cristal.relicario
   const s = $derived(juego.s)
   const rel = $derived(s.relicario)
@@ -113,7 +108,7 @@
 </script>
 
 {#snippet sello(t: string)}
-  <svg class="sello" viewBox="-10 -10 20 20" aria-hidden="true"><path d={SELLOS[t] ?? SELLOS.cascada} /></svg>
+  <span class="sello"><IconoTipo tipo={t} /></span>
 {/snippet}
 {#snippet cara(p: { foto: string; nivel: number })}
   <canvas class="cara" use:caraReliquia={{ foto: p.foto, nivel: p.nivel }} aria-hidden="true"></canvas>
@@ -132,7 +127,7 @@
             ondragover={(e) => e.preventDefault()} ondrop={(e) => { e.preventDefault(); if (arrastrada !== null) enEngarce(arrastrada, i) }}
             onclick={() => tocarEngarce(i)}
           >
-            {#if p}{@render cara(p)}<span class="tipo">{@render sello(p.tipo)}</span>{/if}
+            {#if p}{@render cara(p)}<span class="emblema"><IconoTipo tipo={p.tipo} halo={color(p.nivel)} /></span>{/if}
           </button>
         {/each}
       </div>
@@ -148,7 +143,7 @@
     {#if sel}
       {@const g = grupoDe(sel)}
       <div class="detalle placa" style:--c={color(sel.nivel)} aria-live="polite">
-        <div class="ficha">{@render cara(sel)}<span class="tipo">{@render sello(sel.tipo)}</span></div>
+        <div class="ficha">{@render cara(sel)}<span class="emblema"><IconoTipo tipo={sel.tipo} halo={color(sel.nivel)} /></span></div>
         <div class="datos">
           <b>{nombre(sel.tipo)} <span style:color={color(sel.nivel)}>{grado(sel.nivel)}</span></b>
           <span>{efecto(sel.tipo, sel.nivel)}</span>
@@ -218,7 +213,7 @@
           ondragover={(e) => e.preventDefault()} ondrop={(e) => { e.preventDefault(); soltarSobre(p) }}
           onclick={() => (elegida = elegida === p.id ? null : p.id)}
         >
-          {@render cara(p)}<span class="tipo">{@render sello(p.tipo)}</span>
+          {@render cara(p)}<span class="emblema"><IconoTipo tipo={p.tipo} halo={color(p.nivel)} /></span>
           {#if escalon(p.nivel).vuelta}<i class="vuelta">+{escalon(p.nivel).vuelta}</i>{/if}
         </button>
       {/each}
@@ -244,15 +239,16 @@
   small { color: var(--apagado); font-size: 0.8125rem; text-wrap: balance; }
   button { font: inherit; color: var(--escarcha); cursor: pointer; }
 
-  .sello { width: 1rem; height: 1rem; flex: none; fill: none; stroke: var(--escarcha); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+  .sello { display: block; width: 1.1rem; height: 1.1rem; flex: none; color: var(--escarcha); }
   .cara { display: block; width: 100%; height: 100%; }
-  /* El símbolo del tipo arriba de cada reliquia: una ficha oscura tallada con el símbolo del color de su nivel. */
-  .tipo {
-    position: absolute; z-index: 1; left: 50%; top: 0; translate: -50% 0; display: grid; place-items: center; width: 44%; aspect-ratio: 1.45;
-    background: rgb(4 6 13 / 0.85); clip-path: polygon(0 0, 100% 0, 84% 100%, 16% 100%);
+  /* El emblema del tipo en el centro de cada reliquia, sobre una placa hexagonal de escarcha que deja ver la pila. */
+  .emblema { position: absolute; z-index: 1; inset: 0; margin: auto; width: 44%; aspect-ratio: 1; display: grid; place-items: center; }
+  .emblema::before {
+    content: ''; position: absolute; inset: -16%; z-index: -1;
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+    background: linear-gradient(160deg, rgb(255 255 255 / 0.3), transparent 45%), var(--tex-escarcha), rgb(6 13 26 / 0.62);
+    box-shadow: inset 0 0 0 1px rgb(220 245 255 / 0.4);
   }
-  .tipo .sello { width: 58%; height: auto; aspect-ratio: 1; stroke: var(--c); stroke-width: 2.4; filter: drop-shadow(0 0 0.15rem var(--c)); }
-
   .izq { display: flex; flex-direction: column; gap: 1rem; min-height: 0; }
   .engarces { display: grid; justify-items: center; gap: 0.6rem; }
   .huecos { display: flex; gap: 0.5rem; justify-content: center; }
@@ -263,7 +259,7 @@
   }
   .hueco::after { content: ''; position: absolute; inset: 0; background: linear-gradient(160deg, rgb(255 255 255 / 0.22), transparent 35%, transparent 70%, color-mix(in srgb, var(--c, var(--hielo)) 30%, transparent)); pointer-events: none; }
   .hueco.lleno { background: var(--hielo-hondo); }
-  .hueco .tipo { top: 8%; width: 40%; }
+  .hueco .emblema { width: 40%; }
   .hueco.elegido { filter: brightness(1.25); }
   .totales { display: grid; gap: 0.2rem; margin: 0; padding: 0; list-style: none; color: var(--tenue); font-size: 0.875rem; }
   .totales li { display: flex; gap: 0.45rem; align-items: center; }
@@ -284,7 +280,7 @@
   .texto { display: grid; gap: 0.2rem; }
   .tipos { grid-column: 1 / -1; display: grid; gap: 0.35rem; }
   .tipos button { display: grid; grid-template-columns: 1.75rem 1fr; gap: 0 0.75rem; align-items: center; padding: 0.45rem 1.4rem; text-align: left; }
-  .tipos .sello { grid-row: span 3; width: 1.75rem; height: 1.75rem; stroke: var(--c); }
+  .tipos .sello { grid-row: span 3; width: 1.75rem; height: 1.75rem; color: var(--c); }
   .tipos span { color: var(--tenue); font-size: 0.8125rem; }
   .tipos small { font-size: 0.75rem; }
 

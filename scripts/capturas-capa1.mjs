@@ -52,7 +52,7 @@ for (const [W, H] of [[1366, 768], [390, 844]]) {
   await ev(`import(performance.getEntriesByType('resource').map((r) => r.name).find((n) => n.includes('/src/ui/juego.svelte.ts')) ?? '/src/ui/juego.svelte.ts').then(({ juego: j }) => {
     window.__j = j
     const s = j.s, ocho = (f) => Array.from({ length: 8 }, (_, k) => f(k))
-    j.vistos = { ...j.vistos, cristales: true }
+    j.vistos = { ...j.vistos, cristales: true, cascada: true, mutaciones: true }
     j.s = { ...s, infinitos: 4, granos: 300000, caudal: 12, cristales: s.cristales.mul(0).add(5571), cristalesTotales: s.cristalesTotales.mul(0).add(2.75e6),
       red: { ...s.red, estratos: 4, presion: 2, engarces: 1 }, estratos: { abiertos: 3, s: ocho((k) => (k < 3 ? 25 - k * 2 : 0)), perm: ocho((k) => (k < 3 ? 6 : 0)), pres: ocho((k) => (k < 3 ? 4 : 0)) },
       relicario: { ...s.relicario, pendiente: 5, foto: window.__fotos[7], equipadas: [3, 6],
@@ -64,6 +64,11 @@ for (const [W, H] of [[1366, 768], [390, 844]]) {
   })`)
   await espera(4000)
   await foto(`${W}-arena`)
+  // La tienda de la Capa 0 con la pestaña de Mutaciones (los íconos de las reliquias).
+  await ev(`[...document.querySelectorAll('[role=tab]')].find((b) => b.dataset.guia === 'mutaciones')?.click()`)
+  await espera(800)
+  await foto(`${W}-arena-mutaciones`)
+  await ev(`[...document.querySelectorAll('[role=tab]')].find((b) => b.dataset.guia === 'tienda')?.click()`)
   for (const p of ['red', 'estratos', 'relicario', 'defectos']) {
     await ev(`(window.__j.capa = 'cristalizacion', window.__j.pantalla = '${p}')`)
     await espera(p === 'estratos' ? 3500 : 1200)

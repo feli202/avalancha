@@ -970,6 +970,12 @@ Balance sin cambios: el simulador ya modelaba el inventario desde la sesión 2 (
 - **Sin porcentajes**: Cauce "El valor de los colores ^1,015", Mutaciones "^1,08", Cascada "Exponente c +0,02"; Permeabilidad y Presión "× (1 + 0,3 × nivel)"; Eco II "× (1 + 0,001 × log₁₀ Cristales totales)". Quedan dos `%` que son proporciones, no efectos: la barra de progreso y "el X % de la Energía/s" de Estadísticas.
 - **Pantalla fija**: el Relicario entra entero en la ventana y solo scrollea la grilla (`.cristalizacion.fija` en `Capas.svelte`). Escritorio: engarces y elección/ficha a la izquierda, inventario a la derecha; la regla automática se abre encima de la grilla. Celular: engarces en una fila, elección con un tipo por renglón, grilla de 6. Regla nueva en `CLAUDE.md` (pantallas sin scroll y valores sin porcentajes, para todo lo que sigue). `capturas-capa1.mjs` ahora usa 1366×768, 30 reliquias, y anota qué elementos scrollean. **Red y Estratos todavía scrollean la página** (se rehacen en los bloques 9 y 11).
 
+**Sin scroll en toda Cristalización e íconos de los tipos**
+
+- `.cristalizacion.fija` vale para todas las pantallas de sistema: Red se achica con unidades de contenedor (`cqw`/`cqh`) para entrar en el alto y el ancho que quedan; en Estratos la escena toma lo que deja la ficha (en el celular se esconde el párrafo explicativo, que está en "Cómo funciona"). Medido con `capturas-capa1.mjs` en 1366×768 y 390×844: nada scrollea salvo la grilla del Relicario.
+- **Íconos de los tipos, versión C ("sello", elegida entre tres)**: `src/ui/IconoTipo.svelte`, un anillo con un emblema. Cauce dos corrientes que se juntan, Cascada un derrumbe abeliano que se abre en anillos de granos, Mutaciones una doble hélice con un cristal en el centro. En la Capa 0, en ámbar, en las pestañas Cascada y Mutaciones y en sus filas. En el Relicario, en el centro de cada reliquia (engarces, grilla y ficha) en blanco de escarcha con un halo del color del nivel, sobre una placa hexagonal de escarcha; y en las gemas de elección, los totales y el orden de la regla. Reemplazó el símbolo de arriba de la versión anterior.
+- **Cauce no está en la Capa 0** (no es una mejora de la tienda; lo que mejora son los colores): falta decidir dónde va.
+
 ### Sesión 4 (2026-11-16) — bloque 7: multiplicadores visibles
 
 No se tocó `src/core/`, `balance/` ni el worker: todo sale de las fórmulas del núcleo.
