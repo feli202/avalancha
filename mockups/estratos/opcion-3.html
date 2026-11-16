@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estratos · opción 3 · uno enfocado</title>
+<link rel="stylesheet" href="../../node_modules/@fontsource/space-grotesk/300.css">
+<link rel="stylesheet" href="../../node_modules/@fontsource/space-grotesk/index.css">
+<link rel="stylesheet" href="../../node_modules/@fontsource/space-grotesk/600.css">
+<link rel="stylesheet" href="../../src/ui/hielo.css">
+<link rel="stylesheet" href="comun.css">
+<style>
+  .estratos { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr) 20rem; gap: 1.5rem; }
+  .lienzo .presion { position: absolute; left: 0; top: 0; z-index: 1; }
+</style>
+</head>
+<body>
+<main class="cristalizacion">
+  <section class="estratos">
+    <div class="lienzo" id="tira" aria-label="Los 8 estratos"></div>
+    <div class="lienzo" id="lienzo"></div>
+    <aside class="ficha placa grietas" id="ficha"></aside>
+  </section>
+</main>
+<script src="comun.js"></script>
+<script>
+marco()
+document.getElementById('ficha').innerHTML = fichaHTML(EST[0])
+const cont = document.getElementById('lienzo')
+cont.insertAdjacentHTML('beforeend', PRESION_HTML)
+
+// Un estrato grande enfocado (con la base de la pila arriba y el de abajo asomando) y una tira con los 8 para navegar.
+const N = 48
+const pilas = EST.slice(0, 3).map((e) => { const p = new Pila(N, N); p.sembrar(e.lleno * 0.86); return p })
+let G = null
+const L = lienzo(cont, ({ W, H }) => {
+  const cel = Math.max(3, Math.floor(Math.min(W - 40, H - 150) / N)), lado = cel * N
+  G = { W, H, cel, lado, x: Math.round((W - lado) / 2), y: 92 }
+})
+const T = lienzo(document.getElementById('tira'))
+
+function paso() {
+  if (!G) return
+  for (let k = 0; k < 4; k++) lanzar(G.x + G.lado / 2 + (Math.random() - 0.5) * 6, 64, G.x + G.lado / 2, G.y + G.lado / 2, { dur: 420, tam: 4, al: () => pilas[0].echar(1) })
+  pilas.forEach((p, k) => {
+    p.paso(3000)
+    const sig = pilas[k + 1]
+    for (const [x, y, dx, dy, q] of p.salidas.splice(0)) {
+      if (k > 0 || dy === -1) { sig?.echar(q); continue } // solo se ve caer lo del enfocado
+      const sx = G.x + x * G.cel + dx * 8, sy = G.y + y * G.cel + dy * 8
+      lanzar(sx, sy, sx + dx * 30 + (G.W / 2 - sx) * 0.5, G.H + 10, { dur: 900, arco: 26, tam: 4, al: () => sig.echar(q) })
+    }
+  })
+}
+
+bucle(paso, (t, dt) => {
+  // la tira
+  { const { ctx, W, H } = T, alto = H / 8
+    ctx.clearRect(0, 0, W, H)
+    EST.forEach((e, k) => {
+      const y = k * alto, m = Math.min(alto - 18, W - 56), x = 8
+      if (k === 0) { ctx.fillStyle = 'rgb(159 227 245 / 0.08)'; ctx.fillRect(0, y + 2, W, alto - 4); ctx.fillStyle = '#9fe3f5'; ctx.fillRect(0, y + 2, 2, alto - 4) }
+      if (e.costo) {
+        roca(ctx, x, y + 9, m, m, { n: '', costo: '' }, { cel: 3 })
+        ctx.fillStyle = 'rgb(232 233 243 / 0.35)'
+      } else {
+        losa(ctx, x + 2, y + 11, m - 4, m - 4, e.lleno, { margen: 2, esp: 2 + Math.round(e.lleno * 3) })
+        ctx.imageSmoothingEnabled = false; pintar(ctx, pilas[k], -999, -999, 1); ctx.drawImage(pilas[k].cv, x + 2, y + 11, m - 4, m - 4)
+        ctx.fillStyle = k ? 'rgb(232 233 243 / 0.7)' : '#eaf6ff'
+      }
+      ctx.font = "600 15px 'Space Grotesk'"; ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillText(e.n, x + m + 10, y + alto / 2 - 7)
+      ctx.font = "400 11px 'Space Grotesk'"; ctx.fillStyle = e.costo ? 'rgb(232 233 243 / 0.35)' : '#9fe3f5'; ctx.fillText(e.costo ?? '×' + e.aporte, x + m + 10, y + alto / 2 + 9)
+    })
+  }
+  const { ctx, W, H } = L
+  ctx.clearRect(0, 0, W, H)
+  if (!G) return
+  pintarMadre(ctx, G.x + G.lado / 2, -40, 130)
+  // el de abajo asoma por el pie, para que se lea adónde va la arena
+  ctx.save(); ctx.globalAlpha = 0.55; losa(ctx, G.x + 40, G.H - 14, G.lado - 80, 40, EST[1].lleno, { margen: 6 }); ctx.restore()
+  ctx.font = "400 12px 'Space Grotesk'"; ctx.fillStyle = 'rgb(232 233 243 / 0.6)'; ctx.textAlign = 'center'; ctx.fillText('↓ Estrato 2', G.x + G.lado / 2, G.H - 30)
+  losa(ctx, G.x, G.y, G.lado, G.lado, 1, { tope: true, t, margen: 12, esp: 18 })
+  pintar(ctx, pilas[0], G.x, G.y, G.cel)
+  aire(ctx, dt)
+})
+</script>
+</body>
+</html>

@@ -145,7 +145,7 @@ export const es = {
       },
       hay: 'Hay una reliquia para elegir',
     },
-    // SPEC_CAPA1 §7 (interfaz 2D provisoria; la escena 3D es de C5)
+    // SPEC_CAPA1 §7 y correcciones, bloque 11 (el embudo en 2D)
     estratos: {
       cerrado: 'Los Estratos se abren con el nodo Estratos de la Red.',
       que: 'La arena que se escurre de la pila llena el estrato 1, y cada estrato alimenta al de abajo. Cuanto más llenos y más profundos, más Presión. No se pierden en el Infinito.',
@@ -162,12 +162,15 @@ export const es = {
       abrir: 'Abrir',
       sinAbrir: 'Sin abrir',
       bajar: '↓ Estratos',
-      escena: 'Los estratos, de arriba a abajo. Rueda, arrastre o flechas para bajar.',
+      escena: 'Los estratos, de arriba a abajo. Tocá uno para verlo, o usá las flechas.',
+      roca: (n: number, c: string) => `Estrato ${n} · ${c}`,
+      permEfecto: (a: string, b: string) => `×${a} → ×${b} de flujo`,
+      presEfecto: (a: string, b: string) => `×${a} → ×${b} de peso`,
       arriba: 'Estrato de arriba',
       abajo: 'Estrato de abajo',
       perm: 'Permeabilidad',
       pres: 'Presión',
-      nivel: (n: number) => `nivel ${n}`,
+      nv: (n: number) => `nv ${n}`,
       permQue: (k: string) => `Flujo de este estrato × (1 + ${k} × nivel).`,
       presQue: (k: string) => `Peso de este estrato en la Presión × (1 + ${k} × nivel).`,
     },

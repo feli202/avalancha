@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estratos · opción 1 · corte geológico</title>
+<link rel="stylesheet" href="../../node_modules/@fontsource/space-grotesk/300.css">
+<link rel="stylesheet" href="../../node_modules/@fontsource/space-grotesk/index.css">
+<link rel="stylesheet" href="../../node_modules/@fontsource/space-grotesk/600.css">
+<link rel="stylesheet" href="../../src/ui/hielo.css">
+<link rel="stylesheet" href="comun.css">
+<style>
+  .estratos { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 1.75rem; }
+  .lienzo .presion { position: absolute; left: 0; top: 0; z-index: 1; }
+</style>
+</head>
+<body>
+<main class="cristalizacion">
+  <section class="estratos">
+    <div class="lienzo" id="lienzo"></div>
+    <aside class="ficha placa grietas" id="ficha"></aside>
+  </section>
+</main>
+<script src="comun.js"></script>
+<script>
+marco()
+document.getElementById('ficha').innerHTML = fichaHTML(EST[0])
+const cont = document.getElementById('lienzo')
+cont.insertAdjacentHTML('beforeend', PRESION_HTML)
+
+// Corte de perfil: la pila arriba y los 8 estratos como capas horizontales; la arena llueve de una capa a la otra.
+const FILAS = 8
+let G = null, pilas = []
+function armar({ W, H }) {
+  const arriba = 82, paso = (H - arriba) / 8, cel = Math.max(2, Math.floor((paso - 10) / (FILAS + 1.6)))
+  const x0 = 34, ancho = W - x0 - 46, wc = Math.floor(ancho / cel)
+  G = { W, H, arriba, paso, cel, wc, x0: x0 + Math.floor((ancho - wc * cel) / 2) }
+  pilas = EST.slice(0, 3).map((e) => {
+    const p = new Pila(wc, FILAS, { sumidero: (x, y, dx, dy) => dy === 1 })
+    const medio = wc / 2, ext = (wc * e.lleno) / 2
+    p.sembrar(e.lleno * 0.98, () => [medio + (Math.random() * 2 - 1) * ext * 0.92, 0])
+    return p
+  })
+}
+const yBanda = (k) => G.arriba + k * G.paso + 4
+const L = lienzo(cont, armar)
+
+function paso() {
+  if (!G) return
+  // la pila principal escurre por el centro
+  for (let k = 0; k < 3; k++) {
+    const col = G.wc / 2 + (Math.random() * 2 - 1) * G.wc * 0.06
+    lanzar(G.x0 + col * G.cel, 56, G.x0 + col * G.cel, yBanda(0), { dur: 380, al: () => pilas[0].echar(1, col, 0) })
+  }
+  pilas.forEach((p, k) => {
+    p.paso(2500)
+    for (const [x, , , , q] of p.salidas.splice(0)) {
+      const px = G.x0 + x * G.cel, y0 = yBanda(k) + FILAS * G.cel, y1 = yBanda(k + 1)
+      const destino = pilas[k + 1]
+      lanzar(px + (Math.random() - 0.5) * 2, y0 + 8, px, y1, { dur: 300, tam: Math.max(2, G.cel - 2), al: destino ? () => destino.echar(q, x, 0) : null })
+    }
+  })
+}
+
+bucle(paso, (t, dt) => {
+  const { ctx, W, H } = L
+  ctx.clearRect(0, 0, W, H)
+  if (!G) return
+  pintarMadre(ctx, G.x0 + G.wc * G.cel / 2, -G.cel * 2, Math.min(W * 0.26, 170), { achatar: 0.36 })
+  EST.forEach((e, k) => {
+    const y = yBanda(k), h = FILAS * G.cel, w = G.wc * G.cel
+    ctx.font = "600 13px 'Space Grotesk'"; ctx.textBaseline = 'middle'
+    if (e.costo) { roca(ctx, G.x0 - 3, y - 3, w + 6, h + 9, e, { cel: G.cel }); return }
+    losa(ctx, G.x0, y, w, h, e.lleno, { tope: e.tope, margen: 3, esp: 3 + Math.round(e.lleno * 5), t })
+    pintar(ctx, pilas[k], G.x0, y, G.cel)
+    ctx.textAlign = 'right'; ctx.fillStyle = k === 0 ? '#9fe3f5' : 'rgb(232 233 243 / 0.6)'; ctx.fillText(e.n, G.x0 - 12, y + h / 2)
+    ctx.textAlign = 'left'; ctx.fillStyle = '#9fe3f5'; ctx.fillText('×' + e.aporte, G.x0 + w + 10, y + h / 2)
+    if (k === 0) { // el elegido: corchetes de hielo a los costados
+      ctx.fillStyle = '#9fe3f5'
+      for (const x of [G.x0 - 7, G.x0 + w + 5]) { ctx.fillRect(x, y - 3, 2, h + 6); ctx.fillRect(x < G.x0 ? x : x - 4, y - 3, 6, 2); ctx.fillRect(x < G.x0 ? x : x - 4, y + h + 1, 6, 2) }
+    }
+  })
+  aire(ctx, dt)
+})
+</script>
+</body>
+</html>

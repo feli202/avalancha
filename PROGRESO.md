@@ -1504,3 +1504,36 @@ Reemplaza la pila 3D de three.js por el boceto `correcciones-capa1/bocetos-red/e
 ### Verificación
 - Rueda, barra, doble clic, arrastre y clic tras arrastre probados con eventos sintéticos en 1366×768. 390×844 sin scroll, con zoom mínimo. **El pellizco con dos dedos no se probó** (falta pantalla táctil).
 - `vitest` en verde, `svelte-check` sin errores ni avisos, build ok.
+
+## Correcciones Capa 1, bloque 11: Estratos en 2D, el embudo (2026-11-16)
+
+Cambio de dirección: la escena 3D de three.js se sacó. Antes de tocar el juego se mostraron 5 maquetas (`mockups/estratos/opcion-1.html` … `opcion-5.html`, con su PNG; `node mockups/estratos/capturar.mjs` las vuelve a capturar). Se eligió la **4, embudo**.
+
+| Archivo | Qué |
+| --- | --- |
+| `src/render/embudo.ts` | Nuevo. La física, pura (sin DOM): una grilla de 120×92 de **arena que cae** (gravedad y deslizamiento a 45°). Cada grano guarda su color (índice de la paleta). Ocho bandejas cada vez más angostas unidas por paredes en diagonal; el piso de cada una tiene poros (uno cada 7 columnas y el cuello del centro) que se abren cuando la bandeja pasa su nivel. Los estratos cerrados son roca: lo que cae encima se pierde. |
+| `src/render/estratos.worker.ts` | Nuevo. Corre el embudo a 20 pasos por segundo y manda las celdas. Lo crea la pantalla al entrar y lo termina al salir. |
+| `src/render/estratosLienzo.ts` | Nuevo. Dibujo en canvas 2D, en pixel art (celdas de px físicos enteros). Arriba, el casquete de la **pila principal llena de verdad** (`celdasLlena()`), con su aro; debajo, el embudo. Evolución: el fondo de cada bandeja pasa de hielo claro a sedimento más hondo y el piso engorda al llenarse; veta violeta en los estratos al tope. Cerrados: roca con "Estrato N · costo" grabado; el próximo, si alcanza, se agrieta; al abrirlo la roca salta en pedazos y la bandeja se llena de golpe. Dibuja solo cuando llegan celdas o hay animación. |
+| `src/ui/Estratos.svelte` | Sin three.js. Ficha con granos, ritmo, aporte en ×, el desglose de la velocidad local a la vista y las dos mejoras distintas: Permeabilidad = gema de hielo con gotas; Presión = placa de prensa de metal con remaches. **Ficha de tamaño fijo** (no late con cada Infinito): alto fijo, desglose con dos renglones reservados (todos los factores en el tooltip), cifras en un renglón. |
+| `package.json` | Fuera `three` y `@types/three` (la Red ya era SVG: nada más los usaba). Borrados `estratosVisual.ts` y su test. |
+| `tests/embudo.test.ts` | Nuevo: la arena se asienta sin perderse ni meterse en paredes, gotea pasado su nivel, se pierde en la roca. |
+| `scripts/capturas-estratos.mjs` | Nuevo: capturas (3 abiertos, abrir el 4, cambiar paleta), scroll de página y alto de la ficha en 8 estratos y 6 "Infinitos" seguidos. `medir-estratos.mjs` adaptado al 2D. |
+
+### Colores
+La arena de los estratos es la de la pila: sus colores son los de la **paleta equipada** (o daltonismo) y vienen en la misma proporción que en la pila llena (se cuentan de `celdasLlena()` y se le pasan al worker). Cambiar la paleta recolorea los granos al instante.
+
+### Medido (Edge headless, notebook de siempre)
+| | 1366×768 | 390×844, CPU ÷4 |
+| --- | --- | --- |
+| fps en Estratos, quieta | 60,4 (peor 17 ms) | 58,8 (peor 50 ms) |
+| fps cambiando de estrato | 60,4 (peor 17 ms) | 59,2 (peor 33 ms) |
+| Costo de un cuadro | 0,42 ms | 1,67 ms |
+| Heap en la Arena: antes / 1 visita / 31 visitas | 6,7 / 6,5 / 7,5 MB | — |
+
+Nodos del DOM iguales tras 11 y 31 visitas; el contexto WebGL de la pila sigue vivo. Sin scroll de página en 1366×768 ni 390×844. Alto de la ficha: un solo valor (424 px y 232 px). `vitest` 223/223, `svelte-check` 0, build ok.
+
+### Decisiones (revisar)
+1. **Física de arena que cae en vez de la regla de 4.** El bloque 11 pedía pilas abelianas, pero en un corte de perfil con granos de colores que se mezclan la regla de 4 no conserva qué grano es cuál; la arena que cae sí (pedido del usuario: "colores mezclados con físicas reales").
+2. **Lo lleno que se ve cada bandeja es visual**: `s_k / (s_k + 6)` hasta 0,9, llena si está al tope; el chorro, `0,6 + 0,8 × log2(1 + γ/γ_base)` granos por paso con tope 5. No son balance.
+3. Sin rueda ni arrastre: se elige un estrato tocándolo, con las flechas de la ficha o del teclado.
+4. **Celular real: sin medir** (emulación).
