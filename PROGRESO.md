@@ -1494,3 +1494,13 @@ Reemplaza la pila 3D de three.js por el boceto `correcciones-capa1/bocetos-red/e
 ### Decisiones (revisar)
 - Sin giro ni arrastre: la red es plana.
 - Emblemas nuevos para Presión, Engarces e Inercia. Los del anillo 3 todavía no tienen y muestran solo el disco.
+
+## La Red: lo que viene, zoom y sorpresa (2026-11-16)
+
+- **Lo que viene**: los nodos del anillo 3 (bajo el hielo) se ven como bloques escarchados con un copo, sin nombre, unidos con caminos punteados a sus vecinos. Más allá, dos anillos de puntos que se apagan con la distancia, y los bordes de la red se desvanecen: se lee que la Red sigue.
+- **Zoom solo en la Red**, como el de la pila: barra abajo a la derecha (escala logarítmica, doble clic = encuadre), rueda y pellizco de trackpad hacia el puntero, pellizco con dos dedos y arrastre para moverla (`touch-action: none` en la red: la página no hace zoom ni scroll). Un toque quieto sigue eligiendo el nodo; el clic después de arrastrar no. Mínimo: se ve la trama entera; máximo ×3. El centro no puede irse de la Red. El zoom no se guarda: al volver a la pantalla arranca encuadrado.
+- **Sorpresa**: un nodo que todavía no se abrió no dice qué da ("Lo que da se descubre cuando se abre."), ni muestra emblema ni botón de compra. Los del hielo tampoco dicen su nombre ("Bajo el hielo"). El "Siguiente nivel" de un nodo que ya tenés sigue a la vista.
+
+### Verificación
+- Rueda, barra, doble clic, arrastre y clic tras arrastre probados con eventos sintéticos en 1366×768. 390×844 sin scroll, con zoom mínimo. **El pellizco con dos dedos no se probó** (falta pantalla táctil).
+- `vitest` en verde, `svelte-check` sin errores ni avisos, build ok.

@@ -28,6 +28,9 @@
   let elegido = $state('memoria')
   let hover = $state<string | null>(null)
   const n = $derived(nivelRed(s, elegido))
+  // Sorpresa: lo que da un nodo se ve recién cuando se abre. Los del hielo, además, no dicen ni su nombre.
+  const oculto = (id: string) => bajoHielo(id) || (!abierto(s, id) && nivelRed(s, id) === 0)
+  const titulo = (id: string) => (bajoHielo(id) ? r.bajoHielo : nombre(id, false))
   const estado = $derived(
     n >= NIVEL_MAX_RED ? r.completo : bajoHielo(elegido) ? r.hielo : !abierto(s, elegido) ? r.cerrado : null,
   )
@@ -56,21 +59,114 @@
   const vistas = $derived(ids.map((id): Vista => {
     const k = nivelRed(s, id), [px, py] = NODOS[id].pos
     const modo: Modo = bajoHielo(id) ? 'hielo' : k > 0 ? 'cristal' : abierto(s, id) ? 'vacio' : 'escarcha'
-    return { id, x: px * M.dx, y: -py * M.dy, r: modo === 'hielo' ? 6 : anillo(id) <= 1 ? 38 : 32, modo, n: k }
+    return { id, x: px * M.dx, y: -py * M.dy, r: modo === 'hielo' ? 26 : anillo(id) <= 1 ? 38 : 32, modo, n: k }
   }))
   const por = $derived(new Map(vistas.map((v) => [v.id, v])))
+  const radio = $derived(Math.max(...ids.map(anillo)))
 
-  // La caja de lo dibujado, sin los puntos de hielo (llegan hasta el borde y achicarían la red).
+  // Más allá de los nodos: una trama de puntos que se apaga con la distancia (dos anillos más), para que se lea que la
+  // Red sigue. Es solo dibujo: los nodos reales salen de config.
+  const trama = $derived.by(() => {
+    const out: { x: number; y: number; o: number }[] = []
+    for (let x = -radio - 2; x <= radio + 2; x++) for (let y = -radio - 2; y <= radio + 2; y++) {
+      const a = Math.abs(x) + Math.abs(y)
+      if (a > radio && a <= radio + 2) out.push({ x: x * M.dx, y: -y * M.dy, o: a === radio + 1 ? 0.22 : 0.1 })
+    }
+    return out
+  })
+
+  // El encuadre: los nodos que ya no están bajo el hielo (sin los del hielo, que achicarían la red).
   const caja = $derived.by(() => {
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
     for (const v of vistas) {
       if (v.modo === 'hielo') continue
       const w = Math.max(v.r + 4, M.medio)
       x0 = Math.min(x0, v.x - w); x1 = Math.max(x1, v.x + w)
-      y0 = Math.min(y0, v.y - v.r - 10); y1 = Math.max(y1, v.y + v.r + M.fila + 8)
+      y0 = Math.min(y0, v.y - v.r - 20); y1 = Math.max(y1, v.y + v.r + M.fila + 18)
     }
-    return `${x0} ${y0} ${x1 - x0} ${y1 - y0}`
+    return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }
   })
+
+  // Zoom y paneo, solo dentro de la Red (como el de la pila: barra, rueda, pellizco; doble clic en la barra = encuadre).
+  // z = 1 es el encuadre; el mínimo deja ver la trama entera y el máximo, un nodo de cerca.
+  const Z_MAX = 3
+  const zMin = $derived(Math.min(1, caja.w / ((2 * radio + 3) * M.dx), caja.h / ((2 * radio + 3) * M.dy)))
+  let z = $state(1)
+  let centro = $state<[number, number] | null>(null) // null = el centro del encuadre
+  const vb = $derived.by(() => {
+    const w = caja.w / z, h = caja.h / z
+    const [cx, cy] = centro ?? [caja.x + caja.w / 2, caja.y + caja.h / 2]
+    return `${cx - w / 2} ${cy - h / 2} ${w} ${h}`
+  })
+  const zoomT = $derived(Math.log(z / zMin) / Math.log(Z_MAX / zMin))
+  const lim = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x))
+
+  let svg = $state<SVGSVGElement>()
+  /** Punto de pantalla → unidades del dibujo. */
+  function aDibujo(px: number, py: number) {
+    const p = svg!.createSVGPoint()
+    p.x = px; p.y = py
+    const q = p.matrixTransform(svg!.getScreenCTM()!.inverse())
+    return [q.x, q.y] as [number, number]
+  }
+  /** Lleva el zoom a `nz` dejando quieto el punto `p` del dibujo (el del puntero). */
+  function zoomA(nz: number, p?: [number, number]) {
+    nz = lim(nz, zMin, Z_MAX)
+    const [cx, cy] = centro ?? [caja.x + caja.w / 2, caja.y + caja.h / 2]
+    const [px, py] = p ?? [cx, cy], f = z / nz
+    z = nz
+    mover(px + (cx - px) * f, py + (cy - py) * f)
+  }
+  /** Pone el centro sin dejar que la Red se vaya de la vista. */
+  function mover(cx: number, cy: number) {
+    const rx = (radio + 1) * M.dx, ry = (radio + 1) * M.dy
+    centro = [lim(cx, -rx, rx), lim(cy, -ry, ry)]
+  }
+  function encuadre() { z = 1; centro = null }
+
+  function rueda(e: WheelEvent) {
+    e.preventDefault()
+    zoomA(z * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)), aDibujo(e.clientX, e.clientY))
+  }
+
+  // Arrastre (un dedo o el mouse) y pellizco (dos dedos). Un toque sin moverse sigue eligiendo el nodo.
+  const dedos = new Map<number, [number, number]>()
+  let arrastro = $state(false)
+  let pellizco = 0
+  function bajar(e: PointerEvent) {
+    dedos.set(e.pointerId, [e.clientX, e.clientY])
+    if (dedos.size === 1) arrastro = false
+    if (dedos.size === 2) pellizco = distancia()
+  }
+  const distancia = () => { const [a, b] = [...dedos.values()]; return Math.hypot(a[0] - b[0], a[1] - b[1]) }
+  function mover1(e: PointerEvent) {
+    const antes = dedos.get(e.pointerId)
+    if (!antes) return
+    const ahora: [number, number] = [e.clientX, e.clientY]
+    if (dedos.size === 2) {
+      dedos.set(e.pointerId, ahora)
+      const d = distancia(), [a, b] = [...dedos.values()]
+      if (pellizco) zoomA(z * (d / pellizco), aDibujo((a[0] + b[0]) / 2, (a[1] + b[1]) / 2))
+      pellizco = d
+      arrastro = true
+      return
+    }
+    if (!arrastro && Math.hypot(ahora[0] - antes[0], ahora[1] - antes[1]) < 5) return
+    if (!arrastro) try { svg!.setPointerCapture(e.pointerId) } catch { /* puntero ya suelto */ } // recién al moverse: un toque quieto tiene que llegar al nodo
+    arrastro = true
+    const [x0, y0] = aDibujo(...antes), [x1, y1] = aDibujo(...ahora)
+    const [cx, cy] = centro ?? [caja.x + caja.w / 2, caja.y + caja.h / 2]
+    mover(cx - (x1 - x0), cy - (y1 - y0))
+    dedos.set(e.pointerId, ahora)
+  }
+  function subir(e: PointerEvent) {
+    dedos.delete(e.pointerId)
+    pellizco = 0
+  }
+  // Después de arrastrar, el clic que sigue no elige nada.
+  function clicCaptura(e: MouseEvent) {
+    if (arrastro) { e.stopPropagation(); arrastro = false }
+  }
 
   // Escarcha: de cada nodo completo a sus vecinos (una sola vez entre dos completos).
   const ramas = $derived.by(() => {
@@ -117,29 +213,39 @@
 <section class="red" aria-label={txt.cristal.pantallas.red}>
   <div class="vista">
     <div class="escena" bind:clientWidth={ancho}>
-      <svg viewBox={caja} preserveAspectRatio="xMidYMid meet" role="group" aria-label={r.escena}>
+      <svg bind:this={svg} viewBox={vb} preserveAspectRatio="xMidYMid meet" role="group" aria-label={r.escena} class:movida={arrastro}
+        onwheel={rueda} onpointerdown={bajar} onpointermove={mover1} onpointerup={subir} onpointercancel={subir} onclickcapture={clicCaptura}>
         <defs>
           <filter id="red-halo" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3" /></filter>
           <filter id="red-halo-cara" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7" /></filter>
           <clipPath id="red-c38"><circle r="38" /></clipPath>
           <clipPath id="red-c32"><circle r="32" /></clipPath>
         </defs>
+        {#each trama as p}<circle class="punto" cx={p.x} cy={p.y} r="4" opacity={p.o} />{/each}
+        <!-- Caminos bajo el hielo: de cada nodo del hielo a sus vecinos ya a la vista. -->
+        <g class="camino">
+          {#each vistas as a (a.id)}{#if a.modo === 'hielo'}{#each vecinos(a.id) as id}{@const b = por.get(id)!}{#if b.modo !== 'hielo'}
+            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
+          {/if}{/each}{/if}{/each}
+        </g>
         <g class="halo" filter="url(#red-halo)">{#each ramas as [d, w]}{#if w >= 1}<path {d} />{/if}{/each}</g>
         <g class="ramas">{#each ramas as [d, w]}<path {d} stroke-width={w} opacity={w >= 1 ? 0.9 : 0.55} />{/each}</g>
 
         {#each vistas as v (v.id)}
-          {#if v.modo === 'hielo'}
-            <circle class="punto" cx={v.x} cy={v.y} r="5" />
-          {:else}
-            <g
+          <g
               class="nodo {v.modo}" class:elegido={v.id === elegido} class:visto={v.id === hover}
               class:cae={derrumbe?.id === v.id} transform="translate({v.x} {v.y})"
-              role="button" tabindex="0" aria-pressed={v.id === elegido} aria-label="{nombre(v.id, false)}, {r.nivel(v.n)}"
+              role="button" tabindex="0" aria-pressed={v.id === elegido} aria-label="{titulo(v.id)}, {r.nivel(v.n)}"
               onclick={() => (elegido = v.id)} onkeydown={(e) => tecla(e, v.id)}
               onpointerenter={() => (hover = v.id)} onpointerleave={() => (hover = null)}
             >
               <circle class="toque" r={v.r + 12} />
-              {#if v.modo === 'escarcha'}
+              {#if v.modo === 'hielo'}
+                <!-- Lo que viene: un nodo que todavía está bajo el hielo, sin nombre. -->
+                <circle class="bloque" r={v.r} />
+                <path class="copo" d="M0-7V7M-6-3.5 6 3.5M-6 3.5 6-3.5" transform="scale({v.r / 22})" />
+                {#if v.id === elegido}<circle class="sel" r={v.r + 7} />{/if}
+              {:else if v.modo === 'escarcha'}
                 <!-- Arena que todavía no cristalizó: la misma pila, gris y muy apagada, sin emblema. -->
                 <image href={cara(v.id, null)} x={-v.r * 0.7} y={-v.r * 0.7} width={v.r * 1.4} height={v.r * 1.4} opacity="0.28" />
                 <circle class="aro" r={v.r * 0.7 + 3} opacity="0.12" stroke-width="0.75" />
@@ -166,7 +272,6 @@
                 </g>
               {/if}
             </g>
-          {/if}
         {/each}
 
         {#if derrumbe}
@@ -182,6 +287,10 @@
           {/key}
         {/if}
       </svg>
+      <input
+        class="zoom" type="range" min="0" max="1" step="0.01" value={zoomT} aria-label={r.zoom} title={r.zoomPista}
+        oninput={(e) => zoomA(zMin * (Z_MAX / zMin) ** +e.currentTarget.value)} ondblclick={encuadre}
+      />
     </div>
 
     <aside class="ficha placa grietas" aria-live="polite">
@@ -193,20 +302,20 @@
           <circle class="aro" r="40" opacity="0.35" />
           <circle r="19" fill="var(--noche)" opacity="0.72" />
           <circle class="aro" r="19" opacity="0.55" />
-          {#if EMBLEMA[elegido]}<path class="emblema" d={EMBLEMA[elegido]} transform="scale(1.25)" stroke-width="1.1" />{/if}
+          {#if EMBLEMA[elegido] && !oculto(elegido)}<path class="emblema" d={EMBLEMA[elegido]} transform="scale(1.25)" stroke-width="1.1" />{/if}
         </svg>
         <div>
-          <h2>{nombre(elegido, false)}</h2>
+          <h2>{titulo(elegido)}</h2>
           <p class="nv num">
             <span class="cuadros" aria-hidden="true">{#each COLORES as c, i}<i style:background={i < n ? `var(${c})` : null}></i>{/each}</span>
             {r.nv(n, txt.colores[n - 1])}
           </p>
         </div>
       </header>
-      <p class="hace">{efecto(elegido, Math.max(1, n))}</p>
+      {#if oculto(elegido)}<p class="sig">{r.sorpresa}</p>{:else}<p class="hace">{efecto(elegido, Math.max(1, n))}</p>{/if}
       {#if n > 0 && n < NIVEL_MAX_RED}<p class="sig">{r.siguiente(efecto(elegido, n + 1))}</p>{/if}
       {#if estado}<p class="estado">{estado}</p>{/if}
-      {#if n < NIVEL_MAX_RED}
+      {#if n < NIVEL_MAX_RED && !oculto(elegido)}
         <button class="compra gema" style:--c="var({COLORES[n]})" aria-disabled={!puedeComprarRed(s, elegido)} onclick={comprar}
           aria-label="{r.comprar(n + 1)}. {r.costo(formato(costoRed(elegido, n), true))}">
           <span>{r.comprar(n + 1)}</span><span class="num costo">{formato(costoRed(elegido, n), true)}</span>
@@ -223,11 +332,29 @@
   @keyframes entrar { from { opacity: 0; } }
   .vista { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 2rem; width: min(100%, 76rem); min-height: 0; }
   .escena { position: relative; min-height: 0; min-width: 0; }
-  .escena > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; font-family: inherit; }
+  /* El zoom queda adentro de esta caja; los bordes se desvanecen: la Red sigue más allá. */
+  .escena > svg {
+    position: absolute; inset: 0; width: 100%; height: 100%; font-family: inherit; touch-action: none; cursor: grab;
+    --borde-fundido: 1.5rem;
+    mask-image: linear-gradient(to right, transparent, #000 var(--borde-fundido), #000 calc(100% - var(--borde-fundido)), transparent),
+      linear-gradient(to bottom, transparent, #000 var(--borde-fundido), #000 calc(100% - var(--borde-fundido)), transparent);
+    mask-composite: intersect;
+  }
+  .escena > svg.movida { cursor: grabbing; }
+  /* La barra de zoom, como la de la pila: abajo a la derecha, tenue hasta que se usa. */
+  .zoom {
+    position: absolute; right: 0; bottom: 0; z-index: 1; width: 7rem; height: 2.75rem; margin: 0;
+    accent-color: var(--tinta); cursor: pointer; opacity: 0.45; transition: opacity 0.15s;
+  }
+  .zoom:hover, .zoom:focus-visible { opacity: 1; }
+  .camino line { stroke: var(--hielo); stroke-width: 1; stroke-dasharray: 2 6; opacity: 0.22; }
+  .bloque { fill: rgb(159 227 245 / 0.05); stroke: var(--hielo); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.45; }
+  .copo { fill: none; stroke: var(--hielo); stroke-width: 1.2; stroke-linecap: round; opacity: 0.35; }
+  .nodo.hielo.visto .bloque, .nodo.hielo.elegido .bloque { opacity: 0.9; }
 
   .halo path { stroke: var(--hielo); stroke-width: 3; fill: none; opacity: 0.45; stroke-linecap: round; }
   .ramas path { stroke: var(--escarcha); fill: none; stroke-linecap: round; stroke-linejoin: round; }
-  .punto { fill: none; stroke: var(--hielo); stroke-width: 0.75; opacity: 0.18; }
+  .punto { fill: var(--hielo); }
 
   .nodo { cursor: pointer; outline: none; }
   .nodo image { image-rendering: pixelated; }
