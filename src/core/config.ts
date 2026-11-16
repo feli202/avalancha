@@ -42,6 +42,11 @@ export interface Config {
   /** Fondos de la pila en orden: id -> logro que lo da (null = de inicio). */
   fondos: Record<string, string | null>
   objetivo_minutos: Record<string, number>
+  /** Mejoras de la Arena: por encima de este precio (log10) cada nivel extra multiplica ×10 el siguiente. */
+  softcap_desde_log10: number
 }
 
 export const CFG: Config = crudo
+
+/** Todo precio del juego es 1eN con N entero: el exponente se redondea al entero más cercano (SPEC §4). */
+export const precioLog10 = (x: number) => Math.floor(x + 0.5 + 1e-9)

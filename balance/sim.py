@@ -11,14 +11,33 @@ Todo numero grande vive en log10 (un double no alcanza para 1e308 con margen).
 import json, math, os, sys
 
 CFG = json.load(open(os.path.join(os.path.dirname(__file__), 'config.json')))
+def setp(d, path, v):
+    ks = path.split('.')
+    for k in ks[:-1]: d = d[int(k)] if isinstance(d, list) else d[k]
+    d[int(ks[-1]) if isinstance(d, list) else ks[-1]] = v
+if '--over' in sys.argv:  # pruebas de calibracion sin tocar config.json: --over '{"caudal.mult_por_nivel": 3}'
+    for k, v in json.loads(sys.argv[sys.argv.index('--over') + 1]).items(): setp(CFG, k, v)
 INF = CFG['infinito_log10']
+SOFT = CFG['softcap_desde_log10']  # mejoras de la Arena: cada nivel por encima de 1e308 x10 el precio del siguiente
 
 def l10(x): return math.log10(x) if x > 0 else -math.inf
 def addlog(a, b):
     if a < b: a, b = b, a
     return a if b == -math.inf or b < a - 30 else a + math.log10(1 + 10 ** (b - a))
 def sublog(a, b): return a + math.log10(1 - 10 ** (b - a)) if b < a - 1e-12 else -math.inf
-def quad(c0, g, s, L): return c0 + g * L + s * L * L / 2          # log10 del costo del nivel L -> L+1
+def precio(x): return math.floor(x + 0.5 + 1e-9)                   # todo precio es 1eN con N entero (al mas cercano)
+def soft(f, L):
+    """precio con softcap: exp_normal(L) + max(0, L - L308), L308 = primer nivel cuyo exp_normal pasa de 1e308"""
+    e = f(L)
+    if e <= SOFT: return precio(e)
+    L0 = L
+    lo = 0
+    while lo < L0:  # biseccion: primer nivel cuyo exponente normal pasa de 1e308 (f es creciente)
+        mid = (lo + L0) // 2
+        if f(mid) > SOFT: L0 = mid
+        else: lo = mid + 1
+    return precio(e + L - L0)
+def quad(c0, g, s, L): return soft(lambda n: c0 + g * n + s * n * n / 2, L)  # log10 del costo del nivel L -> L+1
 
 class State:
     def __init__(s):
@@ -57,11 +76,11 @@ class State:
             o.append((f'color{i}', quad(col['c0'], col['g'], col['s'], s.Lc[i])))
         k = CFG['cascada']
         if s.tier >= k['compresiones_para_desbloquear'] and s.Lk < k['nivel_max']:
-            o.append(('cascada', k['c0'] + k['g'] * s.Lk))
+            o.append(('cascada', soft(lambda n: k['c0'] + k['g'] * n, s.Lk)))
         m = CFG['mutaciones']
         if s.tier >= m['compresiones_para_desbloquear'] and s.max_ever >= m['energia_para_desbloquear_log10']:
             for name in s.mut:
-                if s.mut[name] < m['nivel_max']: o.append((f'mut_{name}', m[name]['c0'] + m[name]['g'] * s.mut[name]))
+                if s.mut[name] < m['nivel_max']: o.append((f'mut_{name}', soft(lambda n: m[name]['c0'] + m[name]['g'] * n, s.mut[name])))
         return o
     def apply(s, it):
         if it == 'caudal': s.Lf += 1

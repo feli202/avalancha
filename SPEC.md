@@ -23,10 +23,12 @@ El simulador juega la Capa 0 con un bot que compra lo de mejor retorno. Resultad
 
 | Estilo de jugador | Primer Infinito | Compresiones |
 | --- | --- | --- |
-| Muy activo (revisa cada 5 s) | 3 h 07 min | 17 |
-| **Atento (cada 15 s) — referencia** | **3 h 14 min** | 17 |
-| Revisa cada minuto | 3 h 48 min | 17 |
-| Casi idle (cada 5 min) | 6 h 16 min | 17 |
+| Muy activo (revisa cada 5 s) | 3 h 20 min | 17 |
+| **Atento (cada 15 s) — referencia** | **3 h 28 min** | 17 |
+| Revisa cada minuto | 4 h 00 min | 17 |
+| Casi idle (cada 5 min) | 6 h 41 min | 17 |
+
+(Con los precios en potencias de 10 puras, §4.11. Antes del redondeo daba 3 h 07 / 3 h 14 / 3 h 48 / 6 h 16.)
 
 Es el rango del primer Infinito de Antimatter Dimensions y Revolution Idle: unas 3 horas jugando atento, bastante más si se deja en segundo plano.
 
@@ -36,20 +38,20 @@ Línea de tiempo del jugador de referencia (salida real de `python3 balance/sim.
 | --- | --- |
 | 0:20 | Primera compra de Caudal y primera mejora de color (Ámbar) |
 | 1:25 | Aparece Coral |
-| 4:10 | Aparece Jade |
-| 13:20 | Aparece Violeta |
-| 14:40 | Compresión 1 (1e17) |
-| 30 | Compresión 2 → se desbloquean Cascada y el autocomprador de Caudal |
-| 44 | Compresión 3 → autocompradores de Ámbar y Coral |
-| 58 | Compresión 4 → autocompradores de Jade y Violeta |
-| 70 | Compresión 5 |
-| 83 | Compresión 6 → Compresión automática |
-| 119 | Compresión 10 y primer 1e120 → Mutaciones |
-| 120–190 | Fase de Mutaciones, corridas de ~10 min |
-| 192 | Compresión 17 (1e295) |
-| 194 | **Infinito** (la última corrida dura menos de 2 minutos: es el clímax) |
+| 4:20 | Aparece Jade |
+| 12:55 | Aparece Violeta |
+| 16:05 | Compresión 1 (1e17) |
+| 33 | Compresión 2 → se desbloquean Cascada y el autocomprador de Caudal |
+| 47 | Compresión 3 → autocompradores de Ámbar y Coral |
+| 62 | Compresión 4 → autocompradores de Jade y Violeta |
+| 74 | Compresión 5 |
+| 87 | Compresión 6 → Compresión automática |
+| 128 | Compresión 10 y primer 1e120 → Mutaciones (primera a los 130) |
+| 130–206 | Fase de Mutaciones, corridas de ~11 min |
+| 206 | Compresión 17 (1e295) |
+| 208 | **Infinito** (la última corrida dura menos de 2 minutos: es el clímax) |
 
-Las corridas duran 15 min al principio y bajan a ~10 min. Nunca hay una corrida de más de 15 minutos para el jugador atento.
+Las corridas duran 15–17 min al principio y bajan a ~11 min. Nunca hay una corrida de más de 17 minutos para el jugador atento.
 
 ---
 
@@ -76,6 +78,8 @@ Detalle físico real que sostiene el juego (medido con una simulación exacta de
 
 Notación: `log10` en todos los costos. `G` = granos en la pila en esta corrida. Todos los niveles empiezan en 0.
 
+**Todo precio es una potencia de 10 pura** (1e10, nunca 1,13e10): las fórmulas de costo de esta sección dan el exponente normal y el precio real es `10^redondear(exponente)`, al entero más cercano (x,5 sube). Vale para todo el juego, Capa 0 y Capa 1 (§4.11).
+
 ### 4.1 Producción
 
 ```
@@ -96,7 +100,7 @@ F = 1 × 2^nivel × 3^(mutación Caudal)
 costo(nivel → nivel+1) = 10^(1 + 0,6·nivel + 0,075·nivel²)
 ```
 
-Primeros costos: 10, 47, 316, 2.985, 39.811, 749.894…
+Primeros costos (exponente redondeado): 10, 100, 1.000, 1.000, 1e5, 1e6… (el 3.º y el 4.º cuestan lo mismo: 2,5 sube a 3 y 3,475 baja a 3).
 
 ### 4.3 Colores
 
@@ -178,6 +182,19 @@ Al llegar a 2^1024 ≈ 1,8e308 de Energía: se congela la economía, se reproduc
 ### 4.10 Puñado (interacción del primer minuto)
 
 Clic o toque sobre la pila (o barra espaciadora): suelta 5 granos. Máximo 8 por segundo. No escala: es para que los primeros segundos sean activos y se sientan. No afecta el balance a partir del minuto 2.
+
+### 4.11 Precios: potencias de 10 y softcap más allá del Infinito
+
+```
+precio = 10^redondear(exponente)                                (todo el juego)
+mejoras de la Arena (Caudal, colores, Cascada, Mutaciones):
+  costo = 10^redondear(exp_normal(nivel) + max(0, nivel − nivel_1e308))
+```
+
+- `exp_normal` es la fórmula de cada mejora (4.2, 4.3, 4.5, 4.6). `nivel_1e308` es el primer nivel cuyo `exp_normal` pasa de `softcap_desde_log10` (308): desde ahí cada nivel comprado multiplica ×10 el precio del siguiente, además de su escalado normal. Por debajo de 1e308 todo queda igual.
+- En la Capa 0 no se llega nunca (la Energía se frena en 1e308); actúa en la Capa 1 con el Infinito roto.
+- La tienda marca esas filas con una gema de hielo chica con "∞" ("Más allá del Infinito" en el tooltip).
+- Se eligió redondear al más cercano y no hacia arriba: hacia arriba cada precio sube ×3 en promedio y el primer Infinito pasaba de 3 h 14 a 4 h 10 (fuera del ±10 %); compensarlo con multiplicadores no es estable (×1,01 en los multiplicadores lo bajaba a 2 h 21).
 
 ---
 
@@ -353,9 +370,9 @@ Herramienta de desarrollo obligatoria: un panel de debug (solo en desarrollo) co
 | --- | --- |
 | Primera Compresión | 13–17 min |
 | Compresiones totales | 17 |
-| Primera Mutación | 110–130 min |
-| Infinito | 180–210 min |
-| Ninguna corrida | > 16 min |
+| Primera Mutación | 120–140 min |
+| Infinito | 195–225 min |
+| Ninguna corrida | > 17 min |
 
 Regla: si se cambia cualquier valor de `config.json`, primero se corre `python3 balance/sim.py`, se actualizan las tablas de la sección 2 y recién después se cambia el juego.
 

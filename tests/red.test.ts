@@ -21,20 +21,24 @@ describe('Red', () => {
 
   it('costos de §6.2 por anillo', () => {
     expect([0, 1, 2, 3].map((n) => costoRedLog10('memoria', n))).toEqual([0, 0, 0, 0])
-    expect([0, 1, 2, 3].map((n) => costoRedLog10('eco', n))).toEqual([0, 0.15, 0.3, 0.45].map((x) => expect.closeTo(x)))
-    expect([0, 1, 2, 3].map((n) => costoRedLog10('ruptura', n))).toEqual([1.6, 1.9, 2.2, 2.5].map((x) => expect.closeTo(x)))
+    // Todo precio es 1eN: 0,15·L se redondea a 0 (1 Cristal); 1,6 + 0,3·L a 2, 2, 2, 3.
+    expect([0, 1, 2, 3].map((n) => costoRedLog10('eco', n))).toEqual([0, 0, 0, 0])
+    expect([0, 1, 2, 3].map((n) => costoRedLog10('ruptura', n))).toEqual([2, 2, 2, 3])
     expect([0, 3].map((n) => costoRedLog10('eco2', n))).toEqual([45, 60])
     expect([0, 3].map((n) => costoRedLog10('ruptura2', n))).toEqual([250, 265])
-    // En Cristales enteros, redondeado para arriba.
-    expect([0, 1, 2, 3].map((n) => costoRed('eco', n).toNumber())).toEqual([1, 2, 2, 3])
-    expect(costoRed('ruptura', 0).toNumber()).toBe(40)
+    expect([0, 1, 2, 3].map((n) => costoRed('eco', n).toNumber())).toEqual([1, 1, 1, 1])
+    expect(costoRed('ruptura', 0).toNumber()).toBe(100)
   })
 
   it('apertura: un nodo se abre cuando un vecino ortogonal más cercano al centro llega a nivel 4', () => {
     expect(abierto(estadoInicial(), 'memoria')).toBe(true)
     expect(abierto(conRed({ memoria: 3 }), 'eco')).toBe(false)
     const m4 = conRed({ memoria: 4 })
-    expect(['eco', 'sedimentacion', 'estratos', 'defectos'].every((k) => abierto(m4, k))).toBe(true)
+    expect(['eco', 'sedimentacion', 'defectos'].every((k) => abierto(m4, k))).toBe(true)
+    // Estratos: además pide Romper el Infinito (Ruptura nv1); un guardado que ya lo tenía lo sigue subiendo.
+    expect(abierto(m4, 'estratos')).toBe(false)
+    expect(abierto(conRed({ memoria: 4, ruptura: 1 }), 'estratos')).toBe(true)
+    expect(abierto(conRed({ memoria: 4, estratos: 1 }), 'estratos')).toBe(true)
     expect(abierto(m4, 'ruptura')).toBe(false) // anillo 2: hace falta Eco en 4
     expect(abierto(m4, 'cascada_plus')).toBe(false) // diagonal de Memoria
     const eco4 = conRed({ memoria: 4, eco: 4 })

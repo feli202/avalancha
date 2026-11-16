@@ -3,7 +3,7 @@
   // Pestañas Cascada y Mutaciones cuando aparecen (SPEC 5): ahí se compra de a un nivel, son las decisiones.
   import Decimal from 'break_infinity.js'
   import {
-    CFG, MUTACIONES, aplicar, autoActivo, autoDisponible, comprar, comprarMax, comprarN, comprarTodo, costo, nivel, type ItemId, type State,
+    CFG, MUTACIONES, aplicar, autoActivo, autoDisponible, comprar, comprarMax, comprarN, comprarTodo, costo, masAlla, nivel, type ItemId, type State,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
   import { txt } from '../strings'
@@ -125,7 +125,7 @@
       <button class="fila" class:puede={o.puede && !tope} class:sola disabled={!o.puede || tope} onclick={() => compra(id)}
         aria-label="{txt.comprar} {nombre(id)} · {tope ? txt.nivelMaximo : hablado(formato(o.c, true))}">
         {#if ic}<span class="muestra icono" style:color={ic.color}><IconoTipo tipo={ic.tipo} centro={ic.centro} /></span>{:else}<span class="muestra" class:caudal={i < 0} aria-hidden="true"></span>{/if}
-        <span class="nombre">{nombre(id)} <span class="nv num">{txt.nivel(nivel(juego.ver, id))}</span></span>
+        <span class="nombre">{nombre(id)} <span class="nv num">{txt.nivel(nivel(juego.ver, id))}</span>{#if !tope && masAlla(juego.ver, id)}<span class="allende" title={txt.masAlla} aria-label={txt.masAlla}>∞</span>{/if}</span>
         <span class="costo num">
           {#if tope}{txt.nivelMaximo}{:else}{#if o.n > 1}<span class="cuantos">{txt.comprarCuantos(o.n)}</span> {/if}{formato(o.c, true)}{/if}
         </span>
@@ -185,6 +185,13 @@
   .nombre { grid-area: n; font-size: 1rem; font-weight: 600; }
   .nv { margin-left: 0.25rem; font-size: 0.8125rem; font-weight: 400; color: var(--tenue); }
   .efecto { grid-area: e; font-size: 0.8125rem; color: var(--tenue); }
+  /* Softcap (SPEC §4.11): más allá del Infinito cada nivel cuesta ×10 más. Una gema de hielo chica, como la Capa 1. */
+  .allende {
+    display: inline-grid; place-items: center; width: 1.25rem; height: 1rem; margin-left: 0.4rem; vertical-align: 0.05rem;
+    clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+    background: linear-gradient(160deg, rgb(214 243 255 / 0.55), rgb(159 227 245 / 0.18));
+    color: #e9f9ff; font-size: 0.75rem; font-weight: 600; line-height: 1;
+  }
   .costo { grid-area: c; font-weight: 600; color: var(--apagado); transition: color 0.2s, text-shadow 0.2s; }
   .cuantos { font-size: 0.75rem; font-weight: 400; }
   .puede .costo { color: var(--c); }

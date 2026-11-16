@@ -101,7 +101,8 @@ describe('Estratos', () => {
     expect(E.abrir_log10).toEqual([0, 2, 4, 7, 11, 16, 22, 29])
     expect(costoMejoraLog10('perm', 0, 0)).toBe(1)
     expect(costoMejoraLog10('perm', 3, 0)).toBe(4)
-    expect(costoMejoraLog10('pres', 2, 6)).toBeCloseTo(1 + 2 + 0.6 * 6 + (0.1 * 216) / 6)
+    expect(costoMejoraLog10('pres', 2, 6)).toBe(10) // 1 + 2 + 0,6·6 + 0,1·216/6 = 10,2 → 1e10
+    expect(costoMejoraLog10('perm', 0, 1)).toBe(2) // 1,617 → 1e2
     let s = con({}, {}, { cristales: new Decimal(1000) })
     expect(abrirEstrato(s)).toBe(s) // hace falta el nodo Estratos
     s = con({ estratos: 1 }, {}, { cristales: new Decimal(1000) })

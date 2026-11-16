@@ -77,6 +77,7 @@ export const en: typeof es = {
     cascada: (x: string) => `+${x} Cascade`,
   },
   nivelMaximo: 'Max',
+  masAlla: 'Beyond Infinity: each level costs ×10 more than the last',
 
   infinito: '∞',
 
@@ -163,7 +164,7 @@ export const en: typeof es = {
       hay: 'There is a relic to pick',
     },
     estratos: {
-      cerrado: 'Strata open with the Strata node of the Lattice.',
+      cerrado: 'The Strata are what let you go beyond Infinity: they open with the Strata node of the Lattice, which needs Break Infinity.',
       que: 'Sand draining from the pile fills stratum 1, and each stratum feeds the one below. The fuller and deeper they are, the more Pressure. They are kept through Infinity.',
       total: (p: string, d: string, v: string) => `Pressure ${p} → each topple is worth ×10^(${p} × Density ${d}) = ×${v}`,
       velocidad: 'Local speed',
@@ -207,11 +208,12 @@ export const en: typeof es = {
       siguiente: (e: string) => `Next level: ${e}`,
       cerrado: 'Opens when a neighbor closer to Memory reaches Violet.',
       hielo: 'Under the ice: opens with the Frost.',
+      requiere: 'Opens with Break Infinity (Rupture lv1): it is what lets you go beyond Infinity.',
       nodos: {
         memoria: ['Memory', 'Mem', (x, n) => `${['Autobuyers and auto-Compression from the start', 'Auto-Cascade', 'Auto-Mutations', 'Auto-Infinity'].slice(0, n).join(' · ')}. Keeps ${x.conservar_compresiones} compressions.`],
         eco: ['Echo', 'Echo', (x) => `Each order of magnitude of your total Crystals multiplies topple value by 10^${f(x.p)}`],
         sedimentacion: ['Sedimen­tation', 'Sed', (x, n) => `The pile keeps ${x.conservar_compresiones} compressions on each Infinity${n >= 4 ? ' and the Cascade no longer resets' : ''}`],
-        estratos: ['Strata', 'Str', (x, n) => (n <= 1 ? 'Opens the Strata: eight piles under the main one that fill by themselves and multiply everything' : `Strata fill ${f(x.flujo_x)} times faster`)],
+        estratos: ['Strata', 'Str', (x, n) => (n <= 1 ? 'Opens the Strata, what lets you go beyond Infinity: eight piles under the main one that fill by themselves and multiply everything' : `Strata fill ${f(x.flujo_x)} times faster`)],
         defectos: ['Defects', 'Def', (_, n) => `Opens ${['Vacancy', 'Dislocation', 'Twinning', 'Impurity'].slice(0, n).join(', ')}`],
         ruptura: ['Rupture', 'Rup', (x) => `Energy goes past 1e308 and Crystals grow with how far you pass it${x.cristales_log10 ? `; each Infinity gives ${f(10 ** x.cristales_log10)} times more` : ''}`],
         compactacion: ['Compac­tion', 'Comp', (x) => `Every topple weighs more: Density goes up by ${f(x.densidad)}`],
@@ -526,7 +528,7 @@ export const en: typeof es = {
       c1_cristales: 'Your Crystals: every Infinity gives you more. Spend them on the Lattice and the Strata.',
       c1_relicario: 'Every Infinity leaves you a relic carrying that run\'s pile. Choose what it does: three alike fuse, and only socketed ones give an effect.',
       c1_red: 'Each node has four levels. Max one out and it topples, waking up its neighbors.',
-      c1_estratos: 'The strata squeeze the pile from below: every topple is worth more. Each stratum you open arrives full and unblocks you.',
+      c1_estratos: 'Beyond Infinity: the strata squeeze the pile from below and every topple is worth more. Each stratum you open arrives full and unblocks you.',
       c1_automat: 'Set up everything that runs on its own here: how often each autobuyer buys, when to compress and when to go Infinite.',
       c1_defectos: 'A Defect is an Infinity with a broken rule. Win it and the reward is yours forever.',
       c1_escarcha: 'Frost grows on its own over time and multiplies everything. Break it to earn Shards.',
@@ -664,7 +666,7 @@ export const en: typeof es = {
         'They all go to the inventory, but only socketed ones give an effect. You start with one socket and the Settings node adds more. Two socketed relics of the same type add up.',
       ]],
       c1_estratos: ['Strata', [
-        'Below the pile there are eight strata. The sand that trickles down fills the first one, and each one feeds the one below. They are not lost on Infinity.',
+        'Break Infinity opens the door and the Strata take you beyond: below the pile there are eight strata. The sand that trickles down fills the first one, and each one feeds the one below. They are not lost on Infinity.',
         'The strata squeeze the pile from below: that is Pressure, and it makes every topple worth more. The fuller and deeper a stratum, the harder it squeezes.',
         'Local speed is how much a stratum\'s grains multiply per minute. It goes up with its Permeability, the Strata node, Inertia, Flow (first stratum only) and the stratum below, which pushes the one above.',
         'Opening a new stratum unblocks you: it arrives filled to its cap at once, adds its Pressure from the first second and pushes the ones above.',

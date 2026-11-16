@@ -14,7 +14,7 @@ Al llegar al primer Infinito la pila de arena se **cristaliza**. Aparece una seg
 |---|---|---|
 | **Relicario de Cristal** | Cada Infinito elegís el tipo de una reliquia nueva; 3 iguales se funden en el color siguiente. | 1.1 (primer Infinito) |
 | **Red** | Una "pila" de nodos con 4 niveles de color; maxear un nodo abre sus vecinos. Mejoras y llaves (la Automatización se configura en su propio panel, §11). | 1.1 |
-| **Estratos** | 8 pilas debajo de la pila principal que se llenan solas con la arena que cae y empujan la producción (Presión). Vista 2D: un embudo de arena de colores. | 1.1 |
+| **Estratos** | Lo que te deja ir más allá del Infinito: 8 pilas debajo de la pila principal que se llenan solas con la arena que cae y empujan la producción (Presión). Vista 2D: un embudo de arena de colores. | 1.1 (con Romper el Infinito) |
 | **Defectos** | Desafíos: jugar un Infinito con una regla rota. Recompensa permanente. | 1.1 (4) y 1.2 (4) |
 | **Escarcha** | Una capa de hielo que crece sola con el tiempo, multiplica todo y se "rompe" para dar Esquirlas. | 1.2 |
 
@@ -29,34 +29,36 @@ Progresión **horizontal**: en todo momento hay 2–3 cosas para empujar (un nod
 
 ## 2. Duración objetivo (medida con el simulador)
 
-Tiempo de juego **desde el primer Infinito** (la Capa 0 completa dura ~3 h y no cambia). `python3 balance/sim_capa1.py --robustez`:
+Tiempo de juego **desde el primer Infinito** (la Capa 0 completa dura ~3 h 30). `python3 balance/sim_capa1.py --robustez`, con los precios en potencias de 10 puras, el softcap de la Arena más allá de 1e308 (`SPEC.md` §4.11) y los Estratos detrás de Romper el Infinito:
 
 | Hito | revisa cada 15 s | cada 60 s | cada 5 min |
 |---|---|---|---|
-| Segundo Infinito | 1,10 h | 1,25 h | 2,25 h |
-| Romper el Infinito (nodo) | 2,34 h | 2,50 h | 3,53 h |
-| Memoria completa (Infinito automático) | 1,64 h | 1,80 h | 2,83 h |
-| Estratos (primer estrato abierto) | 2,26 h | 2,42 h | 3,45 h |
-| Defecto Vacancia | 2,41 h | 2,57 h | 3,60 h |
+| Segundo Infinito | 1,21 h | 1,37 h | 2,33 h |
+| Memoria completa (Infinito automático) | 1,81 h | 1,97 h | 3,00 h |
+| Defecto Vacancia | 2,18 h | 2,33 h | 3,36 h |
+| Romper el Infinito (nodo) | 2,26 h | 2,42 h | 3,45 h |
+| Estratos (primer estrato abierto, en la misma tanda) | 2,26 h | 2,42 h | 3,45 h |
 | Defecto Dislocación | 3,53 h | 3,69 h | 4,72 h |
-| Defecto Macla | 4,52 h | 4,68 h | 5,72 h |
-| Defecto Impureza | 5,52 h | 5,67 h | 6,71 h |
-| **FIN 1.1**: Estrato 8 lleno → Escarcha | **7,30 h** | 7,45 h | 8,49 h |
-| Defecto Fatiga | 9,70 h | 9,85 h | 10,89 h |
-| Defecto Frontera | 12,21 h | 12,32 h | 13,36 h |
-| Defecto Inclusión | 12,81 h | 13,00 h | 14,05 h |
-| Defecto Vidrio | 13,82 h | 14,03 h | 15,08 h |
-| **FIN CAPA 1**: 1e308 Cristales | **14,82 h** | 15,04 h | 16,09 h |
+| Defecto Macla | 4,46 h | 4,62 h | 5,65 h |
+| Defecto Impureza | 5,53 h | 5,69 h | 6,72 h |
+| **FIN 1.1**: Estrato 8 lleno → Escarcha | **7,29 h** | 7,45 h | 8,48 h |
+| Defecto Fatiga | 9,71 h | 9,86 h | 10,90 h |
+| Defecto Frontera | 12,25 h | 12,32 h | 13,36 h |
+| Defecto Inclusión | 12,78 h | 12,99 h | 14,07 h |
+| Defecto Vidrio | 13,82 h | 14,01 h | 15,09 h |
+| **FIN CAPA 1**: 1e308 Cristales | **14,82 h** | 15,02 h | 16,11 h |
 
-- Hueco máximo entre compras de la Capa 1 (después de la hora 1,5): **31 min** (35 min para el jugador de cada 5 min). Durante esos huecos siempre hay compras de Arena y la Escarcha creciendo; son las corridas largas del final, donde el jugador espera un Infinito grande.
-- **Abrir un estrato se nota enseguida** (se llena de golpe, §7.2). Lo que multiplica la producción en el momento de abrirlo, `10^(D × Presión que suma)`, medido en el simulador: E1 ×1e2,3 · E2 ×1e6,3 · E3 ×1e13,2 · E4 ×1e16,4 · E5 ×1e18,7 · E6 ×1e39,5 · E7 ×1e71,8 · E8 ×1e103 (las tres revisiones dan lo mismo). El mínimo pedido es ×100.
+- Hueco máximo entre compras de la Capa 1 (después de la hora 1,5): **31 min** (31 min cada 60 s; 40 min para el jugador de cada 5 min). Durante esos huecos siempre hay compras de Arena y la Escarcha creciendo; son las corridas largas del final, donde el jugador espera un Infinito grande.
+- **Abrir un estrato se nota enseguida** (se llena de golpe, §7.2). Lo que multiplica la producción en el momento de abrirlo, `10^(D × Presión que suma)`, medido en el simulador: E1 ×1e2,3 · E2 ×1e7,9 · E3 ×1e13,3 · E4 ×1e16,1 · E5 ×1e18,3 · E6 ×1e40,8 · E7 ×1e74,5 · E8 ×1e104 (las tres revisiones dan lo mismo). El mínimo pedido es ×100.
+- **El softcap casi no mueve la capa** (sin él: fin 1.1 a las 7,24 h y fin de la capa a las 14,78 h): con el Infinito roto la producción la llevan la Presión, el Eco y la Escarcha, no los niveles de color. Frena sobre todo las Mutaciones y los colores altos en los Defectos largos (~0,1 h cada uno). No hubo que recalibrar multiplicadores.
+- **Estratos después de Romper**: el bot compra Ruptura nv1 y en la misma tanda el nodo Estratos y los primeros estratos (2,26 h). La Vacancia (sin estratos) queda justo antes; Dislocación, Macla e Impureza siguen pidiendo 3, 5 y 7 estratos y caen todos con el Infinito roto, en el mismo orden que antes.
 - La segunda corrida (~1 h) es intencional: es la Capa 0 de nuevo pero con la primera reliquia y la primera compra de la Red; enseña que "volver a empezar" ahora es rápido.
 - Peso de cada fuente de producción (en log10 de V) al final de cada parte:
 
 | | Colores | Anillos | Cascada | Mutaciones | **Presión** | Eco | Cauce | **Escarcha** |
 |---|---|---|---|---|---|---|---|---|
-| Fin 1.1 | 19 % | 2 % | 4 % | 0 % | **57 %** | 12 % | 5 % | — |
-| Fin 1.2 | 7 % | 1 % | 1 % | 0 % | **43 %** | 5 % | 2 % | **41 %** |
+| Fin 1.1 | 19 % | 2 % | 4 % | 0 % | **58 %** | 12 % | 5 % | — |
+| Fin 1.2 | 7 % | 1 % | 1 % | 0 % | **45 %** | 5 % | 2 % | **40 %** |
 
   La Presión (Estratos) es el motor de la capa a propósito: es el sistema nuevo más visual. Si en las pruebas con gente se siente que "solo importan los estratos", el primer ajuste es bajar `estratos.w_base_por_profundidad` y subir `escarcha.g_log10_por_s`, siempre volviendo a correr el simulador.
 
@@ -66,10 +68,10 @@ Tiempo de juego **desde el primer Infinito** (la Capa 0 completa dura ~3 h y no 
 
 1. Jugás la **Arena** igual que en la Capa 0 hasta 1e308 Energía → **Infinito**.
 2. El Infinito da **Cristales** y **una reliquia** (elegís su tipo).
-3. En **Cristalización** gastás Cristales en la **Red** y en los **Estratos**.
+3. En **Cristalización** gastás Cristales en la **Red** y, con el Infinito roto, en los **Estratos**.
 4. La Arena vuelve a empezar pero mucho más rápido: la Red conserva compresiones y automatiza; los Estratos y el Relicario multiplican.
 5. Cuando la Red lo permite, entrás a un **Defecto** (un Infinito con una regla rota) para una recompensa permanente.
-6. Con **Romper el Infinito** (un nodo) la Energía pasa de 1e308 y los Cristales escalan con cuánto la pasás.
+6. Con **Romper el Infinito** (un nodo) la Energía pasa de 1e308 y los Cristales escalan con cuánto la pasás. Ahí se abren los **Estratos**: lo que te deja ir más allá. Las mejoras de la Arena que pasan de 1e308 entran en softcap (cada nivel ×10 el siguiente, `SPEC.md` §4.11).
 7. En la 1.2 la **Escarcha** crece sola; la rompés cada tanto para Esquirlas y con ellas la mejorás y pulís reliquias.
 
 Lo que **se conserva** en un Infinito: Cristales, Red, Relicario, Estratos (la arena de los estratos sigue ahí), Defectos, Escarcha. Lo que **se reinicia**: todo lo de la Arena (Energía, granos, Caudal, colores, Cascada, Mutaciones, compresiones), salvo las compresiones que conserve la Red.
@@ -155,6 +157,8 @@ Anillo = |x| + |y|. Anillos 0–2 en la 1.1 (13 nodos). Anillo 3 (12 nodos) en l
 
 ### 6.2 Costos (log10 de Cristales)
 
+Como todo precio del juego, el exponente se redondea al entero más cercano (`SPEC.md` §4.11): el anillo 1 cuesta 1 Cristal cada nivel (0,15 × L redondea a 0) y el anillo 2 cuesta 100, 100, 100 y 1000.
+
 | Anillo | Costo nivel L (L = 0..3) |
 |---|---|
 | 0 (Memoria) | 0 (1 Cristal cada nivel) |
@@ -171,7 +175,7 @@ Bases del anillo 3: Eco II 45, Defectos II 55, Germen 65, Compactación II 78, F
 | **Memoria** | Autocompradores y compresión automática desde el inicio de cada Infinito / + Cascada automática / + Mutaciones automáticas / + Infinito automático. Conserva 3/5/7/9 compresiones. |
 | **Eco** | `+p × log10(Cristales totales)` a log V; p = 0,5 / 1,5 / 3 / 5. ("Los cristales recuerdan la arena".) |
 | **Sedimentación** | Conserva 11/13/15/17 compresiones. nv4 además conserva los niveles de Cascada (ni la Compresión ni el Infinito los reinician). |
-| **Estratos** | Abre la pantalla de Estratos. Velocidad del flujo ×1 / ×1,5 / ×2 / ×3. |
+| **Estratos** | **Pide Ruptura nv1** (`requiere` en config) además de Memoria en 4: es lo que te deja ir más allá del Infinito. Abre la pantalla de Estratos. Velocidad del flujo ×1 / ×1,5 / ×2 / ×3. Un guardado que ya lo tenía sin Ruptura lo conserva y lo sigue subiendo. |
 | **Defectos** | Abre Vacancia / Dislocación / Macla / Impureza. |
 | **Ruptura** | nv1 = **Romper el Infinito**. Cristales ×1 / ×10 / ×100 / ×1000 (log 0/1/2/3). |
 | **Compactación** | Densidad +0,08 / 0,16 / 0,24 / 0,32. |
@@ -196,7 +200,7 @@ Bases del anillo 3: Eco II 45, Defectos II 55, Germen 65, Compactación II 78, F
 
 Cada nodo tiene una mecánica propia (ninguno repite el efecto de otro). Los valores de Compactación II y Eco II salen del simulador: con los del primer borrador (+0,001 de Densidad por anillo, +0,05 por orden de Cristales) la 1.2 duraba menos de una hora.
 
-**Romper el Infinito es un nodo** (Ruptura nv1, anillo 2, detrás de Eco). El primer Defecto (Vacancia) se juega antes o justo después; los siguientes ya con el Infinito roto.
+**Romper el Infinito es un nodo** (Ruptura nv1, anillo 2, detrás de Eco) y es la llave de los Estratos: el nodo Estratos (anillo 1) no se abre sin él, y Presión y Abismo, que están detrás, tampoco. El primer Defecto (Vacancia) se juega justo antes; los siguientes ya con el Infinito roto y los estratos que piden.
 
 ---
 
@@ -204,7 +208,7 @@ Cada nodo tiene una mecánica propia (ninguno repite el efecto de otro). Los val
 
 ### 7.1 Qué son
 
-Debajo de la pila principal hay 8 pilas más (estratos 1 a 8, de arriba a abajo). La arena que se escurre de la pila principal llena el estrato 1; el 1 alimenta al 2, y así. Cada estrato guarda una cantidad `s_k` (log10 de granos) que **no se pierde en el Infinito**. Cuanto más llenos y más profundos, más **Presión**, y la Presión multiplica la producción de la Arena.
+Los Estratos son **lo que te deja ir más allá del Infinito**: se abren con el nodo Estratos, que pide Romper el Infinito (Ruptura nv1). Debajo de la pila principal hay 8 pilas más (estratos 1 a 8, de arriba a abajo). La arena que se escurre de la pila principal llena el estrato 1; el 1 alimenta al 2, y así. Cada estrato guarda una cantidad `s_k` (log10 de granos) que **no se pierde en el Infinito**. Cuanto más llenos y más profundos, más **Presión**, y la Presión multiplica la producción de la Arena.
 
 ### 7.2 Fórmulas (por segundo de juego de Arena; no corren en el Defecto Vidrio)
 
@@ -229,7 +233,7 @@ La Presión se **suma a log10 V** (o sea, queda multiplicada por la Densidad com
 ### 7.3 Compras (en Cristales, log10)
 
 - Abrir el estrato k: 0, 2, 4, 7, 11, 16, 22, 29.
-- Permeabilidad del estrato k (k = 0..7), nivel L: `1 + 1×k + 0,6×L + 0,1×L³/6`.
+- Permeabilidad del estrato k (k = 0..7), nivel L: `1 + 1×k + 0,6×L + 0,1×L³/6`, redondeado al entero más cercano como todo precio.
 - Presión del estrato k, nivel L: misma fórmula (`presion` en config).
 
 El término cúbico es lo que frena la explosión: el jugador sube todos los estratos parejo en vez de uno solo al infinito.
@@ -285,7 +289,7 @@ H       = 50 × 1,5^Aguante × Frío × (1,5 si Inclusión)
 ```
 
 - **Romper la Escarcha** (botón, cada 30 min como mínimo; automático con Deshielo): conserva el 50 % de `logX` y da `floor(logX × 0,5 / 10) × Deshielo.esquirlas_x` **Esquirlas**. Animación: el hielo se agrieta en hexágonos y salta.
-- **Mejoras con Esquirlas** (costo en log10 de Esquirlas, nivel L): Crecimiento `0 + 0,4L` (×1,12 a g), Brillo `0,5 + 0,5L` (+0,04 a m), Aguante `0,5 + 0,4L` (×1,5 a H). Y el Pulido de reliquias (§5).
+- **Mejoras con Esquirlas** (costo en log10 de Esquirlas, nivel L, redondeado al entero más cercano como todo precio, también el Pulido): Crecimiento `0 + 0,4L` (×1,12 a g), Brillo `0,5 + 0,5L` (+0,04 a m), Aguante `0,5 + 0,4L` (×1,5 a H). Y el Pulido de reliquias (§5).
 - No funciona en el Defecto Vidrio.
 - Se desbloquea al llegar al hito de la 1.1 (Estrato 8 lleno con los 4 primeros Defectos): los Defectos ayudan a abrirla.
 
@@ -391,7 +395,7 @@ El simulador no modela el offline: hay que probarlo con un test aparte (12 h off
 
 `tests/balance_capa1.test.ts` corre el núcleo real del juego con un bot igual al de `sim_capa1.py` (revisa cada 15 s) y verifica, con ±10 %:
 
-- Segundo Infinito ~1,1 h; Memoria completa ~1,6 h; Romper ~2,35 h; Vacancia ~2,45 h.
+- Segundo Infinito ~1,2 h; Memoria completa ~1,8 h; Romper ~2,25 h; Vacancia ~2,2 h; Estratos nunca antes que Romper.
 - Fin 1.1 en 6,5–7,5 h; fin de la capa en 14–16 h.
 - Hueco máximo entre compras de la Capa 1 (desde la hora 1,5) < 40 min.
 - Ninguna fuente de log V > 65 % al final de la 1.2.

@@ -1,18 +1,40 @@
 // SPEC.md sección 4. Cada función es una fórmula de la spec, sin estado propio.
 import Decimal from 'break_infinity.js'
-import { CFG, type MutId } from './config'
+import { CFG, precioLog10, type MutId } from './config'
 import { presion } from './estratos'
 import { cascadaExtra, densidadRed, ecoLog10, efectoRed, mutacionExtra } from './red'
 import { cascadaRel, cauceRel, mutacionesRel } from './relicario'
 import type { State } from './state'
 
-const curva = (c0: number, g: number, s: number, n: number) => Decimal.pow10(c0 + g * n + (s * n * n) / 2)
+type Exp = (n: number) => number
+const curva = (c0: number, g: number, s = 0): Exp => (n) => c0 + g * n + (s * n * n) / 2
+
+/** Exponente normal (sin redondeo ni softcap) del costo de cada mejora de la Arena, nivel n → n+1. */
+export const expCaudal: Exp = curva(CFG.caudal.c0, CFG.caudal.g, CFG.caudal.s)
+export const expColor = (i: number): Exp => curva(CFG.colores[i].c0, CFG.colores[i].g, CFG.colores[i].s)
+export const expCascada: Exp = curva(CFG.cascada.c0, CFG.cascada.g)
+export const expMutacion = (id: MutId): Exp => curva(CFG.mutaciones[id].c0, CFG.mutaciones[id].g)
+
+/** El precio normal del nivel n pasa de 1e308: la mejora está "más allá del Infinito". */
+export const masAllaDelInfinito = (f: Exp, n: number) => f(n) > CFG.softcap_desde_log10
+
+/** log10 del costo con softcap: exp_normal(n) + max(0, n − n_1e308), redondeado (SPEC §4.11). */
+export function precioArenaLog10(f: Exp, n: number) {
+  if (!masAllaDelInfinito(f, n)) return precioLog10(f(n))
+  let lo = 0, hi = n // bisección: primer nivel cuyo exponente normal pasa de 1e308 (f es creciente)
+  while (lo < hi) {
+    const m = (lo + hi) >> 1
+    if (masAllaDelInfinito(f, m)) hi = m
+    else lo = m + 1
+  }
+  return precioLog10(f(n) + n - hi)
+}
 
 // ---------- costos (nivel n → n+1) ----------
-export const costoCaudal = (n: number) => curva(CFG.caudal.c0, CFG.caudal.g, CFG.caudal.s, n)
-export const costoColor = (i: number, n: number) => curva(CFG.colores[i].c0, CFG.colores[i].g, CFG.colores[i].s, n)
-export const costoCascada = (n: number) => curva(CFG.cascada.c0, CFG.cascada.g, 0, n)
-export const costoMutacion = (id: MutId, n: number) => curva(CFG.mutaciones[id].c0, CFG.mutaciones[id].g, 0, n)
+export const costoCaudal = (n: number) => Decimal.pow10(precioArenaLog10(expCaudal, n))
+export const costoColor = (i: number, n: number) => Decimal.pow10(precioArenaLog10(expColor(i), n))
+export const costoCascada = (n: number) => Decimal.pow10(precioArenaLog10(expCascada, n))
+export const costoMutacion = (id: MutId, n: number) => Decimal.pow10(precioArenaLog10(expMutacion(id), n))
 
 // ---------- producción ----------
 export const INFINITO = Decimal.pow10(CFG.infinito_log10)

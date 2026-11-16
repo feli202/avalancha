@@ -74,5 +74,8 @@
   "fondos": { "noche": null, "arenaSeca": "compresion", "milimetrado": "anillo", "desierto": "paciencia", "fractal": "infinito",
               "hielo": "cristal", "aurora": "insomnio", "vacio": "minimalista" },
 
-  "objetivo_minutos": { "jugador_activo_revisa_cada_15s": 194, "revisa_cada_60s": 228, "revisa_cada_5min": 376 }
+  "_precios": "SPEC 4.11: todo precio es 1eN (exponente redondeado al entero más cercano). Mejoras de la Arena: el primer nivel cuyo exponente normal pasa de softcap_desde_log10 es n_1e308; cada nivel por encima suma 1 al exponente (x10).",
+  "softcap_desde_log10": 308,
+
+  "objetivo_minutos": { "jugador_activo_revisa_cada_15s": 208, "revisa_cada_60s": 240, "revisa_cada_5min": 401 }
 }

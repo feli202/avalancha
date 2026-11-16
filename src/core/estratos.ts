@@ -1,5 +1,6 @@
 // SPEC_CAPA1 §7.1–7.3: los Estratos. Ocho pilas debajo de la principal; cada una guarda s_k (log10 de granos), que no se
 // pierde en el Infinito. Igual que el bloque de estratos de play_arena y Player.mods de balance/sim_capa1.py.
+import { precioLog10 } from './config'
 import { CFG1 } from './config1'
 import { cristalesDe, efectoRed } from './red'
 import type { State } from './state'
@@ -56,11 +57,11 @@ export const presion = (s: State) => s.estratos.s.reduce((p, _, k) => p + presio
 export type MejoraEstrato = 'perm' | 'pres'
 const CURVA = { perm: E.permeabilidad, pres: E.presion }
 /** log10 del costo de abrir el próximo estrato (Infinity si ya están todos). */
-export const costoAbrirLog10 = (s: State) => E.abrir_log10[s.estratos.abiertos] ?? Infinity
+export const costoAbrirLog10 = (s: State) => precioLog10(E.abrir_log10[s.estratos.abiertos] ?? Infinity)
 /** log10 del costo del nivel L → L+1 de Permeabilidad o Presión del estrato k: c0 + k + paso × L + cub × L³ / 6. */
 export function costoMejoraLog10(que: MejoraEstrato, k: number, L: number) {
   const c = CURVA[que]
-  return c.c0 + c.por_profundidad * k + c.paso * L + (c.cub * L ** 3) / 6
+  return precioLog10(c.c0 + c.por_profundidad * k + c.paso * L + (c.cub * L ** 3) / 6)
 }
 export const costoAbrir = (s: State) => cristalesDe(costoAbrirLog10(s))
 export const costoMejora = (s: State, que: MejoraEstrato, k: number) => cristalesDe(costoMejoraLog10(que, k, s.estratos[que][k]))

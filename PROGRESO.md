@@ -1603,3 +1603,56 @@ Nodos del DOM iguales tras 11 y 31 visitas; el contexto WebGL de la pila sigue v
 2. **Lo lleno que se ve cada bandeja es visual**: `s_k / (s_k + 6)` hasta 0,9, llena si está al tope; el chorro, `0,6 + 0,8 × log2(1 + γ/γ_base)` granos por paso con tope 5. No son balance.
 3. Sin rueda ni arrastre: se elige un estrato tocándolo, con las flechas de la ficha o del teclado.
 4. **Celular real: sin medir** (emulación).
+
+## Balance: precios 1eN, softcap más allá del Infinito y Estratos tras Romper (2026-11-16)
+
+Antes del paso 7 (Romper el Infinito). Orden seguido: simuladores → specs → config y código.
+
+1. **Precios en potencias de 10 puras, en todo el juego.** El exponente se **redondea al entero más cercano** (x,5 sube), en la fórmula de costo: `precioLog10` en `src/core/config.ts`, usado por la Arena (`formulas.ts`), la Red (`red.ts`) y los Estratos (`estratos.ts`); `precio()` en `sim.py` y `sim_capa1.py` (también Escarcha y Pulido, que todavía no están en el juego). Primero se probó **hacia arriba**, como se había pedido: la Capa 0 pasaba de 3 h 14 a 4 h 10 (+29 %), y compensarlo con multiplicadores no era estable (×1,01 en los multiplicadores la bajaba a 2 h 21). Se frenó y el usuario eligió el redondeo al más cercano.
+2. **Softcap más allá del Infinito** en las mejoras de la Arena (Caudal, colores, Cascada, Mutaciones): `costo = 10^redondear(exp_normal(n) + max(0, n − n_1e308))`, con `softcap_desde_log10: 308` en `config.json` (SPEC §4.11). `precioArenaLog10` busca `n_1e308` por bisección. La tienda marca esas filas con una gema de hielo chica con "∞" (tooltip "Más allá del Infinito: cada nivel cuesta ×10 más que el anterior").
+3. **Estratos detrás de Romper el Infinito**: `"requiere": {"ruptura": 1}` en el nodo Estratos de `config_capa1.json`; `requisitoRed` en `red.ts` lo lee (sirve para cualquier nodo). La ficha del nodo dice "Se abre con Romper el Infinito (Ruptura nv1): es lo que te deja ir más allá del Infinito". Textos de la pantalla cerrada, del nodo y de las guías (es/en) los presentan así. Los requisitos de Dislocación, Macla e Impureza (3, 5 y 7 estratos) siguen teniendo sentido: los Estratos se abren a las 2,26 h, justo después de la Vacancia (2,18 h), y los tres caen en el mismo orden de antes.
+
+### Capa 0 (`python3 balance/sim.py`)
+
+| Estilo | Antes | Ahora | |
+| --- | --- | --- | --- |
+| cada 5 s | 187 min | 200 min | +7 % |
+| **cada 15 s** | **194 min** | **208 min** | +7 % |
+| cada 60 s | 228 min | 240 min | +5 % |
+| cada 5 min | 376 min | 401 min | +7 % |
+
+17 compresiones. Primera Compresión a los 16,1 min y primera Mutación a los 130 min; la corrida más larga del jugador de 15 s dura 16,8 min. El test de balance (núcleo real) da 214,2 min. Rangos de SPEC §10 y del test: Mutación 120–140, Infinito 195–225, ninguna corrida de más de 17 min; `objetivo_minutos` 208 / 240 / 401.
+
+### Capa 1 (`python3 balance/sim_capa1.py --robustez`), sin recalibrar
+
+| Hito | 15 s | 60 s | 5 min |
+| --- | --- | --- | --- |
+| Segundo Infinito | 1,21 h | 1,37 h | 2,33 h |
+| Memoria completa | 1,81 h | 1,97 h | 3,00 h |
+| Vacancia | 2,18 h | 2,33 h | 3,36 h |
+| Romper el Infinito = Estratos | 2,26 h | 2,42 h | 3,45 h |
+| Dislocación | 3,53 h | 3,69 h | 4,72 h |
+| Macla | 4,46 h | 4,62 h | 5,65 h |
+| Impureza | 5,53 h | 5,69 h | 6,72 h |
+| **FIN 1.1** | **7,29 h** | 7,45 h | 8,48 h |
+| Fatiga | 9,71 h | 9,86 h | 10,90 h |
+| Frontera | 12,25 h | 12,32 h | 13,36 h |
+| Inclusión | 12,78 h | 12,99 h | 14,07 h |
+| Vidrio | 13,82 h | 14,01 h | 15,09 h |
+| **FIN CAPA 1** | **14,82 h** | 15,02 h | 16,11 h |
+| Hueco máximo | 30,8 min | 30,8 min | 40,0 min |
+
+Abrir un estrato: E1 ×1e2,3 · E2 ×1e7,9 · E3 ×1e13,3 · E4 ×1e16,1 · E5 ×1e18,3 · E6 ×1e40,8 · E7 ×1e74,5 · E8 ×1e104 (mínimo ×100). Dentro de los rangos pedidos (1.1 en 6,5–7,5 h, capa en 14–16 h, hueco < 40 min) **sin tocar ningún multiplicador**: el softcap mueve la capa ~0,05 h (sin él, 7,24 h y 14,78 h) porque con el Infinito roto mandan la Presión, el Eco y la Escarcha, no los niveles de la Arena. `tune.py` acepta `L0.` para probar cambios de `config.json`, y `sim.py` acepta `--over '{...}'`.
+
+### Guardados
+No hace falta migración: los precios se calculan, no se guardan. Un guardado que ya tenía el nodo Estratos sin Ruptura lo conserva y lo puede seguir subiendo (`requisitoRed` solo frena el nivel 0 → 1; tiene test).
+
+### Verificación
+- `vitest` 243/243 (tests nuevos del softcap, del redondeo y del requisito de Estratos; precios de los tests viejos al día). `svelte-check` 0 errores. Build ok.
+- Juego abierto (1366×768 y 390×844, sin scroll de página): precios redondeados en la tienda (Caudal nv3 1.000, Coral nv2 1e5, Jade nv1 1e10); Violeta nv46 con la gema "∞" y costo 1e328; nodo Estratos cerrado con Memoria en 4 y su mensaje; con Ruptura nv1 se compra y abre la pantalla de Estratos con la guía nueva. Sin errores en consola.
+- **No medí fps**: el cambio no toca el dibujo.
+
+### Decisiones (revisar)
+- Con el redondeo, algunos precios seguidos quedan iguales (Caudal nv2 y nv3 cuestan 1.000) y el anillo 1 de la Red cuesta 1 Cristal por nivel (antes 1, 2, 2, 3); el anillo 2 cuesta 100, 100, 100, 1000 (antes 40…317).
+- El jugador de cada 5 min queda con un hueco de 40,0 min en la Capa 1 (antes 35), justo en el límite. El de referencia, 30,8.
+- La gema "∞" usa colores fijos de hielo, no una variable CSS de la Capa 1 (no hay una de cian suelta).

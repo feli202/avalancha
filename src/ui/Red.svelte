@@ -3,7 +3,7 @@
   // de arena teñida con el color de su nivel; los completos se unen a sus vecinos con escarcha. La red llena su caja
   // (el viewBox se ajusta a los nodos) y la ficha del elegido va al costado (debajo en el celular).
   import {
-    ANILLO3, NIVEL_MAX_RED, NODOS, abierto, anillo, comprarRed, costoRed, escarchaAbierta, nivelRed, puedeComprarRed, vecinos,
+    ANILLO3, NIVEL_MAX_RED, NODOS, abierto, anillo, comprarRed, costoRed, escarchaAbierta, nivelRed, puedeComprarRed, requisitoRed, vecinos,
   } from '../core'
   import { EMBLEMA, cara, rama, semilla } from '../render/redCaras'
   import { txt } from '../strings'
@@ -32,7 +32,7 @@
   const oculto = (id: string) => bajoHielo(id) || (!abierto(s, id) && nivelRed(s, id) === 0)
   const titulo = (id: string) => (bajoHielo(id) ? r.bajoHielo : nombre(id, false))
   const estado = $derived(
-    n >= NIVEL_MAX_RED ? r.completo : bajoHielo(elegido) ? r.hielo : !abierto(s, elegido) ? r.cerrado : null,
+    n >= NIVEL_MAX_RED ? r.completo : bajoHielo(elegido) ? r.hielo : !requisitoRed(s, elegido) ? r.requiere : !abierto(s, elegido) ? r.cerrado : null,
   )
 
   // Los colores de la interfaz (respetan daltonismo), para pintar las caras.

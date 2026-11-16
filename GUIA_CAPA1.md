@@ -94,7 +94,9 @@ ni crecer la memoria). Probá en el celular. PROGRESO.md con los números medido
 Hito C6. Romper el Infinito (nodo Ruptura nv1) y la fórmula completa de Cristales de la sección 4 con el blando
 sobre 1e50, Q, mult. Indicador "Cristales al hacer Infinito: X (Y/min)" con brillo en el óptimo, e Infinito
 automático de Memoria nv4 con la regla del óptimo (configurable). Test contra infinity_reward de sim_capa1.py
-con 5 casos. PROGRESO.md.
+con 5 casos. Ruptura nv1 es además la llave de los Estratos (el nodo Estratos pide `requiere: {ruptura: 1}`, ya en el
+núcleo): al romper el Infinito, presentá los Estratos como "lo que te deja ir más allá del Infinito" y probá que el
+softcap de la Arena sobre 1e308 (SPEC.md §4.11) se ve en la tienda con la gema "∞". PROGRESO.md.
 ```
 
 ## Paso 8 — C7: Defectos 1–4 (Opus)

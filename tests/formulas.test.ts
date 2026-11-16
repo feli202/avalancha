@@ -12,16 +12,25 @@ const cerca = (d: Decimal | number, esperado: number) =>
   expect(new Decimal(d).div(esperado).toNumber()).toBeCloseTo(1, 3)
 
 describe('costos', () => {
-  it('Caudal: 10, 47, 316, 2.985, 39.811, 749.894 (SPEC 4.2)', () => {
-    const esperados = [10, 47.315, 316.228, 2985.38, 39810.7, 749894]
+  it('Caudal: 10, 100, 1000, 1000, 1e5, 1e6 (SPEC 4.2: exponente redondeado al entero más cercano)', () => {
+    const esperados = [10, 100, 1000, 1000, 1e5, 1e6]
     esperados.forEach((e, n) => cerca(costoCaudal(n), e))
   })
   it('colores: 10^(c0 + g·n + s·n²/2)', () => {
     cerca(costoColor(0, 0), 10)
-    cerca(costoColor(0, 1), 10 ** 1.37) // 1 + 0,35 + 0,04/2
+    cerca(costoColor(0, 1), 10) // 1 + 0,35 + 0,04/2 = 1,37 → 1e1
+    cerca(costoColor(0, 2), 100) // 1,78 → 1e2
     cerca(costoColor(1, 0), 1e4)
-    cerca(costoColor(2, 2), 10 ** 10.7) // 9 + 1,4 + 0,15·4/2
+    cerca(costoColor(2, 2), 1e11) // 9 + 1,4 + 0,15·4/2 = 10,7 → 1e11
     cerca(costoColor(3, 4), 1e22) // 16 + 4 + 0,25·16/2
+  })
+  it('softcap más allá del Infinito (SPEC 4.11): por encima de 1e308 cada nivel ×10 el siguiente', async () => {
+    const { costoMutacion, masAlla } = await import('../src/core')
+    // Mutación Colores: 130 + 22n. n = 8 → 1e306 (normal); n = 9 → 328 > 308 es n_1e308 (sin extra); después +1, +2…
+    expect([8, 9, 10, 11].map((n) => costoMutacion('colores', n).log10())).toEqual([306, 328, 351, 374])
+    expect(masAlla(con({ mutaciones: { caudal: 0, colores: 8, expansion: 0, cascada: 0 } }), 'mut_colores')).toBe(false)
+    expect(masAlla(con({ mutaciones: { caudal: 0, colores: 9, expansion: 0, cascada: 0 } }), 'mut_colores')).toBe(true)
+    expect(costoCaudal(40).log10()).toBe(Math.floor(1 + 0.6 * 40 + 0.075 * 1600 + 0.5)) // 145: por debajo, sin extra
   })
   it('Cascada: 10^(40 + 6n)', () => {
     cerca(costoCascada(0), 1e40)
@@ -87,9 +96,9 @@ describe('tienda', () => {
     cerca(s.energia, 2)
   })
   it('comprarMax compra todo lo que alcanza', () => {
-    const s = comprarMax(con({ energia: new Decimal(400) }), 'caudal') // 10 + 47,3 + 316,2 = 373,5
+    const s = comprarMax(con({ energia: new Decimal(1200) }), 'caudal') // 10 + 100 + 1000 = 1110; el siguiente es otro 1000
     expect(s.caudal).toBe(3)
-    cerca(s.energia, 26.457)
+    cerca(s.energia, 90)
   })
   it('ofrece cada cosa recién cuando corresponde', () => {
     expect(disponibles(estadoInicial())).toEqual(['caudal', 'color0'])
@@ -122,12 +131,12 @@ describe('tick', () => {
     expect(comprimir(con({ coloresDesbloqueados: 3, energia: new Decimal(1e17) })).coloresDesbloqueados).toBe(3)
   })
   it('autocompradores: según la Compresión, con interruptor, una vez por segundo', () => {
-    const rico = { energia: new Decimal(400), coloresDesbloqueados: 4 }
+    const rico = { energia: new Decimal(1200), coloresDesbloqueados: 4 }
     expect(autocomprar(con({ ...rico, compresiones: 1 })).caudal).toBe(0)
     const s2 = autocomprar(con({ ...rico, compresiones: 2 }))
     expect([s2.caudal, s2.colores[0]]).toEqual([3, 0])
     const s3 = autocomprar(con({ ...rico, compresiones: 3 }))
-    expect([s3.caudal, s3.colores[0]]).toEqual([3, 1]) // sobran 26,5: alcanza un Ámbar (10)
+    expect([s3.caudal, s3.colores[0]]).toEqual([3, 2]) // Máx de cada uno: Caudal 10 + 100 + 1000; sobran 90: Ámbar 10 + 10
     const apagado = con({ ...rico, compresiones: 3 })
     apagado.auto = { ...apagado.auto, caudal: false }
     expect(autocomprar(apagado).caudal).toBe(0)
@@ -220,7 +229,7 @@ describe('Puñado', () => {
 describe('modos de compra (hito 3)', () => {
   it('comprarN compra n niveles o ninguno', async () => {
     const { comprarN } = await import('../src/core')
-    const s = con({ energia: new Decimal(60) }) // Caudal 10 + 47 = 57
+    const s = con({ energia: new Decimal(150) }) // Caudal 10 + 100 = 110; el tercero cuesta 1000
     expect(comprarN(s, 'caudal', 2).caudal).toBe(2)
     expect(comprarN(s, 'caudal', 3)).toBe(s)
   })

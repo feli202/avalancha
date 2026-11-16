@@ -1,6 +1,7 @@
 // SPEC_CAPA1 §6: la Red. Los nodos (posición, efectos por nivel, costo del anillo 3) se leen de config_capa1.json:
 // agregar un nodo no requiere tocar código.
 import Decimal from 'break_infinity.js'
+import { precioLog10 } from './config'
 import { CFG1 } from './config1'
 import type { State } from './state'
 
@@ -26,16 +27,22 @@ export const vecinos = (id: string) => {
 /** La Escarcha llega en C10; hasta entonces el anillo 3 queda cerrado. */
 export const escarchaAbierta = (_s: State) => false
 
+/** Lo que pide el nodo además del vecino (`requiere` en config: Estratos pide Ruptura nv1). Solo para abrirlo: un
+ * guardado que ya lo tenía sigue subiéndolo. */
+export const requisitoRed = (s: State, id: string) =>
+  nivelRed(s, id) > 0 ||
+  Object.entries((NODOS[id].requiere ?? {}) as Record<string, number>).every(([n, lv]) => nivelRed(s, n) >= lv)
+
 /** Se puede comprar: Memoria siempre; el resto, con un vecino ortogonal más cercano al centro en nivel 4. */
 export const abierto = (s: State, id: string) =>
   id === CENTRO ||
-  ((!ANILLO3.has(id) || escarchaAbierta(s)) &&
+  ((!ANILLO3.has(id) || escarchaAbierta(s)) && requisitoRed(s, id) &&
     vecinos(id).some((v) => anillo(v) < anillo(id) && nivelRed(s, v) >= NIVEL_MAX_RED))
 
 /** log10 del costo del nivel n → n+1 (§6.2). */
 export function costoRedLog10(id: string, n: number) {
   const r = anillo(id)
-  return (NODOS[id].costo_base_log10 ?? CFG1.red.costo_anillo_log10[r]) + CFG1.red.paso_nivel_log10[r] * n
+  return precioLog10((NODOS[id].costo_base_log10 ?? CFG1.red.costo_anillo_log10[r]) + CFG1.red.paso_nivel_log10[r] * n)
 }
 
 // Los Cristales son enteros: un costo chico se redondea para arriba (10^0,15 = 1,41 → 2), como los Cristales del Infinito (§4).

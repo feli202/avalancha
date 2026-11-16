@@ -73,15 +73,15 @@ describe('balance: jugador atento (revisa cada 15 s, con autocompradores)', () =
     expect(p.compresiones[0]).toBeLessThanOrEqual(17)
   })
   it('17 compresiones en total', () => expect(p.compresiones.length).toBe(17))
-  it('primera Mutación entre 110 y 130 min', () => {
-    expect(p.primeraMutacion).toBeGreaterThanOrEqual(110)
-    expect(p.primeraMutacion).toBeLessThanOrEqual(130)
+  it('primera Mutación entre 120 y 140 min', () => {
+    expect(p.primeraMutacion).toBeGreaterThanOrEqual(120)
+    expect(p.primeraMutacion).toBeLessThanOrEqual(140)
   })
-  it('Infinito entre 180 y 210 min', () => {
-    expect(p.infinito).toBeGreaterThanOrEqual(180)
-    expect(p.infinito).toBeLessThanOrEqual(210)
+  it('Infinito entre 195 y 225 min', () => {
+    expect(p.infinito).toBeGreaterThanOrEqual(195)
+    expect(p.infinito).toBeLessThanOrEqual(225)
   })
-  it('ninguna corrida de más de 16 min', () => expect(Math.max(...p.corridas)).toBeLessThanOrEqual(16))
+  it('ninguna corrida de más de 17 min', () => expect(Math.max(...p.corridas)).toBeLessThanOrEqual(17))
   it('Infinito a ±5 % del objetivo de config.json', () => {
     const objetivo = CFG.objetivo_minutos.jugador_activo_revisa_cada_15s
     expect(Math.abs(p.infinito / objetivo - 1)).toBeLessThanOrEqual(0.05)

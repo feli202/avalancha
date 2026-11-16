@@ -90,6 +90,10 @@
      0,
      -1
     ],
+    "_requiere": "Los Estratos son lo que te deja ir más allá del Infinito: el nodo se abre recién con Ruptura nv1 (Romper el Infinito).",
+    "requiere": {
+     "ruptura": 1
+    },
     "flujo_x": [
      1,
      1.5,

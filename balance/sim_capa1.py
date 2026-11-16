@@ -29,6 +29,18 @@ def addlog(a, b):
     if a < b: a, b = b, a
     return a if b == NEG or b < a - 30 else a + math.log10(1 + 10 ** (b - a))
 def sublog(a, b): return a + math.log10(1 - 10 ** (b - a)) if b < a - 1e-12 else NEG
+def precio(x): return math.floor(x + 0.5 + 1e-9)  # todo precio es 1eN con N entero (al mas cercano)
+def costo_arena(f, L):
+    """mejoras de la Arena: exp_normal(L) + max(0, L - L308), L308 = primer nivel cuyo exp_normal pasa de 1e308"""
+    e = f(L); S = L0['softcap_desde_log10']
+    if e <= S: return precio(e)
+    n = L
+    lo = 0
+    while lo < n:  # biseccion: primer nivel cuyo exponente normal pasa del tope (f es creciente)
+        mid = (lo + n) // 2
+        if f(mid) > S: n = mid
+        else: lo = mid + 1
+    return precio(e + L - n)
 
 # ------------------------------------------------------------------ Red
 RED = dict(L1['red']['nodos']); RED.update(L1['red']['anillo3_1.2'])
@@ -38,7 +50,7 @@ BYPOS = {v: k for k, v in POS.items()}
 def ring(k): x, y = POS[k]; return abs(x) + abs(y)
 def red_cost(k, lvl):
     r = ring(k); base = RED[k].get('costo_base_log10', L1['red']['costo_anillo_log10'][r])
-    return base + L1['red']['paso_nivel_log10'][r] * lvl
+    return precio(base + L1['red']['paso_nivel_log10'][r] * lvl)
 DEFS = [k for k in L1['defectos'] if k not in ('abandono_min', 'requisitos')]
 DEF_REQ = {'vacancia': ('defectos', 1), 'dislocacion': ('defectos', 2), 'macla': ('defectos', 3), 'impureza': ('defectos', 4),
            'fatiga': ('defectos2', 1), 'frontera': ('defectos2', 2), 'inclusion': ('defectos2', 3), 'vidrio': ('defectos2', 4)}
@@ -63,6 +75,7 @@ class Player:
             if s.red[k] >= 4: continue
             if k in RING3 and not s.esc_on: continue
             if k == 'memoria': out.append(k); continue
+            if any(s.red[n] < lv for n, lv in RED[k].get('requiere', {}).items()): continue  # Estratos: solo con Ruptura nv1
             x, y = POS[k]
             nb = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
             if any(BYPOS.get(p) and s.red[BYPOS[p]] >= 4 and ring(BYPOS[p]) < ring(k) for p in nb): out.append(k)
@@ -187,11 +200,10 @@ class Arena:
         return r
     # ---- tienda de la Arena
     def color_cost(s, i):
-        c = COLS[i]; gx = 1.0
-        return quad(c['c0'], c['g'] * gx, c['s'] * s.m['colorS'], s.Lc[i])
+        c = COLS[i]; sx = c['s'] * s.m['colorS']
+        return costo_arena(lambda n: quad(c['c0'], c['g'], sx, n), s.Lc[i])
     def flow_cost(s):
-        gx = 1.0
-        return quad(CAU['c0'], CAU['g'] * gx, CAU['s'], s.Lf)
+        return costo_arena(lambda n: quad(CAU['c0'], CAU['g'], CAU['s'], n), s.Lf)
     def buy_basic(s, which):
         """compra Caudal/colores lo mas barato primero (como un autocomprador o una persona atenta)"""
         n = 0
@@ -210,8 +222,9 @@ class Arena:
     def buy_casc(s):
         if s.tier < CAS['compresiones_para_desbloquear']: return
         mx = CAS['nivel_max'] + s.m['cascMax']
-        while s.Lk < mx and CAS['c0'] + CAS['g'] * s.Lk <= s.E - L1['autocompradores_umbral_log10']:
-            s.E = sublog(s.E, CAS['c0'] + CAS['g'] * s.Lk); s.Lk += 1
+        cost = lambda: costo_arena(lambda n: CAS['c0'] + CAS['g'] * n, s.Lk)
+        while s.Lk < mx and cost() <= s.E - L1['autocompradores_umbral_log10']:
+            s.E = sublog(s.E, cost()); s.Lk += 1
     def buy_mut(s):
         if s.defect == 'macla' or s.tier < MUT['compresiones_para_desbloquear'] or s.maxE_ever < MUT['energia_para_desbloquear_log10']: return
         mx = MUT['nivel_max'] + s.m['mutMax']
@@ -219,7 +232,7 @@ class Arena:
             best = None
             for j, name in enumerate(['caudal', 'colores', 'expansion', 'cascada']):
                 if s.mut[j] >= mx: continue
-                c = MUT[name]['c0'] + MUT[name]['g'] * s.mut[j]
+                c = costo_arena(lambda n: MUT[name]['c0'] + MUT[name]['g'] * n, s.mut[j])
                 if c <= s.E - L1['autocompradores_umbral_log10'] and (best is None or c < best[1]): best = (j, c)
             if not best: return
             s.E = sublog(s.E, best[1]); s.mut[best[0]] += 1
@@ -316,19 +329,19 @@ def shop_items(P):
     for k in P.open_nodes(): it.append(('red', k, red_cost(k, P.red[k])))
     E = L1['estratos']
     if P.red['estratos'] >= 1:
-        if P.est_open < E['cantidad']: it.append(('abrir', P.est_open, E['abrir_log10'][P.est_open]))
+        if P.est_open < E['cantidad']: it.append(('abrir', P.est_open, precio(E['abrir_log10'][P.est_open])))
         for k in range(P.est_open):
             pe, pr = E['permeabilidad'], E['presion']
-            it.append(('perm', k, pe['c0'] + pe['por_profundidad'] * k + pe['paso'] * P.perm[k] + pe['cub'] * P.perm[k] ** 3 / 6))
-            it.append(('pres', k, pr['c0'] + pr['por_profundidad'] * k + pr['paso'] * P.pres[k] + pr['cub'] * P.pres[k] ** 3 / 6))
+            it.append(('perm', k, precio(pe['c0'] + pe['por_profundidad'] * k + pe['paso'] * P.perm[k] + pe['cub'] * P.perm[k] ** 3 / 6)))
+            it.append(('pres', k, precio(pr['c0'] + pr['por_profundidad'] * k + pr['paso'] * P.pres[k] + pr['cub'] * P.pres[k] ** 3 / 6)))
     return it
 def esq_items(P):
     if not P.esc_on: return []
-    M = L1['escarcha']['mejoras']; out = [('esc', k, M[k]['c0'] + M[k]['paso'] * P.escup[k]) for k in M]  # costo en log10 de Esquirlas
+    M = L1['escarcha']['mejoras']; out = [('esc', k, precio(M[k]['c0'] + M[k]['paso'] * P.escup[k])) for k in M]  # costo en log10 de Esquirlas
     px = P.v('engarces2', 'pulido_x', 1.0)
     for t in P.relic:
         if t in {e[0] for e in P.equipped}:
-            out.append(('pul', t, L1['escarcha']['pulido']['c0'] + L1['escarcha']['pulido']['paso'] * P.polish[t] * px + l10(max(1, P.relic[t])) ))
+            out.append(('pul', t, precio(L1['escarcha']['pulido']['c0'] + L1['escarcha']['pulido']['paso'] * P.polish[t] * px + l10(max(1, P.relic[t])))))
     return out
 def do_shop(P, t, log, stats):
     bought = 0

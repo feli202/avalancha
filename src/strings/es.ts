@@ -85,6 +85,7 @@ export const es = {
     cascada: (x: string) => `+${x} a la Cascada`,
   } as Record<string, (x: string) => string>,
   nivelMaximo: 'Máximo',
+  masAlla: 'Más allá del Infinito: cada nivel cuesta ×10 más que el anterior',
 
   // Infinito (SPEC 6.6)
   infinito: '∞',
@@ -175,7 +176,7 @@ export const es = {
     },
     // SPEC_CAPA1 §7 y correcciones, bloque 11 (el embudo en 2D)
     estratos: {
-      cerrado: 'Los Estratos se abren con el nodo Estratos de la Red.',
+      cerrado: 'Los Estratos son lo que te deja ir más allá del Infinito: se abren con el nodo Estratos de la Red, que pide Romper el Infinito.',
       que: 'La arena que se escurre de la pila llena el estrato 1, y cada estrato alimenta al de abajo. Cuanto más llenos y más profundos, más Presión. No se pierden en el Infinito.',
       total: (p: string, d: string, v: string) => `Presión ${p} → cada derrumbe vale ×10^(${p} × Densidad ${d}) = ×${v}`,
       velocidad: 'Velocidad local',
@@ -220,11 +221,12 @@ export const es = {
       siguiente: (e: string) => `Siguiente nivel: ${e}`,
       cerrado: 'Se abre cuando un vecino más cerca de Memoria llega a Violeta.',
       hielo: 'Bajo el hielo: se abre con la Escarcha.',
+      requiere: 'Se abre con Romper el Infinito (Ruptura nv1): es lo que te deja ir más allá del Infinito.',
       nodos: {
         memoria: ['Memoria', 'Mem', (x, n) => `${['Autocompradores y Compresión automática desde el inicio', 'Cascada automática', 'Mutaciones automáticas', 'Infinito automático'].slice(0, n).join(' · ')}. Conserva ${x.conservar_compresiones} compresiones.`],
         eco: ['Eco', 'Eco', (x) => `Cada orden de magnitud de tus Cristales totales multiplica el valor de los derrumbes por 10^${f(x.p)}`],
         sedimentacion: ['Sedimen­tación', 'Sed', (x, n) => `La pila conserva ${x.conservar_compresiones} compresiones en cada Infinito${n >= 4 ? ' y la Cascada ya no vuelve a cero' : ''}`],
-        estratos: ['Estratos', 'Est', (x, n) => (n <= 1 ? 'Abre los Estratos: ocho pilas debajo de la principal que se llenan solas y multiplican todo' : `Los estratos se llenan ${f(x.flujo_x)} veces más rápido`)],
+        estratos: ['Estratos', 'Est', (x, n) => (n <= 1 ? 'Abre los Estratos, lo que te deja ir más allá del Infinito: ocho pilas debajo de la principal que se llenan solas y multiplican todo' : `Los estratos se llenan ${f(x.flujo_x)} veces más rápido`)],
         defectos: ['Defectos', 'Def', (_, n) => `Abre ${['Vacancia', 'Dislocación', 'Macla', 'Impureza'].slice(0, n).join(', ')}`],
         ruptura: ['Ruptura', 'Rup', (x) => `La Energía pasa de 1e308 y los Cristales crecen con cuánto la pasás${x.cristales_log10 ? `; cada Infinito da ${f(10 ** x.cristales_log10)} veces más` : ''}`],
         compactacion: ['Compac­tación', 'Comp', (x) => `Cada derrumbe pesa más: la Densidad sube ${f(x.densidad)}`],
@@ -564,7 +566,7 @@ export const es = {
       c1_cristales: 'Tus Cristales: cada Infinito te da más. Se gastan en la Red y en los Estratos.',
       c1_relicario: 'Cada Infinito te deja una reliquia con la pila de esa corrida. Elegí qué hace: tres iguales se fusionan, y solo dan efecto las engarzadas.',
       c1_red: 'Cada nodo tiene cuatro niveles. Al maxear uno, se derrumba y despierta a sus vecinos.',
-      c1_estratos: 'Los estratos aprietan la pila desde abajo: cada derrumbe vale más. Cada estrato que abrís llega lleno y te destraba.',
+      c1_estratos: 'Más allá del Infinito: los estratos aprietan la pila desde abajo y cada derrumbe vale más. Cada estrato que abrís llega lleno y te destraba.',
       c1_automat: 'Acá elegís todo lo que se hace solo: cada cuánto compra cada autocomprador, cuándo comprimir y cuándo hacer Infinito.',
       // Preparadas (cerradas hasta C7 y C10): se terminan de escribir en esos hitos.
       c1_defectos: 'Un Defecto es un Infinito con una regla rota. Ganalo y la recompensa queda para siempre.',
@@ -710,7 +712,7 @@ export const es = {
         'Todas van al inventario, pero solo dan efecto las engarzadas. Empezás con un engarce y el nodo Engarces suma más. Dos engarzadas del mismo tipo se suman.',
       ]],
       c1_estratos: ['Estratos', [
-        'Debajo de la pila hay ocho estratos. La arena que se escurre llena el primero, y cada uno alimenta al de abajo. No se pierden en el Infinito.',
+        'Romper el Infinito abre la puerta y los Estratos te llevan más allá: debajo de la pila hay ocho estratos. La arena que se escurre llena el primero, y cada uno alimenta al de abajo. No se pierden en el Infinito.',
         'Los estratos aprietan la pila desde abajo: eso es la Presión, y hace que cada derrumbe valga más. Cuanto más lleno y más profundo está un estrato, más aprieta.',
         'La velocidad local es cuánto se multiplican por minuto los granos de un estrato. La suben su Permeabilidad, el nodo Estratos, la Inercia, el Caudal (solo en el primero) y el estrato de abajo, que empuja al de arriba.',
         'Abrir un estrato nuevo te destraba: llega lleno de golpe hasta su tope, suma su Presión desde el primer segundo y además empuja a los de arriba.',

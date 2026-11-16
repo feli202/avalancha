@@ -2,6 +2,7 @@
 import json, sys, sim_capa1 as S
 def setp(d, path, v):
     if path.startswith('nodo.'): d, path = S.RED, path[5:]  # nodos de la Red (anillo3_1.2 tiene un punto en el nombre)
+    if path.startswith('L0.'): d, path = S.L0, path[3:]  # config.json (Capa 0)
     ks = path.split('.')
     for k in ks[:-1]: d = d[int(k)] if isinstance(d, list) else d[k]
     k = ks[-1]
