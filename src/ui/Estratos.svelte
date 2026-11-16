@@ -141,12 +141,12 @@
         {/if}
       </aside>
     </div>
-    <p>{t.que}</p>
+    <p class="que">{t.que}</p>
   {/if}
 </section>
 
 <style>
-  .estratos { display: grid; grid-template-rows: auto minmax(20rem, 1fr) auto; justify-items: center; gap: 1rem; padding: 1.5rem 0 0; animation: entrar 0.3s ease-out; }
+  .estratos { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; min-height: 0; justify-items: center; gap: 1rem; padding: 1.5rem 0 0; animation: entrar 0.3s ease-out; }
   @keyframes entrar { from { opacity: 0; } }
   p { max-width: 38rem; margin: 0; color: var(--tenue); text-align: center; text-wrap: balance; }
   .total { color: var(--hielo); font-size: 1.25rem; font-weight: 600; }
@@ -180,9 +180,14 @@
 
   /* Móvil y ventanas angostas: la escena arriba y la interfaz del estrato debajo. */
   @media (max-width: 760px) {
-    .estratos { grid-template-rows: auto auto auto; padding-top: 1rem; }
+    /* Pantalla fija: la escena toma lo que deja la ficha del estrato. */
+    .estratos { gap: 0.6rem; padding-top: 0.75rem; }
     .total { font-size: 1rem; }
-    .vista { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; min-height: auto; }
-    .escena { height: 44vh; min-height: 15rem; }
+    .vista { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(6rem, 1fr) auto; gap: 0.5rem; }
+    .ficha { padding: 0.5rem 0.9rem 0.9rem; gap: 0.5rem; }
+    .ficha h2 { font-size: 1.25rem; }
+    .compra { padding-block: 0.45rem; font-size: 0.875rem; }
+    .total { font-size: 0.875rem; }
+    .que { display: none; } /* en el celular no entra: está en "Cómo funciona" */
   }
 </style>

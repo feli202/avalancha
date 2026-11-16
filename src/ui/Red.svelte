@@ -88,10 +88,11 @@
 </section>
 
 <style>
-  .red { display: grid; justify-items: center; align-content: center; gap: 1.25rem; padding: 1.5rem 0; }
+  /* Pantalla fija: el rombo se achica para entrar en el alto y el ancho que quedan (unidades del contenedor .red). */
+  .red { container-type: size; display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center; gap: 0.75rem; height: 100%; min-height: 0; padding: 1rem 0 0.5rem; }
   .rombo {
     --gap: 0.375rem;
-    --celda: min(6.25rem, calc((100vw - 8rem - (var(--lado) - 1) * var(--gap)) / var(--lado)), calc((100vh - 16rem) / var(--lado)));
+    --celda: min(6.25rem, calc((100cqw - (var(--lado) - 1) * var(--gap)) / var(--lado)), calc((100cqh - 5.5rem - (var(--lado) - 1) * var(--gap)) / var(--lado)));
     --paso: calc(var(--celda) + var(--gap));
     display: grid; grid-template-columns: repeat(var(--lado), var(--celda)); grid-auto-rows: var(--celda); gap: var(--gap);
   }
@@ -136,6 +137,6 @@
   :global(.quieto) :is(.golpe, .grano, .recibe) { display: none; }
 
   @media (orientation: portrait) and (max-width: 1100px) {
-    .rombo { --gap: 2px; --celda: min(6.25rem, calc((100vw - 5rem - (var(--lado) - 1) * var(--gap)) / var(--lado))); }
+    .rombo { --gap: 2px; }
   }
 </style>

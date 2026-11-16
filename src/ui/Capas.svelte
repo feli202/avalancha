@@ -45,7 +45,7 @@
 {#if s.infinitos > 0 && !juego.titulo}
   <div class="capa1" class:quieto={ajustes.reducirDestellos} class:calma={ajustes.calma} inert={hayCartel()}>
     {#if juego.capa === 'cristalizacion'}
-      <main class="cristalizacion" class:llega={!juego.vistos.cristales} class:fija={juego.vistos.cristales && juego.pantalla === 'relicario'}>
+      <main class="cristalizacion" class:llega={!juego.vistos.cristales} class:fija={juego.vistos.cristales}>
         <Escarcha />
         <dl class="contadores num">
           <div class="principal">{@render cristal('emblema')}<div><dt>{txt.cristal.cristales}</dt><dd class="cristales">{formato(s.cristales)}</dd></div></div>
@@ -147,7 +147,7 @@
       radial-gradient(120% 80% at 50% 0%, #0a1322, var(--noche) 70%);
     animation: entrar 0.3s ease-out;
   }
-  /* Pantalla fija (CLAUDE.md): sin scroll de página; lo que no entra scrollea dentro de su caja. Por ahora, el Relicario. */
+  /* Pantalla fija (CLAUDE.md): ninguna pantalla de sistema scrollea; cada una se acomoda al alto que queda. */
   .cristalizacion.fija { overflow: hidden; grid-template-rows: auto auto minmax(0, 1fr); }
   /* Primera vez: la cámara cae desde la Arena. */
   .cristalizacion.llega { animation: caer 1.1s cubic-bezier(0.2, 0.8, 0.2, 1); }
