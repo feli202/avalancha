@@ -6,28 +6,29 @@
                        se enciende desde adentro. `--c` cambia el color de la luz (por defecto, hielo).
    - .pestanas-hielo   barra de pestañas rectas con ícono propio; la elegida, con una raya de hielo y un cristal sobre la línea.
    - Escarcha.svelte   partículas de escarcha cayendo detrás.
-   Reducir movimiento (`.quieto`) apaga reflejos, brillos que recorren y partículas. Nada parpadea: lo que cambia, cambia lento. */
+   Reducir movimiento (`.quieto`) apaga el reflejo de las gemas y las partículas. Nada parpadea: lo que cambia, cambia lento. */
 
 :root {
   --hielo-hondo: #050a14;
   --hielo-placa: #0a1526;
   --hielo-placa-2: #060d1a;
-  --hielo-arista: rgb(200 240 255 / 0.55);
+  --hielo-arista: rgb(159 227 245 / 0.2);
   --hielo-linea: rgb(159 227 245 / 0.16);
   /* Escarcha: puntos sueltos finos + manchas grandes muy tenues. */
-  --tex-escarcha: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .8 0 0 0 0 .94 0 0 0 0 1 .9 0 0 0 -.5'/%3E%3C/filter%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='3' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .85 0 0 0 0 1 .26 0 0 0 -.11'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23b)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23a)' opacity='.55'/%3E%3C/svg%3E");
+  --tex-escarcha: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .8 0 0 0 0 .94 0 0 0 0 1 .9 0 0 0 -.5'/%3E%3C/filter%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='3' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .85 0 0 0 0 1 .26 0 0 0 -.11'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)' opacity='.55'/%3E%3C/svg%3E");
   --tex-grietas: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 140' fill='none' stroke='%23d6f3ff' stroke-linecap='round'%3E%3Cpath d='M240 6 196 30 170 26 128 58 92 60 60 88M196 30 204 62 188 92M128 58 134 80M170 26 160 6' stroke-width='.7' opacity='.22'/%3E%3Cpath d='M240 54 214 70 218 98 200 124M214 70 188 66' stroke-width='.5' opacity='.14'/%3E%3C/svg%3E");
 }
 @property --encendido { syntax: '<number>'; inherits: true; initial-value: 0; }
 
 /* ---------- Placa ---------- */
+/* Hielo tallado, no vidrio con resplandor: bordes y caras de corte duro, sin degradados blandos ni brillos que se esfuman. */
 .placa {
   --f: 0.75rem;                       /* cateto horizontal de la faceta; el vertical sale de los 60° */
   --fv: calc(var(--f) * 1.732);
   position: relative; isolation: isolate;
   clip-path: polygon(var(--f) 0, 100% 0, 100% calc(100% - var(--fv)), calc(100% - var(--f)) 100%, 0 100%, 0 var(--fv));
-  /* La arista: el fondo del elemento asoma 1 px alrededor del relleno. Fuerte arriba, casi nada a los costados. */
-  background: linear-gradient(180deg, var(--hielo-arista), rgb(159 227 245 / 0.1) 22%, rgb(159 227 245 / 0.05) 70%, rgb(159 227 245 / 0.16));
+  /* La arista: el fondo del elemento asoma 1 px alrededor del relleno, parejo. */
+  background: var(--hielo-arista);
 }
 .placa::before {
   content: ''; position: absolute; inset: 1px; z-index: -1; pointer-events: none;
@@ -36,18 +37,16 @@
     var(--luz, none),
     var(--grieta, none) right top / min(15rem, 70%) auto no-repeat,
     var(--tex-escarcha),
-    linear-gradient(180deg, rgb(159 227 245 / 0.07), transparent 3.5rem),
-    linear-gradient(165deg, var(--hielo-placa), var(--hielo-placa-2) 75%);
+    /* Dos caras de corte: una más clara arriba a la izquierda, otra apenas abajo a la derecha. */
+    linear-gradient(118deg, rgb(159 227 245 / 0.05) 0 34%, transparent 34% 78%, rgb(0 0 0 / 0.18) 78%),
+    var(--hielo-placa);
 }
-/* El brillo frío que recorre la arista de arriba, muy lento. */
+/* El filo de arriba: una línea dura más clara. */
 .placa::after {
-  content: ''; position: absolute; top: 0; left: 0; width: 30%; height: 1px; pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.85) 50%, transparent);
-  transform: translateX(-100%); animation: recorrer 14s linear infinite; /* transform: no repinta */
-  opacity: 0.6;
+  content: ''; position: absolute; top: 0; left: var(--f); right: 0; height: 1px; pointer-events: none;
+  background: rgb(220 245 255 / 0.45);
 }
 .placa.grietas { --grieta: var(--tex-grietas); }
-@keyframes recorrer { 0% { transform: translateX(-100%); } 45%, 100% { transform: translateX(340%); } }
 
 /* ---------- Gema (botón de cristal) ---------- */
 .gema {
@@ -57,29 +56,27 @@
   padding: 0.6rem calc(var(--b) + 0.6rem);
   border: 0; font: inherit; color: var(--apagado); cursor: default; text-align: center;
   clip-path: polygon(var(--b) 0, calc(100% - var(--b)) 0, 100% 50%, calc(100% - var(--b)) 100%, var(--b) 100%, 0 50%);
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--c) calc(30% + var(--encendido) * 55%), transparent),
-    color-mix(in srgb, var(--c) calc(8% + var(--encendido) * 22%), transparent) 50%,
-    color-mix(in srgb, var(--c) calc(14% + var(--encendido) * 40%), transparent));
+  background: color-mix(in srgb, var(--c) calc(22% + var(--encendido) * 50%), transparent); /* la arista */
   transition: --encendido 0.6s ease-out, color 0.6s ease-out;
 }
 .gema::before {
-  /* El cuerpo: corona clara arriba, pabellón oscuro abajo (el bisel), y la luz que nace adentro cuando alcanza. */
+  /* El cuerpo: corona clara arriba y pabellón oscuro abajo, con el corte duro en el medio (el bisel; `--corte` lo mueve).
+     Cuando alcanza, todo el cristal toma su color de adentro. */
   content: ''; position: absolute; inset: 1px; z-index: -1; pointer-events: none; clip-path: inherit;
   background:
-    linear-gradient(180deg, rgb(234 246 255 / 0.12), rgb(234 246 255 / 0.035) 46%, rgb(0 0 0 / 0.05) 54%, rgb(0 0 0 / 0.3)),
-    radial-gradient(70% 90% at 50% 100%, color-mix(in srgb, var(--c) calc(var(--encendido) * 34%), transparent), transparent 70%),
+    linear-gradient(180deg, rgb(234 246 255 / 0.08) 0 var(--corte, 50%), rgb(0 0 0 / 0.28) var(--corte, 50%)),
+    linear-gradient(color-mix(in srgb, var(--c) calc(var(--encendido) * 9%), transparent), color-mix(in srgb, var(--c) calc(var(--encendido) * 9%), transparent)),
     var(--tex-escarcha),
-    linear-gradient(180deg, #0d1a2d, #070e1b);
+    #0a1424;
 }
 .gema::after {
-  /* El reflejo: una franja diagonal que cruza cada tanto. */
+  /* El reflejo: un filo de luz angosto, de bordes duros, que cruza cada tanto. */
   content: ''; position: absolute; inset: 0 auto 0 0; width: 70%; pointer-events: none;
-  background: linear-gradient(115deg, transparent 25%, rgb(255 255 255 / 0.09) 45%, rgb(255 255 255 / 0.02) 55%, transparent 75%);
+  background: linear-gradient(115deg, transparent 0 46%, rgb(255 255 255 / 0.1) 46% 50%, transparent 50% 53%, rgb(255 255 255 / 0.05) 53% 54%, transparent 54%);
   transform: translateX(-100%); animation: reflejo 11s ease-in-out infinite;
 }
 .gema:not([aria-disabled='true'], :disabled) { --encendido: 1; color: var(--escarcha); cursor: pointer; }
-.gema:not([aria-disabled='true'], :disabled):is(:hover, :focus-visible) { --encendido: 1.35; }
+.gema:not([aria-disabled='true'], :disabled):is(:hover, :focus-visible) { --encendido: 1.4; }
 .gema:not([aria-disabled='true'], :disabled):active { translate: 0 1px; }
 @keyframes reflejo { 0%, 55% { transform: translateX(-100%); } 100% { transform: translateX(150%); } }
 
@@ -105,6 +102,15 @@
   background: var(--fondo); border: 1.5px solid var(--hielo); z-index: 1;
 }
 
+/* Celular: solo los íconos, repartidos a lo ancho (el nombre queda para lectores de pantalla). */
+@media (max-width: 760px) {
+  .pestanas-hielo { flex-wrap: nowrap; gap: 0; }
+  .pestanas-hielo button { flex: 1; justify-content: center; min-width: 2.75rem; }
+  .pestanas-hielo svg { width: 1.375rem; height: 1.375rem; }
+  .pestanas-hielo .nombre { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .pestanas-hielo button > i { position: absolute; top: 0.5rem; left: calc(50% + 0.6rem); margin: 0; }
+}
+
 /* Reducir movimiento: sin reflejos ni brillos que recorren. */
-.quieto .placa::after, .quieto .gema::after { animation: none; opacity: 0; }
-@media (prefers-reduced-motion: reduce) { .placa::after, .gema::after { animation: none; opacity: 0; } }
+.quieto .gema::after { animation: none; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .gema::after { animation: none; opacity: 0; } }

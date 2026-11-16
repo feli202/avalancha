@@ -958,7 +958,9 @@ Solo interfaz: no se tocó `src/core/`, `balance/` ni las escenas WebGL.
 3. La barra de capas quedó de 5 rem para que "Cristalización" entre en una línea a 0,6875 rem; en el móvil, 4 rem con el nombre cortado en dos.
 4. **La barra de capas no lleva estética de capa** (pedido después de la primera versión, que era una placa de hielo): la estética de cada capa vive solo en su ícono y en el color con que se enciende al estar activa.
 5. **Pestañas sin esquirla torcida ni resplandor** (pedido: se veían inclinadas y "de IA"): rectas, sin fondo ni brillo; la personalidad la dan los íconos (Red rombo de celdas, Estratos losas apiladas, Defectos una dislocación, Escarcha copo, Relicario gema tallada) y la marca de la elegida.
-6. Las ofertas del Relicario siempre se pueden tomar, así que siempre están encendidas (con el color de la reliquia); las mejoras de Estratos se apagan cuando no alcanza.
+6. **Menos "de IA"** (pedido): placas y gemas pasaron de degradados blandos y resplandores a hielo tallado: arista pareja de 1 px, filo claro duro arriba, caras de corte recto (sin humo de ruido: la escarcha es solo el punteado fino), gemas con el bisel cortado en seco (`--corte`) y un reflejo angosto de bordes duros; encendidas se tiñen apenas (9 %) de su color. Sin resplandor en el número de Cristales ni en el borde de las placas.
+7. **En el celular (≤ 760 px) las pestañas son solo íconos**, repartidas a lo ancho en una fila; el nombre queda para lectores de pantalla.
+8. Las ofertas del Relicario siempre se pueden tomar, así que siempre están encendidas (con el color de la reliquia); las mejoras de Estratos se apagan cuando no alcanza.
 
 ## Plan (SPEC_CAPA1 §16)
 

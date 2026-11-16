@@ -55,7 +55,7 @@
         {#if juego.vistos.cristales}
           <nav class="sistemas pestanas-hielo" aria-label={txt.cristal.sistemas}>
             {#each PANTALLAS as p}
-              <button aria-current={juego.pantalla === p ? 'page' : undefined} onclick={() => (juego.pantalla = p)}><svg viewBox="-8 -8 16 16" aria-hidden="true"><path d={ICONOS[p]} /></svg>{txt.cristal.pantallas[p]}{#if p === 'relicario' && hayOferta}<i class="punto" title={txt.cristal.relicario.hay}></i>{/if}</button>
+              <button aria-current={juego.pantalla === p ? 'page' : undefined} onclick={() => (juego.pantalla = p)}><svg viewBox="-8 -8 16 16" aria-hidden="true"><path d={ICONOS[p]} /></svg><span class="nombre">{txt.cristal.pantallas[p]}</span>{#if p === 'relicario' && hayOferta}<i class="punto" title={txt.cristal.relicario.hay}></i>{/if}</button>
             {/each}
           </nav>
           {#key juego.pantalla}
@@ -156,12 +156,12 @@
   .cristalizacion > :global(:not(.escarcha)) { position: relative; }
   .contadores { display: flex; flex-wrap: wrap; align-items: end; gap: 0.5rem 3rem; margin: 0; }
   .principal { display: flex; align-items: center; gap: 0.75rem; }
-  .emblema { width: 3.25rem; height: 3.25rem; flex: none; overflow: visible; filter: drop-shadow(0 0 0.8rem rgb(159 227 245 / 0.45)); }
+  .emblema { width: 3.25rem; height: 3.25rem; flex: none; overflow: visible; filter: drop-shadow(0 0 0.3rem rgb(159 227 245 / 0.3)); }
   .emblema .destello { animation: destello 6s ease-in-out infinite; }
   :is(.quieto, .calma) .emblema .destello { animation: none; opacity: 0.6; }
   dt { font-size: 0.875rem; color: var(--tenue); }
   dd { margin: 0.125rem 0 0; font-size: 1.5rem; font-weight: 600; line-height: 1; letter-spacing: -0.02em; }
-  .cristales { font-size: clamp(2.5rem, 4vw, 3.75rem); letter-spacing: -0.03em; color: var(--hielo); text-shadow: 0 0 1.5rem rgb(159 227 245 / 0.35); }
+  .cristales { font-size: clamp(2.5rem, 4vw, 3.75rem); letter-spacing: -0.03em; color: var(--hielo); }
 
   .sistemas { margin-top: 1.75rem; }
 
@@ -179,7 +179,6 @@
   @media (orientation: portrait) and (max-width: 1100px) {
     .capas { top: 7rem; translate: none; }
     .capas button { width: 4rem; min-height: 4rem; font-size: 0.625rem; hyphens: manual; }
-    .sistemas { gap: 0 1.25rem; }
     .capas svg { width: 1.875rem; height: 1.875rem; }
     .cristalizacion { padding: 1rem 1rem 1rem 5rem; }
     .emblema { width: 2.5rem; height: 2.5rem; }
