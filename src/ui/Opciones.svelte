@@ -171,7 +171,11 @@
             </label>
           {/each}
           <label class="fila">
-            <span class="texto">{txt.reducirDestellos}<small>{txt.opciones.reducirDesc}</small></span>
+            <span class="texto">{txt.reducirDestellos}<small>{txt.opciones.calmaDesc}</small></span>
+            <input type="checkbox" bind:checked={ajustes.calma} />
+          </label>
+          <label class="fila">
+            <span class="texto">{txt.opciones.movimiento}<small>{txt.opciones.reducirDesc}</small></span>
             <input type="checkbox" bind:checked={ajustes.reducirDestellos} />
           </label>
           <label class="fila">

@@ -3,10 +3,11 @@
   // Pestañas Cascada y Mutaciones cuando aparecen (SPEC 5): ahí se compra de a un nivel, son las decisiones.
   import Decimal from 'break_infinity.js'
   import {
-    CFG, MUTACIONES, aplicar, comprar, comprarMax, comprarN, comprarTodo, costo, nivel, type ItemId, type State,
+    CFG, MUTACIONES, aplicar, autoActivo, comprar, comprarMax, comprarN, comprarTodo, costo, memoria, nivel, type ItemId, type State,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
   import { txt } from '../strings'
+  import { ajustes } from './ajustes.svelte'
   import { ayuda, ayudaItem, ayudaSimple, colorDe as color, efecto, maximo, nombre } from './ayudas.svelte'
   import { formato, hablado } from './formato'
   import { hayPanel, juego, nombreAuto, vigia } from './juego.svelte'
@@ -29,6 +30,12 @@
 
   /** Clave del autocomprador de cada fila (CFG.autocompradores), si tiene. */
   const claveAuto = (id: ItemId) => (id === 'caudal' ? 'caudal' : color(id) >= 0 ? CFG.colores[color(id)].id : null)
+
+  /** La fila se compra sola: su autocomprador prendido, o Memoria nv2 (Cascada) y nv3 (Mutaciones), como tick.ts. */
+  const automatica = (s: State, id: ItemId) => {
+    const k = claveAuto(id)
+    return k ? autoActivo(s, k) : memoria(s) >= (id === 'cascada' ? 2 : 3)
+  }
 
   /** Cuántos niveles compraría el modo actual, cuánto cuestan y si alcanza. */
   function oferta(s: State, id: ItemId) {
@@ -90,23 +97,24 @@
 <ul>
   {#each filas as id (id)}
     {@const i = color(id)}
-    {@const tope = nivel(juego.s, id) >= maximo(juego.s, id)}
-    {@const o = oferta(juego.s, id)}
+    {@const tope = nivel(juego.ver, id) >= maximo(juego.ver, id)}
+    {@const o = oferta(juego.ver, id)}
     {@const k = claveAuto(id)}
+    {@const sola = ajustes.calma && automatica(juego.ver, id)}
     <li style:--c={i >= 0 ? COLOR_CSS[ALTURA_DE_COLOR[i]] : 'var(--tinta)'} data-guia={id === 'caudal' ? 'tienda' : id}
       use:ayuda={() => ayudaItem(juego.s, id)}>
-      <button class="fila" class:puede={o.puede && !tope} disabled={!o.puede || tope} onclick={() => compra(id)}
+      <button class="fila" class:puede={o.puede && !tope} class:sola disabled={!o.puede || tope} onclick={() => compra(id)}
         aria-label="{txt.comprar} {nombre(id)} · {tope ? txt.nivelMaximo : hablado(formato(o.c, true))}">
         <span class="muestra" class:caudal={i < 0} aria-hidden="true"></span>
-        <span class="nombre">{nombre(id)} <span class="nv num">{txt.nivel(nivel(juego.s, id))}</span></span>
+        <span class="nombre">{nombre(id)} <span class="nv num">{txt.nivel(nivel(juego.ver, id))}</span></span>
         <span class="costo num">
           {#if tope}{txt.nivelMaximo}{:else}{#if o.n > 1}<span class="cuantos">{txt.comprarCuantos(o.n)}</span> {/if}{formato(o.c, true)}{/if}
         </span>
-        <span class="efecto num">{efecto(juego.s, id)}</span>
+        <span class="efecto num">{efecto(juego.ver, id)}</span>
       </button>
       {#if k && juego.vistos[`auto_${k}`]}
         <!-- SPEC 4.8: interruptor del autocomprador, fuera del botón de la fila. -->
-        <button class="auto aparece" data-guia="auto_{k}" use:ayuda={() => ayudaSimple(txt.autoDe(nombreAuto(k)), txt.guia.que.auto)} role="switch" aria-checked={juego.s.auto[k]} aria-label={txt.autoDe(nombreAuto(k))}
+        <button class="auto aparece" data-guia="auto_{k}" use:ayuda={() => ayudaSimple(txt.autoDe(nombreAuto(k)), txt.guia.que.auto)} role="switch" aria-checked={juego.ver.auto[k]} aria-label={txt.autoDe(nombreAuto(k))}
           onclick={() => alternarAuto(k)}>{txt.auto}</button>
       {/if}
     </li>
@@ -161,6 +169,8 @@
   .puede .costo { color: var(--c); }
   .puede:hover .costo { text-shadow: 0 0 0.75rem var(--c); }
   .puede:active .nombre { opacity: 0.7; }
+  /* CORRECCIONES 1: una fila que se compra sola no se enciende y se apaga con cada compra automática. */
+  .fila.sola .costo { color: var(--apagado); text-shadow: none; transition: none; }
 
   /* Interruptor del autocomprador: abajo a la derecha de la fila, en la línea del efecto. */
   .auto {

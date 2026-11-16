@@ -835,6 +835,31 @@ Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `bala
 
 **Hito actual: C6 (sin empezar). C5 terminado el 2026-11-15; falta probarlo en un celular de verdad (ver abajo).**
 
+## Correcciones de la Capa 1 (9 sesiones)
+
+Lista en `correcciones-capa1/correcciones-capa1/CORRECCIONES_CAPA1.md` (13 bloques); prompts en `PROMPTS.md` de la misma carpeta. Ese archivo manda sobre `SPEC_CAPA1.md` donde se contradigan. Los hitos C6–C14 siguen después.
+
+- [ ] **Sesión 1 — bloques 1 a 4: antiparpadeo, sonido, bug del AUTO, guías una sola vez** ← **en curso** (2026-11-15)
+- [ ] Sesión 2 — bloques 5 y 6: balance de Estratos y Red
+- [ ] Sesión 3 — bloque 13: estética de cristal y escarcha, barra lateral
+- [ ] Sesión 4 — bloque 7: multiplicadores visibles
+- [ ] Sesión 5 — bloque 8: Relicario como inventario
+- [ ] Sesión 6 — bloque 9: Red en 3D de cristal
+- [ ] Sesión 7 — bloque 11: Estratos con físicas
+- [ ] Sesión 8 — bloque 10: panel de Automatización
+- [ ] Sesión 9 — bloque 12 (guías nuevas) y cierre
+
+### Sesión 1 (2026-11-15)
+
+**Bloque 1 — antiparpadeo**
+
+- Ajuste nuevo `calma` (`ajustes.svelte.ts`), **prendido por defecto**: es el "Reducir destellos" de Ajustes → Juego. Los ajustes guardados de antes no lo tienen, así que les queda prendido.
+- **Decisión (revisar):** el "Reducir destellos" que ya existía apaga los destellos de la pila y el zoom de cámara; prenderlo por defecto le sacaba el espectáculo a la pila, contra lo que pide el bloque. Quedó como opción aparte, con otro nombre: **"Reducir movimiento"** (misma clave `reducirDestellos`, mismo valor guardado, sigue arrancando con `prefers-reduced-motion`).
+- Qué parpadeaba: el costo de cada fila pasa de apagado a su color cuando alcanza la Energía, y el autocomprador la gasta una vez por segundo. Con `calma`, la fila que se compra sola (autocomprador prendido; Cascada con Memoria nv2, Mutaciones con nv3) deja el costo apagado y fijo (`.fila.sola` en `Tienda.svelte`). Las filas a mano se siguen encendiendo.
+- Números a 10 Hz: `juego.ver` es el estado que muestran la tienda y los contadores de la Arena; un efecto de `App.svelte` lo copia de `juego.s` cada 100 ms como mucho. La economía, la pila y los clics siguen usando `juego.s`. Con la opción apagada, cada cuadro como antes.
+- No había destello ni pulso por compra en la interfaz (solo ese cambio de color). La pila no se tocó.
+- Probado en el navegador integrado con los cinco autocompradores andando (Compresión 12): 0 cambios de color en las filas en 5 s; la opción aparece en Ajustes → Juego prendida. **No medido a 60 fps:** el navegador integrado iba a ~7–16 cuadros por segundo, así que el tope de 10 Hz se ve en el código y no en una medida. "Transición suave" de los números = menos refrescos y cifras tabulares; no hay interpolación entre valores.
+
 ## Plan (SPEC_CAPA1 §16)
 
 **Actualización 1.1**

@@ -16,6 +16,8 @@ const AVISAR_DESDE = 60 // s de ausencia para mostrar "Mientras no estabas"
 
 class Juego {
   s = $state.raw(estadoInicial())
+  /** CORRECCIONES 1: el estado que muestran los números (tienda y contadores): `s` a 10 Hz como mucho (App.svelte). */
+  ver = $state.raw(estadoInicial())
   velocidad = $state(1)
   /** Debug: nivel simulado de todos los colores para ver el brillo de la pila (0 = el real). */
   nivelColores = $state(0)
@@ -337,7 +339,7 @@ export function arrancar() {
   // Cada partida nueva, su semilla del Relicario (el núcleo no tira dados: usa la que está en el estado).
   if (nueva && p !== 'corrupto') juego.s = { ...juego.s, relicario: { ...juego.s.relicario, semilla: Math.floor(Math.random() * 2 ** 31) } }
   if (p !== 'corrupto') juego.titulo = true
-  previo = juego.s
+  previo = juego.ver = juego.s
   tomarCandado()
   escucharSecretos()
   setInterval(guardarYa, GUARDAR_CADA)

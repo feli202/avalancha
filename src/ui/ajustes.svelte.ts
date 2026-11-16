@@ -14,6 +14,9 @@ const base = {
   volMusica: 0.5,
   /** SPEC 6.8: arranca como pida el sistema. */
   reducirDestellos: matchMedia('(prefers-reduced-motion: reduce)').matches,
+  /** CORRECCIONES 1: interfaz tranquila (las compras automáticas no encienden su fila; números a 10 Hz). Es el
+   * "Reducir destellos" de Ajustes; `reducirDestellos` (de antes) es el de la pila y el movimiento. */
+  calma: true,
   daltonismo: false,
   /** I11: con la pila llena, la simulación visual trabaja menos (batería y ventilador). */
   ahorro: false,

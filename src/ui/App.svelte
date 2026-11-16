@@ -23,7 +23,16 @@
   import { foto, guardarImagen } from './foto.svelte'
 
   const v = $derived(juego.vistos)
-  const s = $derived(juego.s)
+  // CORRECCIONES 1: los números se refrescan a 10 Hz como mucho (con "Reducir destellos"); la economía sigue en juego.s.
+  const VER_MS = 100
+  let visto = 0
+  $effect(() => {
+    const e = juego.s
+    if (ajustes.calma && performance.now() - visto < VER_MS) return
+    visto = performance.now()
+    juego.ver = e
+  })
+  const s = $derived(juego.ver)
 
   // Compresión: el anillo alrededor de la pila (Pila.svelte) muestra el progreso; acá, el botón con meta y porcentaje.
   const comp = $derived(progresoCompresion(s))
