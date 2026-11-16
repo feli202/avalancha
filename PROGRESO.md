@@ -860,6 +860,14 @@ Lista en `correcciones-capa1/correcciones-capa1/CORRECCIONES_CAPA1.md` (13 bloqu
 - No había destello ni pulso por compra en la interfaz (solo ese cambio de color). La pila no se tocó.
 - Probado en el navegador integrado con los cinco autocompradores andando (Compresión 12): 0 cambios de color en las filas en 5 s; la opción aparece en Ajustes → Juego prendida. **No medido a 60 fps:** el navegador integrado iba a ~7–16 cuadros por segundo, así que el tope de 10 Hz se ve en el código y no en una medida. "Transición suave" de los números = menos refrescos y cifras tabulares; no hay interpolación entre valores.
 
+**Bloque 2 — sonido sin amontonarse**
+
+- `src/ui/limite.ts` (nuevo, puro, con `tests/limite.test.ts`): `crearLimite(4, 80)` (como mucho 4 sonidos a la vez, el mismo no se repite antes de 80 ms, el que sobra se descarta) y `crearAtenuador` (derrumbes seguidos). `sonido.ts` los usa en `compra`, `hito` y `compresion`, y en el volumen de cada derrumbe: hasta 3 por segundo suenan enteros; con más, cada uno baja para que el total no crezca.
+- **Lo automático no suena.** Las compras automáticas ya no sonaban, pero sí sus consecuencias: el acorde del hito ×4 de un color (salía de mirar los niveles en `Pila.svelte`) ahora suena solo desde el clic (`Tienda.svelte`), y la implosión de la Compresión y el acorde del Infinito suenan solo si se hicieron a mano (`juego.aMano`). La animación de la Compresión automática sigue igual.
+- "Comprar todo" (botón y tecla M) no sonaba nunca: ahora suena una vez. "Máx" ya sonaba una vez.
+- **Decisiones (revisar):** (1) el tope de 4 es para compras, acordes e implosión; los derrumbes de la pila siguen con sus 12 voces de SPEC 6.7 más el atenuador (si contaran en los 4, una compra casi nunca sonaría). (2) Anillos y color nuevo siguen sonando aunque lleguen solos: son de la pila, no compras; el límite evita que se encimen. (3) La Compresión automática quedó muda: es un cambio para el jugador de la Capa 0, que antes la escuchaba.
+- Probado en el navegador integrado contando osciladores de Web Audio (no se puede escuchar desde acá): 5 s con los cinco autocompradores y la Compresión automática andando → solo la música de fondo; "Comprar todo" → una campana; 5 clics seguidos en una fila → una campana. **Falta escucharlo con oídos**, sobre todo el volumen de los derrumbes con la pila llena.
+
 ## Plan (SPEC_CAPA1 §16)
 
 **Actualización 1.1**

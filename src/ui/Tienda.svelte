@@ -53,8 +53,12 @@
   function compra(id: ItemId) {
     const s = juego.s
     juego.s = modo === 'x1' || !enTienda ? comprar(s, id) : modo === 'x10' ? comprarN(s, id, DIEZ) : comprarMax(s, id)
-    if (juego.s !== s) sonido.compra(claveAuto(id) ?? 'other')
-    if (juego.s !== s) vigia.compraManual(juego.s)
+    if (juego.s === s) return
+    // SPEC 6.7: el acorde del hito ×4 de un color o, si no, la campana de la compra. Solo acá: las compras automáticas no suenan.
+    const cada = CFG.hito_colores.cada
+    if (color(id) >= 0 && Math.floor(nivel(juego.s, id) / cada) > Math.floor(nivel(s, id) / cada)) sonido.hito('milestone')
+    else sonido.compra(claveAuto(id) ?? 'other')
+    vigia.compraManual(juego.s)
   }
 
   const alternarAuto = (k: string) => (juego.s = { ...juego.s, auto: { ...juego.s.auto, [k]: !juego.s.auto[k] } })
@@ -62,7 +66,9 @@
   const todo = () => {
     const s = juego.s
     juego.s = comprarTodo(s, items)
-    if (juego.s !== s) vigia.compraManual(juego.s)
+    if (juego.s === s) return
+    sonido.compra('other') // una sola vez, compre los niveles que compre
+    vigia.compraManual(juego.s)
   }
 
 

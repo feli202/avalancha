@@ -65,6 +65,8 @@ class Juego {
   zoomMin = $state(PX_MAX)
   /** Segundos reales con el zoom al máximo en la Compresión actual (logro Microscopio). Sin $state: sube cada cuadro. */
   zoomMaxS = 0
+  /** Sube con cada Compresión o Infinito hechos a mano: solo esos suenan (Pila.svelte). Sin $state. */
+  aMano = 0
   /** Sube con cada salto fuera de línea: Pila.svelte no anima lo que pasó en la ausencia. */
   saltos = 0
   /** Logro secreto Arena: la lluvia de granos que se ve ahora (Pila.svelte), o null. */
@@ -199,6 +201,7 @@ let previo = juego.s
 export function comprimirYa() {
   const antes = juego.s
   juego.s = comprimir(antes)
+  juego.aMano++
   transicion(antes, juego.s, juego.zoomMaxS).forEach(ganarSecreto)
   registrar(historial, antes, juego.s)
   previo = juego.s
@@ -210,6 +213,7 @@ export function infinitoYa() {
   const s = infinito(antes)
   if (s === antes) return
   juego.s = s
+  juego.aMano++
   registrar(historial, antes, s)
   previo = s
   juego.aviso = { id: avisos++, texto: txt.cristal.ganados(cristalesAlInfinito(antes)) }

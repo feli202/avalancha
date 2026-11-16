@@ -145,9 +145,7 @@
     let cristalesAntes = juego.s.cristales
     let granosAntes = juego.s.granos
     let saltosAntes = juego.saltos
-    // SPEC 6.7: acorde en cada hito ×4 de un color (cada CFG.hito_colores.cada niveles).
-    const hitos = (s: typeof juego.s) => s.colores.reduce((t, n) => t + Math.floor(n / CFG.hito_colores.cada), 0)
-    let hitosAntes = hitos(juego.s)
+    let manoAntes = juego.aMano
     grabacion.pila = pila
     const TAPAR_MS = 1500 // más que la animación más larga de entrada de Capas.svelte (1,1 s)
     let tapadaDesde = 0
@@ -170,16 +168,15 @@
         infAntes = s.infinitos
         anillosAntes = anillos(s.granos)
         coloresAntes = coloresVistos()
-        hitosAntes = hitos(s)
       }
-      const h = hitos(s)
-      if (h > hitosAntes) sonido.hito('milestone')
-      hitosAntes = h
+      // CORRECCIONES 2: lo automático (Compresión, Infinito) se ve pero no suena.
+      const aMano = juego.aMano !== manoAntes
+      manoAntes = juego.aMano
       // Comprimir (a mano o la automática): implosión. La pila de pantalla se congela con lo que tenía.
       if (s.compresiones > compAntes) {
         implotando = true
         implotaHasta = ahora + IMPLOSION_MS
-        sonido.compresion(IMPLOSION_MS)
+        if (aMano) sonido.compresion(IMPLOSION_MS)
         efecto({ compresion: { r: Math.max(pila.radioCss, 48), densidad: formatoMult(densidad(s)) } })
       }
       compAntes = s.compresiones
@@ -187,7 +184,7 @@
       if (juego.cinematica && !cineAntes) sonido.infinito(1.8, 0.6)
       cineAntes = juego.cinematica
       if (s.infinitos > infAntes && infAntes > 0) {
-        sonido.hito('milestone')
+        if (aMano) sonido.hito('milestone')
         efecto({ texto: txt.cristal.ganados(s.cristales.sub(cristalesAntes).toNumber()) })
       }
       cristalesAntes = s.cristales

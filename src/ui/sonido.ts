@@ -1,9 +1,17 @@
 // Sonido (SPEC 6.7): todo sintetizado con Web Audio, sin archivos. Todo lo tonal usa la misma escala (ESCALA).
 import { ajustes } from './ajustes.svelte'
+import { crearAtenuador, crearLimite } from './limite'
 
 const VOCES_MAX = 12 // derrumbes y golpes a la vez (SPEC 6.7); compras, acordes y música no cuentan
 const JUNTAR_MS = 50 // los derrumbes de este lapso suenan como uno
 const GOLPE_CADA_MS = 1500 // golpes graves: como mucho uno por lapso
+// CORRECCIONES 2: compras, acordes e implosión no se amontonan (los derrumbes de la pila tienen sus VOCES_MAX y su atenuador).
+const SONIDOS_MAX = 4 // a la vez; el que llega de más se descarta
+const REPETIR_MS = 80 // el mismo sonido no se repite antes
+const SUENA_MS = { compra: 400, hito: 900 } // lo que se oye de cada uno (la cola sigue, casi muda)
+const pasa = crearLimite(SONIDOS_MAX, REPETIR_MS)
+const DERRUMBES_LIBRES = 3 // por segundo a todo volumen; con más, cada uno baja para que no se sumen
+const seguidilla = crearAtenuador(DERRUMBES_LIBRES, 1000)
 const RAIZ = 146.83 // Re3
 const ESCALA = [0, 2, 4, 7, 9] // pentatónica mayor: cualquier combinación de notas consuena
 /** Grado de la escala por compra; en una octava alta. */
@@ -132,7 +140,7 @@ function arenita(n: number) {
   f.frequency.value = azar(0.9, 1.1) * (2600 - 1700 * t) // cálido: nunca agudo
   f.Q.value = 0.7
   const g = c.createGain()
-  envolvente(g, c.currentTime, 0.25 + 0.75 * t, 0.004 + 0.04 * t, dura)
+  envolvente(g, c.currentTime, (0.25 + 0.75 * t) * seguidilla(performance.now()), 0.004 + 0.04 * t, dura)
   src.connect(f).connect(g).connect(efectos)
   if (t > 0.5) g.connect(eco)
   voz(src, dura + 0.1)
@@ -204,14 +212,14 @@ function tono(frec: number, cuando: number, vol: number, largo: number, salida: 
 
 /** Compra a mano: una campana por color, en su grado de la escala. */
 export function compra(id: string) {
-  if (!listo()) return
+  if (!listo() || !pasa(`compra:${id}`, performance.now(), SUENA_MS.compra)) return
   campana(nota(10 + (GRADO_COMPRA[id] ?? 5)) * azar(0.998, 1.002), ctx!.currentTime, 0.18)
 }
 
 /** Acordes breves: arpegio rápido de notas de la escala. */
 const ACORDES = { milestone: [5, 7, 9], ring: [3, 5, 8, 10], color: [0, 5, 7, 9, 12] }
 export function hito(cual: keyof typeof ACORDES) {
-  if (!listo()) return
+  if (!listo() || !pasa(`hito:${cual}`, performance.now(), SUENA_MS.hito)) return
   const t = ctx!.currentTime
   ACORDES[cual].forEach((g, i) => {
     tono(nota(g), t + i * 0.06, 0.12, 2.2)
@@ -221,7 +229,7 @@ export function hito(cual: keyof typeof ACORDES) {
 
 /** Compresión: implosión que baja de tono durante `ms` y un acorde de recompensa al final. */
 export function compresion(ms: number) {
-  if (!listo()) return
+  if (!listo() || !pasa('compresion', performance.now(), ms)) return
   const c = ctx!
   const t0 = c.currentTime
   const t1 = t0 + ms / 1000
