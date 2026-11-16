@@ -1,6 +1,9 @@
 // Estadísticas · Producción: Energía/s = F × (K × G) × V^D partida en factores, cada uno en log10 (así se suman).
 // Usa las fórmulas del núcleo; los factores con partes internas las traen en `partes`.
-import { CFG, anillos, cascadaC, densidad, hayEstratos, multAnillos, multCascada, multColor, presion, presionEstrato, valor, type State } from '../core'
+import {
+  CFG, CFG1, anillos, cascadaC, cascadaRel, caudal, cauceRel, densidad, efectoRed, empuje, factorCaudal, hayEstratos, impulso, multAnillos,
+  multCascada, multColor, mutacionesRel, presion, presionEstrato, valor, type State,
+} from '../core'
 
 export interface Factor {
   id: string
@@ -49,4 +52,55 @@ export function desglose(s: State): Factor[] {
     // El exponente: V^D = V × V^(D−1). Lo que suma es (D − 1) × log10 V.
     { id: 'densidad', log: (densidad(s) - 1) * logV, partes: [{ id: 'exponente', log: (densidad(s) - 1) * logV, n: densidad(s) }] },
   ]
+}
+
+// ---------- Bloque 7 de las correcciones: el valor final de cada mejora y de cada estrato, con su desglose ----------
+export interface Parte { id: string; log: number; n?: number }
+/** Lo que vale una mejora con todo lo de afuera aplicado; `log` = suma de las partes (log10). */
+export interface Valor { log: number; partes: Parte[] }
+const valorDe = (partes: Parte[]): Valor => ({ log: partes.reduce((a, p) => a + p.log, 0), partes })
+
+/** Cuánto multiplica cada mejora: Caudal en granos/s; el resto, a la Energía/s (las de V, elevadas a la Densidad).
+ * null: la mejora muestra un número que no lleva multiplicadores de afuera (Mutación de Expansión y de Cascada). */
+export function valorMejora(s: State, id: string): Valor | null {
+  const M = CFG.mutaciones, rel = mutacionesRel(s), D1 = densidad(s) - 1
+  const conD = (partes: Parte[]) => { const l = valorDe(partes).log; return valorDe([...partes, { id: 'densidad', log: D1 * l, n: D1 + 1 }]) }
+  if (id === 'caudal') {
+    const m = s.mutaciones.caudal * lg(M.caudal.por_nivel)
+    return valorDe([
+      { id: 'base', log: lg(CFG.caudal.granos_base) }, { id: 'niveles', log: s.caudal * lg(CFG.caudal.mult_por_nivel) },
+      { id: 'mutacion', log: m }, { id: 'reliquia', log: m * rel },
+    ])
+  }
+  if (id.startsWith('color')) {
+    const i = Number(id.slice(5)), n = s.colores[i], H = CFG.hito_colores
+    const niv = n * lg(CFG.colores[i].mult_por_nivel), hit = Math.floor(n / H.cada) * lg(H.mult)
+    return conD([{ id: 'niveles', log: niv }, { id: 'hitos', log: hit }, { id: 'cauce', log: (niv + hit) * cauceRel(s) }])
+  }
+  if (id === 'cascada') {
+    // multCascada = 10^(c × X): cada fuente de c aporta su parte del exponente.
+    const l = multCascada(s).log10(), c = cascadaC(s), cN = CFG.cascada.c_por_nivel * s.cascada, cR = s.cascada >= 1 ? cascadaRel(s) : 0
+    const k = c > 0 ? l / c : 0
+    return conD([{ id: 'niveles', log: cN * k }, { id: 'mutacion', log: (c - cN - cR) * k }, { id: 'reliquia', log: cR * k }])
+  }
+  if (id === 'mut_caudal' || id === 'mut_colores') {
+    const m = s.mutaciones[id.slice(4) as 'caudal' | 'colores'] * lg(M[id.slice(4) as 'caudal' | 'colores'].por_nivel)
+    const p = [{ id: 'niveles', log: m }, { id: 'reliquia', log: m * rel }]
+    return id === 'mut_caudal' ? valorDe(p) : conD(p)
+  }
+  return null
+}
+
+/** Velocidad local del estrato k (γ_k, log10 por segundo) partida en factores: base × Estratos × Inercia × Permeabilidad ×
+ * Caudal (solo el primero) × empuje del de abajo. `x` = lo que multiplica cada uno. */
+export function velocidadEstrato(s: State, k: number) {
+  const E = CFG1.estratos
+  const factores = [
+    { id: 'estratos', x: efectoRed(s, 'estratos', 'flujo_x') },
+    { id: 'inercia', x: impulso(s) },
+    { id: 'perm', x: 1 + E.permeabilidad.suma_gamma * s.estratos.perm[k] },
+    ...(k === 0 ? [{ id: 'caudal', x: factorCaudal(Math.log10(caudal(s))) }] : []),
+    { id: 'empuje', x: empuje(s, k) },
+  ]
+  return { base: E.gamma_log10_por_s, factores, gamma: factores.reduce((g, f) => g * f.x, E.gamma_log10_por_s) }
 }

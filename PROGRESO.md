@@ -842,7 +842,7 @@ Lista en `correcciones-capa1/correcciones-capa1/CORRECCIONES_CAPA1.md` (13 bloqu
 - [x] Sesión 1 — bloques 1 a 4: antiparpadeo, sonido, bug del AUTO, guías una sola vez (2026-11-15; falta que lo revises jugando: ver abajo)
 - [x] Sesión 2 — bloques 5 y 6: balance de Estratos y Red (2026-11-16; el Relicario como inventario solo en el simulador, el núcleo va en la sesión 5)
 - [x] Sesión 3 — bloque 13: estética de cristal y escarcha, barra lateral (2026-11-16)
-- [ ] Sesión 4 — bloque 7: multiplicadores visibles
+- [x] Sesión 4 — bloque 7: multiplicadores visibles (2026-11-16)
 - [ ] Sesión 5 — bloque 8: Relicario como inventario
 - [ ] Sesión 6 — bloque 9: Red en 3D de cristal
 - [ ] Sesión 7 — bloque 11: Estratos con físicas
@@ -930,6 +930,30 @@ Peso al final de la 1.2: Presión 43 %, Escarcha 41 %, Colores 7 % (antes 59 / 2
 6. **Cristalografía II no suma nada todavía**: los Defectos llegan en C7 (`defectosCompletos` devuelve 0). Eco II no tiene dónde actuar hasta la Escarcha (C10).
 7. **El núcleo del Relicario no se tocó** (ofertas con semilla, como en C3): el inventario es la sesión 5. El tooltip de Engarces II ya describe la fusión automática.
 8. En el navegador integrado quedó la partida de prueba con Cristales y nodos puestos a mano.
+
+### Sesión 4 (2026-11-16) — bloque 7: multiplicadores visibles
+
+No se tocó `src/core/`, `balance/` ni el worker: todo sale de las fórmulas del núcleo.
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/ui/desglose.ts` | `valorMejora(s, id)`: el valor final de cada mejora partido en factores (log10). Caudal en granos/s (base × niveles × Mutación × Reliquia); colores (niveles × hitos × Cauce × Densidad), Cascada (cada fuente de `c`: niveles, Mutación, Reliquia; × Densidad), Mutación de Caudal y de Colores (niveles × Reliquia; la de Colores, × Densidad). `velocidadEstrato(s, k)`: base × Estratos × Inercia × Permeabilidad × Caudal (solo el 1) × empuje del de abajo. |
+| `src/ui/ayudas.svelte.ts` | `efecto()` muestra el valor final; `cuenta()` arma "512 niveles × 27 Mutación × 2,21 Reliquia = 30.490 granos/s" (los ×1 no se nombran). `Tip` suma `desglose` y `hielo`. |
+| `src/ui/Ayuda.svelte` | El tooltip muestra la cuenta debajo, separada por una línea; con `hielo`, raya y "próximo" en color hielo (estilo de la sesión 3). |
+| `src/ui/Estratos.svelte` | Presión: "Presión 10,66 → cada derrumbe vale ×10^(10,66 × Densidad 2,28) = ×1,97e24" (antes ×10^Presión, sin la Densidad: mostraba de menos). Aporte de cada estrato como ×10^(aporte × Densidad), con tooltip de la cuenta. Tooltip en la velocidad local con sus factores. "Frenado" usa `lleno()` del núcleo (antes ignoraba Capilaridad). |
+| `src/strings/es.ts`, `en.ts` | `factor` (nombres de cada factor), textos de los tooltips nuevos y de la Presión. |
+| `tests/desglose.test.ts` | Nuevo, con una partida avanzada (Red, tres reliquias, Mutaciones, Densidad, estratos): Caudal = `caudal()`; cada mejora = cuánto cae `produccion()` del núcleo sin ella; velocidad = `gammaEstrato()`; ×10^(Presión × Densidad) = cuánto cae la Energía/s sin estratos. |
+
+- **De paso**: los guiones blandos de la sesión 3 en los nombres de nodos se habían guardado como el texto `00ad` ("Cristalo00adgrafía", "Compac00adtación", en los dos idiomas): ahora son el carácter U+00AD.
+
+**Verificación**: 213 tests en verde, `tsc` y `svelte-check` sin errores. En el navegador integrado: compré Compactación nv1 con un clic en la Red y la fila de Ámbar pasó de ×3.262 a ×4.378 (Densidad 2,20 → 2,28); equipar la reliquia Mutaciones subió la fila de Caudal de 13.824 a 30.490 granos/s; tooltips de Caudal, Ámbar, velocidad y aporte mirados en captura; Estratos en 375×812 (la línea de la Presión baja a 1 rem). `medir-estratos.mjs` 1280×720: 60,4 fps en Arena y Estratos. **Sin mirar**: un celular real, el tooltip con el teclado en Estratos (los números no reciben foco), inglés en pantalla.
+
+**Decisiones (revisar)**
+
+1. **El valor final incluye la Densidad** en todo lo que está dentro del valor del derrumbe (colores, Cascada, Mutación de Colores): es lo que de verdad multiplica la Energía/s, y así un nodo como Compactación cambia las filas. Caudal no va elevado a la Densidad. Las filas de colores muestran números más grandes que antes.
+2. **Ningún nodo de la Red multiplica el Caudal hoy**: lo que lo cambia es la reliquia Mutaciones (rinde más la Mutación de Caudal). Los nodos que mueven filas son Compactación (Densidad), Cascada+ (más niveles) y Mutación+.
+3. Mutación de Expansión y de Cascada siguen como estaban ("cada anillo ×", "+c"): no tienen multiplicadores de afuera.
+4. En la velocidad del estrato 1 aparece "Caudal ×0,50" cuando el Caudal es bajo: el factor frena, y se muestra igual.
 
 ### Sesión 3 (2026-11-16) — bloque 13: hielo y cristal
 

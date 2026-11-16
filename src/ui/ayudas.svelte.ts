@@ -1,12 +1,15 @@
 // Ayuda integrada: el tooltip global (use:ayuda) y lo que dice cada mejora y número. Los textos, en src/strings.
 import {
-  CFG, aplicar, anillos, maxCascada, maxMutacion, caudal, densidad, multAnillos, multCascada, multColor, nivel, produccion, valor,
+  CFG, aplicar, anillos, maxCascada, maxMutacion, caudal, densidad, multAnillos, nivel, produccion, valor,
   type ItemId, type MutId, type State,
 } from '../core'
+import Decimal from 'break_infinity.js'
 import { txt } from '../strings'
+import { valorMejora, type Valor } from './desglose'
 import { formato, formatoMult } from './formato'
 
-export interface Tip { titulo: string; que: string; ahora?: string; prox?: string }
+/** `desglose`: la cuenta del número (bloque 7); `hielo`: tooltip de la Capa 1. */
+export interface Tip { titulo: string; que: string; ahora?: string; prox?: string; desglose?: string; hielo?: boolean }
 
 /** El tooltip visible (lo dibuja Ayuda.svelte). `fn` se relee cada cuadro: "ahora" sigue al juego. */
 export const tip = $state<{ actual: { fn: () => Tip; el: HTMLElement } | null }>({ actual: null })
@@ -66,15 +69,25 @@ export function nombre(id: ItemId) {
   return m ? txt.mutaciones[m] : id === 'cascada' ? txt.cascada : colorDe(id) >= 0 ? txt.colores[colorDe(id)] : txt.caudal
 }
 
+/** Bloque 7: el valor final, con reliquias, Red y Densidad (desglose.ts). Caudal en granos/s; el resto, ×Energía/s. */
 export function efecto(s: State, id: ItemId) {
   const m = mutDe(id)
   const n = nivel(s, id)
   if (m === 'expansion') return txt.efectoMutacion[m](formatoMult(CFG.anillos.mult_por_anillo + CFG.mutaciones[m].por_nivel * n))
   if (m === 'cascada') return txt.efectoMutacion[m](formatoMult(CFG.mutaciones[m].por_nivel * n))
-  if (m) return txt.efectoMutacion[m](formato(CFG.mutaciones[m].por_nivel ** n))
-  if (id === 'cascada') return txt.mult(formatoMult(multCascada(s)))
-  if (colorDe(id) >= 0) return `${txt.mult(formatoMult(multColor(colorDe(id), n)))} · ${txt.alturaColor[colorDe(id)]}`
+  const v = formatoMult(Decimal.pow10(valorMejora(s, id)!.log))
+  if (m) return txt.efectoMutacion[m](v)
+  if (id === 'cascada') return txt.mult(v)
+  if (colorDe(id) >= 0) return `${txt.mult(v)} · ${txt.alturaColor[colorDe(id)]}`
   return txt.efectoCaudal(formato(caudal(s)))
+}
+
+/** "8 base × 3 Red × 1,2 Reliquia = 28,8": los factores que no hacen nada (×1) no se nombran. */
+export function cuenta(v: Valor | null, unidad = (d: Decimal) => txt.mult(formatoMult(d))): string | undefined {
+  const fs = v?.partes.filter((p) => Math.abs(p.log) > 1e-9)
+  if (!v || !fs || fs.length < 2) return undefined // con un solo factor la cuenta es el mismo número
+  const nombre = (p: (typeof fs)[number]) => (p.id === 'densidad' ? `(${txt.factor.densidad} ^${n2(p.n!)})` : txt.factor[p.id])
+  return `${fs.map((p) => `${formatoMult(Decimal.pow10(p.log))} ${nombre(p)}`).join(' × ')} = ${unidad(Decimal.pow10(v.log))}`
 }
 
 /** Cuánto multiplica a la Energía/s pasar de `s` a `t` (null si ahora no hay producción para comparar). */
@@ -91,6 +104,7 @@ export function ayudaItem(s: State, id: ItemId): Tip {
     que: g.que[id],
     ahora: g.ahora(efecto(s, id)),
     prox: nivel(s, id) >= maximo(s, id) ? txt.nivelMaximo : g.proximo(efecto(t, id), cambio(s, t)),
+    desglose: cuenta(valorMejora(s, id), id === 'caudal' ? (d) => txt.efectoCaudal(formato(d)) : undefined),
   }
 }
 

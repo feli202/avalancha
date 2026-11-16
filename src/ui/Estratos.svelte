@@ -3,13 +3,15 @@
   // que se carga, se crea y se destruye con esta pantalla) y al costado va la interfaz HTML del estrato que mira la cámara.
   import Decimal from 'break_infinity.js'
   import {
-    CFG1, ESTRATOS, abrirEstrato, caudal, costoAbrir, costoMejora, cristalesDe, gammaEstrato, hayEstratos, mejorarEstrato, presion,
+    CFG1, ESTRATOS, abrirEstrato, costoAbrir, costoMejora, cristalesDe, densidad, hayEstratos, lleno, mejorarEstrato, presion,
     presionEstrato, puedeAbrir, puedeMejorar, type MejoraEstrato,
   } from '../core'
   import type { EstratosVisual } from '../render/estratosVisual'
   import { COLORES_DALTONISMO, COLORES_PILA } from '../render/paletas'
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
+  import { ayuda, type Tip } from './ayudas.svelte'
+  import { velocidadEstrato } from './desglose'
   import { formato, formatoMult } from './formato'
   import { juego } from './juego.svelte'
   import * as sonido from './sonido'
@@ -28,8 +30,23 @@
     sonido.compra('other')
   }
   /** El estrato no puede pasar al de arriba menos la separación: está al tope. */
-  const frenado = (k: number) => k > 0 && s.estratos.s[k] >= s.estratos.s[k - 1] - E.separacion_log10 - 1e-9
-  const gamma = (k: number) => gammaEstrato(s, k, Math.log10(caudal(s)))
+  const frenado = (k: number) => k > 0 && lleno(s, k) // con la separación de Capilaridad
+  const gamma = (k: number) => velocidadEstrato(s, k).gamma
+  const porMinuto = (g: number) => formatoMult(10 ** (g * 60))
+  // Bloque 7: lo que vale la Presión, ya elevada a la Densidad (así actúa en cada derrumbe).
+  const d = $derived(formatoMult(densidad(s)))
+  const vale = (p: number) => formato(Decimal.pow10(p * densidad(s)))
+  function tipVelocidad(k: number): Tip {
+    const v = velocidadEstrato(juego.s, k)
+    return {
+      titulo: t.velocidad, que: t.velocidadQue, hielo: true, ahora: t.ritmo(porMinuto(v.gamma)),
+      desglose: v.factores.filter((f) => Math.abs(f.x - 1) > 1e-9).map((f) => `${txt.factor[f.id]} ×${formatoMult(f.x)}`).join(' · ') || undefined,
+    }
+  }
+  const tipAporte = (k: number): Tip => ({
+    titulo: t.aporte, que: t.aporteQue, hielo: true,
+    desglose: t.aporteCuenta(formatoMult(presionEstrato(juego.s, k)), formatoMult(densidad(juego.s)), formato(Decimal.pow10(presionEstrato(juego.s, k) * densidad(juego.s)))),
+  })
 
   let canvas = $state<HTMLCanvasElement>()
   let visual = $state.raw<EstratosVisual>()
@@ -82,7 +99,7 @@
   {#if !hayEstratos(s)}
     <p>{t.cerrado}</p>
   {:else}
-    <p class="total num">{t.total(formatoMult(presion(s)), formato(Decimal.pow10(presion(s))))}</p>
+    <p class="total num">{t.total(formatoMult(presion(s)), d, vale(presion(s)))}</p>
     <div class="vista">
       <div class="escena">
         <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -104,9 +121,9 @@
             <div>
               <dt>{t.granos}</dt>
               <dd>{formato(Decimal.pow10(s.estratos.s[foco]))}</dd>
-              <small>{frenado(foco) ? t.tope : t.ritmo(formatoMult(10 ** (gamma(foco) * 60)))}</small>
+              <small use:ayuda={() => tipVelocidad(foco)}>{frenado(foco) ? t.tope : t.ritmo(porMinuto(gamma(foco)))}</small>
             </div>
-            <div><dt>{t.aporte}</dt><dd>+{formatoMult(presionEstrato(s, foco))}</dd></div>
+            <div use:ayuda={() => tipAporte(foco)}><dt>{t.aporte}</dt><dd>×{vale(presionEstrato(s, foco))}</dd></div>
           </dl>
           {#each MEJORAS as [que, nombre, ayuda]}
             <button class="compra gema" aria-disabled={!puedeMejorar(s, que, foco)} onclick={() => hacer(mejorarEstrato(juego.s, que, foco))}>
@@ -164,6 +181,7 @@
   /* Móvil y ventanas angostas: la escena arriba y la interfaz del estrato debajo. */
   @media (max-width: 760px) {
     .estratos { grid-template-rows: auto auto auto; padding-top: 1rem; }
+    .total { font-size: 1rem; }
     .vista { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; min-height: auto; }
     .escena { height: 44vh; min-height: 15rem; }
   }

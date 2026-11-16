@@ -93,11 +93,12 @@
 {/if}
 
 {#if a && t}
-  <div class="tip" id="ayuda-tip" role="tooltip" bind:this={caja}>
+  <div class="tip" class:hielo={t.hielo} id="ayuda-tip" role="tooltip" bind:this={caja}>
     <p class="titulo">{t.titulo}</p>
     <p>{t.que}</p>
     {#if t.ahora}<p class="ahora num">{t.ahora}</p>{/if}
     {#if t.prox}<p class="prox num">{t.prox}</p>{/if}
+    {#if t.desglose}<p class="desglose num">{t.desglose}</p>{/if}
   </div>
 {/if}
 
@@ -114,6 +115,10 @@
   .tip .titulo { margin-bottom: 0.25rem; font-size: 0.9375rem; font-weight: 600; color: var(--tinta); }
   .tip .ahora { margin-top: 0.375rem; color: var(--tinta); }
   .tip .prox { color: var(--ambar); }
+  .tip .desglose { margin-top: 0.375rem; padding-top: 0.375rem; border-top: 1px solid rgb(255 255 255 / 0.08); color: var(--tinta); }
+  /* Capa 1 (estilo de hielo de la sesión 3): raya fría en vez de ámbar. */
+  .tip.hielo { border-left-color: var(--hielo); }
+  .tip.hielo .prox { color: var(--hielo); }
 
   /* El indicador: un contorno fino que respira alrededor de lo nuevo, y una línea de texto al lado. */
   .anillo {
