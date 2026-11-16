@@ -67,7 +67,7 @@
       </main>
     {/if}
 
-    <nav class="capas placa" aria-label={txt.capas.barra}>
+    <nav class="capas" aria-label={txt.capas.barra}>
       <button class="arena" aria-current={juego.capa === 'arena' ? 'page' : undefined} onclick={() => (juego.capa = 'arena')}>
         <svg viewBox="-12 -12 24 24" aria-hidden="true">
           <!-- Una mini pila de arena en píxeles, como el logo: más clara arriba, dos granos cayendo. -->
@@ -91,14 +91,13 @@
 <style>
   /* Estética helada (SPEC_CAPA1 §11): azul noche casi negro, blancos fríos, cian tenue; facetas de 60° con aristas finas.
      El hielo es textura (líneas de grieta), no desenfoque. */
-  /* Barra de capas: una placa de hielo angosta. Cada capa con su ícono de color y el nombre debajo; la activa se enciende
-     con su color (Arena ámbar, Cristalización hielo) y una marca a la izquierda. */
+  /* Barra de capas: es de todo el juego (va a tener todas las capas), así que es neutra, con la sobriedad de la Arena:
+     fondo de la página y líneas de 1 px. La personalidad está en cada ícono: el de cada capa con su estética y su color;
+     la activa se enciende con ese color y una marca a la izquierda. */
   .capas {
-    --f: 0.6rem;
-    position: fixed; left: 0; top: 50%; translate: 0 -50%; z-index: 5; display: grid; gap: 0.25rem; padding: 0.5rem 0.25rem 0.5rem 0;
-    clip-path: polygon(0 0, calc(100% - var(--f)) 0, 100% var(--fv), 100% calc(100% - var(--fv)), calc(100% - var(--f)) 100%, 0 100%);
+    position: fixed; left: 0; top: 50%; translate: 0 -50%; z-index: 5; display: grid; gap: 0.25rem; padding: 0.5rem 0;
+    border: 1px solid var(--borde); border-left: 0; background: rgb(7 8 15 / 0.92);
   }
-  .capas::after { left: 0; }
   .capas button {
     --c: var(--ambar);
     position: relative; display: grid; justify-items: center; align-content: center; gap: 0.3rem; width: 5rem; min-height: 4.5rem; padding: 0.5rem 0.25rem;

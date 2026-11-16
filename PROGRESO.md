@@ -939,7 +939,7 @@ Solo interfaz: no se tocó `src/core/`, `balance/` ni las escenas WebGL.
 | --- | --- |
 | `src/ui/hielo.css` | Nuevo. El sistema de estilo de la Capa 1, por clases (se ponen sobre el elemento que ya existe): `.placa` (placa de hielo: azul noche, escarcha en ruido SVG, esquinas facetadas a 60° con `clip-path`, arista fría fuerte arriba y casi nada a los costados, un brillo que la recorre cada 14 s), `.placa.grietas`, `--luz` (luz extra adentro), `.gema` (botón de cristal: hexágono alargado, corona clara y pabellón oscuro como bisel, un reflejo que cruza cada 11 s; sin `aria-disabled` se enciende desde adentro en 0,6 s; `--c` cambia el color), `.pestanas-hielo` (la elegida es una esquirla encendida). Tokens `--hielo-*`, `--tex-escarcha`, `--tex-grietas`. |
 | `src/ui/Escarcha.svelte` | Nuevo. Escarcha cayendo detrás de Cristalización: tres capas de copos blandos en mosaicos de 41, 29 y 17 rem (no se repiten juntos), 95–150 s por vuelta, solo `transform`. |
-| `src/ui/Capas.svelte` | Encabezado con el cristal de emblema junto a los Cristales; pestañas `.pestanas-hielo`; "Seguir" de la presentación es una gema. **Barra de capas**: placa de 5 rem (antes 2,75), cada capa con ícono y nombre debajo: Arena = mini pila de píxeles ámbar con dos granos cayendo; Cristalización = prisma de hielo con caras de distinta luz y un destello. La activa: ícono a color con resplandor, nombre en su color, marca de 2 px y luz de su color. |
+| `src/ui/Capas.svelte` | Encabezado con el cristal de emblema junto a los Cristales; pestañas `.pestanas-hielo`; "Seguir" de la presentación es una gema. **Barra de capas**: 5 rem (antes 2,75), **neutra** (fondo del juego y borde de 1 px, como la Arena: va a tener todas las capas, no es de la Capa 1); cada capa con ícono y nombre debajo: Arena = mini pila de píxeles ámbar con dos granos cayendo; Cristalización = prisma de hielo con caras de distinta luz y un destello. La activa: ícono a color con resplandor, nombre en su color, marca de 2 px y luz de su color. |
 | `src/ui/Estratos.svelte` | La ficha del estrato es una placa con grietas; Permeabilidad, Presión y Abrir son gemas. |
 | `src/ui/Relicario.svelte` | Ofertas = gemas de punta arriba y abajo con la arista del color de la reliquia; engarces = huecos hexagonales (vacío apagado, lleno encendido de su color); las tres pilas = placas (la engarzada, con grietas, arista de su color y luz desde abajo). |
 | `src/ui/App.svelte` | `--barra` 5,25 rem: la columna izquierda de la Arena le deja lugar a la barra más ancha. |
@@ -956,7 +956,8 @@ Solo interfaz: no se tocó `src/core/`, `balance/` ni las escenas WebGL.
 1. **Componentes por clase CSS, no componentes Svelte**: `.placa` y `.gema` se ponen sobre el botón o el `aside` que ya existe; envolverlos habría obligado a pasar a mano `onclick`, `aria-*`, arrastre, etc. Solo la escarcha (que tiene marcado propio) es un componente.
 2. **La Red no se tocó**: se rehace en 3D en el bloque 9. Defectos y Escarcha siguen con su pantalla vacía.
 3. La barra de capas quedó de 5 rem para que "Cristalización" entre en una línea a 0,6875 rem; en el móvil, 4 rem con el nombre cortado en dos.
-4. Las ofertas del Relicario siempre se pueden tomar, así que siempre están encendidas (con el color de la reliquia); las mejoras de Estratos se apagan cuando no alcanza.
+4. **La barra de capas no lleva estética de capa** (pedido después de la primera versión, que era una placa de hielo): la estética de cada capa vive solo en su ícono y en el color con que se enciende al estar activa.
+5. Las ofertas del Relicario siempre se pueden tomar, así que siempre están encendidas (con el color de la reliquia); las mejoras de Estratos se apagan cuando no alcanza.
 
 ## Plan (SPEC_CAPA1 §16)
 
