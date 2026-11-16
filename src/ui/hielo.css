@@ -4,7 +4,7 @@
      .placa.grietas    con grietas tenues en una esquina. `--luz`: una capa de luz extra adentro (p. ej. lo elegido).
    - .gema             botón de cristal biselado (hexágono alargado) con un reflejo lento. Sin `aria-disabled`/`disabled` = alcanza:
                        se enciende desde adentro. `--c` cambia el color de la luz (por defecto, hielo).
-   - .pestanas-hielo   barra de pestañas: la elegida es una esquirla de hielo encendida.
+   - .pestanas-hielo   barra de pestañas rectas con ícono propio; la elegida, con una raya de hielo y un cristal sobre la línea.
    - Escarcha.svelte   partículas de escarcha cayendo detrás.
    Reducir movimiento (`.quieto`) apaga reflejos, brillos que recorren y partículas. Nada parpadea: lo que cambia, cambia lento. */
 
@@ -85,23 +85,24 @@
 
 /* ---------- Pestañas ---------- */
 .pestanas-hielo {
-  display: flex; flex-wrap: wrap; gap: 0 0.25rem; position: relative; padding-bottom: 1px;
-  background: linear-gradient(90deg, rgb(159 227 245 / 0.32), rgb(159 227 245 / 0.12) 60%, transparent) bottom / 100% 1px no-repeat;
+  display: flex; flex-wrap: wrap; gap: 0 1.75rem; position: relative;
+  background: linear-gradient(90deg, rgb(159 227 245 / 0.28), rgb(159 227 245 / 0.1) 70%, transparent) bottom / 100% 1px no-repeat;
 }
 .pestanas-hielo button {
-  --s: 0.7rem;
-  position: relative; min-height: 2.75rem; padding: 0 calc(var(--s) + 0.6rem); border: 0; background: none;
+  position: relative; display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; padding: 0; border: 0; background: none;
   color: var(--apagado); font: inherit; font-size: 1rem; cursor: pointer; transition: color 0.3s;
-  clip-path: polygon(var(--s) 0, 100% 0, calc(100% - var(--s)) 100%, 0 100%);
 }
-.pestanas-hielo button:hover, .pestanas-hielo button:focus-visible { color: var(--escarcha); }
-.pestanas-hielo button[aria-current], .pestanas-hielo button[aria-selected='true'] {
-  color: var(--escarcha); font-weight: 600;
-  background:
-    linear-gradient(90deg, transparent, rgb(255 255 255 / 0.8), transparent) top / 100% 1px no-repeat,
-    linear-gradient(180deg, rgb(159 227 245 / 0.2), rgb(159 227 245 / 0.04)),
-    var(--tex-escarcha);
-  text-shadow: 0 0 0.9rem rgb(159 227 245 / 0.6);
+.pestanas-hielo svg { width: 1rem; height: 1rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; }
+.pestanas-hielo button:hover, .pestanas-hielo button:focus-visible { color: var(--tenue); }
+/* La elegida: el texto en blanco frío, el ícono en hielo y, sobre la línea, una raya de hielo con un cristal en el medio. */
+.pestanas-hielo [aria-current], .pestanas-hielo [aria-selected='true'] { color: var(--escarcha); font-weight: 600; }
+.pestanas-hielo [aria-current] svg, .pestanas-hielo [aria-selected='true'] svg { color: var(--hielo); fill: rgb(159 227 245 / 0.18); }
+.pestanas-hielo [aria-current]::after, .pestanas-hielo [aria-selected='true']::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--hielo);
+}
+.pestanas-hielo [aria-current]::before, .pestanas-hielo [aria-selected='true']::before {
+  content: ''; position: absolute; left: 50%; bottom: -3px; width: 7px; height: 7px; margin-left: -3.5px; rotate: 45deg;
+  background: var(--fondo); border: 1.5px solid var(--hielo); z-index: 1;
 }
 
 /* Reducir movimiento: sin reflejos ni brillos que recorren. */

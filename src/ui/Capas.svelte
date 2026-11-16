@@ -12,6 +12,15 @@
   import Relicario from './Relicario.svelte'
 
   const PANTALLAS = ['red', 'estratos', 'defectos', 'escarcha', 'relicario']
+  // Un ícono por sistema, dibujado con la geometría del juego: la Red un rombo de celdas, los Estratos losas apiladas,
+  // los Defectos una red con una dislocación, la Escarcha un copo de seis brazos, el Relicario una gema tallada.
+  const ICONOS: Record<string, string> = {
+    red: 'M0-7 7 0 0 7-7 0ZM-3.5-3.5 3.5 3.5M3.5-3.5-3.5 3.5',
+    estratos: 'M-7-6.5h14l-1.5 3h-11ZM-6-1h12l-1.5 3h-9ZM-5 4.5h10l-1.5 3h-7Z',
+    defectos: 'M-7-3.5h14M-7 3.5h14M-3.5-7V7M3.5-7V0M1.5 0V7', // una dislocación: la línea de la red que se corre
+    escarcha: 'M0-7V7M-6-3.5 6 3.5M-6 3.5 6-3.5M0-7-1.5-5.5M0-7 1.5-5.5M0 7-1.5 5.5M0 7 1.5 5.5',
+    relicario: 'M-6-2.5-3.5-6h7L6-2.5 0 7ZM-6-2.5H6M-3.5-6-1.5-2.5 0 7M3.5-6 1.5-2.5 0 7',
+  }
   const s = $derived(juego.s)
   // La presentación de tres líneas, hasta que se toca Seguir (queda en el guardado).
   const visto = () => {
@@ -46,7 +55,7 @@
         {#if juego.vistos.cristales}
           <nav class="sistemas pestanas-hielo" aria-label={txt.cristal.sistemas}>
             {#each PANTALLAS as p}
-              <button aria-current={juego.pantalla === p ? 'page' : undefined} onclick={() => (juego.pantalla = p)}>{txt.cristal.pantallas[p]}{#if p === 'relicario' && hayOferta}<i class="punto" title={txt.cristal.relicario.hay}></i>{/if}</button>
+              <button aria-current={juego.pantalla === p ? 'page' : undefined} onclick={() => (juego.pantalla = p)}><svg viewBox="-8 -8 16 16" aria-hidden="true"><path d={ICONOS[p]} /></svg>{txt.cristal.pantallas[p]}{#if p === 'relicario' && hayOferta}<i class="punto" title={txt.cristal.relicario.hay}></i>{/if}</button>
             {/each}
           </nav>
           {#key juego.pantalla}
@@ -170,7 +179,7 @@
   @media (orientation: portrait) and (max-width: 1100px) {
     .capas { top: 7rem; translate: none; }
     .capas button { width: 4rem; min-height: 4rem; font-size: 0.625rem; hyphens: manual; }
-    .sistemas :global(button) { --s: 0.5rem; padding: 0 0.9rem; }
+    .sistemas { gap: 0 1.25rem; }
     .capas svg { width: 1.875rem; height: 1.875rem; }
     .cristalizacion { padding: 1rem 1rem 1rem 5rem; }
     .emblema { width: 2.5rem; height: 2.5rem; }
