@@ -5,6 +5,8 @@
   import {
     CFG, MUTACIONES, anillos, autoDisponible, caudal, cascadaC, costoCascada, costoCaudal, costoColor, costoMutacion, densidad,
     maxMutacion, multAnillos, multCascada, multColor, produccion, valor, type State,
+    CFG1, ESTRATOS, NODOS, NIVEL_MAX_RED, cauceRel, cascadaRel, costoAbrir, cristalesAlInfinito, cristalesRedLog10, espacios,
+    gammaEstrato, memoria, mutacionesRel, nivelRed, presion, separacion,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
   import { txt } from '../strings'
@@ -91,6 +93,57 @@
         g: g.autoEn(n),
         v: autoDisponible(s, k) ? '✓' : '—',
       }))),
+      ...(s.infinitos > 0 ? capa1(s) : []),
+    ]
+  }
+
+  /** Correcciones, bloque 12: una sección por sistema de la Capa 1, con su fórmula (CFG1 y el núcleo). Defectos y Escarcha,
+   * cerradas hasta sus hitos. */
+  function capa1(s: State): Seccion[] {
+    const v = juego.vistos, c1 = g.c1, R = CFG1.red, E = CFG1.estratos, RL = CFG1.relicario
+    const sec = (id: string, f: Formula[]): Seccion => ({ id, abierta: !!v[id], color: 'var(--hielo)', titulo: g.secciones[id][0], texto: g.secciones[id][1], f })
+    const mult = cristalesRedLog10(s), D = densidad(s), P = presion(s)
+    const ids = Object.keys(NODOS), completos = ids.filter((id) => nivelRed(s, id) >= NIVEL_MAX_RED).length
+    const costoAnillo = (a: number) => (a === 0 ? '1' : `10^(${d(R.costo_anillo_log10[a])} + ${d(R.paso_nivel_log10[a])}·L)`)
+    const nMem = memoria(s), mem = txt.cristal.red.nodos.memoria
+    const memX = Object.fromEntries(Object.entries(NODOS.memoria).flatMap(([k, x]) => (k !== 'pos' && Array.isArray(x) ? [[k, x[nMem - 1]]] : [])))
+    const g1 = gammaEstrato(s, 0, Math.log10(Math.max(1, caudal(s))))
+    const tipos = txt.cristal.relicario.tipos
+    return [
+      sec('c1_cristales', [
+        { r: g.rotulo.cristales, g: `⌊10^(mult + ${d(CFG1.cristales.base_log10)})⌋`,
+          v: s.infinitos === 0 ? `= ${CFG1.cristales.primer_infinito}` : `= ⌊10^(${d(mult)} + ${d(CFG1.cristales.base_log10)})⌋ = ${formato(cristalesAlInfinito(s))}` },
+        { r: g.rotulo.multRed, g: c1.multRed, v: `= ${d(mult)}` },
+        { r: g.rotulo.totales, g: formato(s.cristalesTotales), v: '' },
+      ]),
+      sec('c1_red', [
+        { r: g.rotulo.anillo, g: '|x| + |y|', v: R.costo_anillo_log10.slice(0, 3).map((_, a) => c1.anillo(a, costoAnillo(a))).join(' · ') },
+        { r: g.rotulo.costoRed, g: c1.costoRed, v: '' },
+        { r: g.rotulo.abre, g: c1.abre, v: '' },
+        { r: g.rotulo.completos, g: `nv = ${NIVEL_MAX_RED}`, v: c1.completos(completos, ids.length) },
+      ]),
+      sec('c1_relicario', [
+        { r: `${g.rotulo.efectoRel} · ${tipos.cauce[0]}`, g: c1.cauce(d(RL.cauce_colores_pct_por_nivel, 4)), v: tipos.cauce[1](cauceRel(s)) },
+        { r: `${g.rotulo.efectoRel} · ${tipos.cascada[0]}`, g: `c + ${d(RL.cascada_c_por_nivel, 4)} × (n + 1)`, v: tipos.cascada[1](cascadaRel(s)) },
+        { r: `${g.rotulo.efectoRel} · ${tipos.mutaciones[0]}`, g: `^(1 + ${d(RL.mutaciones_efecto_por_nivel, 4)} × (n + 1))`, v: tipos.mutaciones[1](mutacionesRel(s)) },
+        { r: g.rotulo.fusion, g: c1.fusion, v: '' },
+        { r: g.rotulo.engarces, g: c1.engarces(espacios(s)), v: '' },
+      ]),
+      sec('c1_estratos', [
+        { r: g.rotulo.presion, g: c1.presion(d(E.w_base_por_profundidad), d(E.presion.suma_w)),
+          v: `= ${d(P)} → ×10^(${d(P)} × ${d(D)}) = ×${formato(Decimal.pow10(P * D))}` },
+        { r: g.rotulo.velocidad, g: c1.gamma(d(E.gamma_log10_por_s, 5), d(E.permeabilidad.suma_gamma), d(E.empuje_por_estrato_inferior)),
+          v: s.estratos.abiertos ? `= ${d(g1, 6)} → ${c1.porMinuto(formatoMult(10 ** (g1 * 60)))}` : '' },
+        { r: g.rotulo.abrir, g: `s₁ = ${d(E.s1_inicial)} · s_k = s_(k−1) − ${d(separacion(s))}`,
+          v: s.estratos.abiertos < ESTRATOS ? c1.proximo(s.estratos.abiertos + 1, formato(costoAbrir(s))) : c1.todos },
+      ]),
+      sec('c1_automat', [
+        { r: g.rotulo.intervalo, g: c1.intervalo(CFG.automatizacion.intervalo_s), v: '' },
+        { r: g.rotulo.memoria, g: `nv ${nMem} / ${NIVEL_MAX_RED}`, v: nMem ? mem[2](memX, nMem) : '—' },
+        { r: g.rotulo.infinitoAuto, g: c1.espera, v: nMem >= NIVEL_MAX_RED ? '✓' : '—' },
+      ]),
+      sec('c1_defectos', []),
+      sec('c1_escarcha', []),
     ]
   }
 
@@ -109,7 +162,7 @@
     <dl>
       {#each f as x (x.r)}
         <dt>{x.r}</dt>
-        <dd><code>{x.g}</code><code class="valor num">{x.v}</code></dd>
+        <dd><code>{x.g}</code>{#if x.v}<code class="valor num">{x.v}</code>{/if}</dd>
       {/each}
     </dl>
   </details>
@@ -134,7 +187,7 @@
               <p class="texto">{g.bloqueada}</p>
             {:else}
               {#each x.texto as p}<p class="texto">{p}</p>{/each}
-              {@render formulas(x.f)}
+              {#if x.f.length}{@render formulas(x.f)}{/if}
               {#if x.id === 'pila'}
                 <h3>{g.derrumbesTitulo(d(CFG.K_derrumbes_por_grano))}</h3>
                 <p class="texto">{g.derrumbesTexto}</p>

@@ -4,7 +4,7 @@
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import { tip } from './ayudas.svelte'
-  import { hayPanel, juego } from './juego.svelte'
+  import { esGuiaCapa1, guiaEnSuLugar, hayCartel, juego } from './juego.svelte'
 
   const MARGEN = 12 // px entre el texto y lo que señala, y contra el borde de la ventana
   const DURA = 9000 // ms que dura el indicador si nadie lo toca
@@ -46,11 +46,13 @@
   })
 
   // ---------- indicador de sistema nuevo ----------
-  const clave = $derived(hayPanel() || juego.cinematica ? null : (juego.guias[0] ?? null)) // durante la cinemática del Infinito no hay nada que señalar
+  // Cada guía en su lugar: las de la Arena con la Arena al frente; las de la Capa 1 (bloque 12), con su pantalla. Durante la
+  // cinemática del Infinito no hay nada que señalar.
+  const clave = $derived(hayCartel() || juego.cinematica ? null : (juego.guias.find(guiaEnSuLugar) ?? null))
   let anillo = $state<{ x: number; y: number; w: number; h: number; c: string } | null>(null)
   let rotulo = $state<HTMLElement>()
   let objetivo: Element | null = null
-  const cerrar = () => { anillo = null; juego.guias = juego.guias.slice(1) }
+  const cerrar = () => { anillo = null; juego.guias = juego.guias.filter((k) => k !== clave) }
 
   $effect(() => {
     const k = clave
@@ -66,7 +68,7 @@
         return
       }
       if (el !== objetivo) { objetivo = el; el.scrollIntoView({ block: 'nearest' }) }
-      const c = getComputedStyle(el).getPropertyValue('--c').trim() || 'var(--tinta)'
+      const c = getComputedStyle(el).getPropertyValue('--c').trim() || (esGuiaCapa1(k) ? 'var(--hielo)' : 'var(--tinta)')
       anillo = { x: r.left, y: r.top, w: r.width, h: r.height, c }
       if (rotulo) ubicar(rotulo, r)
     })

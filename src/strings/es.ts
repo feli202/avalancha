@@ -560,6 +560,15 @@ export const es = {
       cascada: 'Pestaña nueva: la Cascada.',
       mutaciones: 'Pestaña nueva: las Mutaciones, que no se pierden.',
       auto_compresion_auto: 'Prendelo y la pila comprime sola al llegar a la meta.',
+      // Capa 1 (correcciones, bloque 12): salen la primera vez que mirás cada pantalla.
+      c1_cristales: 'Tus Cristales: cada Infinito te da más. Se gastan en la Red y en los Estratos.',
+      c1_relicario: 'Cada Infinito te deja una reliquia con la pila de esa corrida. Elegí qué hace: tres iguales se fusionan, y solo dan efecto las engarzadas.',
+      c1_red: 'Cada nodo tiene cuatro niveles. Al maxear uno, se derrumba y despierta a sus vecinos.',
+      c1_estratos: 'Los estratos aprietan la pila desde abajo: cada derrumbe vale más. Cada estrato que abrís llega lleno y te destraba.',
+      c1_automat: 'Acá elegís todo lo que se hace solo: cada cuánto compra cada autocomprador, cuándo comprimir y cuándo hacer Infinito.',
+      // Preparadas (cerradas hasta C7 y C10): se terminan de escribir en esos hitos.
+      c1_defectos: 'Un Defecto es un Infinito con una regla rota. Ganalo y la recompensa queda para siempre.',
+      c1_escarcha: 'La Escarcha crece sola con el tiempo y multiplica todo. Rompela para ganar Esquirlas.',
     } as Record<string, string>,
     auto: 'Este interruptor prende y apaga el autocomprador.',
     cerrar: 'Cerrar',
@@ -621,11 +630,34 @@ export const es = {
     bloqueada: 'Seguí jugando para descubrirlo',
     /** Nombres de las variables en las fórmulas. */
     v: { nivel: 'nivel', mut: 'mutación', anillos: 'anillos', comp: 'compresiones', expansion: 'Expansión' },
+    /** Capa 1: piezas de las fórmulas de "Cómo funciona". */
+    c1: {
+      abre: 'un vecino más cerca de Memoria en nv 4',
+      multRed: 'mult = Ruptura + Cristalografía + Cristalografía II × Defectos completos',
+      costoRed: '10^(base del anillo + paso del anillo × L)',
+      cauce: (x: string) => `colores ^(1 + ${x} × (n + 1))`,
+      presion: (w: string, sw: string) => `P = Σ ${w} × k^e × Presión × (1 + ${sw} × nivel de Presión) × lleno × s_k`,
+      gamma: (g: string, sp: string, e: string) => `γ = ${g} × Estratos × Impulso × (1 + ${sp} × Permeabilidad) × f₁ × (1 + ${e} × s₂)`,
+      anillo: (n: number, c: string) => `anillo ${n}: ${c}`,
+      completos: (n: number, de: number) => `${n} de ${de}`,
+      fusion: '3 iguales de nivel n → 1 de nivel n + 1 (nivel n = 3ⁿ Ámbar)',
+      engarces: (n: number) => `${n} ${n === 1 ? 'engarce' : 'engarces'}`,
+      porMinuto: (x: string) => `×${x} por minuto`,
+      proximo: (n: number, c: string) => `Estrato ${n} · cuesta ${c}`,
+      todos: 'Los ocho están abiertos',
+      intervalo: (s: number) => `cada ${s} s o más`,
+      espera: 'apenas llega, o al llegar a X Cristales (con Romper el Infinito)',
+    },
     rotulo: {
       caudal: 'Granos por segundo', costo: 'Costo del próximo nivel', produccion: 'Energía por segundo',
       mult: 'Multiplicador', anillos: 'Anillos', multAnillos: 'Multiplicador de los anillos', proximoAnillo: 'Próximo anillo',
       densidad: 'Densidad', meta: 'Próxima meta', c: 'Fuerza de la Cascada', derrumbes: 'Derrumbes por grano',
       total: 'Derrumbes de N granos soltados de a uno',
+      cristales: 'Cristales del próximo Infinito', multRed: 'Multiplicador de la Red (log₁₀)', totales: 'Cristales totales',
+      anillo: 'Anillo de un nodo', costoRed: 'Costo del nivel L', abre: 'Se abre con', completos: 'Nodos completos',
+      efectoRel: 'Efecto de una reliquia de nivel n', fusion: 'Fusión', engarces: 'Engarces',
+      presion: 'Presión', velocidad: 'Velocidad local del estrato 1', abrir: 'Al abrir el estrato k', proximo: 'Próximo estrato',
+      intervalo: 'Intervalo de un autocomprador', memoria: 'Memoria', infinitoAuto: 'Infinito automático',
     } as Record<string, string>,
     granosUnidad: (g: string) => `${g} granos`,
     derrumbesUnidad: (d: string) => `≈ ${d} derrumbes`,
@@ -661,6 +693,36 @@ export const es = {
         'Llegan con las compresiones. Una vez por segundo compran todos los niveles que alcancen de lo suyo, como "Máx".',
         'La Cascada y las Mutaciones siempre son a mano: son las decisiones.',
       ]],
+      // Capa 1 (correcciones, bloque 12)
+      c1_cristales: ['Cristales e Infinito', [
+        'Cuando la Energía llega a 1e308, la pila llega al Infinito: se cristaliza, te da Cristales y la Arena vuelve a empezar.',
+        'Se pierde todo lo de la Arena: Energía, granos, niveles, Cascada, Mutaciones y las compresiones (salvo las que conserve la Red). Quedan los Cristales, la Red, el Relicario y los Estratos, así que cada corrida va más rápido que la anterior.',
+        'Los Cristales totales nunca bajan: cuentan todo lo que ganaste.',
+      ]],
+      c1_red: ['Red', [
+        'La Red es una pila vista desde arriba: un rombo de nodos alrededor de Memoria. Cada nodo tiene cuatro niveles, con los colores de la Arena: Ámbar, Coral, Jade y Violeta.',
+        'Maxear un nodo (llevarlo a Violeta) hace que se derrumbe y despierte a sus vecinos: así se abren los nodos más lejos del centro. Lo que da un nodo nuevo se descubre cuando se abre.',
+        'Cada anillo más afuera es más caro. Ningún nodo repite lo que hace otro.',
+      ]],
+      c1_relicario: ['Relicario', [
+        'Cada Infinito te deja una reliquia y vos elegís qué hace: Cauce (los colores valen más), Cascada (la Cascada empuja más) o Mutaciones (rinden más las de Caudal y Colores). Si no elegís en 30 s, se elige sola con la regla de Automatización.',
+        'Cada reliquia lleva grabada la pila de su Infinito. Nace Ámbar; tres iguales (mismo tipo y mismo color) se fusionan en una del color siguiente. Después de Violeta vuelve Ámbar, con un +1.',
+        'Todas van al inventario, pero solo dan efecto las engarzadas. Empezás con un engarce y el nodo Engarces suma más. Dos engarzadas del mismo tipo se suman.',
+      ]],
+      c1_estratos: ['Estratos', [
+        'Debajo de la pila hay ocho estratos. La arena que se escurre llena el primero, y cada uno alimenta al de abajo. No se pierden en el Infinito.',
+        'Los estratos aprietan la pila desde abajo: eso es la Presión, y hace que cada derrumbe valga más. Cuanto más lleno y más profundo está un estrato, más aprieta.',
+        'La velocidad local es cuánto se multiplican por minuto los granos de un estrato. La suben su Permeabilidad, el nodo Estratos, la Inercia, el Caudal (solo en el primero) y el estrato de abajo, que empuja al de arriba.',
+        'Abrir un estrato nuevo te destraba: llega lleno de golpe hasta su tope, suma su Presión desde el primer segundo y además empuja a los de arriba.',
+      ]],
+      c1_automat: ['Automatización', [
+        'Todo lo que se hace solo, en una pantalla: los autocompradores de la Arena, la Compresión y el Infinito automáticos, y la regla con que se eligen las reliquias.',
+        'Cada autocomprador compra cada tanto (como mucho una vez por segundo) la cantidad que elijas: ×1, ×10 o Máx. Memoria los deja andando desde el inicio de cada Infinito y suma la Cascada, las Mutaciones y el Infinito automáticos.',
+        'El Infinito automático se hace apenas llegás. Con Romper el Infinito puede esperar hasta dar X Cristales.',
+      ]],
+      // Preparadas (cerradas hasta C7 y C10)
+      c1_defectos: ['Defectos', ['Un Defecto es un Infinito con una regla rota. Si llegás a la meta, la recompensa queda para siempre.']],
+      c1_escarcha: ['Escarcha', ['La Escarcha crece sola con el tiempo y multiplica todo. Rompela cada tanto para ganar Esquirlas.']],
     } as Record<string, [string, string[]]>,
     colorTexto: (nombre: string, altura: string, mult: string, cada: number, hito: number) => [
       `${nombre} hace valer más los derrumbes en las ${altura}. Cada nivel multiplica por ${mult}, y cada ${cada} niveles hay un ×${hito} extra.`,

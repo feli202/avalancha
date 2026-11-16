@@ -13,8 +13,8 @@ Al llegar al primer Infinito la pila de arena se **cristaliza**. Aparece una seg
 | Sistema | Qué hace en una línea | Llega en |
 |---|---|---|
 | **Relicario de Cristal** | Cada Infinito elegís el tipo de una reliquia nueva; 3 iguales se funden en el color siguiente. | 1.1 (primer Infinito) |
-| **Red** | Una "pila" de nodos con 4 niveles de color; maxear un nodo abre sus vecinos. Automatización, mejoras y llaves. | 1.1 |
-| **Estratos** | 8 pilas debajo de la pila principal que se llenan solas con la arena que cae y empujan la producción (Presión). Vista 3D descendente. | 1.1 |
+| **Red** | Una "pila" de nodos con 4 niveles de color; maxear un nodo abre sus vecinos. Mejoras y llaves (la Automatización se configura en su propio panel, §11). | 1.1 |
+| **Estratos** | 8 pilas debajo de la pila principal que se llenan solas con la arena que cae y empujan la producción (Presión). Vista 2D: un embudo de arena de colores. | 1.1 |
 | **Defectos** | Desafíos: jugar un Infinito con una regla rota. Recompensa permanente. | 1.1 (4) y 1.2 (4) |
 | **Escarcha** | Una capa de hielo que crece sola con el tiempo, multiplica todo y se "rompe" para dar Esquirlas. | 1.2 |
 
@@ -49,7 +49,7 @@ Tiempo de juego **desde el primer Infinito** (la Capa 0 completa dura ~3 h y no 
 | **FIN CAPA 1**: 1e308 Cristales | **14,82 h** | 15,04 h | 16,09 h |
 
 - Hueco máximo entre compras de la Capa 1 (después de la hora 1,5): **31 min** (35 min para el jugador de cada 5 min). Durante esos huecos siempre hay compras de Arena y la Escarcha creciendo; son las corridas largas del final, donde el jugador espera un Infinito grande.
-- **Abrir un estrato se nota enseguida** (se llena de golpe, §7.2). Lo que multiplica la producción en el momento de abrirlo, `10^(D × Presión que suma)`, medido en el simulador: E1 ×1e2,3 · E2 ×1e6,3 · E3 ×1e13 · E4 ×1e16 · E5 ×1e19 · E6 ×1e40 · E7 ×1e72 · E8 ×1e103. El mínimo pedido es ×100.
+- **Abrir un estrato se nota enseguida** (se llena de golpe, §7.2). Lo que multiplica la producción en el momento de abrirlo, `10^(D × Presión que suma)`, medido en el simulador: E1 ×1e2,3 · E2 ×1e6,3 · E3 ×1e13,2 · E4 ×1e16,4 · E5 ×1e18,7 · E6 ×1e39,5 · E7 ×1e71,8 · E8 ×1e103 (las tres revisiones dan lo mismo). El mínimo pedido es ×100.
 - La segunda corrida (~1 h) es intencional: es la Capa 0 de nuevo pero con la primera reliquia y la primera compra de la Red; enseña que "volver a empezar" ahora es rápido.
 - Peso de cada fuente de producción (en log10 de V) al final de cada parte:
 
@@ -102,9 +102,9 @@ Tres tipos de reliquia. Efectos pasivos y moderados:
 
 | Tipo | Efecto por nivel `n` (n = 0, 1, 2…) |
 |---|---|
-| **Cauce** | Los colores valen +1,5 % × (n+1) más (se suma `colores_log10 × 0,015 × (n+1)` a log V). |
+| **Cauce** | El valor de los colores ^(1 + 0,015 × (n+1)) (se suma `colores_log10 × 0,015 × (n+1)` a log V). |
 | **Cascada** | +0,02 × (n+1) al exponente `c` de la Cascada. |
-| **Mutaciones** | Las Mutaciones de Caudal y Colores rinden +8 % × (n+1). |
+| **Mutaciones** | Las Mutaciones de Caudal y Colores ^(1 + 0,08 × (n+1)) (su exponente × (1 + 0,08 × (n+1))). |
 
 **Inventario (correcciones, bloque 8)**: cada Infinito te da **una** reliquia y **vos elegís el tipo** (Cauce, Cascada o Mutaciones); nace Ámbar (nivel 0) y va a una grilla de casilleros (24 al principio; si se llena, crece). La cara de cada reliquia es **la pila de ese Infinito**: una instantánea de 32×32 celdas a 2 bits (256 bytes) teñida con el color de su nivel, dibujada por el generador de miniaturas compartido.
 
@@ -126,7 +126,9 @@ Tres tipos de reliquia. Efectos pasivos y moderados:
 
 **Pulido (1.2)**: con Esquirlas sumás reliquias "virtuales" a un tipo equipado. Costo (log10 de Esquirlas) = `1 + 0,477 × pulidos × pulido_x + log10(reliquias del tipo)`. `pulido_x` = 1, o 0,7/0,5/0,35/0,25 con Engarces II.
 
-Inventario completo y auto-equipar quedan para la Capa 2 (ver §15).
+**Cómo se ve** (correcciones, bloque 8): pantalla fija. Engarces hexagonales y la elección (o la ficha de la reliquia elegida) a la izquierda, el inventario a la derecha (solo la grilla scrollea; 6 columnas en el celular). Cada tipo tiene su sello (`IconoTipo.svelte`): Cauce dos corrientes que se juntan, Cascada un derrumbe que se abre en anillos, Mutaciones una doble hélice; el mismo sello marca sus filas en la Arena. Sin porcentajes: los efectos se escriben como `^1,015`, `+0,02 a c`.
+
+Un cuarto tipo de reliquia y builds guardadas quedan para la Capa 2 (ver §15).
 
 ---
 
@@ -147,7 +149,9 @@ La Red es una pila de arena vista desde arriba: un rombo de nodos alrededor de *
  -3                                               Abismo
 ```
 
-Anillo = |x| + |y|. Anillos 0–2 en la 1.1 (13 nodos). Anillo 3 (12 nodos) en la 1.2, se ve en gris con un candado de hielo hasta abrir la Escarcha.
+Anillo = |x| + |y|. Anillos 0–2 en la 1.1 (13 nodos). Anillo 3 (12 nodos) en la 1.2, se ve bajo el hielo hasta abrir la Escarcha.
+
+**Cómo se ve** (correcciones, bloque 9, versión final en SVG; la pila 3D de three.js se probó y se descartó): la Red es plana. Cada nodo es una mini pila abeliana teñida con el color de su nivel, con su emblema, su nombre y cuatro cuadros de nivel; los completos se unen a sus vecinos con escarcha (trazo fino con ramitas a 60°). Al completar uno, el nodo late y salen fragmentos hacia cada vecino (se saltea con Reducir destellos). Los nodos del anillo 3 se ven como bloques escarchados con un copo, sin nombre; más allá, dos anillos de puntos que se apagan: la Red sigue. **Sorpresa**: un nodo que todavía no se abrió no dice qué da. Zoom propio (rueda, pellizco, barra; doble clic = encuadre), que no se guarda. Ficha al costado (abajo en el celular) con nivel, efecto, siguiente nivel y el botón con el costo.
 
 ### 6.2 Costos (log10 de Cristales)
 
@@ -232,20 +236,16 @@ El término cúbico es lo que frena la explosión: el jugador sube todos los est
 
 **Hito de la 1.1**: Estrato 8 con `s_8 ≥ 100` (1e100 granos) teniendo Vacancia, Dislocación, Macla e Impureza completos.
 
-### 7.4 Vista 3D (three.js)
+### 7.4 Vista: el embudo (2D)
 
-- En la pantalla de la Arena, debajo de la pila, una **flecha** discreta "↓ Estratos" (solo cuando ya hay estratos).
-- La pantalla de Estratos es una escena 3D que **desciende**: arriba, la sombra de la pila principal (un disco oscuro difuso, no la pila real); debajo, cada estrato como una losa translúcida de hielo/sedimento con su mini-pila (un heightmap) y su número. Scroll o arrastre = la cámara baja de estrato en estrato. Los estratos sin abrir se ven como roca oscura con el costo encima.
-- Cada estrato tiene **su propia interfaz** al costado (HTML, no en el canvas): `s_k`, su aporte a la Presión, y los botones Permeabilidad y Presión con costo y efecto.
-- Partículas finas cayendo entre estratos con densidad proporcional a `γ_k` (visual, sin efecto).
+Correcciones, bloque 11: la escena 3D descendente de three.js se reemplazó por un **embudo en 2D**, en pixel art (se eligió entre cinco maquetas, `mockups/estratos/`). three.js ya no está en el juego.
 
-**Optimización (obligatoria, medir 60 fps en una notebook integrada y en celular de gama media):**
-- El renderer se crea al entrar a la pantalla y se **destruye** (`dispose` de geometrías, materiales, texturas y renderer) al salir. Nunca dos contextos WebGL a la vez además del de la pila.
-- Render **a demanda**: un frame cuando cambia la cámara o el estado; las partículas a 30 fps como máximo; nada cuando la pestaña está oculta (`visibilitychange`).
-- Los heightmaps se regeneran a 2 Hz como máximo, en una textura chica (64×64) desplazada en el shader de vértices; 8 losas = 8 mallas de 64×64 o una `InstancedMesh`.
-- Partículas en un solo `Points` con buffer fijo (≤ 2000), sin crear objetos por frame.
-- Sombras falsas (un quad con gradiente), sin `shadowMap`. `pixelRatio` tope 1,5 (1 en celular). Sin postprocesado en móvil.
-- three.js con **versión exacta** en `package.json`, importando solo lo necesario.
+- Arriba, el casquete de la pila principal llena; debajo, ocho bandejas cada vez más angostas unidas por paredes en diagonal. **Física de arena que cae** (gravedad y deslizamiento a 45°, grilla de 120×92, `src/render/embudo.ts`, pura) en un worker a 20 pasos/s que se crea al entrar y se termina al salir. Cada grano guarda su color: los de la **paleta equipada**, en la misma proporción que en la pila llena.
+- Los poros del piso de cada bandeja se abren cuando pasa su nivel; los estratos cerrados son roca con "Estrato N · costo" grabado (lo que cae encima se pierde). El próximo, si alcanza, se agrieta; al abrirlo la roca salta en pedazos y la bandeja se llena de golpe.
+- Lo lleno que se ve cada bandeja y el chorro son visuales (`s_k / (s_k + 6)` hasta 0,9; el chorro crece con `log2(1 + γ/γ_base)`), no balance.
+- Ficha del estrato de tamaño fijo: granos, ritmo (×N por minuto), aporte como ×10^(aporte × Densidad), desglose de la velocidad local y las dos mejoras (Permeabilidad, una gema de hielo; Presión, una placa de prensa). Se elige un estrato tocándolo o con las flechas.
+- En la Arena, debajo de la pila, una flecha discreta "↓ Estratos" cuando ya hay estratos.
+- Medido: 60 fps en 1366×768 (0,42 ms por cuadro) y ~59 en 390×844 con la CPU ÷4. Sin scroll de página.
 
 ---
 
@@ -306,13 +306,19 @@ Pantalla de estadísticas (estilo AD): desglose de log10 V por fuente, con porce
 
 ## 11. Interfaz
 
-- **Barra lateral de capas** (izquierda, angosta): Arena → Cristalización. La Capa 2 aparece como silueta gris al final de la 1.2.
+- **Barra lateral de capas** (izquierda, 5 rem; neutra, con la sobriedad de la Arena): Arena (una mini pila ámbar en píxeles) → Cristalización (un prisma de hielo), con el nombre debajo del ícono; la activa se enciende con su color. Abajo, separada por una línea, **Automatización** (no es una capa sino de todo el juego). La Capa 2 aparece como silueta gris al final de la 1.2.
+- **Panel de Automatización** (correcciones, bloque 10): "Encender todo" / "Apagar todo"; a la izquierda las compras (Caudal, los cuatro colores, Cascada, Mutaciones), cada una con su intervalo (como mínimo `automatizacion.intervalo_s` = 1 s), su cantidad (×1 / ×10 / Máx) y su interruptor; a la derecha la Compresión automática (al llegar al umbral / esperar X s más) y el Infinito automático (apenas llega; con Romper el Infinito, "al llegar a X Cristales") con la regla de reliquias (§5). Se ven los que el jugador tiene y el siguiente como silueta con lo que lo desbloquea. Una sola regla (`autoDisponible`) decide si un autocomprador existe para la economía, la tienda y el panel. Con los valores por defecto el núcleo hace lo mismo que antes del panel.
+- La fila de íconos (foto, logros, estadísticas, ajustes, ayuda) está en todas las capas.
 - Dentro de Cristalización, **segunda barra** con: **Red · Estratos · Defectos · Escarcha · Relicario**. Cada una es su propia pantalla a pantalla completa; nunca paneles encima de la pila. Las que no están abiertas no se muestran (o se muestran como "???" solo la siguiente).
 - La pila principal **no se mueve nunca** por la interfaz (misma regla de la Capa 0).
-- **Estética helada**: fondo azul noche casi negro, blancos fríos, cian tenue para lo nuevo; facetas de cristal (bordes con un brillo fino, ángulos de 60°). Los 4 colores de la Capa 0 siguen siendo los colores de nivel. Nada de "glassmorphism" genérico: el hielo es textura (grietas, escarcha en los bordes), no blur.
+- **Estética helada** (correcciones, bloque 13; `src/ui/hielo.css`): fondo azul noche casi negro, blancos fríos, cian para lo de la capa. Paneles = **placas de hielo** (`.placa`: escarcha en ruido fino, esquinas facetadas a 60° con `clip-path`, arista fría arriba, cuerpo apenas translúcido); botones de compra = **gemas** (`.gema`: biselados, un reflejo que cruza lento, se encienden desde adentro en 0,6 s cuando alcanza). Escarcha cayendo detrás de Cristalización (tres capas lentas, solo `transform`). Pestañas rectas con un ícono propio por sistema. Los 4 colores de la Capa 0 siguen siendo los colores de nivel. Sin `backdrop-filter`, sin tarjetas con sombra, sin emojis. Automatización y la barra de capas son neutras (de todo el juego).
+- **Reducir destellos** (Ajustes → Juego, prendido por defecto): las compras automáticas no destellan ni suenan; los números de la tienda y los contadores se refrescan a 10 Hz como mucho; nada cambia de brillo más de 3 veces por segundo. La pila no se toca. **Reducir movimiento** (aparte) apaga además los destellos de la pila, la escarcha y los reflejos.
+- **Sonido**: lo automático no suena; como mucho 4 sonidos a la vez, el mismo no se repite antes de 80 ms, "Comprar todo" / "Máx" suenan una vez; los derrumbes seguidos bajan de volumen.
+- **Multiplicadores a la vista** (bloque 7): cada fila muestra su valor final y el tooltip la cuenta ("512 niveles × 27 Mutación × 2,21 Reliquia = 30.490 granos/s"). Siempre como multiplicadores o notación matemática (×3, ^1,015, +0,02 a c), nunca porcentajes.
+- **Pantallas sin scroll**: cada pantalla entra entera en la ventana (1366×768 y 390×844); si hay una lista larga, scrollea solo esa caja.
 - Contadores arriba: Energía (Arena), Cristales, Cristales totales, Esquirlas (1.2).
 - Primer Infinito: cinemática corta (la pila se congela desde abajo, se rompe en cristales, la cámara cae a la pantalla de Cristalización). Explica en 3 líneas qué son los Cristales y abre el primer Relicario.
-- Guías integradas + panel de ayuda con las fórmulas (como en la Capa 0) para cada sistema nuevo.
+- **Guías** (correcciones, bloques 4 y 12): cada guía tiene un id y se anota como vista en el guardado: sale **una sola vez en la vida de la partida**. Las de la Capa 1 salen la primera vez que se mira cada pantalla (así llegan de a una): Cristales (al cerrar la presentación), Relicario, Red, Estratos (cuando ya están abiertos) y Automatización. Cada una tiene su página en "Cómo funciona" (?) con la fórmula y los valores actuales. Defectos y Escarcha tienen su lugar preparado, cerrado hasta C7 y C10. Las de la Capa 0 se muestran con la Arena al frente; las de la Capa 1, fuera de ella.
 - Textos en español rioplatense en el archivo de cadenas.
 
 ---
@@ -336,11 +342,11 @@ El simulador no modela el offline: hay que probarlo con un test aparte (12 h off
 ## 14. Problemas a evitar (lecciones del balance)
 
 1. **Bucles multiplicativos**: Cristales → Presión → más Cristales explota. Por eso: costos cúbicos de los estratos, blando de Cristales sobre 1e50, Escarcha lineal en el tiempo. Cualquier efecto nuevo que escale con Cristales se mete en el simulador antes que en el código.
-2. **Esperas vacías**: hueco máximo 32 min medido. Si un cambio crea un hueco > 40 min, el test de balance falla.
+2. **Esperas vacías**: hueco máximo 31 min medido. Si un cambio crea un hueco > 40 min, el test de balance falla.
 3. **Defectos imposibles o triviales**: las metas salen de `probe.py`, no a ojo.
 4. **Elección frustrante**: no hay azar en el Relicario (elegís el tipo); la regla automática es configurable.
 5. **Números**: todo lo grande en log10 o break_infinity. `s_k`, `logX` y Cristales nunca en float lineal.
-6. **Rendimiento**: three.js solo en su pantalla y destruido al salir; la pila sigue a 60 fps.
+6. **Rendimiento**: la única escena WebGL es la pila; la Red es SVG y los Estratos canvas 2D con su física en un worker que se termina al salir. La pila sigue a 60 fps.
 7. **Demasiadas monedas juntas**: en la 1.1 solo hay Cristales; Esquirlas recién en la 1.2.
 8. **Árbol ilegible**: la Red se lee como una pila (rombo), con 4 colores; nada de líneas cruzadas ni árbol de habilidades clásico.
 9. **Offline mejor que activo**: prohibido (test).
@@ -351,7 +357,7 @@ El simulador no modela el offline: hay que probarlo con un test aparte (12 h off
 ## 15. Ganchos para la Capa 2
 
 - La Red crece: un anillo 4 (los datos de nodos están en config; se agrega sin tocar código).
-- Inventario de reliquias, auto-equipar por build, cuarto tipo de reliquia.
+- Builds de reliquias guardadas, cuarto tipo de reliquia.
 - Estratos 9+ y una "presión inversa" hacia la Capa 2.
 - Más Defectos (un tercer grupo) que mezclan dos reglas.
 - La Escarcha puede pasar a ser "permanente" como recompensa de la Capa 2.
@@ -366,9 +372,9 @@ El simulador no modela el offline: hay que probarlo con un test aparte (12 h off
 |---|---|---|
 | C1 | Guardado v2 + migración, Cristales, Infinito nuevo, barra lateral de capas y de Cristalización (pantallas vacías) | Fable |
 | C2 | Red: datos desde config, forma de rombo, compra, apertura de vecinos, Memoria (automatización) | Opus |
-| C3 | Relicario: ofertas con semilla, fusión, engarces, efectos | Opus |
+| C3 | Relicario: fusión, engarces, efectos (ofertas reemplazadas por el inventario en las correcciones, bloque 8) | Opus |
 | C4 | Estratos: lógica (`s_k`, Presión, compras) + interfaz 2D provisoria | Fable |
-| C5 | Estratos: escena three.js descendente + optimización | Fable |
+| C5 | Estratos: escena descendente + optimización (reemplazada por el embudo 2D en las correcciones, bloque 11) | Fable |
 | C6 | Romper el Infinito + fórmula de Cristales + Infinito automático óptimo | Fable |
 | C7 | Defectos 1–4 + visuales | Opus |
 | C8 | Test de balance de la 1.1 + offline + estadísticas | Fable |

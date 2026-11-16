@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, CFG1, anillos, autoDisponible, comprimir, conFoto, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, fueraDeLinea, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
+import { CFG, CFG1, anillos, autoDisponible, comprimir, conFoto, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, fueraDeLinea, hayEstratos, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
 import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
@@ -145,7 +145,24 @@ function condiciones(s: State): Record<string, boolean> {
   }
   for (let i = 1; i < CFG.colores.length; i++) c[`color${i}`] = s.coloresDesbloqueados > i
   for (const k of Object.keys(CFG.autocompradores)) c[`auto_${k}`] = autoDisponible(s, k)
+  // Correcciones, bloque 12: las guías de la Capa 1 salen la primera vez que se mira cada pantalla (así llegan de a una).
+  // Defectos y Escarcha quedan preparadas pero cerradas hasta sus hitos (C7, C10).
+  const cris = s.infinitos > 0 && juego.capa === 'cristalizacion' && !!juego.vistos.cristales
+  c.c1_cristales = cris
+  for (const p of ['relicario', 'red']) c[`c1_${p}`] = cris && juego.pantalla === p
+  c.c1_estratos = cris && juego.pantalla === 'estratos' && hayEstratos(s)
+  c.c1_automat = s.infinitos > 0 && juego.capa === 'automatizacion'
+  c.c1_defectos = c.c1_escarcha = false
   return c
+}
+
+/** Las guías de la Capa 1 se muestran fuera de la Arena; las demás, en la Arena. */
+export const esGuiaCapa1 = (k: string) => k.startsWith('c1_')
+/** La guía se puede mostrar ahora: la de cada pantalla, solo con esa pantalla al frente (si quedó en cola, espera). */
+export function guiaEnSuLugar(k: string): boolean {
+  if (!esGuiaCapa1(k)) return juego.capa === 'arena'
+  if (k === 'c1_automat') return juego.capa === 'automatizacion'
+  return juego.capa === 'cristalizacion' && (k === 'c1_cristales' || juego.pantalla === k.slice(3))
 }
 
 /** Nombre de lo que compra cada autocomprador (claves de AUTOS). */
@@ -178,7 +195,7 @@ export function revelar(s: State) {
   if (autos.length) frases.push(txt.autocompradores(autos))
   const guias = nuevos.filter((k) => k in txt.guia.indicador || k === primerAuto)
   if (guias.length) juego.guias = [...juego.guias, ...guias].slice(-AVISOS_JUNTOS)
-  juego.aviso = { id: avisos++, texto: frases.slice(-AVISOS_JUNTOS).join(' ') }
+  if (frases.length) juego.aviso = { id: avisos++, texto: frases.slice(-AVISOS_JUNTOS).join(' ') }
 }
 
 let logrosAvisados = 0

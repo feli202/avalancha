@@ -49,14 +49,14 @@
       <main class="cristalizacion" class:llega={!juego.vistos.cristales} class:fija={juego.vistos.cristales}>
         <Escarcha />
         <dl class="contadores num">
-          <div class="principal">{@render cristal('emblema')}<div><dt>{txt.cristal.cristales}</dt><dd class="cristales">{formato(s.cristales)}</dd></div></div>
+          <div class="principal" data-guia="c1_cristales">{@render cristal('emblema')}<div><dt>{txt.cristal.cristales}</dt><dd class="cristales">{formato(s.cristales)}</dd></div></div>
           <div><dt>{txt.cristal.totales}</dt><dd>{formato(s.cristalesTotales)}</dd></div>
           <div><dt>{txt.energia} · {txt.capas.arena}</dt><dd>{formato(s.energia)}</dd></div>
         </dl>
         {#if juego.vistos.cristales}
           <nav class="sistemas pestanas-hielo" aria-label={txt.cristal.sistemas}>
             {#each PANTALLAS as p}
-              <button aria-current={juego.pantalla === p ? 'page' : undefined} onclick={() => (juego.pantalla = p)}><svg viewBox="-8 -8 16 16" aria-hidden="true"><path d={ICONOS[p]} /></svg><span class="nombre">{txt.cristal.pantallas[p]}</span>{#if p === 'relicario' && hayOferta}<i class="punto" title={txt.cristal.relicario.hay}></i>{/if}</button>
+              <button data-guia="c1_{p}" aria-current={juego.pantalla === p ? 'page' : undefined} onclick={() => (juego.pantalla = p)}><svg viewBox="-8 -8 16 16" aria-hidden="true"><path d={ICONOS[p]} /></svg><span class="nombre">{txt.cristal.pantallas[p]}</span>{#if p === 'relicario' && hayOferta}<i class="punto" title={txt.cristal.relicario.hay}></i>{/if}</button>
             {/each}
           </nav>
           {#key juego.pantalla}
@@ -99,7 +99,7 @@
         {#if hayOferta}<i class="punto" title={txt.cristal.relicario.hay}></i>{/if}
       </button>
       <!-- Bloque 10: no es una capa sino de todas; va abajo, separada por una línea. Ícono: dos engranajes de cristal. -->
-      <button class="auto" aria-current={juego.capa === 'automatizacion' ? 'page' : undefined} onclick={() => (juego.capa = 'automatizacion')}>
+      <button class="auto" data-guia="c1_automat" aria-current={juego.capa === 'automatizacion' ? 'page' : undefined} onclick={() => (juego.capa = 'automatizacion')}>
         <svg viewBox="-12 -12 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round">
           <path d="M-3.5-10.5h3l.6 2.4 2 1.2 2.4-.7 1.5 2.6-1.8 1.7v2.3l1.8 1.7-1.5 2.6-2.4-.7-2 1.2-.6 2.4h-3l-.6-2.4-2-1.2-2.4.7-1.5-2.6 1.8-1.7v-2.3l-1.8-1.7 1.5-2.6 2.4.7 2-1.2Z" />
           <circle cx="-2" cy="-3" r="2.6" />

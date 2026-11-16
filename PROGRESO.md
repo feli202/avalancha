@@ -844,12 +844,48 @@ Lista en `correcciones-capa1/correcciones-capa1/CORRECCIONES_CAPA1.md` (13 bloqu
 - [x] Sesión 3 — bloque 13: estética de cristal y escarcha, barra lateral (2026-11-16)
 - [x] Sesión 4 — bloque 7: multiplicadores visibles (2026-11-16)
 - [x] Sesión 5 — bloque 8: Relicario como inventario (2026-11-16)
-- [ ] Sesión 6 — bloque 9: Red en 3D de cristal
-- [ ] Sesión 7 — bloque 11: Estratos con físicas
+- [x] Sesión 6 — bloque 9: la Red (terminó plana en SVG; ver más abajo) (2026-11-16)
+- [x] Sesión 7 — bloque 11: Estratos en 2D, el embudo (2026-11-16)
 - [x] Sesión 8 — bloque 10: panel de Automatización (2026-11-16)
-- [ ] Sesión 9 — bloque 12 (guías nuevas) y cierre
+- [x] Sesión 9 — bloque 12 (guías nuevas) y cierre (2026-11-16)
 
-### Sesión 1 (2026-11-15)
+### Sesión 9 (2026-11-16) — bloque 12: guías nuevas, y cierre
+
+**Guías de la Capa 1.** Mismo sistema que las de la Capa 0 (bloque 4): un id en `juego.vistos` (va al guardado), el indicador que señala algo con una frase, y su página en "Cómo funciona" (?) con la fórmula y los valores actuales.
+
+| Guía | Sale | Señala |
+| --- | --- | --- |
+| `c1_cristales` | al tocar "Seguir" en la presentación | el contador de Cristales |
+| `c1_relicario` / `c1_red` | la primera vez que mirás esa pantalla | su pestaña |
+| `c1_estratos` | la primera vez que mirás Estratos **ya abiertos** (antes no: no habría nada que explicar) | su pestaña |
+| `c1_automat` | la primera vez que entrás a Automatización | su botón de la barra lateral |
+| `c1_defectos`, `c1_escarcha` | nunca todavía: texto provisorio y página cerrada (??? con candado) hasta C7 y C10 | — |
+
+- `src/ui/juego.svelte.ts`: las condiciones de arriba en `condiciones()`; `esGuiaCapa1`. Un aviso sin frase ya no deja un `juego.aviso` vacío.
+- `src/ui/Ayuda.svelte`: **arreglo necesario**: el indicador no salía nunca fuera de la Arena (`hayPanel()` es verdadero en cualquier otra capa). Ahora cada guía se muestra en su lugar (`guiaEnSuLugar`): las de la Arena con la Arena al frente; las de cada pantalla de la Capa 1, solo con esa pantalla al frente (si quedó en cola, espera: en la primera tanda de capturas la de Estratos salía estando en el Relicario). `cerrar` saca la que se mostró (antes, la primera de la cola). Color hielo por defecto para las de la Capa 1.
+- `src/ui/Capas.svelte`: `data-guia` en el contador, las pestañas y el botón de Automatización.
+- `src/ui/ComoFunciona.svelte`: siete secciones nuevas (aparecen con el primer Infinito), en color hielo: Cristales (`⌊10^(mult + 0,35)⌋` y el multiplicador de la Red), Red (anillo, costo por anillo, regla de apertura, nodos completos), Relicario (efecto por nivel de cada tipo con lo engarzado ahora, fusión, engarces), Estratos (Presión con ×10^(P × D), velocidad local del estrato 1, llenado al abrir y el próximo estrato), Automatización (intervalo mínimo, Memoria, Infinito automático), Defectos y Escarcha (cerradas). Las reglas sin valor no dibujan un renglón vacío.
+- `src/strings/es.ts`, `en.ts`: textos de las guías, las páginas y las piezas de las fórmulas.
+- `tests/juego.test.ts`: test nuevo: recorriendo todas las pantallas salen las cinco, en orden y una vez; otra vuelta y un Infinito no traen ninguna; Defectos y Escarcha siguen cerradas; una guía en cola no sale en otra pantalla.
+- **Partidas de antes**: la migración del bloque 4 ya corrió (`vistos.guias`), así que un jugador que ya estaba en la Capa 1 ve cada guía nueva una vez, al volver a mirar cada pantalla. Me pareció mejor que darlas por vistas sin que las haya leído nunca.
+
+**Probado en el navegador integrado** (partida nueva, debug "casi Infinito" a ×10, cinemática real): Cristales al tocar Seguir → Relicario → (elegí Cauce) Red → Estratos cerrados: nada → Automatización → nodo Estratos puesto por consola → Estratos. Cada una salió una vez, señalando lo suyo. En 390×844 la frase queda arriba de la pestaña, sobre fondo oscuro. "Cómo funciona" con las siete secciones nuevas y sus fórmulas, sin errores en la consola.
+
+**Cierre ("Al terminar todo")**
+
+1. `python balance/sim_capa1.py --robustez`: **la misma tabla de la sesión 2** (el balance no cambió desde entonces). Afiné en `SPEC_CAPA1.md` §2 los decimales de "abrir un estrato" (E3 ×1e13,2 · E4 ×1e16,4 · E5 ×1e18,7 · E6 ×1e39,5 · E7 ×1e71,8).
+
+| Hito | 15 s | 60 s | 5 min | Rango |
+|---|---|---|---|---|
+| Segundo Infinito | 1,10 h | 1,25 | 2,25 | 1,0–1,3 |
+| **FIN 1.1** | **7,30 h** | 7,45 | 8,49 | 6,5–7,5 |
+| **FIN CAPA 1** | **14,82 h** | 15,04 | 16,09 | 14–16 |
+| Hueco máximo | 30,6 min | 30,8 | 35,0 | < 40 |
+
+2. `SPEC_CAPA1.md` al día con las correcciones: §1 (Estratos en 2D, Automatización fuera de la Red), §5 (sin porcentajes, cómo se ve el Relicario, ya no dice que el inventario es de la Capa 2), §6.1 (la Red plana en SVG, sorpresa, zoom), §7.4 reescrito (el embudo 2D; three.js ya no está), §11 (barra de capas, panel de Automatización, estética de hielo, Reducir destellos, sonido, multiplicadores, pantallas sin scroll, guías), §14–16.
+3. **Tests**: 242 en verde (18 archivos, incluido `balance.test.ts` de la Capa 0), `tsc` y `svelte-check` sin errores. `tests/balance_capa1.test.ts` **no existe todavía**: es del hito C8 (SPEC_CAPA1 §17), no de las correcciones.
+4. Capturas en `correcciones-capa1/capturas_despues/cierre/` (Arena con la barra lateral, Red, Estratos, Relicario, Defectos, Automatización; 1366×768 y 390×844), con `scripts/capturas-capa1.mjs` (ahora da las guías de la Capa 1 por vistas, para que no tapen las capturas).
+
 
 **Bloque 1 — antiparpadeo**
 

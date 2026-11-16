@@ -1,7 +1,7 @@
 // El bucle del juego (src/ui/juego.svelte.ts), sin DOM.
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CFG, INFINITO, estadoInicial, infinito } from '../src/core'
-import { guardarYa, juego, partidaActual, reemplazarPartida, revelar, tomarCandado, yaVisto } from '../src/ui/juego.svelte'
+import { guardarYa, guiaEnSuLugar, juego, partidaActual, reemplazarPartida, revelar, tomarCandado, yaVisto } from '../src/ui/juego.svelte'
 
 afterEach(() => vi.useRealTimers())
 
@@ -85,5 +85,39 @@ describe('guías: una sola vez en la vida de la partida (CORRECCIONES 4)', () =>
     expect(yaVisto(estadoInicial(), { auto_caudal: true }).auto).toBe(true) // ya había visto un autocomprador
     expect(yaVisto(estadoInicial(), {}).auto).toBeUndefined()
     expect(juego.guias).toEqual([])
+  })
+
+  it('bloque 12: cada guía de la Capa 1 sale la primera vez que se mira su pantalla, y nunca más', () => {
+    const s = { ...estadoInicial(), infinitos: 1, compresiones: CFG.compresion.umbrales_log10.length, red: { estratos: 1 } }
+    juego.vistos = yaVisto(s, { guias: true }) // las de la Arena ya vistas
+    juego.guias = []
+    juego.capa = 'cristalizacion'
+    revelar(s)
+    expect(juego.guias).toEqual([]) // la presentación todavía no se tocó
+    juego.vistos = { ...juego.vistos, cristales: true }
+    const vistas: string[] = []
+    for (const p of ['relicario', 'red', 'estratos', 'defectos', 'escarcha']) {
+      juego.pantalla = p
+      revelar(s)
+      vistas.push(...juego.guias)
+      juego.guias = []
+    }
+    juego.capa = 'automatizacion'
+    revelar(s)
+    vistas.push(...juego.guias)
+    expect(vistas).toEqual(['c1_cristales', 'c1_relicario', 'c1_red', 'c1_estratos', 'c1_automat'])
+    // Otra vuelta por todas las pantallas, y un Infinito: ninguna vuelve. Defectos y Escarcha siguen cerradas.
+    juego.guias = []
+    const nueva = infinito({ ...s, energia: INFINITO })
+    for (const capa of ['cristalizacion', 'automatizacion'] as const) for (const p of ['relicario', 'red', 'estratos']) {
+      juego.capa = capa; juego.pantalla = p
+      revelar(nueva)
+    }
+    expect(juego.guias).toEqual([])
+    expect([juego.vistos.c1_defectos, juego.vistos.c1_escarcha]).toEqual([undefined, undefined])
+    // Si quedó en cola, la guía de una pantalla espera a que esa pantalla esté al frente.
+    juego.capa = 'cristalizacion'; juego.pantalla = 'relicario'
+    expect([guiaEnSuLugar('c1_estratos'), guiaEnSuLugar('c1_relicario'), guiaEnSuLugar('c1_cristales'), guiaEnSuLugar('tienda')]).toEqual([false, true, true, false])
+    juego.capa = 'arena'
   })
 })
