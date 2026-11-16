@@ -18,7 +18,7 @@
   import Titulo from './Titulo.svelte'
   import { formato, formatoMult, hablado } from './formato'
   import { fade } from 'svelte/transition'
-  import { comprimirYa, hayPanel, infinitoYa, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
+  import { comprimirYa, hayCartel, hayPanel, infinitoYa, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
   import { PX_MAX } from '../render/pilaVisual'
   import { foto, guardarImagen } from './foto.svelte'
 
@@ -47,7 +47,8 @@
 
   // C comprime, P guarda la imagen (Espacio y M viven en Pila y Tienda).
   function tecla(e: KeyboardEvent) {
-    const libre = !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !hayPanel() &&
+    // Los paneles se abren desde cualquier capa (los íconos están en todas): basta con que no haya otro encima.
+    const libre = !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !hayCartel() &&
       !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
     // SPEC 5: Ajustes desde el inicio (sonido, accesibilidad); el resto aparece con la tienda.
     const conTienda = libre && juego.vistos.tienda
@@ -108,35 +109,6 @@
     {#if s.infinitos > 0}<span class="linea num aparece">{txt.cristal.cristales} <b class="hielo">{formato(s.cristales)}</b></span>{/if}
   </header>
 
-  <div class="ajustes">
-    {#if v.tienda}
-    <button class="icono" aria-label={txt.menu.guardarImagen} title={txt.menu.guardarImagen} aria-keyshortcuts="P" onclick={guardarImagen}>
-      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-        <path d="M1.5 6a1.5 1.5 0 0 1 1.5-1.5h2.2L6.7 2.5h4.6l1.5 2H15A1.5 1.5 0 0 1 16.5 6v8a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 14z" /><circle cx="9" cy="9.75" r="3" />
-      </svg>
-    </button>
-    <button class="icono" aria-label={txt.menu.logros} aria-haspopup="dialog" aria-keyshortcuts="L" onclick={() => (juego.panel = 'logros')}>
-      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-        <path d="M5 2.5h8v4a4 4 0 0 1-8 0zM9 10.5v3M6 15.5h6M5 4H2.5a2.5 2.5 0 0 0 2.6 3M13 4h2.5a2.5 2.5 0 0 1-2.6 3" />
-      </svg>
-    </button>
-    <button class="icono" aria-label={txt.menu.estadisticas} aria-haspopup="dialog" aria-keyshortcuts="E" onclick={() => (juego.panel = 'estadisticas')}>
-      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15.5V9M7 15.5V3M11 15.5V7M15 15.5v-4M1.5 15.5h15" /></svg>
-    </button>
-    {/if}
-    <button class="icono" aria-label={txt.menu.abrir} aria-haspopup="dialog" aria-keyshortcuts="A" onclick={() => (juego.panel = 'ajustes')}>
-      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-        <path d="M2 5h8M14 5h2M2 13h2M8 13h8" /><circle cx="12" cy="5" r="2" /><circle cx="6" cy="13" r="2" />
-      </svg>
-    </button>
-    {#if v.tienda}
-    <button class="icono" aria-label={txt.menu.ayuda} aria-haspopup="dialog" aria-keyshortcuts="H" onclick={() => (juego.panel = 'ayuda')}>
-      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-        <circle cx="9" cy="9" r="7.5" /><path d="M6.9 6.9a2.2 2.2 0 1 1 3 2.05c-.55.22-.9.7-.9 1.3v.5" /><circle class="lleno" cx="9" cy="13" r="0.4" />
-      </svg>
-    </button>
-    {/if}
-  </div>
 
   {#if juego.aviso}
     {#key juego.aviso.id}<p class="aviso" role="status">{juego.aviso.texto}</p>{/key}
@@ -206,6 +178,40 @@
 </div>
 
 <Capas />
+
+<!-- Los íconos (foto, logros, estadísticas, ajustes, ayuda) están en todas las capas: fuera de .juego, que queda inert fuera de la
+     Arena. Llevan .juego por las variables de margen y las mismas entradas y salidas. -->
+<div class="juego iconos" class:en-titulo={juego.titulo} class:entrando class:fin class:alejado={juego.panel !== null} inert={hayCartel()}>
+  <div class="ajustes">
+    {#if v.tienda}
+    <button class="icono" aria-label={txt.menu.guardarImagen} title={txt.menu.guardarImagen} aria-keyshortcuts="P" onclick={guardarImagen}>
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <path d="M1.5 6a1.5 1.5 0 0 1 1.5-1.5h2.2L6.7 2.5h4.6l1.5 2H15A1.5 1.5 0 0 1 16.5 6v8a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 14z" /><circle cx="9" cy="9.75" r="3" />
+      </svg>
+    </button>
+    <button class="icono" aria-label={txt.menu.logros} aria-haspopup="dialog" aria-keyshortcuts="L" onclick={() => (juego.panel = 'logros')}>
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <path d="M5 2.5h8v4a4 4 0 0 1-8 0zM9 10.5v3M6 15.5h6M5 4H2.5a2.5 2.5 0 0 0 2.6 3M13 4h2.5a2.5 2.5 0 0 1-2.6 3" />
+      </svg>
+    </button>
+    <button class="icono" aria-label={txt.menu.estadisticas} aria-haspopup="dialog" aria-keyshortcuts="E" onclick={() => (juego.panel = 'estadisticas')}>
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 15.5V9M7 15.5V3M11 15.5V7M15 15.5v-4M1.5 15.5h15" /></svg>
+    </button>
+    {/if}
+    <button class="icono" aria-label={txt.menu.abrir} aria-haspopup="dialog" aria-keyshortcuts="A" onclick={() => (juego.panel = 'ajustes')}>
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <path d="M2 5h8M14 5h2M2 13h2M8 13h8" /><circle cx="12" cy="5" r="2" /><circle cx="6" cy="13" r="2" />
+      </svg>
+    </button>
+    {#if v.tienda}
+    <button class="icono" aria-label={txt.menu.ayuda} aria-haspopup="dialog" aria-keyshortcuts="H" onclick={() => (juego.panel = 'ayuda')}>
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <circle cx="9" cy="9" r="7.5" /><path d="M6.9 6.9a2.2 2.2 0 1 1 3 2.05c-.55.22-.9.7-.9 1.3v.5" /><circle class="lleno" cx="9" cy="13" r="0.4" />
+      </svg>
+    </button>
+    {/if}
+  </div>
+</div>
 
 <!-- La foto: un destello suave al tocar y el aviso al terminar. -->
 {#key foto.destello}{#if foto.destello}<div class="destello" class:quieto={ajustes.reducirDestellos} aria-hidden="true"></div>{/if}{/key}
@@ -330,7 +336,8 @@
   .juego { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s, filter 0.6s; }
   .juego.alejado { transform: scale(0.82); opacity: 0; filter: blur(6px); }
   .juego.quieto.alejado { transform: none; filter: none; }
-  .ajustes { position: fixed; top: var(--margen); right: calc(var(--margen) - 0.8125rem); z-index: 2; display: flex; } /* el trazo del ícono, al ras de la lista */
+  /* z-index 6: por encima de Cristalización y Automatización (4) y de la barra de capas (5): los íconos están en toda capa. */
+  .ajustes { position: fixed; top: var(--margen); right: calc(var(--margen) - 0.8125rem); z-index: 6; display: flex; } /* el trazo del ícono, al ras de la lista */
   .icono {
     display: grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: 0; border: 0; background: none;
     color: var(--apagado); cursor: pointer; transition: color 0.15s;

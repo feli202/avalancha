@@ -2,41 +2,56 @@ import Decimal from 'break_infinity.js'
 import { CFG, MUTACIONES } from './config'
 import { CFG1 } from './config1'
 import { crecerEstratos } from './estratos'
-import { infinito } from './infinito'
-import { memoria } from './red'
+import { infinito, infinitoAutoListo } from './infinito'
 import { elegirSola } from './relicario'
-import { autoActivo, comprimir } from './compress'
+import { autoActivo, comprimir, puedeComprimir } from './compress'
 import { INFINITO, caudal, enInfinito, energiaPorGrano, produccion } from './formulas'
-import { comprar, comprarMax, costo, puedeComprar, type ItemId } from './shop'
+import { comprar, comprarMax, comprarN, costo, puedeComprar, type ItemId } from './shop'
 import type { State } from './state'
 
-/** SPEC 4.8: cada autocomprador encendido compra todo lo suyo que se pueda pagar. */
+/** SPEC 4.8 y bloque 10: cada autocomprador encendido compra, cada `intervalo` segundos, su `cantidad` (×1, ×10 o el máximo). */
 export function autocomprar(s: State): State {
-  if (autoActivo(s, 'caudal')) s = comprarMax(s, 'caudal')
+  const { segundos, intervalo, cantidad } = s.automat
+  const toca = (k: string) => autoActivo(s, k) && segundos % Math.max(1, Math.round(intervalo[k] / CFG.automatizacion.intervalo_s)) === 0
+  const compra = (t: State, k: string, id: ItemId) =>
+    cantidad[k] === 0 ? comprarMax(t, id) : cantidad[k] === 1 ? comprar(t, id) : comprarN(t, id, cantidad[k])
+  if (toca('caudal')) s = compra(s, 'caudal', 'caudal')
   CFG.colores.forEach((c, i) => {
-    if (autoActivo(s, c.id)) s = comprarMax(s, `color${i}`)
+    if (toca(c.id)) s = compra(s, c.id, `color${i}`)
   })
   // Memoria nv2 y nv3 (SPEC_CAPA1 §6.3): Cascada y Mutaciones automáticas, lo más barato primero y dejando un margen
   // de Energía (como sim_capa1.py), para no frenar a los colores.
-  if (memoria(s) >= 2) s = comprarConMargen(s, ['cascada'])
-  if (memoria(s) >= 3) s = comprarConMargen(s, MUTACIONES.map((m): ItemId => `mut_${m}`))
+  const n = (k: string) => cantidad[k] || Infinity
+  if (toca('cascada')) s = comprarConMargen(s, ['cascada'], n('cascada'))
+  if (toca('mutaciones')) s = comprarConMargen(s, MUTACIONES.map((m): ItemId => `mut_${m}`), n('mutaciones'))
   return s
 }
 
 const MARGEN = Decimal.pow10(CFG1.autocompradores_umbral_log10)
-function comprarConMargen(s: State, ids: ItemId[]): State {
-  for (;;) {
+function comprarConMargen(s: State, ids: ItemId[], max: number): State {
+  for (let i = 0; i < max; i++) {
     const ok = ids.filter((id) => puedeComprar(s, id) && s.energia.gte(costo(s, id).mul(MARGEN)))
     if (!ok.length) return s
     s = comprar(s, ok.reduce((a, b) => (costo(s, b).lt(costo(s, a)) ? b : a)))
   }
+  return s
+}
+
+/** Bloque 10: la Compresión automática, al llegar al umbral o `segundos` después. */
+function comprimirSola(s: State, dt: number): State {
+  if (!autoActivo(s, 'compresion_auto')) return s
+  const { modo, segundos } = s.automat.compresion
+  if (modo === 'umbral') return comprimir(s)
+  const espera = puedeComprimir(s) ? s.automat.espera + dt : 0
+  if (espera > 0 && espera >= segundos) return comprimir(s) // comprimir deja la espera en 0
+  return espera === s.automat.espera ? s : { ...s, automat: { ...s.automat, espera } }
 }
 
 /** Avanza la economía dt segundos (Euler explícito, igual que balance/sim.py). */
 export function tick(s: State, dt: number): State {
-  // Economía congelada hasta el Infinito (core/infinito.ts); con Memoria nv4 se hace solo, en el tick siguiente.
-  // El Infinito automático elige su reliquia solo (SPEC_CAPA1 §5).
-  if (enInfinito(s)) return memoria(s) >= 4 ? elegirSola(infinito(s)) : s
+  // Economía congelada hasta el Infinito (core/infinito.ts); con Memoria nv4 y el interruptor, se hace solo cuando lo diga
+  // su modo (bloque 10). Elige su reliquia con la regla (SPEC_CAPA1 §5).
+  if (enInfinito(s)) return autoActivo(s, 'infinito') && infinitoAutoListo(s) ? elegirSola(infinito(s)) : s
   const energia = Decimal.min(INFINITO, s.energia.add(produccion(s).mul(dt))) // sin Romper, se frena en 1e308
   const granos = caudal(s) * dt
   let n: State = {
@@ -58,11 +73,12 @@ export function tick(s: State, dt: number): State {
   )
     n.coloresDesbloqueados++
   if (enInfinito(n)) return n
-  if (n.relojAuto >= 1) {
-    n.relojAuto %= 1
-    n = autocomprar(n)
+  const paso = CFG.automatizacion.intervalo_s
+  if (n.relojAuto >= paso) {
+    n.relojAuto %= paso
+    n = autocomprar({ ...n, automat: { ...n.automat, segundos: n.automat.segundos + 1 } })
   }
-  return autoActivo(n, 'compresion_auto') ? comprimir(n) : n
+  return comprimirSola(n, dt)
 }
 
 /** SPEC 4.10: suelta un puñado de granos; cada uno rinde como un grano del Caudal. */

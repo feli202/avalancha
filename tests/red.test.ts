@@ -79,7 +79,7 @@ describe('Red', () => {
 
   it('Memoria nv2 y nv3: Cascada y Mutaciones automáticas (con margen de Energía)', () => {
     // Sin los autocompradores de Caudal y colores, que se gastarían la Energía antes.
-    const auto = Object.fromEntries(Object.keys(CFG.autocompradores).map((k) => [k, false]))
+    const auto = { ...estadoInicial().auto, ...Object.fromEntries(Object.keys(CFG.autocompradores).map((k) => [k, false])) }
     const base = { energia: new Decimal('1e200'), maxEnergia: new Decimal('1e200'), compresiones: 6, relojAuto: 0.99, auto }
     const t1 = tick(conRed({ memoria: 1 }, base), 0.05)
     expect([t1.cascada, t1.mutaciones.caudal]).toEqual([0, 0])

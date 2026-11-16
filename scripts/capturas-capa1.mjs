@@ -54,7 +54,7 @@ for (const [W, H] of [[1366, 768], [390, 844]]) {
     const s = j.s, ocho = (f) => Array.from({ length: 8 }, (_, k) => f(k))
     j.vistos = { ...j.vistos, cristales: true, cascada: true, mutaciones: true }
     j.s = { ...s, infinitos: 4, granos: 300000, caudal: 12, cristales: s.cristales.mul(0).add(5571), cristalesTotales: s.cristalesTotales.mul(0).add(2.75e6),
-      red: { ...s.red, estratos: 4, presion: 2, engarces: 1 }, estratos: { abiertos: 3, s: ocho((k) => (k < 3 ? 25 - k * 2 : 0)), perm: ocho((k) => (k < 3 ? 6 : 0)), pres: ocho((k) => (k < 3 ? 4 : 0)) },
+      red: { ...s.red, estratos: 4, presion: 2, engarces: 1, memoria: 4 }, compresiones: 17, estratos: { abiertos: 3, s: ocho((k) => (k < 3 ? 25 - k * 2 : 0)), perm: ocho((k) => (k < 3 ? 6 : 0)), pres: ocho((k) => (k < 3 ? 4 : 0)) },
       relicario: { ...s.relicario, pendiente: 5, foto: window.__fotos[7], equipadas: [3, 6],
         // 30 reliquias: el inventario pasa de los 24 casilleros y tiene que scrollear solo la grilla.
         piezas: Array.from({ length: 30 }, (_, i) => [['cauce', 2], ['cauce', 0], ['cauce', 1], ['cascada', 0], ['cascada', 0], ['mutaciones', 4], ['mutaciones', 0], ['cascada', 1], ['mutaciones', 3], ['cascada', 2]][i % 10])
@@ -77,6 +77,23 @@ for (const [W, H] of [[1366, 768], [390, 844]]) {
     const pasa = await ev(`[...document.querySelectorAll('main, main *')].filter((e) => getComputedStyle(e).overflowY !== 'visible' && e.scrollHeight > e.clientHeight + 1).map((e) => e.className.split(' ')[0])`)
     console.log(`${W} ${p}: scrollean`, JSON.stringify(pasa))
   }
+  // Bloque 10: Automatización (todo desbloqueado con Memoria nv4), con un modo de Infinito y Prioridad para ver sus campos.
+  await ev(`(window.__j.capa = 'automatizacion', window.__j.s = { ...window.__j.s, automat: { ...window.__j.s.automat, infinito: { modo: 'cristales', log10: 6 } }, red: { ...window.__j.s.red, ruptura: 1 }, relicario: { ...window.__j.s.relicario, regla: { ...window.__j.s.relicario.regla, modo: 'prioridad' } } })`)
+  await espera(1200)
+  await foto(`${W}-automatizacion`)
+  const pasaA = await ev(`[...document.querySelectorAll('main, main *')].filter((e) => getComputedStyle(e).overflowY !== 'visible' && e.scrollHeight > e.clientHeight + 1).map((e) => e.tagName + '.' + e.className.split(' ')[0])`)
+  const pagina = await ev(`document.documentElement.scrollHeight > innerHeight + 1`)
+  console.log(`${W} automatizacion: scrollean`, JSON.stringify(pasaA), 'página scrollea:', pagina)
+  // Apagar Caudal con su interruptor y volver a la tienda: la fila tiene que decir MANUAL.
+  await ev(`document.querySelector('.interruptor').click()`)
+  await espera(300)
+  await foto(`${W}-automatizacion-caudal-apagado`)
+  await ev(`window.__j.capa = 'arena'`)
+  await espera(1500)
+  const fila = await ev(`document.querySelector('[data-guia=auto_caudal]')?.textContent.trim()`)
+  console.log(`${W} tienda, fila de Caudal:`, fila, '· s.auto.caudal =', await ev(`window.__j.s.auto.caudal`))
+  await foto(`${W}-arena-caudal-manual`)
+  await ev(`window.__j.s = { ...window.__j.s, auto: { ...window.__j.s.auto, caudal: true } }`)
 }
 console.log('errores', JSON.stringify(errores, null, 1))
 await cdp('Browser.close')

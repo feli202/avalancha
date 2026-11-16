@@ -846,7 +846,7 @@ Lista en `correcciones-capa1/correcciones-capa1/CORRECCIONES_CAPA1.md` (13 bloqu
 - [x] Sesión 5 — bloque 8: Relicario como inventario (2026-11-16)
 - [ ] Sesión 6 — bloque 9: Red en 3D de cristal
 - [ ] Sesión 7 — bloque 11: Estratos con físicas
-- [ ] Sesión 8 — bloque 10: panel de Automatización
+- [x] Sesión 8 — bloque 10: panel de Automatización (2026-11-16)
 - [ ] Sesión 9 — bloque 12 (guías nuevas) y cierre
 
 ### Sesión 1 (2026-11-15)
@@ -930,6 +930,36 @@ Peso al final de la 1.2: Presión 43 %, Escarcha 41 %, Colores 7 % (antes 59 / 2
 6. **Cristalografía II no suma nada todavía**: los Defectos llegan en C7 (`defectosCompletos` devuelve 0). Eco II no tiene dónde actuar hasta la Escarcha (C10).
 7. **El núcleo del Relicario no se tocó** (ofertas con semilla, como en C3): el inventario es la sesión 5. El tooltip de Engarces II ya describe la fusión automática.
 8. En el navegador integrado quedó la partida de prueba con Cristales y nodos puestos a mano.
+
+### Sesión 8 (2026-11-16) — bloque 10: panel de Automatización
+
+Balance sin cambios: con los valores por defecto (cada 1 s, máx, comprimir al llegar, Infinito apenas llega) el núcleo hace exactamente lo de antes. `tests/balance.test.ts` da lo mismo. Entró `automatizacion.intervalo_s: 1` en `balance/config.json` (el intervalo base y mínimo; antes era un `1` escrito en `tick.ts`). `sim.py` y `sim_capa1.py` no cambian (compran en cada paso).
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/core/state.ts` | `automat`: `intervalo` y `cantidad` (×1 / ×10 / máx = 0) por autocomprador de compras, `compresion` (al llegar al umbral / esperar X s más), `infinito` (apenas llega / al llegar a X Cristales, X en log10), el reloj `segundos` y la `espera` de la Compresión. `COMPRAS_AUTO` y `AUTOS` (todos los interruptores, en el orden del panel). `auto` suma `cascada`, `mutaciones` e `infinito`. |
+| `src/core/compress.ts` | `autoDisponible` sabe de Cascada, Mutaciones e Infinito (Memoria nv2, nv3, nv4): una sola regla para la economía, la tienda y el panel. `encenderTodo(s, si)`: solo los que el jugador tiene. |
+| `src/core/tick.ts` | Cada autocomprador dispara cada `intervalo` (múltiplos del intervalo base) y compra su cantidad; Cascada y Mutaciones con su interruptor (antes, siempre con la Memoria). `comprimirSola` con la espera. El Infinito automático respeta el interruptor y `infinitoAutoListo`. |
+| `src/core/infinito.ts` | `infinitoRoto` (Ruptura nv1) e `infinitoAutoListo`: siempre apenas llega; "al llegar a X Cristales" solo cuenta con Romper el Infinito. El Infinito conserva `automat` (como `auto`). |
+| `src/guardado/guardado.ts` | `leerAutomat`: modos que existen, intervalos ≥ el mínimo y enteros, cantidades 0/1/10, nada negativo. Un guardado de antes arranca con todo prendido y los valores por defecto (sin cambio de versión). |
+| `src/ui/Automatizacion.svelte` | Nuevo. Encabezado con "Encender todo" / "Apagar todo"; a la izquierda las compras (Caudal, cuatro colores, Cascada, Mutaciones: intervalo, ×1/×10/máx, interruptor), a la derecha Compresión (condición) e Infinito (modo, "hoy el Infinito da X" y la regla de reliquias completa del bloque 8: los 5 modos, el orden para Fijo/Prioridad, fusionar solas y engarzar las mejores). Se ven los que el jugador tiene y el siguiente como silueta con lo que lo desbloquea. Pantalla fija: solo scrollea cada lista. |
+| `src/ui/Capas.svelte` | Entrada **Automatización** en la barra lateral (abajo, separada por una línea, dos engranajes). Pestañas: **Relicario primero**. En el celular el contenido empieza debajo de la fila de íconos. |
+| `src/ui/App.svelte` | **La fila de íconos (foto, logros, estadísticas, ajustes, ayuda) está en todas las capas**: salió de `.juego` (que queda inert fuera de la Arena) a un contenedor propio por encima de Cristalización; las teclas L, E, A, P, H también andan desde cualquier capa. |
+| `src/ui/Tienda.svelte` | Cascada y las Mutaciones tienen su interruptor como las demás filas; apagado dice "manual" (antes "auto" apagado). |
+| `src/ui/Relicario.svelte` | Sin la regla provisoria: queda "Elección automática: <modo>", que lleva a Automatización. |
+| `tests/automatizacion.test.ts` | Nuevo, 18 tests: cada interruptor apagado deja de comprar lo suyo, Memoria nv2/3/4, Encender/Apagar todo, intervalo, ×1/×10/máx (también Cascada y Mutaciones), Compresión al llegar / esperar / apagada, Infinito apenas llega / apagado / al llegar a X Cristales solo con Ruptura, cada regla de reliquias aplicada por el Infinito automático (fijo, rotar, completar, subir, prioridad, fusionar solas, engarzar las mejores), guardado y limpieza. |
+| `scripts/capturas-capa1.mjs` | Suma Automatización y la prueba de apagar Caudal (la tienda dice "manual"). Capturas en `correcciones-capa1/capturas_despues/bloque10/` (sin commitear, como el resto de esa carpeta). |
+
+**Verificación**: 241 tests en verde (balance de la Capa 0 incluido), `tsc` y `svelte-check` sin errores. Edge headless con el servidor de desarrollo, en 1366×768 y 390×844: la página no scrollea (en el celular solo las dos listas), sin errores en la consola; apagar Caudal con su interruptor deja la fila de la tienda en "manual" y `s.auto.caudal = false`. **Sin mirar**: fps (la pantalla es DOM quieto, sin animación propia), un celular real, inglés en pantalla.
+
+**Decisiones (revisar)**
+
+1. **Estética neutra** (pedido durante la sesión: no hielo): como la barra de capas, fondo de la página y líneas de 1 px. Cada fila lleva el detalle de lo que automatiza: los de la Arena su color (raya, interruptor, cantidad elegida) y su ícono; el Infinito, el cristal y la luz fría de la Cristalización.
+2. **Infinito automático** (pedido durante la sesión): siempre apenas llegás; con Romper el Infinito se mejora y suma "al llegar a X Cristales". Se fue "cada X minutos". Romper todavía no cambia la economía (C6), pero el nodo Ruptura ya existe y la mejora ya se ve.
+3. **Automatización vive en la barra lateral**, que aparece con el primer Infinito. Antes del Infinito los autocompradores se siguen manejando desde la tienda.
+4. **Intervalo mínimo = 1 s** (el de siempre): el jugador lo puede alargar, no acortar. ×10 compra solo si alcanzan los diez, como el modo ×10 de la tienda. En Cascada y Mutaciones la cantidad cuenta compras (las Mutaciones, entre las cuatro).
+5. **"Esperar más" de la Compresión** cuenta desde que se llega al umbral; si la Energía baja del umbral, la espera vuelve a 0.
+6. "Al llegar a X Cristales" se guarda en log10 (CLAUDE.md); se escribe "1000" o "1e6".
 
 ### Sesión 5 (2026-11-16) — bloque 8: el Relicario como inventario
 

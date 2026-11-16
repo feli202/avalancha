@@ -110,7 +110,7 @@ export function deserializar(texto: string): Partida {
       cristales: deDec(e.cristales), cristalesTotales: deDec(e.cristalesTotales),
       granos: pos(e.granos), granosTotales: pos(e.granosTotales), caudal: ent(e.caudal), colores: e.colores.map((n) => ent(n)),
       red, estratos: { abiertos: ent(e.estratos.abiertos, ESTRATOS), s: e.estratos.s.map(pos), perm: e.estratos.perm.map((n) => ent(n)), pres: e.estratos.pres.map((n) => ent(n)) },
-      relicario, cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
+      relicario, automat: leerAutomat(e.automat), cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
       mutaciones: Object.fromEntries(MUTACIONES.map((m) => [m, ent(e.mutaciones[m], maxMutacion(conRed))])) as State['mutaciones'],
       coloresDesbloqueados: ent(e.coloresDesbloqueados, CFG.colores.length), infinitos,
       tiempoTotal: pos(e.tiempoTotal), tiempoCorrida: pos(e.tiempoCorrida), tiempoInfinito: pos(e.tiempoInfinito),
@@ -127,6 +127,22 @@ export function deserializar(texto: string): Partida {
     secretos: contadores((d as any).secretos),
     // Partidas de antes del historial: no viene, y el juego arranca uno con el comienzo estimado por el tiempo de juego.
     ...((d as any).historial !== undefined && { historial: limpiarHistorial((d as any).historial, d.guardadoEn - e.tiempoTotal * 1000) }),
+  }
+}
+
+/** Bloque 10: la configuración de los autocompradores, con modos que existen e intervalos y esperas posibles. */
+function leerAutomat(x: State['automat']): State['automat'] {
+  const base = estadoInicial().automat
+  const min = CFG.automatizacion.intervalo_s
+  const pos = (n: number) => Math.max(0, n)
+  const de = <T,>(v: T, ok: readonly T[], d: T) => (ok.includes(v) ? v : d)
+  return {
+    intervalo: Object.fromEntries(Object.keys(base.intervalo).map((k) => [k, Math.max(min, Math.floor(x.intervalo[k]))])),
+    cantidad: Object.fromEntries(Object.keys(base.cantidad).map((k) => [k, de(x.cantidad[k], [0, 1, 10], 0)])) as State['automat']['cantidad'],
+    compresion: { modo: de(x.compresion.modo, ['umbral', 'esperar'], 'umbral'), segundos: pos(x.compresion.segundos) },
+    infinito: { modo: de(x.infinito.modo, ['llegar', 'cristales'], 'llegar'), log10: pos(x.infinito.log10) },
+    segundos: Math.floor(pos(x.segundos)),
+    espera: pos(x.espera),
   }
 }
 

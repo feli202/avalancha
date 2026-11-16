@@ -10,8 +10,9 @@
   import './hielo.css'
   import Red from './Red.svelte'
   import Relicario from './Relicario.svelte'
+  import Automatizacion from './Automatizacion.svelte'
 
-  const PANTALLAS = ['red', 'estratos', 'defectos', 'escarcha', 'relicario']
+  const PANTALLAS = ['relicario', 'red', 'estratos', 'defectos', 'escarcha']
   // Un ícono por sistema, dibujado con la geometría del juego: la Red un rombo de celdas, los Estratos losas apiladas,
   // los Defectos una red con una dislocación, la Escarcha un copo de seis brazos, el Relicario una gema tallada.
   const ICONOS: Record<string, string> = {
@@ -74,6 +75,10 @@
           </section>
         {/if}
       </main>
+    {:else if juego.capa === 'automatizacion'}
+      <main class="automat">
+        <Automatizacion />
+      </main>
     {/if}
 
     <nav class="capas" aria-label={txt.capas.barra}>
@@ -92,6 +97,15 @@
         {@render cristal('')}
         <span>{txt.capas.cristalizacion}</span>
         {#if hayOferta}<i class="punto" title={txt.cristal.relicario.hay}></i>{/if}
+      </button>
+      <!-- Bloque 10: no es una capa sino de todas; va abajo, separada por una línea. Ícono: dos engranajes de cristal. -->
+      <button class="auto" aria-current={juego.capa === 'automatizacion' ? 'page' : undefined} onclick={() => (juego.capa = 'automatizacion')}>
+        <svg viewBox="-12 -12 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round">
+          <path d="M-3.5-10.5h3l.6 2.4 2 1.2 2.4-.7 1.5 2.6-1.8 1.7v2.3l1.8 1.7-1.5 2.6-2.4-.7-2 1.2-.6 2.4h-3l-.6-2.4-2-1.2-2.4.7-1.5-2.6 1.8-1.7v-2.3l-1.8-1.7 1.5-2.6 2.4.7 2-1.2Z" />
+          <circle cx="-2" cy="-3" r="2.6" />
+          <path d="M6 4.5l1.6 1.6 2.2-.2.3 2.2 1.6 1.6-1.6 1.6-.3 2.2-2.2-.2L6 15l-1.6-1.6-2.2.2-.3-2.2-1.6-1.6 1.6-1.6.3-2.2 2.2.2Z" transform="scale(.75) translate(4 -2)" />
+        </svg>
+        <span>{txt.capas.automatizacion}</span>
       </button>
     </nav>
   </div>
@@ -114,6 +128,10 @@
     transition: color 0.3s;
   }
   .capas .cristal { --c: var(--hielo); }
+  .capas .auto { --c: var(--tinta); }
+  .capas .auto { border-top: 1px solid var(--borde); margin-top: 0.25rem; padding-top: 0.75rem; }
+  /* Automatización: de todo el juego, neutra como esta barra (fondo de la página, líneas de 1 px); sin escarcha. */
+  .automat { position: fixed; inset: 0; z-index: 4; display: grid; padding: 2rem 2rem 2rem 7rem; overflow: hidden; color: var(--tinta); background: var(--fondo); animation: entrar 0.3s ease-out; }
   .capas svg { width: 2.25rem; height: 2.25rem; overflow: visible; filter: saturate(0.55) brightness(0.8); opacity: 0.75; transition: filter 0.3s, opacity 0.3s, scale 0.3s; }
   .capas button:hover svg, .capas button:focus-visible svg { filter: saturate(0.7); opacity: 1; }
   .capas button:hover, .capas button:focus-visible { color: var(--tenue); }
@@ -182,7 +200,7 @@
     .capas { top: 7rem; translate: none; }
     .capas button { width: 4rem; min-height: 4rem; font-size: 0.625rem; hyphens: manual; }
     .capas svg { width: 1.875rem; height: 1.875rem; }
-    .cristalizacion { padding: 1rem 1rem 1rem 5rem; }
+    .cristalizacion, .automat { padding: 3.75rem 1rem 1rem 5rem; } /* arriba, la fila de íconos de App.svelte */
     .emblema { width: 2.5rem; height: 2.5rem; }
     .contadores { gap: 0.5rem 1.5rem; }
   }

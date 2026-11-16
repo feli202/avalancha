@@ -66,6 +66,7 @@ export const es = {
 
   // Autocompradores (SPEC 4.8)
   auto: 'auto',
+  manual: 'manual',
   autoDe: (nombre: string) => `Autocomprador de ${nombre}`,
   compresionAuto: 'Comprimir sola al llegar a la meta',
 
@@ -89,7 +90,34 @@ export const es = {
   infinito: '∞',
 
   // Capa 1: Cristalización (SPEC_CAPA1 §11)
-  capas: { barra: 'Capas', arena: 'Arena', cristalizacion: 'Crista­lización' }, // guion blando: en la barra angosta del móvil corta ahí
+  capas: { barra: 'Capas', arena: 'Arena', cristalizacion: 'Crista­lización', automatizacion: 'Automati­zación' }, // guion blando: en la barra angosta del móvil corta ahí
+  // Correcciones Capa 1, bloque 10: el panel de Automatización
+  automat: {
+    titulo: 'Automatización',
+    encender: 'Encender todo',
+    apagar: 'Apagar todo',
+    compras: 'Compras',
+    reinicios: 'Compresión e Infinito',
+    nombres: { caudal: 'Caudal', cascada: 'Cascada', mutaciones: 'Mutaciones', compresion_auto: 'Compresión', infinito: 'Infinito' } as Record<string, string>,
+    que: { cascada: 'Lo más barato primero, dejando Energía para los colores', mutaciones: 'Las cuatro, lo más barato primero' } as Record<string, string>,
+    interruptor: (n: string) => `Autocomprador de ${n}`,
+    cada: 'Cada',
+    seg: 's',
+    cantidad: 'Cantidad',
+    cantidades: { 1: '×1', 10: '×10', 0: 'máx' } as Record<number, string>,
+    condicion: 'Condición',
+    compresion: { umbral: 'Al llegar al umbral', esperar: 'Esperar más' } as Record<string, string>,
+    esperar: 'Segundos de espera',
+    infinito: { llegar: 'Apenas llegás', cristales: 'Al llegar a X Cristales' } as Record<string, string>,
+    cristales: 'Cristales',
+    daria: (x: string) => `Hoy el Infinito da ${x}`,
+    apenas: 'Hace el Infinito apenas llegás.',
+    mejora: 'Con Romper el Infinito (Ruptura nv1) puede esperar a dar X Cristales.',
+    reliquia: 'Reliquia de cada Infinito',
+    bloqueado: (n: number) => `Con ${n} compresiones o Memoria nv1`,
+    memoria: (n: number) => `Con Memoria nv${n}`,
+    regla: 'Regla',
+  },
   cristal: {
     cristales: 'Cristales',
     totales: 'Cristales totales',
@@ -136,7 +164,7 @@ export const es = {
       pieza: (t: string, grado: string) => `${t} ${grado}`,
       regla: {
         titulo: 'Elección automática',
-        nota: 'Si no elegís en 30 s, o con el Infinito automático. Provisorio: se va a configurar en Automatización.',
+        nota: 'Si no elegís en 30 s, o con el Infinito automático.',
         modos: { completar: 'Completar fusiones', fijo: 'Tipo fijo', rotar: 'Rotar', subir: 'Subir el más bajo', prioridad: 'Prioridad' } as Record<string, string>,
         orden: 'Orden',
         subir: (t: string) => `Subir ${t}`,

@@ -73,7 +73,7 @@ class Juego {
   /** Logro secreto Arena: la lluvia de granos que se ve ahora (Pila.svelte), o null. */
   lluvia = $state.raw<{ id: number } | null>(null)
   /** SPEC_CAPA1 §11: la capa que se ve. Cristalización aparece con el primer Infinito (Capas.svelte). */
-  capa = $state<'arena' | 'cristalizacion'>('arena')
+  capa = $state<'arena' | 'cristalizacion' | 'automatizacion'>('arena')
   /** La pantalla de Cristalización que se ve (Capas.svelte; la flecha "↓ Estratos" de la Arena la cambia). */
   pantalla = $state('red')
   /** La cinemática del primer Infinito está corriendo (Pila.svelte la dibuja). */
@@ -148,8 +148,8 @@ function condiciones(s: State): Record<string, boolean> {
   return c
 }
 
-/** Nombre de lo que compra cada autocomprador (claves de CFG.autocompradores). */
-export const nombreAuto = (k: string) => (k === 'caudal' ? txt.caudal : txt.colores[CFG.colores.findIndex((c) => c.id === k)])
+/** Nombre de lo que compra cada autocomprador (claves de AUTOS). */
+export const nombreAuto = (k: string) => txt.automat.nombres[k] ?? txt.colores[CFG.colores.findIndex((c) => c.id === k)]
 
 const esAuto = (k: string) => k.startsWith('auto_') && !(k in txt.guia.indicador)
 

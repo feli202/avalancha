@@ -59,6 +59,7 @@ export const en: typeof es = {
   haciaInfinito: 'Infinity',
 
   auto: 'auto',
+  manual: 'manual',
   autoDe: (nombre: string) => `${nombre} autobuyer`,
   compresionAuto: 'Compress automatically at the goal',
 
@@ -80,7 +81,33 @@ export const en: typeof es = {
   infinito: '∞',
 
   // Layer 1: Crystallization
-  capas: { barra: 'Layers', arena: 'Sand', cristalizacion: 'Crystal­lization' },
+  capas: { barra: 'Layers', arena: 'Sand', cristalizacion: 'Crystal­lization', automatizacion: 'Auto­mation' },
+  automat: {
+    titulo: 'Automation',
+    encender: 'Turn all on',
+    apagar: 'Turn all off',
+    compras: 'Purchases',
+    reinicios: 'Compression and Infinity',
+    nombres: { caudal: 'Flow', cascada: 'Cascade', mutaciones: 'Mutations', compresion_auto: 'Compression', infinito: 'Infinity' },
+    que: { cascada: 'Cheapest first, leaving Energy for the colors', mutaciones: 'All four, cheapest first' },
+    interruptor: (n: string) => `${n} autobuyer`,
+    cada: 'Every',
+    seg: 's',
+    cantidad: 'Amount',
+    cantidades: { 1: '×1', 10: '×10', 0: 'max' },
+    condicion: 'Condition',
+    compresion: { umbral: 'On reaching the goal', esperar: 'Wait longer' },
+    esperar: 'Seconds to wait',
+    infinito: { llegar: 'As soon as you get there', cristales: 'At X Crystals' },
+    cristales: 'Crystals',
+    daria: (x: string) => `Infinity gives ${x} now`,
+    apenas: 'Does Infinity as soon as you get there.',
+    mejora: 'With Break Infinity (Rupture lv1) it can wait until it gives X Crystals.',
+    reliquia: 'Relic of each Infinity',
+    bloqueado: (n: number) => `With ${n} compressions or Memory lv1`,
+    memoria: (n: number) => `With Memory lv${n}`,
+    regla: 'Rule',
+  },
   cristal: {
     cristales: 'Crystals',
     totales: 'Total Crystals',
@@ -126,7 +153,7 @@ export const en: typeof es = {
       pieza: (t: string, grado: string) => `${grado} ${t}`,
       regla: {
         titulo: 'Automatic choice',
-        nota: 'If you do not choose in 30 s, or with automatic Infinity. Provisional: it will move to Automation.',
+        nota: 'If you do not choose in 30 s, or with automatic Infinity.',
         modos: { completar: 'Complete fusions', fijo: 'Fixed type', rotar: 'Rotate', subir: 'Raise the lowest', prioridad: 'Priority' },
         orden: 'Order',
         subir: (t: string) => `Move ${t} up`,

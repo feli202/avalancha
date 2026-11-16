@@ -34,6 +34,8 @@
   },
 
   "autocompradores": { "caudal": 2, "ambar": 3, "coral": 3, "jade": 4, "violeta": 4, "compresion_auto": 6 },
+  "_automatizacion": "Bloque 10: los autocompradores compran cada intervalo_s (el mínimo; el jugador lo puede alargar). sim.py compra en cada paso.",
+  "automatizacion": { "intervalo_s": 1 },
 
   "_revelado": "SPEC 5: cuándo aparece cada parte de la interfaz (máxima Energía alcanzada). No afecta el balance.",
   "revelado": { "tienda": 5, "ambar": 8, "compresion_log10": 12 },

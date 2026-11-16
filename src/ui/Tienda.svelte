@@ -3,7 +3,7 @@
   // Pestañas Cascada y Mutaciones cuando aparecen (SPEC 5): ahí se compra de a un nivel, son las decisiones.
   import Decimal from 'break_infinity.js'
   import {
-    CFG, MUTACIONES, aplicar, autoActivo, autoDisponible, comprar, comprarMax, comprarN, comprarTodo, costo, memoria, nivel, type ItemId, type State,
+    CFG, MUTACIONES, aplicar, autoActivo, autoDisponible, comprar, comprarMax, comprarN, comprarTodo, costo, nivel, type ItemId, type State,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
   import { txt } from '../strings'
@@ -39,13 +39,14 @@
     return null
   }
 
-  /** Clave del autocomprador de cada fila (CFG.autocompradores), si tiene. */
-  const claveAuto = (id: ItemId) => (id === 'caudal' ? 'caudal' : color(id) >= 0 ? CFG.colores[color(id)].id : null)
+  /** Clave del autocomprador de cada fila (AUTOS del núcleo), si tiene. */
+  const claveAuto = (id: ItemId) =>
+    id === 'caudal' || id === 'cascada' ? id : id.startsWith('mut_') ? 'mutaciones' : color(id) >= 0 ? CFG.colores[color(id)].id : null
 
-  /** La fila se compra sola: su autocomprador prendido, o Memoria nv2 (Cascada) y nv3 (Mutaciones), como tick.ts. */
+  /** La fila se compra sola: su autocomprador prendido (la misma regla que tick.ts). */
   const automatica = (s: State, id: ItemId) => {
     const k = claveAuto(id)
-    return k ? autoActivo(s, k) : memoria(s) >= (id === 'cascada' ? 2 : 3)
+    return !!k && autoActivo(s, k)
   }
 
   /** Cuántos niveles compraría el modo actual, cuánto cuestan y si alcanza. */
@@ -133,7 +134,7 @@
       {#if k && autoDisponible(juego.ver, k)}
         <!-- SPEC 4.8: interruptor del autocomprador, fuera del botón de la fila. La misma regla que la economía (no juego.vistos). -->
         <button class="auto aparece" data-guia="auto_{k}" use:ayuda={() => ayudaSimple(txt.autoDe(nombreAuto(k)), txt.guia.que.auto)} role="switch" aria-checked={juego.ver.auto[k]} aria-label={txt.autoDe(nombreAuto(k))}
-          onclick={() => alternarAuto(k)}>{txt.auto}</button>
+          onclick={() => alternarAuto(k)}>{juego.ver.auto[k] ? txt.auto : txt.manual}</button>
       {/if}
     </li>
   {/each}

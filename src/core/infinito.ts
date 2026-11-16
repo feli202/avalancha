@@ -1,7 +1,7 @@
 // SPEC_CAPA1 §3 y §4: el Infinito da Cristales y reinicia la Arena.
 import { CFG } from './config'
 import { CFG1 } from './config1'
-import { compresionesConservadas, conservaCascada, cristalesRedLog10 } from './red'
+import { compresionesConservadas, conservaCascada, cristalesRedLog10, nivelRed } from './red'
 import { enInfinito } from './formulas'
 import { elegirSola } from './relicario'
 import { estadoInicial, type State } from './state'
@@ -16,10 +16,10 @@ export const cristalesAlInfinito = (s: State) => {
 export function infinito(s: State): State {
   if (!enInfinito(s)) return s
   const c = cristalesAlInfinito(s)
-  const { auto, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red, estratos } = s
+  const { auto, automat, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red, estratos } = s
   return {
     ...estadoInicial(), granos: 0, // granos_iniciales es solo para la primera corrida
-    auto, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red, estratos,
+    auto, automat, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red, estratos,
     // Bloque 8: cada Infinito trae una reliquia que espera su tipo; si quedaba una sin elegir, se elige sola antes.
     // La pila de este Infinito la pone la interfaz (conFoto).
     relicario: { ...elegirSola(s).relicario, pendiente: s.infinitos + 1, foto: '' },
@@ -29,4 +29,14 @@ export function infinito(s: State): State {
     cristales: s.cristales.add(c),
     cristalesTotales: s.cristalesTotales.add(c),
   }
+}
+
+/** Romper el Infinito: Ruptura nv1 (SPEC_CAPA1 §6). Mejora el Infinito automático (bloque 10). */
+export const infinitoRoto = (s: State) => nivelRed(s, 'ruptura') >= 1
+/** Bloque 10: el Infinito automático ya puede hacerse. Siempre apenas llega; con Romper el Infinito se puede pedir que espere
+ * a que dé al menos X Cristales. */
+export function infinitoAutoListo(s: State): boolean {
+  const { modo, log10 } = s.automat.infinito
+  if (modo === 'cristales' && infinitoRoto(s)) return cristalesAlInfinito(s) >= 10 ** log10 * (1 - 1e-9) // 1e-9: que 10^3 alcance para 1000
+  return true
 }

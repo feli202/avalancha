@@ -25,6 +25,8 @@ export interface Config {
   } & Record<MutId, Curva & { por_nivel: number }>
   /** Compresiones necesarias para cada autocomprador (caudal, id de color, compresion_auto). */
   autocompradores: Record<string, number>
+  /** Bloque 10: intervalo base (y mínimo) de los autocompradores, en s. */
+  automatizacion: { intervalo_s: number }
   /** SPEC 5: Energía máxima a la que aparece cada parte de la interfaz. */
   revelado: { tienda: number; ambar: number; compresion_log10: number }
   punado: { granos: number; max_por_segundo: number }

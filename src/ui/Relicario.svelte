@@ -6,8 +6,8 @@
   import { tick as despues } from 'svelte'
   import { flip } from 'svelte/animate'
   import {
-    CFG1, MODOS, TIPOS, desequipar, efectoNivel, elegir, equipadas, equipar, escalon, espacios, fusionAutomatica, fusionables,
-    fusionar, fusionarTodo, type Pieza, type Regla,
+    CFG1, TIPOS, desequipar, efectoNivel, elegir, equipadas, equipar, escalon, espacios, fusionables,
+    fusionar, fusionarTodo, type Pieza,
   } from '../core'
   import { caraReliquia } from '../render/miniPilas'
   import { txt } from '../strings'
@@ -102,9 +102,6 @@
     conocidas = new Set(rel.piezas.map((p) => p.id))
   })
 
-  // ---------- regla automática (provisoria hasta el panel de Automatización, sesión 8) ----------
-  const regla = (cambio: Partial<Regla>) => (juego.s = { ...juego.s, relicario: { ...juego.s.relicario, regla: { ...juego.s.relicario.regla, ...cambio } } })
-  const subir = (i: number) => { const o = [...rel.regla.orden]; [o[i - 1], o[i]] = [o[i], o[i - 1]]; regla({ orden: o }) }
 </script>
 
 {#snippet sello(t: string)}
@@ -181,26 +178,8 @@
     <div class="cabeza">
       <h2>{r.inventario}</h2>
       {#if grupos.length}<button class="gema" onclick={fusionarTodas}>{r.fusionarTodo}</button>{/if}
-      <details class="regla">
-        <summary>{r.regla.titulo}<span>: <b>{r.regla.modos[rel.regla.modo]}</b></span></summary>
-        <div class="panel placa">
-          <small>{r.regla.nota}</small>
-          <div class="modos" role="radiogroup" aria-label={r.regla.titulo}>
-            {#each MODOS as m (m)}
-              <label><input type="radio" name="modo" checked={rel.regla.modo === m} onchange={() => regla({ modo: m })} />{r.regla.modos[m]}</label>
-            {/each}
-          </div>
-          {#if rel.regla.modo === 'fijo' || rel.regla.modo === 'prioridad'}
-            <ol class="orden" aria-label={r.regla.orden}>
-              {#each rel.regla.orden as t, i (t)}
-                <li animate:flip={{ duration: 200 }}>{@render sello(t)}{nombre(t)}{#if i}<button onclick={() => subir(i)} aria-label={r.regla.subir(nombre(t))}>↑</button>{/if}</li>
-              {/each}
-            </ol>
-          {/if}
-          <label><input type="checkbox" checked={rel.regla.fusionar} disabled={!fusionAutomatica(s)} onchange={(e) => regla({ fusionar: e.currentTarget.checked })} />{r.regla.fusionar}</label>
-          <label><input type="checkbox" checked={rel.regla.equipar} onchange={(e) => regla({ equipar: e.currentTarget.checked })} />{r.regla.equipar}</label>
-        </div>
-      </details>
+      <!-- La regla automática se configura en Automatización (bloque 10); acá solo se ve cuál es y se va hasta ella. -->
+      <button class="regla" onclick={() => (juego.capa = 'automatizacion')}>{r.regla.titulo}<span>: <b>{r.regla.modos[rel.regla.modo]}</b></span></button>
     </div>
     <div class="grilla" role="listbox" aria-label={r.inventario}>
       {#each piezas as p (p.id)}
@@ -323,17 +302,10 @@
   .pieza.nace { animation: nacer 0.9s 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) backwards; }
   @keyframes nacer { from { scale: 0.3; filter: brightness(4) saturate(0); } }
 
-  /* Regla automática (provisoria): se abre encima de la grilla, sin empujar nada. */
-  .regla summary { cursor: pointer; color: var(--tenue); font-size: 0.875rem; list-style: none; }
-  .regla summary::-webkit-details-marker { display: none; }
-  .regla summary b { color: var(--escarcha); font-weight: 600; }
-  .regla .panel { position: absolute; z-index: 5; right: 0; top: calc(100% + 0.4rem); display: grid; gap: 0.6rem; width: min(26rem, 100%); padding: 1rem 1.1rem; }
-  .regla label { display: flex; gap: 0.45rem; align-items: center; font-size: 0.875rem; color: var(--tenue); }
-  .regla input { accent-color: var(--hielo); }
-  .modos { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; }
-  .orden { display: flex; gap: 1rem; margin: 0; padding-left: 1.2rem; font-size: 0.875rem; }
-  .orden li { display: flex; gap: 0.35rem; align-items: center; }
-  .orden button { padding: 0 0.4rem; background: none; border: 1px solid var(--hielo-linea); }
+  /* La regla automática: un enlace a Automatización. */
+  .regla { min-height: 2.75rem; padding: 0; border: 0; background: none; cursor: pointer; color: var(--tenue); font: inherit; font-size: 0.875rem; }
+  .regla:hover, .regla:focus-visible { color: var(--escarcha); }
+  .regla b { color: var(--escarcha); font-weight: 600; }
 
   :global(.quieto) .vuelo { display: none; }
   :global(.quieto) .pieza.nace, :global(.quieto) .pieza.lista::after, :global(.quieto) .nueva { animation: none; }
@@ -359,7 +331,7 @@
     .tipos small { display: none; }
     .grilla { grid-template-columns: repeat(6, 1fr); }
     .cabeza { gap: 0.75rem; justify-content: space-between; }
-    .cabeza h2, .regla summary span { display: none; }
-    .cabeza > button, .regla summary { white-space: nowrap; font-size: 0.8125rem; }
+    .cabeza h2, .regla span { display: none; }
+    .cabeza > button { white-space: nowrap; font-size: 0.8125rem; }
   }
 </style>

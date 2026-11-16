@@ -8,6 +8,20 @@ import { NODOS } from './red'
 export interface Pieza { id: number; tipo: string; nivel: number; foto: string; inf: number }
 /** La regla de elección automática (bloque 8; se configura en el panel de Automatización). `orden`: Tipo fijo usa el primero;
  * Prioridad, la lista entera. `fusionar`: fusionar solas con Engarces II. `equipar`: engarzar siempre las mejores. */
+/** Bloque 10: cuánto compra un autocomprador cada vez (0 = el máximo). */
+export type Cantidad = 1 | 10 | 0
+/** Bloque 10, el panel de Automatización. `intervalo` y `cantidad`, por autocomprador de compras (COMPRAS_AUTO).
+ * `compresion`: comprimir al llegar al umbral o esperar `segundos` más. `infinito`: apenas llega o, con Romper el Infinito,
+ * al llegar a 10^`log10` Cristales. `segundos`: segundos de autocompradores contados en la corrida (los intervalos son múltiplos);
+ * `espera`: segundos que lleva la Compresión lista. */
+export interface Automat {
+  intervalo: Record<string, number>
+  cantidad: Record<string, Cantidad>
+  compresion: { modo: 'umbral' | 'esperar'; segundos: number }
+  infinito: { modo: 'llegar' | 'cristales'; log10: number }
+  segundos: number
+  espera: number
+}
 export interface Regla { modo: 'fijo' | 'rotar' | 'completar' | 'subir' | 'prioridad'; orden: string[]; fusionar: boolean; equipar: boolean }
 
 export interface State {
@@ -25,8 +39,10 @@ export interface State {
   mutaciones: Record<MutId, number>
   maxEnergia: Decimal
   coloresDesbloqueados: number
-  /** Interruptores de los autocompradores, con las claves de CFG.autocompradores. */
+  /** Interruptores de los autocompradores: las claves de CFG.autocompradores más cascada, mutaciones e infinito (AUTOS). */
   auto: Record<string, boolean>
+  /** Bloque 10: cómo compra cada autocomprador (se conserva siempre, como los interruptores). */
+  automat: Automat
   /** Infinitos hechos (SPEC_CAPA1 §3). */
   infinitos: number
   // --- Capa 1: se conserva en un Infinito ---
@@ -55,6 +71,11 @@ export interface State {
   enfriamientoPunado: number
 }
 
+/** Autocompradores que compran ítems de la tienda (tienen intervalo y cantidad). */
+export const COMPRAS_AUTO = ['caudal', ...CFG.colores.map((c) => c.id), 'cascada', 'mutaciones']
+/** Todos los interruptores, en el orden del panel. */
+export const AUTOS = [...COMPRAS_AUTO, 'compresion_auto', 'infinito']
+
 const ceros = () => Array<number>(CFG1.estratos.cantidad).fill(0)
 
 export const estadoInicial =(): State => ({
@@ -68,7 +89,15 @@ export const estadoInicial =(): State => ({
   mutaciones: { caudal: 0, colores: 0, expansion: 0, cascada: 0 },
   maxEnergia: new Decimal(0),
   coloresDesbloqueados: CFG.colores.filter((c) => c.desbloqueo_log10 <= 0).length,
-  auto: Object.fromEntries(Object.keys(CFG.autocompradores).map((k) => [k, true])),
+  auto: Object.fromEntries(AUTOS.map((k) => [k, true])),
+  automat: {
+    intervalo: Object.fromEntries(COMPRAS_AUTO.map((k) => [k, CFG.automatizacion.intervalo_s])),
+    cantidad: Object.fromEntries(COMPRAS_AUTO.map((k): [string, Cantidad] => [k, 0])),
+    compresion: { modo: 'umbral', segundos: 0 },
+    infinito: { modo: 'llegar', log10: 0 },
+    segundos: 0,
+    espera: 0,
+  },
   infinitos: 0,
   cristales: new Decimal(0),
   cristalesTotales: new Decimal(0),

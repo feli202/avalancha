@@ -91,7 +91,7 @@ si lc < 6:   Cristales = floor(10^lc)             (números chicos enteros)
 ```
 
 - `mult` (en log10) = Ruptura (0/1/2/3) + Cristalografía (0,5/1/1,5/2) + Cristalografía II (0,125/0,25/0,375/0,5 por Defecto completo) + 3 si completaste Vidrio. En el Defecto Vidrio `mult` = 0.
-- **Cuándo hacer Infinito** (cuando la Energía ya pasó 1e308): conviene cuando los Cristales por segundo (`10^lc / duración`) dejan de subir. La interfaz muestra "Cristales al hacer Infinito: X (Y/min)" y marca con un brillo el momento óptimo. El Infinito automático (Memoria nivel 4) usa exactamente esa regla (configurable: "en el óptimo" o "al llegar a X Cristales").
+- **Cuándo hacer Infinito** (cuando la Energía ya pasó 1e308): conviene cuando los Cristales por segundo (`10^lc / duración`) dejan de subir. La interfaz muestra "Cristales al hacer Infinito: X (Y/min)" y marca con un brillo el momento óptimo. El Infinito automático (Memoria nivel 4) hace el Infinito **apenas llegás**; Romper el Infinito (Ruptura nv1) lo mejora: puede esperar "al llegar a X Cristales" (correcciones, bloque 10; se configura en Automatización).
 - `Cristales totales` (nunca bajan) es lo que piden los Defectos 5–8 y el fin de la capa (1e308).
 
 ---
