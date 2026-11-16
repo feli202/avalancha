@@ -1424,3 +1424,53 @@ Cosmético: no se tocó `src/core/` (salvo los tipos de `config.ts`), `balance/`
 7. **Los textos de los secretos llevan los números escritos** (50, 10 min, 111…): si cambia un umbral en config hay que cambiar el texto.
 8. **Logo de Exponent y marco Exponent**: marca de texto «eˣ» provisoria (no hay archivo del logo). Hielo (Capa 1) queda bloqueado con "Logro: Primer Cristal" (`cristal` en `txt.logros.lista`).
 9. La foto del mandala sigue con fondo Noche (no lleva el fondo elegido).
+
+## Correcciones Capa 1, bloque 9: la Red como pila 3D de cristal (2026-11-16)
+
+Solo visual: no se tocó `src/core/`, `balance/` ni la config. Tests: 216 en verde más el de balance, tsc sin errores.
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/render/redVisual.ts` | Nuevo. La escena three.js: cámara en diagonal a 35° (arrastrar gira ±0,45 rad y sube o baja la cámara), encuadre automático (proyecta las puntas del rombo y ajusta la distancia), cada nodo una columna de 0 a 4 cubos de cristal del color de su nivel sobre una base de hielo. Cristal: facetas (bisel falso), refracción y reflejo de un entorno procedural chico, brillo en las aristas. Cerrado: losa baja de escarcha lisa; anillo 3: losa más gruesa y oscura. Abierto sin niveles: cubo de vidrio vacío. Hover y elegido: halo aditivo. Derrumbe al maxear: los cubos se separan y tiemblan, un fragmento vuela en arco a cada vecino y el vecino se despierta cuando le llega. |
+| `src/ui/Red.svelte` | Reescrito. Carga la escena en un trozo aparte al entrar y la destruye al salir. Nombres en HTML sobre cada columna (cortos en pantallas angostas), con desamontonado: si dos se pisan queda el de adelante; el elegido y el del puntero siempre se ven; los cerrados solo con el puntero encima. Ficha al costado (abajo en el celular): nombre, nivel con los cuatro colores, qué hace, siguiente nivel, estado y botón de compra con el costo. |
+| `src/strings/es.ts`, `en.ts` | `red.comprar`, `red.ahora`, `red.escena`. |
+| `scripts/medir-red.mjs` | Copia de `medir-estratos.mjs` para la Red (puerto 9335). |
+
+Mismas reglas que los Estratos: un solo renderer, `shadowMap` apagado, `pixelRatio` tope 1,5 (1 con puntero grueso), render a demanda (solo dibuja si cambió un nodo, la cámara o hay un derrumbe en curso; el juego llama a `poner()` en cada tick y sin cambios no dibuja), sin cuadros con la pestaña oculta, `dispose` de todo y `forceContextLoss` al salir. Los colores de los cubos salen de las variables CSS de la interfaz (respetan daltonismo). Reducir destellos: sin animación de derrumbe.
+
+### Medidas
+
+`node scripts/medir-red.mjs http://localhost:5177 correcciones-capa1/capturas_despues/bloque9 <ancho> <alto>`, Edge headless con la GPU integrada de la notebook. Estado de prueba: pila llena, Red con nodos en todos los niveles.
+
+| Medida | 1366×768 | 390×844 (DPR 2) |
+| --- | --- | --- |
+| fps en la Arena, antes | 60,4 | 60,6 |
+| **fps en la Red**, quieta | 60,4 (escena: **0 dibujos/s**) | 60,4 (0 dibujos/s) |
+| **fps en la Red**, girando sin parar | 60,4 (59 dibujos/s) | 60,4 (60 dibujos/s) |
+| **fps en la Red**, un derrumbe tras otro | 60,4 (56 dibujos/s) | 60,6 (56 dibujos/s) |
+| **fps en la Arena después de entrar y salir 10 veces** | **60,4** (no bajó) | **60,4** |
+| Costo de un cuadro de la escena (con `gl.finish`) | 0,19 ms | 0,28 ms |
+| Escena | 56 llamadas de dibujo, 662 triángulos, 3 geometrías, 0 texturas | igual |
+
+Memoria (heap de JS después de forzar el recolector):
+
+| Momento | 1366×768 | 390×844 |
+| --- | --- | --- |
+| Arena, sin haber entrado nunca | 5,9 MB | 6,0 MB |
+| Arena, después de la 1.ª visita (baja three.js) | 12,0 MB | 11,6 MB |
+| En la Red | 12,4 MB | 12,4 MB |
+| Arena, después de 11 visitas | 12,3 MB | 12,3 MB |
+| Arena, después de 31 visitas | 12,9 MB | 12,3 MB |
+
+- No acumula: los nodos del DOM vuelven a la misma cuenta (1232 / 1229), la cantidad de canvas también, el contexto WebGL de la pila sigue vivo y no hubo errores en la consola.
+- Primera medición: con la Red quieta dibujaba 20 cuadros/s (un cuadro por tick del juego). Arreglado: `armar()` dice si cambió algo y `poner()` solo pide cuadro en ese caso.
+- Pantalla fija verificada: sin scroll en 1366×768 ni en 390×844; en 390×844 todos los nombres quedan dentro de la escena y la ficha termina en y = 812.
+
+Capturas en `correcciones-capa1/capturas_despues/bloque9/` (Red, derrumbe a mitad de camino y la Arena al volver, en los dos tamaños).
+
+### Decisiones (revisar)
+
+1. **El hielo quedó liso, sin grietas** (pedido del usuario en la sesión: las texturas de hielo con grietas Voronoi y ruido se veían mal y la escena confusa). Los cerrados son losas bajas para que el cristal sea lo único alto; el anillo 3 se distingue por ser más grueso y más oscuro. El bloque 9 pedía grietas en el anillo 3: si se quieren, hacerlas como pocas líneas finas, no como textura.
+2. Los nombres de los cerrados no se muestran a la vista (aparecen al pasar el puntero o al elegirlos); con 25 nombres la pila no se leía.
+3. El suelo y las bases no proyectan sombra (no hay shadowMap): el resplandor frío debajo de la pila la apoya.
+4. **Celular real: sin medir.** La fila de 390×844 es emulación en la notebook.
