@@ -1,0 +1,31 @@
+<script lang="ts">
+  // Correcciones Capa 1, bloque 13: escarcha que cae muy lenta detrás de Cristalización. Dos capas de puntos en mosaico
+  // que bajan con `transform` (solo composición, nada de JS por cuadro). Con Reducir movimiento no se muestra.
+</script>
+
+<div class="escarcha" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<style>
+  .escarcha { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
+  i {
+    position: absolute; left: -10%; right: -10%; top: calc(-1 * var(--t)); height: calc(100% + 2 * var(--t));
+    background: var(--puntos) 0 0 / var(--t) var(--t);
+    animation: caer var(--d) linear infinite; will-change: transform;
+  }
+  /* Tres capas con mosaicos de tamaños que no se repiten juntos: cerca, copos blandos más grandes y rápidos; lejos, chicos y lentos. */
+  i:nth-child(1) {
+    --t: 41rem; --d: 95s; opacity: 0.5;
+    --puntos: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 656 656'%3E%3Cdefs%3E%3CradialGradient id='g'%3E%3Cstop offset='0' stop-color='%23eaf8ff'/%3E%3Cstop offset='.35' stop-color='%23eaf8ff' stop-opacity='.7'/%3E%3Cstop offset='1' stop-color='%23eaf8ff' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cg fill='url(%23g)'%3E%3Ccircle cx='80' cy='120' r='4.5'/%3E%3Ccircle cx='430' cy='40' r='3.2'/%3E%3Ccircle cx='560' cy='470' r='5'/%3E%3Ccircle cx='250' cy='560' r='3.6'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  i:nth-child(2) {
+    --t: 29rem; --d: 120s; opacity: 0.4; left: -23%;
+    --puntos: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 464 464'%3E%3Cdefs%3E%3CradialGradient id='g'%3E%3Cstop offset='0' stop-color='%23bfeeff'/%3E%3Cstop offset='.35' stop-color='%23bfeeff' stop-opacity='.7'/%3E%3Cstop offset='1' stop-color='%23bfeeff' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cg fill='url(%23g)'%3E%3Ccircle cx='60' cy='300' r='3'/%3E%3Ccircle cx='330' cy='90' r='2.6'/%3E%3Ccircle cx='400' cy='380' r='3.4'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  i:nth-child(3) {
+    --t: 17rem; --d: 150s; opacity: 0.3; left: -37%;
+    --puntos: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 272 272'%3E%3Cdefs%3E%3CradialGradient id='g'%3E%3Cstop offset='0' stop-color='%239fe3f5'/%3E%3Cstop offset='.35' stop-color='%239fe3f5' stop-opacity='.7'/%3E%3Cstop offset='1' stop-color='%239fe3f5' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cg fill='url(%23g)'%3E%3Ccircle cx='40' cy='60' r='2'/%3E%3Ccircle cx='190' cy='200' r='2.2'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  @keyframes caer { from { transform: none; } to { transform: translateY(var(--t)); } }
+  :global(.quieto) .escarcha { display: none; }
+  @media (prefers-reduced-motion: reduce) { .escarcha { display: none; } }
+</style>

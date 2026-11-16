@@ -93,7 +93,7 @@
           </span>
         {/each}
       </div>
-      <aside class="ficha" aria-live="polite">
+      <aside class="ficha placa grietas" aria-live="polite">
         <header>
           <button class="paso" aria-label={t.arriba} title={t.arriba} disabled={foco === 0} onclick={() => ir(foco - 1)}>↑</button>
           <h2>{t.estrato(foco + 1)}</h2>
@@ -109,14 +109,14 @@
             <div><dt>{t.aporte}</dt><dd>+{formatoMult(presionEstrato(s, foco))}</dd></div>
           </dl>
           {#each MEJORAS as [que, nombre, ayuda]}
-            <button class="compra" aria-disabled={!puedeMejorar(s, que, foco)} class:puede={puedeMejorar(s, que, foco)} onclick={() => hacer(mejorarEstrato(juego.s, que, foco))}>
+            <button class="compra gema" aria-disabled={!puedeMejorar(s, que, foco)} onclick={() => hacer(mejorarEstrato(juego.s, que, foco))}>
               <span><b>{nombre}</b> {t.nivel(s.estratos[que][foco])}</span>
               <small>{ayuda}</small>
               <small class="num">{cuesta(costoMejora(s, que, foco))}</small>
             </button>
           {/each}
         {:else if foco === s.estratos.abiertos}
-          <button class="compra" aria-disabled={!puedeAbrir(s)} class:puede={puedeAbrir(s)} onclick={() => hacer(abrirEstrato(juego.s))}>
+          <button class="compra gema abrir" aria-disabled={!puedeAbrir(s)} onclick={() => hacer(abrirEstrato(juego.s))}>
             <span><b>{t.abrir}</b></span><small class="num">{cuesta(costoAbrir(s))}</small>
           </button>
         {:else}
@@ -143,20 +143,22 @@
   .rotulo.cerrado { color: var(--apagado); }
   small { display: block; color: var(--apagado); font-size: 0.8125rem; }
 
-  .ficha { display: grid; align-content: center; gap: 0.75rem; }
-  header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; border-bottom: 1px solid rgb(159 227 245 / 0.14); }
+  .ficha { --f: 1rem; display: grid; align-content: center; gap: 0.75rem; align-self: center; padding: 0.75rem 1rem 1.25rem; }
+  header {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+    background: linear-gradient(90deg, transparent, rgb(159 227 245 / 0.3), transparent) bottom / 100% 1px no-repeat;
+  }
   h2 { margin: 0; font-size: 1.5rem; font-weight: 300; }
   .paso { width: 2.75rem; height: 2.75rem; border: 0; background: none; color: var(--hielo); font: inherit; font-size: 1.25rem; cursor: pointer; }
   .paso:disabled { color: var(--apagado); opacity: 0.4; cursor: default; }
   dl { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 0; }
   dt { font-size: 0.8125rem; color: var(--tenue); }
   dd { margin: 0.125rem 0 0; font-size: 1.25rem; font-weight: 600; }
-  .compra {
-    display: grid; gap: 0.15rem; min-height: 2.75rem; padding: 0.5rem 0.75rem; text-align: left; font: inherit; font-size: 0.9375rem; color: var(--apagado);
-    background: rgb(4 6 13 / 0.6); border: 1px solid rgb(159 227 245 / 0.2); cursor: default;
-  }
-  .compra.puede { color: var(--escarcha); border-color: var(--hielo); cursor: pointer; }
-  .compra.puede:hover { background: color-mix(in srgb, var(--hielo) 12%, rgb(4 6 13 / 0.85)); }
+  .compra { --b: 1.1rem; display: grid; gap: 0.15rem; min-height: 2.75rem; padding-block: 0.7rem; font-size: 0.9375rem; }
+  .compra:not([aria-disabled='true']) small { color: var(--tenue); }
+  .compra .num:last-child { color: var(--hielo); }
+  .compra[aria-disabled='true'] .num:last-child { color: var(--apagado); }
+  .abrir { min-height: 3.5rem; font-size: 1.0625rem; }
   .ficha p { text-align: left; }
 
   /* Móvil y ventanas angostas: la escena arriba y la interfaz del estrato debajo. */

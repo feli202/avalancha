@@ -249,7 +249,7 @@
   @keyframes encender { 30% { color: var(--ambar); } }
 
   /* Con la barra de capas (Capas.svelte) la columna izquierda le deja lugar; la pila no se mueve. */
-  .juego.con-capas { --barra: 2.75rem; }
+  .juego.con-capas { --barra: 5.25rem; }
   .izq {
     position: fixed; top: var(--margen); left: calc(var(--margen) + var(--barra, 0px)); width: var(--col);
     display: grid; justify-items: start; pointer-events: none;

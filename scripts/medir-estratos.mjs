@@ -60,7 +60,7 @@ await espera(3000)
 await ev(`document.querySelector('.titulo button')?.click()`)
 await espera(1500)
 // Estado de prueba: la pila llena con Caudal alto, los 8 estratos abiertos y con flujo de sobra (2000 partículas).
-await ev(`import('/src/ui/juego.svelte.ts').then(({ juego: j }) => {
+await ev(`import(performance.getEntriesByType('resource').map((r) => r.name).find((n) => n.includes('/src/ui/juego.svelte.ts')) ?? '/src/ui/juego.svelte.ts').then(({ juego: j }) => {
   window.__j = j
   const s = j.s, ocho = (f) => Array.from({ length: 8 }, (_, k) => f(k))
   j.vistos = { ...j.vistos, cristales: true }

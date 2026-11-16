@@ -841,7 +841,7 @@ Lista en `correcciones-capa1/correcciones-capa1/CORRECCIONES_CAPA1.md` (13 bloqu
 
 - [x] Sesión 1 — bloques 1 a 4: antiparpadeo, sonido, bug del AUTO, guías una sola vez (2026-11-15; falta que lo revises jugando: ver abajo)
 - [x] Sesión 2 — bloques 5 y 6: balance de Estratos y Red (2026-11-16; el Relicario como inventario solo en el simulador, el núcleo va en la sesión 5)
-- [ ] Sesión 3 — bloque 13: estética de cristal y escarcha, barra lateral
+- [x] Sesión 3 — bloque 13: estética de cristal y escarcha, barra lateral (2026-11-16)
 - [ ] Sesión 4 — bloque 7: multiplicadores visibles
 - [ ] Sesión 5 — bloque 8: Relicario como inventario
 - [ ] Sesión 6 — bloque 9: Red en 3D de cristal
@@ -930,6 +930,33 @@ Peso al final de la 1.2: Presión 43 %, Escarcha 41 %, Colores 7 % (antes 59 / 2
 6. **Cristalografía II no suma nada todavía**: los Defectos llegan en C7 (`defectosCompletos` devuelve 0). Eco II no tiene dónde actuar hasta la Escarcha (C10).
 7. **El núcleo del Relicario no se tocó** (ofertas con semilla, como en C3): el inventario es la sesión 5. El tooltip de Engarces II ya describe la fusión automática.
 8. En el navegador integrado quedó la partida de prueba con Cristales y nodos puestos a mano.
+
+### Sesión 3 (2026-11-16) — bloque 13: hielo y cristal
+
+Solo interfaz: no se tocó `src/core/`, `balance/` ni las escenas WebGL.
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/ui/hielo.css` | Nuevo. El sistema de estilo de la Capa 1, por clases (se ponen sobre el elemento que ya existe): `.placa` (placa de hielo: azul noche, escarcha en ruido SVG, esquinas facetadas a 60° con `clip-path`, arista fría fuerte arriba y casi nada a los costados, un brillo que la recorre cada 14 s), `.placa.grietas`, `--luz` (luz extra adentro), `.gema` (botón de cristal: hexágono alargado, corona clara y pabellón oscuro como bisel, un reflejo que cruza cada 11 s; sin `aria-disabled` se enciende desde adentro en 0,6 s; `--c` cambia el color), `.pestanas-hielo` (la elegida es una esquirla encendida). Tokens `--hielo-*`, `--tex-escarcha`, `--tex-grietas`. |
+| `src/ui/Escarcha.svelte` | Nuevo. Escarcha cayendo detrás de Cristalización: tres capas de copos blandos en mosaicos de 41, 29 y 17 rem (no se repiten juntos), 95–150 s por vuelta, solo `transform`. |
+| `src/ui/Capas.svelte` | Encabezado con el cristal de emblema junto a los Cristales; pestañas `.pestanas-hielo`; "Seguir" de la presentación es una gema. **Barra de capas**: placa de 5 rem (antes 2,75), cada capa con ícono y nombre debajo: Arena = mini pila de píxeles ámbar con dos granos cayendo; Cristalización = prisma de hielo con caras de distinta luz y un destello. La activa: ícono a color con resplandor, nombre en su color, marca de 2 px y luz de su color. |
+| `src/ui/Estratos.svelte` | La ficha del estrato es una placa con grietas; Permeabilidad, Presión y Abrir son gemas. |
+| `src/ui/Relicario.svelte` | Ofertas = gemas de punta arriba y abajo con la arista del color de la reliquia; engarces = huecos hexagonales (vacío apagado, lleno encendido de su color); las tres pilas = placas (la engarzada, con grietas, arista de su color y luz desde abajo). |
+| `src/ui/App.svelte` | `--barra` 5,25 rem: la columna izquierda de la Arena le deja lugar a la barra más ancha. |
+| `src/strings/es.ts`, `en.ts` | Guion blando en "Crista·lización" / "Crystal·lization" (en el móvil la barra mide 4 rem y el nombre corta ahí; en otros lados no se ve). |
+| `scripts/capturas-capa1.mjs` | Nuevo. Capturas de la Arena, Red, Estratos, Relicario y Defectos en 1366×800 y 390×844 (Edge headless). Antes y después de este bloque en `correcciones-capa1/capturas_despues/bloque13/` (sin commitear, como el resto de esa carpeta). |
+
+- **Reducir movimiento** (`.quieto`): sin escarcha, sin reflejos ni brillos que recorren, granos de la barra quietos. **Reducir destellos** (`calma`, prendido por defecto): el destello del cristal (barra y emblema) queda fijo en vez de titilar. Lo que cambia de estado (una gema que pasa a alcanzar) cambia en 0,6 s, nunca de golpe.
+- Arreglo de paso en los scripts de medición: después de un cambio en caliente Vite sirve `juego.svelte.ts` con `?t=`, y el `import('/src/ui/juego.svelte.ts')` de los scripts cargaba **otra instancia** del módulo (el estado de prueba no llegaba al juego). `medir-estratos.mjs` y `capturas-capa1.mjs` ahora importan la URL que cargó la página.
+
+**Verificación**: 204 tests en verde, `tsc` y `svelte-check` sin errores. Capturas antes/después en escritorio y móvil, miradas una por una (dos vueltas: la escarcha en ruido salía como humo gris y los copos formaban una grilla de estrellas; se bajó la textura y se pasó a tres mosaicos de tamaños sin relación). Edge headless con `medir-estratos.mjs`: 1280×720, 60,4 fps en Arena y en Estratos (cámara quieta y bajando); 390×844 con la CPU ÷4, 58,2 fps en Estratos con la cámara quieta (55,6 sin nada de lo nuevo: los brillos eran `background-position` y repintaban, ahora son `transform`). **Sin mirar**: un celular real, Firefox/Safari (`@property` para la transición del encendido; sin él la gema se enciende de golpe), daltonismo.
+
+**Decisiones (revisar)**
+
+1. **Componentes por clase CSS, no componentes Svelte**: `.placa` y `.gema` se ponen sobre el botón o el `aside` que ya existe; envolverlos habría obligado a pasar a mano `onclick`, `aria-*`, arrastre, etc. Solo la escarcha (que tiene marcado propio) es un componente.
+2. **La Red no se tocó**: se rehace en 3D en el bloque 9. Defectos y Escarcha siguen con su pantalla vacía.
+3. La barra de capas quedó de 5 rem para que "Cristalización" entre en una línea a 0,6875 rem; en el móvil, 4 rem con el nombre cortado en dos.
+4. Las ofertas del Relicario siempre se pueden tomar, así que siempre están encendidas (con el color de la reliquia); las mejoras de Estratos se apagan cuando no alcanza.
 
 ## Plan (SPEC_CAPA1 §16)
 

@@ -66,7 +66,7 @@
       <div class="cartas">
         {#each ofrecidas as t, i}
           {@const n = nivelReliquia(s, t)}
-          <button onclick={() => tomar(i)}>
+          <button class="gema" style:--c={COLORES[escalon(Math.max(0, n)).color]} onclick={() => tomar(i)}>
             {@render cristal(t, n)}
             <b>{nombre(t)}</b>
             <span>{efecto(t, Math.max(0, n))}</span>
@@ -84,7 +84,7 @@
     {#each { length: espacios(s) } as _, i}
       {@const t = s.relicario.equipadas[i]}
       <button
-        class="espacio" class:lleno={!!t} aria-label={t ? r.quitar(nombre(t)) : r.vacio} aria-disabled={!t}
+        class="espacio gema" class:lleno={!!t} style:--c={t ? COLORES[escalon(Math.max(0, nivelReliquia(s, t))).color] : undefined} aria-label={t ? r.quitar(nombre(t)) : r.vacio} aria-disabled={!t}
         ondragover={(e) => e.preventDefault()} ondrop={(e) => { e.preventDefault(); soltar(i) }}
         onclick={() => t && (juego.s = desequipar(juego.s, t))}
       >
@@ -100,7 +100,7 @@
       {@const n = nivelReliquia(s, t)}
       {@const puesta = s.relicario.equipadas.includes(t)}
       <button
-        class="pila" class:puesta class:nada={!cant} draggable={cant > 0} aria-disabled={!cant}
+        class="pila placa" class:grietas={puesta} class:puesta class:nada={!cant} style:--c={COLORES[escalon(Math.max(0, n)).color]} draggable={cant > 0} aria-disabled={!cant}
         aria-label="{puesta ? r.quitar(nombre(t)) : r.engarzar(nombre(t))}, {cant ? grado(n) : r.ninguna}"
         ondragstart={(e) => { arrastrada = t; e.dataTransfer?.setData('text/plain', t) }}
         onclick={() => alternar(t)}
@@ -136,7 +136,7 @@
   h2 { margin: 0; font-size: 1.125rem; font-weight: 600; }
   p { max-width: 34rem; margin: 0; color: var(--tenue); text-align: center; text-wrap: balance; }
   small { color: var(--apagado); font-size: 0.8125rem; }
-  button { font: inherit; color: var(--escarcha); background: rgb(4 6 13 / 0.6); border: 1px solid rgb(159 227 245 / 0.28); cursor: pointer; }
+  button { font: inherit; color: var(--escarcha); cursor: pointer; }
 
   .cristal { width: 3rem; height: 3rem; overflow: visible; fill: color-mix(in srgb, var(--c) 30%, transparent); stroke: var(--c); stroke-width: 0.9; stroke-linejoin: round; filter: drop-shadow(0 0 0.35rem color-mix(in srgb, var(--c) 55%, transparent)); }
   /* Segunda vuelta de la escalera (Ámbar +1…): el mismo color con un brillo más fuerte. */
@@ -145,20 +145,29 @@
   .oferta { display: grid; justify-items: center; gap: 0.5rem; width: 100%; }
   .cartas { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-top: 0.5rem; }
   .cartas button {
-    display: grid; justify-items: center; align-content: start; gap: 0.35rem; width: min(11.5rem, calc(50% - 0.375rem)); padding: 1rem 0.75rem; text-align: center;
-    border-color: var(--hielo); box-shadow: inset 0 0 0 1px rgb(159 227 245 / 0.25), 0 0 0.9rem rgb(159 227 245 / 0.15); transition: background-color 0.15s, translate 0.15s;
+    --b: 1.4rem; display: grid; justify-items: center; align-content: start; gap: 0.35rem; width: min(12.5rem, calc(50% - 0.375rem)); padding: 1.25rem 1.6rem 1.4rem;
+    clip-path: polygon(50% 0, 100% var(--b), 100% calc(100% - var(--b)), 50% 100%, 0 calc(100% - var(--b)), 0 var(--b)); /* una gema de punta arriba y abajo */
+    transition: --encendido 0.6s ease-out, translate 0.2s;
   }
-  .cartas button:hover, .cartas button:focus-visible { background: color-mix(in srgb, var(--hielo) 12%, rgb(4 6 13 / 0.85)); translate: 0 -2px; }
+  .cartas button:hover, .cartas button:focus-visible { translate: 0 -3px; }
   .cartas span, .pila span { color: var(--tenue); font-size: 0.875rem; text-wrap: balance; }
 
   .engarces { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.75rem; }
   .engarces h2, .engarces small { flex-basis: 100%; text-align: center; }
-  .espacio { display: grid; place-content: center; justify-items: center; gap: 0.25rem; width: 7rem; height: 7rem; border-style: dashed; cursor: default; font-size: 0.875rem; }
-  .espacio.lleno { border-style: solid; border-color: var(--hielo); cursor: pointer; background: color-mix(in srgb, var(--hielo) 8%, rgb(4 6 13 / 0.85)); }
+  /* El engarce: un hueco hexagonal. Vacío queda apagado; con su reliquia se enciende del color de ella. */
+  .espacio {
+    display: grid; place-content: center; justify-items: center; gap: 0.25rem; width: 7rem; height: 8rem; padding: 0; font-size: 0.875rem;
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  }
+  .espacio:not(.lleno)::before { background: radial-gradient(closest-side, transparent 60%, rgb(0 0 0 / 0.45)), var(--tex-escarcha), var(--hielo-hondo); }
 
   .pilas { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.75rem; width: min(100%, 48rem); }
-  .pila { display: grid; justify-items: center; align-content: start; gap: 0.3rem; padding: 1.25rem 0.75rem; text-align: center; transition: border-color 0.2s, background-color 0.2s; }
-  .pila.puesta { border-color: var(--hielo); background: color-mix(in srgb, var(--hielo) 8%, rgb(4 6 13 / 0.85)); }
+  .pila { --f: 1rem; display: grid; justify-items: center; align-content: start; gap: 0.3rem; padding: 1.25rem 0.75rem; border: 0; text-align: center; }
+  /* Engarzada: la arista se enciende de su color y le entra luz desde abajo. */
+  .pila.puesta {
+    --hielo-arista: color-mix(in srgb, var(--c) 85%, white);
+    --luz: radial-gradient(70% 55% at 50% 100%, color-mix(in srgb, var(--c) 20%, transparent), transparent 75%);
+  }
   .pila.nada { opacity: 0.55; cursor: default; }
   .pila .cristal { width: 4.5rem; height: 4.5rem; }
   .pila .grado { font-weight: 600; }
