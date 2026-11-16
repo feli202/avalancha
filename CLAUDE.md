@@ -21,3 +21,7 @@ Si un cambio toca el balance: primero simulador, después `SPEC_CAPA1.md`, despu
 Todo número grande de la Capa 1 (Cristales, `s_k` de los estratos, espesor de la Escarcha) vive en log10 o break_infinity.
 La escena three.js de los Estratos se crea al entrar a su pantalla y se destruye al salir. Medí fps antes de cerrar C5.
 Llevá `PROGRESO.md` al día: hito actual, qué quedó hecho, qué falta, decisiones tomadas.
+
+Pantallas sin scroll (regla para todo lo que se haga de ahora en más)
+Cada pantalla del juego entra entera en la ventana, sin scroll de página, en escritorio y en el celular. Si hay una lista larga (inventario, logros, nodos), scrollea solo esa caja dentro de la pantalla fija. Probalo en 1366×768 y en 390×844 antes de dar algo por terminado.
+Valores como multiplicadores o en notación matemática (×3, ^1,015, +0,02 a c, × (1 + 0,3 × nivel)), nunca en porcentajes.

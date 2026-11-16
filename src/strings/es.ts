@@ -1,6 +1,8 @@
 // Todos los textos de la interfaz. Nunca escribir textos en los componentes.
 const num = (x: number, d = 2) => x.toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d })
 const f = (x: number) => x.toLocaleString('es-AR', { maximumFractionDigits: 2 })
+/** Coeficientes chicos (exponentes ^1,015, factores 0,001): sin redondear a 2 cifras. */
+const f4 = (x: number) => x.toLocaleString('es-AR', { maximumFractionDigits: 4 })
 /** Nodo de la Red: [nombre, nombre corto (móvil), efecto]. `x` son los valores de config en el nivel `n` (1..4). */
 export type NodoTxt = [string, string, (x: Record<string, any>, n: number) => string]
 
@@ -105,9 +107,9 @@ export const es = {
     relicario: {
       que: 'Solo las reliquias engarzadas dan efecto. Cada tres iguales se funden en una del color siguiente.',
       tipos: {
-        cauce: ['Cauce', (x) => `Los colores valen +${f(x * 100)} % más`],
-        cascada: ['Cascada', (x) => `+${f(x)} al exponente de la Cascada`],
-        mutaciones: ['Mutaciones', (x) => `Las Mutaciones de Caudal y Colores rinden +${f(x * 100)} %`],
+        cauce: ['Cauce', (x) => `El valor de los colores ^${f4(1 + x)}`],
+        cascada: ['Cascada', (x) => `Exponente c de la Cascada +${f4(x)}`],
+        mutaciones: ['Mutaciones', (x) => `Las Mutaciones de Caudal y Colores ^${f4(1 + x)}`],
       } as Record<string, [string, (x: number) => string]>,
       grado: (color: string, vuelta: number) => (vuelta ? `${color} +${vuelta}` : color),
       elegir: 'Elegí qué hace tu reliquia',
@@ -166,8 +168,8 @@ export const es = {
       perm: 'Permeabilidad',
       pres: 'Presión',
       nivel: (n: number) => `nivel ${n}`,
-      permQue: (pct: string) => `Cada nivel: +${pct} % de flujo en este estrato.`,
-      presQue: (pct: string) => `Cada nivel: +${pct} % de peso de este estrato en la Presión.`,
+      permQue: (k: string) => `Flujo de este estrato × (1 + ${k} × nivel).`,
+      presQue: (k: string) => `Peso de este estrato en la Presión × (1 + ${k} × nivel).`,
     },
     // SPEC_CAPA1 §6
     red: {
@@ -193,7 +195,7 @@ export const es = {
         mutacion_plus: ['Mutación+', 'Mut+', (x) => `Cada Mutación puede subir ${x.nivel_max_extra} niveles más`],
         inercia: ['Inercia', 'Iner', (x) => `En cada Infinito los estratos se van acelerando hasta llenarse ${f(x.impulso_x)} veces más rápido a los 10 minutos`],
         cristalografia: ['Cristalo­grafía', 'Crist', (x) => `Cada Infinito da ${f(10 ** x.cristales_log10)} veces más Cristales`],
-        eco2: ['Eco II', 'Eco2', (x) => `La Escarcha crece más cuantos más Cristales juntaste: +${f(x.escarcha_eco * 100)} % por cada orden de magnitud`],
+        eco2: ['Eco II', 'Eco2', (x) => `La Escarcha crece × (1 + ${f4(x.escarcha_eco)} × log₁₀ Cristales totales)`],
         defectos2: ['Defectos II', 'Def2', (_, n) => `Abre ${['Fatiga', 'Frontera', 'Inclusión', 'Vidrio'].slice(0, n).join(', ')}`],
         germen: ['Germen', 'Germ', (x) => `La Escarcha crece ${f(x.escarcha_g_x)} veces más rápido`],
         frio: ['Frío', 'Frío', (x) => `La Escarcha aguanta ${f(x.escarcha_H_x)} veces más antes de frenar la producción`],

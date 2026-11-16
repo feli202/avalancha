@@ -1,6 +1,7 @@
 // English UI text. Same keys as es.ts (the type enforces it).
 import type { es, NodoTxt } from './es'
 const f = (x: number) => x.toLocaleString('en-US', { maximumFractionDigits: 2 })
+const f4 = (x: number) => x.toLocaleString('en-US', { maximumFractionDigits: 4 })
 
 const num = (x: number, d = 2) => x.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d })
 const n0 = (x: number) => x.toLocaleString('en-US')
@@ -96,9 +97,9 @@ export const en: typeof es = {
     relicario: {
       que: 'Only socketed relics have an effect. Every three of a kind fuse into one of the next color.',
       tipos: {
-        cauce: ['Channel', (x) => `Colors are worth +${f(x * 100)}% more`],
-        cascada: ['Cascade', (x) => `+${f(x)} to the Cascade exponent`],
-        mutaciones: ['Mutations', (x) => `Flow and Colors Mutations give +${f(x * 100)}%`],
+        cauce: ['Channel', (x) => `Color value ^${f4(1 + x)}`],
+        cascada: ['Cascade', (x) => `Cascade exponent c +${f4(x)}`],
+        mutaciones: ['Mutations', (x) => `Flow and Colors Mutations ^${f4(1 + x)}`],
       },
       grado: (color: string, vuelta: number) => (vuelta ? `${color} +${vuelta}` : color),
       elegir: 'Choose what your relic does',
@@ -156,8 +157,8 @@ export const en: typeof es = {
       perm: 'Permeability',
       pres: 'Pressure',
       nivel: (n: number) => `level ${n}`,
-      permQue: (pct: string) => `Each level: +${pct}% flow in this stratum.`,
-      presQue: (pct: string) => `Each level: +${pct}% weight of this stratum in Pressure.`,
+      permQue: (k: string) => `Flow in this stratum × (1 + ${k} × level).`,
+      presQue: (k: string) => `Weight of this stratum in Pressure × (1 + ${k} × level).`,
     },
     red: {
       que: 'Each node has four levels: Amber, Coral, Jade and Violet. Completing one topples its sand and opens its neighbors.',
@@ -182,7 +183,7 @@ export const en: typeof es = {
         mutacion_plus: ['Mutation+', 'Mut+', (x) => `Each Mutation can go ${x.nivel_max_extra} levels higher`],
         inercia: ['Inertia', 'Inr', (x) => `During each Infinity the strata speed up until they fill ${f(x.impulso_x)} times faster at 10 minutes`],
         cristalografia: ['Crystallo­graphy', 'Cry', (x) => `Each Infinity gives ${f(10 ** x.cristales_log10)} times more Crystals`],
-        eco2: ['Echo II', 'Echo2', (x) => `Frost grows more the more Crystals you have gathered: +${f(x.escarcha_eco * 100)} % per order of magnitude`],
+        eco2: ['Echo II', 'Echo2', (x) => `Frost grows × (1 + ${f4(x.escarcha_eco)} × log₁₀ total Crystals)`],
         defectos2: ['Defects II', 'Def2', (_, n) => `Opens ${['Fatigue', 'Boundary', 'Inclusion', 'Glass'].slice(0, n).join(', ')}`],
         germen: ['Seed', 'Seed', (x) => `Frost grows ${f(x.escarcha_g_x)} times faster`],
         frio: ['Cold', 'Cold', (x) => `Frost holds ${f(x.escarcha_H_x)} times longer before slowing production`],

@@ -2,6 +2,7 @@
   // Bloque 8: el Relicario como inventario. Cada Infinito el jugador elige el tipo de su reliquia (Ámbar, con la pila de
   // ese Infinito como cara). Grilla de casilleros; 3 iguales se fusionan (arrastrando una sobre otra o con el botón);
   // solo lo que está en los Engarces da efecto. Las caras salen del generador de miniaturas compartido (miniPilas.ts).
+  // Pantalla fija (CLAUDE.md): todo entra en la ventana y solo la grilla del inventario scrollea.
   import { tick as despues } from 'svelte'
   import { flip } from 'svelte/animate'
   import {
@@ -14,11 +15,11 @@
   import * as sonido from './sonido'
 
   const COLORES = ['var(--ambar)', 'var(--coral)', 'var(--jade)', 'var(--violeta)']
-  // El sello del tipo, chico en la esquina: Cauce un rombo largo, Cascada un hexágono, Mutaciones una macla (dos rombos).
+  // El símbolo del tipo, arriba de cada reliquia: tres formas que no se confunden.
   const SELLOS: Record<string, string> = {
-    cauce: 'M0-9 5.2 0 0 9-5.2 0ZM0-9V9',
-    cascada: 'M0-9 7.8-4.5V4.5L0 9-7.8 4.5V-4.5ZM-7.8-4.5 0 0 7.8-4.5M0 0V9',
-    mutaciones: 'M-3-8 2 0-3 8-8 0ZM3-8 8 0 3 8-2 0Z',
+    cauce: 'M-8-4c2.7-3 5.3 3 8 0s5.3-3 8 0M-8 3c2.7-3 5.3 3 8 0s5.3-3 8 0', // dos ondas: el cauce
+    cascada: 'M-7-8 0-3 7-8M-7-2 0 3 7-2M-7 4 0 9 7 4', // tres escalones que caen
+    mutaciones: 'M-3-8 2 0-3 8-8 0ZM3-8 8 0 3 8-2 0Z', // macla: dos cristales cruzados
   }
   const r = txt.cristal.relicario
   const s = $derived(juego.s)
@@ -74,7 +75,9 @@
     const ultima = nuevas.reduce((a, b) => (b.nivel > a.nivel ? b : a))
     nacida = ultima.id
     elegida = null
-    const d = celdas[ultima.id]?.getBoundingClientRect()
+    const el = celdas[ultima.id]
+    el?.scrollIntoView({ block: 'nearest' })
+    const d = el?.getBoundingClientRect()
     const idas = [...antes.keys()].filter((id) => !juego.s.relicario.piezas.some((p) => p.id === id))
     if (d) destino = { x: d.left, y: d.top, w: d.width }
     vuelos = idas.map((id) => rect.get(id)).filter((b): b is DOMRect => !!b).map((b, i) => ({ k: k++, x: b.left, y: b.top, w: b.width, c: color(antes.get(idas[i])!.nivel) }))
@@ -112,119 +115,117 @@
 {#snippet sello(t: string)}
   <svg class="sello" viewBox="-10 -10 20 20" aria-hidden="true"><path d={SELLOS[t] ?? SELLOS.cascada} /></svg>
 {/snippet}
-{#snippet cara(p: { foto: string; nivel: number }, clase = '')}
-  <canvas class="cara {clase}" use:caraReliquia={{ foto: p.foto, nivel: p.nivel }} aria-hidden="true"></canvas>
+{#snippet cara(p: { foto: string; nivel: number })}
+  <canvas class="cara" use:caraReliquia={{ foto: p.foto, nivel: p.nivel }} aria-hidden="true"></canvas>
 {/snippet}
 
 <section class="relicario" aria-label={txt.cristal.pantallas.relicario}>
-  {#if rel.pendiente}
-    <div class="eleccion">
-      <div class="nueva" style:--c={color(0)}>{@render cara({ foto: rel.foto, nivel: 0 })}</div>
-      <div class="texto">
-        <h2>{r.elegir}</h2>
-        <p>{r.elegirQue}</p>
-        <p class="num">{r.cuenta(cuenta)}</p>
-      </div>
-      <div class="tipos">
-        {#each TIPOS as t (t)}
-          <button class="gema" style:--c={color(0)} onclick={() => tomar(t)}>
-            {@render sello(t)}
-            <b>{nombre(t)}</b>
-            <span>{efecto(t, 0)}</span>
-            <small>{r.ambar(ambar(t))}</small>
+  <div class="izq">
+    <div class="engarces" role="group" aria-label={r.engarces}>
+      <h2>{r.engarces}</h2>
+      <div class="huecos">
+        {#each { length: espacios(s) } as _, i}
+          {@const p = rel.piezas.find((x) => x.id === rel.equipadas[i])}
+          <button
+            class="hueco" class:lleno={!!p} class:elegido={!!p && p.id === elegida} style:--c={p ? color(p.nivel) : undefined}
+            aria-label={p ? r.pieza(nombre(p.tipo), grado(p.nivel)) : r.vacio}
+            ondragover={(e) => e.preventDefault()} ondrop={(e) => { e.preventDefault(); if (arrastrada !== null) enEngarce(arrastrada, i) }}
+            onclick={() => tocarEngarce(i)}
+          >
+            {#if p}{@render cara(p)}<span class="tipo">{@render sello(p.tipo)}</span>{/if}
           </button>
         {/each}
       </div>
+      {#if totales.length}
+        <ul class="totales">
+          {#each totales as [t, x] (t)}<li>{@render sello(t)}{r.tipos[t][1](x)}</li>{/each}
+        </ul>
+      {:else}
+        <small class="totales">{r.nada}</small>
+      {/if}
     </div>
-  {/if}
 
-  <div class="mesa">
-    <div class="izq">
-      <div class="engarces" role="group" aria-label={r.engarces}>
-        <h2>{r.engarces}</h2>
-        <div class="huecos">
-          {#each { length: espacios(s) } as _, i}
-            {@const p = rel.piezas.find((x) => x.id === rel.equipadas[i])}
-            <button
-              class="hueco" class:lleno={!!p} class:elegido={!!p && p.id === elegida} style:--c={p ? color(p.nivel) : undefined}
-              aria-label={p ? r.pieza(nombre(p.tipo), grado(p.nivel)) : r.vacio}
-              ondragover={(e) => e.preventDefault()} ondrop={(e) => { e.preventDefault(); if (arrastrada !== null) enEngarce(arrastrada, i) }}
-              onclick={() => tocarEngarce(i)}
-            >
-              {#if p}{@render cara(p)}{@render sello(p.tipo)}{/if}
-            </button>
-          {/each}
-        </div>
-        {#if totales.length}
-          <ul class="totales">
-            {#each totales as [t, x] (t)}<li>{@render sello(t)}{r.tipos[t][1](x)}</li>{/each}
-          </ul>
-        {:else}
-          <small>{r.nada}</small>
-        {/if}
-      </div>
-
-      <div class="detalle placa" class:vacio={!sel} style:--c={sel ? color(sel.nivel) : undefined} aria-live="polite">
-        {#if sel}
-          {@const g = grupoDe(sel)}
-          <div class="ficha">{@render cara(sel)}{@render sello(sel.tipo)}</div>
+    {#if sel}
+      {@const g = grupoDe(sel)}
+      <div class="detalle placa" style:--c={color(sel.nivel)} aria-live="polite">
+        <div class="ficha">{@render cara(sel)}<span class="tipo">{@render sello(sel.tipo)}</span></div>
+        <div class="datos">
           <b>{nombre(sel.tipo)} <span style:color={color(sel.nivel)}>{grado(sel.nivel)}</span></b>
           <span>{efecto(sel.tipo, sel.nivel)}</span>
           <small>{r.deInfinito(sel.inf)} · {puestas.has(sel.id) ? r.puesta : r.suelta}</small>
-          <div class="acciones">
-            <button class="gema" onclick={engarzarSel}>{puestas.has(sel.id) ? r.quitar('') : r.engarzar('')}</button>
-            {#if g}<button class="gema" style:--c={color(sel.nivel + 1)} onclick={() => fusionarGrupo(g)}>{r.fusionar} · {r.fusion(grado(sel.nivel + 1))}</button>{/if}
-          </div>
-        {:else}
-          <small>{r.comoEngarzar}</small>
-        {/if}
+        </div>
+        <div class="acciones">
+          <button class="gema" onclick={engarzarSel}>{puestas.has(sel.id) ? r.quitar('') : r.engarzar('')}</button>
+          {#if g}<button class="gema" style:--c={color(sel.nivel + 1)} onclick={() => fusionarGrupo(g)}>{r.fusionar} → {grado(sel.nivel + 1)}</button>{/if}
+        </div>
       </div>
-    </div>
-
-    <div class="inventario">
-      <div class="cabeza">
-        <h2>{r.inventario}</h2>
-        {#if grupos.length}<button class="gema" onclick={fusionarTodas}>{r.fusionarTodo}</button>{/if}
+    {:else if rel.pendiente}
+      <div class="eleccion placa" style:--c={color(0)}>
+        <div class="nueva">{@render cara({ foto: rel.foto, nivel: 0 })}</div>
+        <div class="texto">
+          <h2>{r.elegir}</h2>
+          <small class="num">{r.cuenta(cuenta)}</small>
+        </div>
+        <div class="tipos">
+          {#each TIPOS as t (t)}
+            <button class="gema" style:--c={color(0)} onclick={() => tomar(t)}>
+              {@render sello(t)}
+              <b>{nombre(t)}</b>
+              <span>{efecto(t, 0)}</span>
+              <small>{r.ambar(ambar(t))}</small>
+            </button>
+          {/each}
+        </div>
       </div>
-      <div class="grilla" role="listbox" aria-label={r.inventario}>
-        {#each piezas as p (p.id)}
-          <button
-            bind:this={celdas[p.id]} animate:flip={{ duration: 300 }}
-            class="pieza" class:puesta={puestas.has(p.id)} class:elegido={p.id === elegida} class:mas={escalon(p.nivel).vuelta > 0}
-            class:lista={!!grupoDe(p)} class:nace={p.id === nacida} style:--c={color(p.nivel)}
-            role="option" aria-selected={p.id === elegida} aria-label="{r.pieza(nombre(p.tipo), grado(p.nivel))}{puestas.has(p.id) ? `, ${r.puesta}` : ''}"
-            draggable="true" ondragstart={(e) => { arrastrada = p.id; e.dataTransfer?.setData('text/plain', String(p.id)) }} ondragend={() => (arrastrada = null)}
-            ondragover={(e) => e.preventDefault()} ondrop={(e) => { e.preventDefault(); soltarSobre(p) }}
-            onclick={() => (elegida = elegida === p.id ? null : p.id)}
-          >
-            {@render cara(p)}{@render sello(p.tipo)}
-            {#if escalon(p.nivel).vuelta}<i class="vuelta">+{escalon(p.nivel).vuelta}</i>{/if}
-          </button>
-        {/each}
-        {#each { length: casilleros - piezas.length } as _}<span class="libre"></span>{/each}
-      </div>
-      {#if !piezas.length}<small>{r.inventarioVacio}</small>{/if}
-    </div>
+    {:else}
+      <small class="ayuda">{r.comoEngarzar}</small>
+    {/if}
   </div>
 
-  <details class="regla placa">
-    <summary>{r.regla.titulo}: <b>{r.regla.modos[rel.regla.modo]}</b></summary>
-    <small>{r.regla.nota}</small>
-    <div class="modos" role="radiogroup" aria-label={r.regla.titulo}>
-      {#each MODOS as m (m)}
-        <label><input type="radio" name="modo" checked={rel.regla.modo === m} onchange={() => regla({ modo: m })} />{r.regla.modos[m]}</label>
-      {/each}
+  <div class="inventario">
+    <div class="cabeza">
+      <h2>{r.inventario}</h2>
+      {#if grupos.length}<button class="gema" onclick={fusionarTodas}>{r.fusionarTodo}</button>{/if}
+      <details class="regla">
+        <summary>{r.regla.titulo}<span>: <b>{r.regla.modos[rel.regla.modo]}</b></span></summary>
+        <div class="panel placa">
+          <small>{r.regla.nota}</small>
+          <div class="modos" role="radiogroup" aria-label={r.regla.titulo}>
+            {#each MODOS as m (m)}
+              <label><input type="radio" name="modo" checked={rel.regla.modo === m} onchange={() => regla({ modo: m })} />{r.regla.modos[m]}</label>
+            {/each}
+          </div>
+          {#if rel.regla.modo === 'fijo' || rel.regla.modo === 'prioridad'}
+            <ol class="orden" aria-label={r.regla.orden}>
+              {#each rel.regla.orden as t, i (t)}
+                <li animate:flip={{ duration: 200 }}>{@render sello(t)}{nombre(t)}{#if i}<button onclick={() => subir(i)} aria-label={r.regla.subir(nombre(t))}>↑</button>{/if}</li>
+              {/each}
+            </ol>
+          {/if}
+          <label><input type="checkbox" checked={rel.regla.fusionar} disabled={!fusionAutomatica(s)} onchange={(e) => regla({ fusionar: e.currentTarget.checked })} />{r.regla.fusionar}</label>
+          <label><input type="checkbox" checked={rel.regla.equipar} onchange={(e) => regla({ equipar: e.currentTarget.checked })} />{r.regla.equipar}</label>
+        </div>
+      </details>
     </div>
-    {#if rel.regla.modo === 'fijo' || rel.regla.modo === 'prioridad'}
-      <ol class="orden" aria-label={r.regla.orden}>
-        {#each rel.regla.orden as t, i (t)}
-          <li animate:flip={{ duration: 200 }}>{@render sello(t)}{nombre(t)}{#if i}<button onclick={() => subir(i)} aria-label={r.regla.subir(nombre(t))}>↑</button>{/if}</li>
-        {/each}
-      </ol>
-    {/if}
-    <label><input type="checkbox" checked={rel.regla.fusionar} disabled={!fusionAutomatica(s)} onchange={(e) => regla({ fusionar: e.currentTarget.checked })} />{r.regla.fusionar}</label>
-    <label><input type="checkbox" checked={rel.regla.equipar} onchange={(e) => regla({ equipar: e.currentTarget.checked })} />{r.regla.equipar}</label>
-  </details>
+    <div class="grilla" role="listbox" aria-label={r.inventario}>
+      {#each piezas as p (p.id)}
+        <button
+          bind:this={celdas[p.id]} animate:flip={{ duration: 300 }}
+          class="pieza" class:puesta={puestas.has(p.id)} class:elegido={p.id === elegida} class:mas={escalon(p.nivel).vuelta > 0}
+          class:lista={!!grupoDe(p)} class:nace={p.id === nacida} style:--c={color(p.nivel)}
+          role="option" aria-selected={p.id === elegida} aria-label="{r.pieza(nombre(p.tipo), grado(p.nivel))}{puestas.has(p.id) ? `, ${r.puesta}` : ''}"
+          draggable="true" ondragstart={(e) => { arrastrada = p.id; e.dataTransfer?.setData('text/plain', String(p.id)) }} ondragend={() => (arrastrada = null)}
+          ondragover={(e) => e.preventDefault()} ondrop={(e) => { e.preventDefault(); soltarSobre(p) }}
+          onclick={() => (elegida = elegida === p.id ? null : p.id)}
+        >
+          {@render cara(p)}<span class="tipo">{@render sello(p.tipo)}</span>
+          {#if escalon(p.nivel).vuelta}<i class="vuelta">+{escalon(p.nivel).vuelta}</i>{/if}
+        </button>
+      {/each}
+      {#each { length: casilleros - piezas.length } as _}<span class="libre"></span>{/each}
+      {#if !piezas.length}<small class="vacio">{r.inventarioVacio}</small>{/if}
+    </div>
+  </div>
 
   {#if destino}
     {#each vuelos as v (v.k)}
@@ -234,33 +235,27 @@
 </section>
 
 <style>
-  .relicario { display: grid; justify-items: center; align-content: start; gap: 1.5rem; padding: 1.5rem 0; width: min(100%, 60rem); margin-inline: auto; animation: entrar 0.3s ease-out; }
+  .relicario {
+    display: grid; grid-template-columns: 18.5rem minmax(0, 1fr); gap: 1.75rem; width: min(100%, 64rem); height: 100%; min-height: 0;
+    margin-inline: auto; padding-top: 1.25rem; animation: entrar 0.3s ease-out;
+  }
   @keyframes entrar { from { opacity: 0; } }
   h2 { margin: 0; font-size: 1.0625rem; font-weight: 600; }
-  p { margin: 0; color: var(--tenue); text-wrap: balance; }
   small { color: var(--apagado); font-size: 0.8125rem; text-wrap: balance; }
   button { font: inherit; color: var(--escarcha); cursor: pointer; }
 
-  .sello { width: 1rem; height: 1rem; fill: rgb(4 6 13 / 0.55); stroke: var(--escarcha); stroke-width: 1.4; stroke-linejoin: round; overflow: visible; }
-  /* La cara: la pila del Infinito, con un vidrio encima (arista clara arriba, sombra abajo). */
-  .cara { display: block; width: 100%; height: 100%; border-radius: 0; }
+  .sello { width: 1rem; height: 1rem; flex: none; fill: none; stroke: var(--escarcha); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+  .cara { display: block; width: 100%; height: 100%; }
+  /* El símbolo del tipo arriba de cada reliquia: una ficha oscura tallada con el símbolo del color de su nivel. */
+  .tipo {
+    position: absolute; z-index: 1; left: 50%; top: 0; translate: -50% 0; display: grid; place-items: center; width: 44%; aspect-ratio: 1.45;
+    background: rgb(4 6 13 / 0.85); clip-path: polygon(0 0, 100% 0, 84% 100%, 16% 100%);
+  }
+  .tipo .sello { width: 58%; height: auto; aspect-ratio: 1; stroke: var(--c); stroke-width: 2.4; filter: drop-shadow(0 0 0.15rem var(--c)); }
 
-  /* ---------- elegir el tipo ---------- */
-  .eleccion { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1.25rem; align-items: center; width: 100%; }
-  .nueva { width: 6.5rem; aspect-ratio: 1; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: var(--hielo-hondo); filter: drop-shadow(0 0 0.6rem color-mix(in srgb, var(--c) 35%, transparent)); animation: latir 2.4s ease-in-out infinite; }
-  @keyframes latir { 50% { filter: drop-shadow(0 0 1rem color-mix(in srgb, var(--c) 55%, transparent)); } }
-  .texto { display: grid; gap: 0.25rem; }
-  .tipos { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
-  .tipos button { display: grid; justify-items: center; align-content: start; gap: 0.3rem; padding: 1rem 0.75rem 1.1rem; text-align: center; }
-  .tipos .sello { width: 1.75rem; height: 1.75rem; stroke: var(--c); fill: color-mix(in srgb, var(--c) 25%, transparent); }
-  .tipos span { color: var(--tenue); font-size: 0.875rem; }
-
-  /* ---------- mesa: engarces + detalle a la izquierda, inventario a la derecha ---------- */
-  .mesa { display: grid; grid-template-columns: 17rem 1fr; gap: 1.5rem; width: 100%; align-items: start; }
-  .izq { display: grid; gap: 1rem; }
+  .izq { display: flex; flex-direction: column; gap: 1rem; min-height: 0; }
   .engarces { display: grid; justify-items: center; gap: 0.6rem; }
   .huecos { display: flex; gap: 0.5rem; justify-content: center; }
-  /* El engarce: un hueco hexagonal. Vacío, hielo hundido; con su reliquia, la cara con la luz de su color. */
   .hueco {
     position: relative; width: 4.75rem; aspect-ratio: 0.88; padding: 0; border: 0;
     clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
@@ -268,50 +263,62 @@
   }
   .hueco::after { content: ''; position: absolute; inset: 0; background: linear-gradient(160deg, rgb(255 255 255 / 0.22), transparent 35%, transparent 70%, color-mix(in srgb, var(--c, var(--hielo)) 30%, transparent)); pointer-events: none; }
   .hueco.lleno { background: var(--hielo-hondo); }
-  .hueco .sello, .pieza .sello, .ficha .sello { position: absolute; right: 8%; bottom: 8%; }
-  .hueco .sello { right: 50%; bottom: 4%; translate: 50% 0; }
-  .hueco.elegido { outline: none; filter: brightness(1.25); }
+  .hueco .tipo { top: 8%; width: 40%; }
+  .hueco.elegido { filter: brightness(1.25); }
   .totales { display: grid; gap: 0.2rem; margin: 0; padding: 0; list-style: none; color: var(--tenue); font-size: 0.875rem; }
-  .totales li { display: flex; gap: 0.4rem; align-items: center; }
+  .totales li { display: flex; gap: 0.45rem; align-items: center; }
+  .ayuda { text-align: center; }
 
-  .detalle { display: grid; justify-items: center; gap: 0.35rem; padding: 1rem; text-align: center; min-height: 9rem; align-content: center; }
-  .detalle.vacio { --hielo-arista: linear-gradient(transparent, transparent); background: none; }
-  .ficha { position: relative; width: 5.5rem; aspect-ratio: 1; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 70%, transparent); }
-  .detalle > span { color: var(--tenue); font-size: 0.875rem; }
-  .acciones { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-top: 0.4rem; }
-  .acciones button { padding: 0.5rem 1rem; font-size: 0.875rem; }
+  /* Ficha de la reliquia elegida. */
+  .detalle { display: grid; grid-template-columns: 5rem 1fr; gap: 0.7rem 0.9rem; align-items: center; padding: 1rem; }
+  .ficha { position: relative; width: 5rem; aspect-ratio: 1; }
+  .datos { display: grid; gap: 0.2rem; }
+  .datos > span { color: var(--tenue); font-size: 0.875rem; }
+  .acciones { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .acciones button { padding: 0.45rem 1rem; font-size: 0.875rem; }
 
-  /* ---------- inventario ---------- */
-  .inventario { display: grid; gap: 0.6rem; }
-  .cabeza { display: flex; align-items: center; justify-content: space-between; min-height: 2.25rem; }
-  .cabeza button { padding: 0.4rem 1rem; font-size: 0.875rem; }
-  .grilla { display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.375rem; }
+  /* Elegir el tipo de la reliquia nueva. */
+  .eleccion { display: grid; grid-template-columns: 4rem 1fr; gap: 0.6rem 0.9rem; align-items: center; padding: 0.9rem; }
+  .nueva { width: 4rem; aspect-ratio: 1; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: var(--hielo-hondo); animation: latir 2.4s ease-in-out infinite; }
+  @keyframes latir { 50% { filter: brightness(1.25); } }
+  .texto { display: grid; gap: 0.2rem; }
+  .tipos { grid-column: 1 / -1; display: grid; gap: 0.35rem; }
+  .tipos button { display: grid; grid-template-columns: 1.75rem 1fr; gap: 0 0.75rem; align-items: center; padding: 0.45rem 1.4rem; text-align: left; }
+  .tipos .sello { grid-row: span 3; width: 1.75rem; height: 1.75rem; stroke: var(--c); }
+  .tipos span { color: var(--tenue); font-size: 0.8125rem; }
+  .tipos small { font-size: 0.75rem; }
+
+  /* Inventario: cabecera fija y la grilla con su propio scroll (lo único que scrollea). */
+  .inventario { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 0.6rem; min-height: 0; }
+  .cabeza { position: relative; display: flex; align-items: center; gap: 1rem; min-height: 2.25rem; }
+  .cabeza h2 { margin-right: auto; }
+  .cabeza > button { padding: 0.4rem 1rem; font-size: 0.875rem; }
+  .grilla {
+    display: grid; grid-template-columns: repeat(8, 1fr); align-content: start; gap: 0.375rem; min-height: 0; overflow-y: auto;
+    padding: 0.125rem 0.375rem 1rem 0.125rem; scrollbar-width: thin; scrollbar-color: var(--hielo-linea) transparent; overscroll-behavior: contain;
+  }
+  .vacio { grid-column: 1 / -1; }
   .libre, .pieza { aspect-ratio: 1; }
   .libre { background: rgb(159 227 245 / 0.035); box-shadow: inset 0 0 0 1px rgb(159 227 245 / 0.07); clip-path: polygon(14% 0, 100% 0, 100% 86%, 86% 100%, 0 100%, 0 14%); }
-  /* Cada reliquia: la cara con esquinas talladas, arista de su color y un reflejo de vidrio arriba. */
   .pieza {
     position: relative; padding: 0; border: 0; background: var(--hielo-hondo);
     clip-path: polygon(14% 0, 100% 0, 100% 86%, 86% 100%, 0 100%, 0 14%);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 55%, transparent);
-    transition: filter 0.2s, translate 0.2s;
+    transition: filter 0.2s;
   }
   .pieza::after, .ficha::after {
     content: ''; position: absolute; inset: 0; pointer-events: none;
-    background: linear-gradient(155deg, rgb(255 255 255 / 0.28), transparent 30%), linear-gradient(transparent 70%, color-mix(in srgb, var(--c) 28%, transparent));
+    background: linear-gradient(155deg, rgb(255 255 255 / 0.24), transparent 30%), linear-gradient(transparent 70%, color-mix(in srgb, var(--c) 28%, transparent));
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 65%, transparent), inset 0 1px 0 rgb(255 255 255 / 0.45);
   }
-  .pieza:hover, .pieza:focus-visible { filter: brightness(1.2); translate: 0 -2px; }
+  .pieza:hover, .pieza:focus-visible { filter: brightness(1.2); }
   .pieza.elegido { outline: 2px solid var(--escarcha); outline-offset: -2px; }
-  /* Engarzada: un cristal de hielo en la esquina de arriba. */
-  .pieza.puesta::before { content: ''; position: absolute; z-index: 1; left: 6%; top: 6%; width: 18%; aspect-ratio: 0.7; background: var(--hielo); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
-  /* Lista para fusionar: un brillo lento en la arista. */
+  /* Engarzada: un cristal de hielo en la esquina de abajo a la derecha. */
+  .pieza.puesta::before { content: ''; position: absolute; z-index: 1; right: 7%; bottom: 7%; width: 16%; aspect-ratio: 0.7; background: var(--hielo); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
   .pieza.lista::after { animation: lista 2.6s ease-in-out infinite; }
   @keyframes lista { 50% { box-shadow: inset 0 0 0 2px var(--c), inset 0 1px 0 rgb(255 255 255 / 0.6); } }
-  /* Segunda vuelta de la escalera (Ámbar +1…): más brillo. */
-  .pieza.mas { filter: saturate(1.3) brightness(1.15); box-shadow: inset 0 0 0 2px var(--c), 0 0 0.6rem var(--c); }
-  .vuelta { position: absolute; left: 8%; bottom: 6%; font-style: normal; font-size: 0.6875rem; font-weight: 700; color: var(--escarcha); text-shadow: 0 0 0.3rem var(--c); }
+  .pieza.mas { filter: saturate(1.3) brightness(1.15); }
+  .vuelta { position: absolute; z-index: 1; left: 8%; bottom: 6%; font-style: normal; font-size: 0.6875rem; font-weight: 700; color: var(--escarcha); text-shadow: 0 0 0.3rem var(--c); }
 
-  /* Fusión: tres cristales vuelan al lugar de la nueva y la nueva nace con un destello de su color. */
   .vuelo {
     position: fixed; z-index: 30; aspect-ratio: 1; pointer-events: none; background: var(--c);
     clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); opacity: 0.85; animation: volar 0.6s cubic-bezier(0.55, 0, 0.75, 0.3) forwards;
@@ -320,10 +327,11 @@
   .pieza.nace { animation: nacer 0.9s 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) backwards; }
   @keyframes nacer { from { scale: 0.3; filter: brightness(4) saturate(0); } }
 
-  /* ---------- regla automática (provisoria) ---------- */
-  .regla { width: 100%; display: grid; gap: 0.6rem; padding: 0.9rem 1.1rem; }
-  .regla summary { cursor: pointer; color: var(--tenue); }
+  /* Regla automática (provisoria): se abre encima de la grilla, sin empujar nada. */
+  .regla summary { cursor: pointer; color: var(--tenue); font-size: 0.875rem; list-style: none; }
+  .regla summary::-webkit-details-marker { display: none; }
   .regla summary b { color: var(--escarcha); font-weight: 600; }
+  .regla .panel { position: absolute; z-index: 5; right: 0; top: calc(100% + 0.4rem); display: grid; gap: 0.6rem; width: min(26rem, 100%); padding: 1rem 1.1rem; }
   .regla label { display: flex; gap: 0.45rem; align-items: center; font-size: 0.875rem; color: var(--tenue); }
   .regla input { accent-color: var(--hielo); }
   .modos { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; }
@@ -338,12 +346,24 @@
   :global(.calma) .nueva { animation: none; }
 
   @media (max-width: 760px) {
-    .mesa { grid-template-columns: 1fr; }
+    .relicario { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 0.9rem; padding-top: 0.75rem; }
+    .izq { gap: 0.6rem; }
+    .engarces { display: flex; justify-content: start; }
+    .engarces h2, .totales { display: none; }
+    .hueco { width: 3.25rem; }
+    .detalle { grid-template-columns: 3.5rem 1fr; padding: 0.7rem; }
+    .ficha { width: 3.5rem; }
+    .eleccion { grid-template-columns: 3rem 1fr; padding: 0.7rem; }
+    .nueva { width: 3rem; }
+    /* Una fila por tipo, en una línea: símbolo, nombre y efecto. */
+    .tipos { gap: 0.3rem; }
+    .tipos button { grid-template-columns: 1.25rem auto 1fr; gap: 0 0.6rem; padding: 0.45rem 1.1rem; }
+    .tipos .sello { grid-row: auto; width: 1.25rem; height: 1.25rem; }
+    .tipos span { font-size: 0.6875rem; line-height: 1.2; }
+    .tipos small { display: none; }
     .grilla { grid-template-columns: repeat(6, 1fr); }
-    .eleccion { grid-template-columns: 1fr; justify-items: center; text-align: center; }
-    /* Una gema por fila: el sello a la izquierda, el texto a la derecha. */
-    .tipos { grid-template-columns: 1fr; gap: 0.5rem; width: 100%; }
-    .tipos button { grid-template-columns: auto 1fr; justify-items: start; gap: 0.1rem 0.9rem; padding: 0.7rem 1.6rem; text-align: left; }
-    .tipos .sello { grid-row: span 3; align-self: center; }
+    .cabeza { gap: 0.75rem; justify-content: space-between; }
+    .cabeza h2, .regla summary span { display: none; }
+    .cabeza > button, .regla summary { white-space: nowrap; font-size: 0.8125rem; }
   }
 </style>

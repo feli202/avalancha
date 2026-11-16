@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os'
 const [url, out] = process.argv.slice(2)
 mkdirSync(out, { recursive: true })
 const edge = spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', [
-  '--headless=new', '--remote-debugging-port=9335', `--user-data-dir=${resolve(tmpdir(), 'avalancha-capturas')}`, '--window-size=1366,800',
+  '--headless=new', '--remote-debugging-port=9335', `--user-data-dir=${resolve(tmpdir(), 'avalancha-capturas')}`, '--window-size=1366,768',
   '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--use-angle=d3d11', 'about:blank',
 ])
 const espera = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -37,7 +37,7 @@ const ev = async (expr) => {
 const foto = async (nombre) => writeFileSync(`${out}/${nombre}.png`, Buffer.from((await cdp('Page.captureScreenshot', { format: 'png' })).result.data, 'base64'))
 
 await cdp('Runtime.enable'); await cdp('Page.enable')
-for (const [W, H] of [[1366, 800], [390, 844]]) {
+for (const [W, H] of [[1366, 768], [390, 844]]) {
   await cdp('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: W < 768 ? 2 : 1, mobile: W < 768 })
   await cdp('Page.navigate', { url })
   await espera(3000)
@@ -47,7 +47,7 @@ for (const [W, H] of [[1366, 800], [390, 844]]) {
   // El mismo módulo que cargó el juego (después de un cambio en caliente Vite lo sirve con `?t=`; otra URL sería otra instancia).
   // Bloque 8: reliquias con pilas de verdad (una pila abeliana de distintos granos cada una).
   await ev(`Promise.all([import('/src/render/pila.ts'), import('/src/render/instantanea.ts')]).then(([{ Pila }, { instantanea }]) => {
-    window.__fotos = [300, 900, 1700, 2600, 4100, 6000, 9000, 14000].map((n) => { const p = new Pila(); for (let i = 0; i < n; i += 50) { p.soltar(50); while (!p.estable) p.estabilizar(1e6) } let r = 0; p.h.forEach((v, i) => { if (v) r = Math.max(r, Math.hypot((i % 513) - 256, Math.floor(i / 513) - 256)) }); return instantanea(p.h, Math.ceil(r)) })
+    window.__fotos = [300, 900, 1700, 2600, 4100, 6000, 9000, 14000].map((n) => { const p = new Pila(); for (let i = 0; i < n; i += 50) { p.soltar(50); while (!p.estable) p.estabilizar(1e6) } return instantanea(p.h) })
   })`)
   await ev(`import(performance.getEntriesByType('resource').map((r) => r.name).find((n) => n.includes('/src/ui/juego.svelte.ts')) ?? '/src/ui/juego.svelte.ts').then(({ juego: j }) => {
     window.__j = j
@@ -56,8 +56,9 @@ for (const [W, H] of [[1366, 800], [390, 844]]) {
     j.s = { ...s, infinitos: 4, granos: 300000, caudal: 12, cristales: s.cristales.mul(0).add(5571), cristalesTotales: s.cristalesTotales.mul(0).add(2.75e6),
       red: { ...s.red, estratos: 4, presion: 2, engarces: 1 }, estratos: { abiertos: 3, s: ocho((k) => (k < 3 ? 25 - k * 2 : 0)), perm: ocho((k) => (k < 3 ? 6 : 0)), pres: ocho((k) => (k < 3 ? 4 : 0)) },
       relicario: { ...s.relicario, pendiente: 5, foto: window.__fotos[7], equipadas: [3, 6],
-        piezas: [['cauce', 2], ['cauce', 0], ['cauce', 1], ['cascada', 0], ['cascada', 0], ['mutaciones', 4], ['mutaciones', 0], ['cascada', 1]]
-          .map(([tipo, nivel], i) => ({ id: i + 1, tipo, nivel, foto: window.__fotos[i], inf: i + 1 })) } }
+        // 30 reliquias: el inventario pasa de los 24 casilleros y tiene que scrollear solo la grilla.
+        piezas: Array.from({ length: 30 }, (_, i) => [['cauce', 2], ['cauce', 0], ['cauce', 1], ['cascada', 0], ['cascada', 0], ['mutaciones', 4], ['mutaciones', 0], ['cascada', 1], ['mutaciones', 3], ['cascada', 2]][i % 10])
+          .map(([tipo, nivel], i) => ({ id: i + 1, tipo, nivel, foto: window.__fotos[i % 8], inf: i + 1 })) } }
     j.capa = 'arena'
     j.ausencia = null
   })`)
@@ -67,6 +68,9 @@ for (const [W, H] of [[1366, 800], [390, 844]]) {
     await ev(`(window.__j.capa = 'cristalizacion', window.__j.pantalla = '${p}')`)
     await espera(p === 'estratos' ? 3500 : 1200)
     await foto(`${W}-${p}`)
+    // CLAUDE.md: la página no scrollea; si algo se pasa, lo anota.
+    const pasa = await ev(`[...document.querySelectorAll('main, main *')].filter((e) => getComputedStyle(e).overflowY !== 'visible' && e.scrollHeight > e.clientHeight + 1).map((e) => e.className.split(' ')[0])`)
+    console.log(`${W} ${p}: scrollean`, JSON.stringify(pasa))
   }
 }
 console.log('errores', JSON.stringify(errores, null, 1))

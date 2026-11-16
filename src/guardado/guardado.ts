@@ -135,7 +135,9 @@ const FOTO = /^[A-Za-z0-9+/]{342}==$/ // 256 bytes en base64
  * Un Relicario de antes (cantidad por tipo y tipos engarzados) se pasa a piezas sin perder poder (migrarRelicario). */
 function leerRelicario(r: any, infinitos: number, espacios: number): State['relicario'] {
   const ent = (x: unknown, max = Infinity) => (typeof x === 'number' && Number.isFinite(x) ? Math.min(max, Math.max(0, Math.floor(x))) : 0)
-  const foto = (x: unknown) => (typeof x === 'string' && FOTO.test(x) ? x : '')
+  // Una foto casi toda en cero es una pila recién reiniciada (bug de la primera versión): mejor la pila genérica.
+  const vacia = (x: string) => [...atob(x)].filter((c) => c === ' ').length > 200
+  const foto = (x: unknown) => (typeof x === 'string' && FOTO.test(x) && !vacia(x) ? x : '')
   const viejo = typeof r.reliquias === 'object' && r.reliquias !== null && !(Array.isArray(r.piezas) && r.piezas.length)
   const crudas = viejo
     ? migrarRelicario(Object.fromEntries(TIPOS.map((t) => [t, ent(r.reliquias[t])])), Array.isArray(r.equipadas) ? r.equipadas.filter((t: unknown) => typeof t === 'string') : [])

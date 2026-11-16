@@ -207,7 +207,8 @@ function revisarLogros(s: State) {
 }
 
 /** Bloque 8: la instantánea de la pila visual (la cara de la reliquia de cada Infinito); '' si la pila no está. */
-const fotoPila = () => { const t = camara.foto?.(); return t ? instantanea(t.alturas, t.radio) : '' }
+const fotoPila = () => { const t = camara.foto?.(); return (t && instantanea(t.alturas)) || fotoActual }
+// La última instantánea buena: si la pila de ahora es casi nada (recién reiniciada), queda la anterior.
 let fotoActual = '', fotoEn = 0
 
 /** El último estado que vio el bucle (el historial compara contra este). */

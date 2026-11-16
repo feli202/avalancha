@@ -963,6 +963,13 @@ Balance sin cambios: el simulador ya modelaba el inventario desde la sesión 2 (
 7. **Pulido (C11)** suma "reliquias virtuales" a un tipo según la spec vieja: con piezas hay que redefinirlo (¿sube el nivel de una pieza?). Queda para C11.
 8. Arrastrar una sobre otra igual fusiona esas dos con la más vieja que quede del mismo tipo y nivel.
 
+**Vuelta de revisión (pedidos sobre la primera versión)**
+
+- **Bug de las caras lisas** (un disco de un color con un cuadradito): después de un Infinito automático la foto salía de la pila visual ya reiniciada con el radio viejo. Ahora `instantanea(alturas)` mide el radio en las mismas alturas y no da foto si la pila tiene menos de 12 celdas de radio; el juego se queda con la última buena. Al cargar, una foto casi toda en cero se descarta (la reliquia pasa a la pila genérica).
+- **Símbolo del tipo arriba de cada reliquia**: ficha oscura tallada con el símbolo en el color del nivel. Cauce dos ondas, Cascada tres escalones que caen, Mutaciones una macla (antes un rombo, un hexágono y la macla, chicos en la esquina). El cristal de "engarzada" pasó abajo a la derecha.
+- **Sin porcentajes**: Cauce "El valor de los colores ^1,015", Mutaciones "^1,08", Cascada "Exponente c +0,02"; Permeabilidad y Presión "× (1 + 0,3 × nivel)"; Eco II "× (1 + 0,001 × log₁₀ Cristales totales)". Quedan dos `%` que son proporciones, no efectos: la barra de progreso y "el X % de la Energía/s" de Estadísticas.
+- **Pantalla fija**: el Relicario entra entero en la ventana y solo scrollea la grilla (`.cristalizacion.fija` en `Capas.svelte`). Escritorio: engarces y elección/ficha a la izquierda, inventario a la derecha; la regla automática se abre encima de la grilla. Celular: engarces en una fila, elección con un tipo por renglón, grilla de 6. Regla nueva en `CLAUDE.md` (pantallas sin scroll y valores sin porcentajes, para todo lo que sigue). `capturas-capa1.mjs` ahora usa 1366×768, 30 reliquias, y anota qué elementos scrollean. **Red y Estratos todavía scrollean la página** (se rehacen en los bloques 9 y 11).
+
 ### Sesión 4 (2026-11-16) — bloque 7: multiplicadores visibles
 
 No se tocó `src/core/`, `balance/` ni el worker: todo sale de las fórmulas del núcleo.

@@ -21,8 +21,8 @@
   const s = $derived(juego.s)
   const cuesta = (c: Decimal) => txt.cristal.red.costo(formato(c, true))
   const MEJORAS: [MejoraEstrato, string, string][] = [
-    ['perm', t.perm, t.permQue(formatoMult(E.permeabilidad.suma_gamma * 100))],
-    ['pres', t.pres, t.presQue(formatoMult(E.presion.suma_w * 100))],
+    ['perm', t.perm, t.permQue(formatoMult(E.permeabilidad.suma_gamma))],
+    ['pres', t.pres, t.presQue(formatoMult(E.presion.suma_w))],
   ]
   function hacer(n: typeof juego.s) {
     if (n === juego.s) return

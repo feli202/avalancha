@@ -5,10 +5,18 @@ import { LADO } from './pila'
 const C = LADO >> 1
 /** Lado de la instantánea en celdas; 2 bits por celda = 256 bytes. */
 const FOTO_LADO = 32, FR = FOTO_LADO >> 1
-/** La instantánea de la pila (alturas de LADO×LADO y su radio) en 32×32 celdas de 2 bits, en base64. Se muestrea
- * el círculo de la pila entera: una pila chica se agranda y una grande se lee de a saltos (se ve el dibujo grande). */
-export function instantanea(alturas: Uint8Array, radio: number): string {
-  const k = (2 * Math.max(radio, 1) + 3) / FOTO_LADO
+/** Radio mínimo (celdas) para que valga la pena: una pila más chica, agrandada, es un disco liso. */
+export const RADIO_MIN = 12
+
+/** La instantánea de la pila (alturas de LADO×LADO) en 32×32 celdas de 2 bits, en base64; '' si la pila es casi nada.
+ * El radio se mide en las mismas alturas (el de la pila visual puede ser de antes de un Infinito, con la pila ya vacía).
+ * Se muestrea el círculo de la pila entera: una grande se lee de a saltos (se ve el dibujo grande). */
+export function instantanea(alturas: Uint8Array): string {
+  let r2 = 0
+  for (let i = 0; i < alturas.length; i++) if (alturas[i]) r2 = Math.max(r2, ((i % LADO) - C) ** 2 + (Math.floor(i / LADO) - C) ** 2)
+  const radio = Math.sqrt(r2)
+  if (radio < RADIO_MIN) return ''
+  const k = (2 * radio + 3) / FOTO_LADO
   const b = new Uint8Array((FOTO_LADO * FOTO_LADO) / 4)
   for (let y = 0; y < FOTO_LADO; y++)
     for (let x = 0; x < FOTO_LADO; x++) {

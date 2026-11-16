@@ -11,7 +11,7 @@ import { LADO } from '../src/render/pila'
 import { desdeFoto, instantanea } from '../src/render/instantanea'
 
 const R = CFG1.relicario
-const FOTO = (n: number) => btoa(String.fromCharCode(...new Uint8Array(256).fill(n)))
+const FOTO = (n: number) => btoa(String.fromCharCode(...new Uint8Array(256).fill(n + 1)))
 let id = 0
 const pz = (tipo: string, nivel = 0, inf = ++id, foto = ''): Pieza => ({ id: ++id, tipo, nivel, foto, inf })
 const con = (rel: Partial<State['relicario']>, extra: Partial<State> = {}): State => {
@@ -221,16 +221,19 @@ describe('Relicario: guardado y migración', () => {
 })
 
 describe('Relicario: instantánea de la pila', () => {
-  it('32×32 celdas de 2 bits (256 bytes); una pila chica se agranda y vuelve igual en el centro', () => {
+  it('32×32 celdas de 2 bits (256 bytes), el radio medido en las alturas; una pila casi vacía no da foto', () => {
     const C = LADO >> 1, h = new Uint8Array(LADO * LADO)
-    h[C * LADO + C] = 3
-    h[C * LADO + C + 1] = 2
-    const f = instantanea(h, 0) // radio 0: 3 celdas en 32, cada una ocupa ~10
+    h[C * LADO + C] = 1
+    expect(instantanea(h)).toBe('') // recién reiniciada: el juego se queda con la última buena
+    for (let d = -20; d <= 20; d++) h[C * LADO + C + d] = 3 // una raya de radio 20
+    h[C * LADO + C] = 2
+    const f = instantanea(h)
     expect(atob(f)).toHaveLength(256)
     const e = desdeFoto(f)
     expect(e.radio).toBe(16)
-    expect(e.alturas[C * LADO + C]).toBe(3)
-    expect(e.alturas[C * LADO + C + 10]).toBe(2)
+    expect(e.alturas[C * LADO + C]).toBe(2)
+    expect(e.alturas[C * LADO + C + 14]).toBe(3) // la raya llega casi al borde del círculo
+    expect(e.alturas[(C - 5) * LADO + C]).toBe(0)
     expect(e.dentro[(C - 16) * LADO + C - 16]).toBe(0) // la esquina queda afuera del círculo
   })
 })
