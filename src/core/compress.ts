@@ -1,7 +1,7 @@
 import Decimal from 'break_infinity.js'
 import { CFG } from './config'
 import { enInfinito } from './formulas'
-import { memoria } from './red'
+import { conservaCascada, memoria } from './red'
 import { estadoInicial, type State } from './state'
 
 /** log10 del umbral de la próxima Compresión (Infinity si ya no quedan). */
@@ -16,7 +16,7 @@ export function comprimir(s: State): State {
   const { energia, caudal, colores, cascada, tiempoCorrida } = estadoInicial()
   return {
     ...s, energia, granos: 0, caudal, // granos_iniciales es solo para la primera corrida
-    colores, cascada, tiempoCorrida,
+    colores, cascada: conservaCascada(s) ? s.cascada : cascada, tiempoCorrida,
     compresiones: s.compresiones + 1,
     mejorCorrida: s.mejorCorrida > 0 ? Math.min(s.mejorCorrida, s.tiempoCorrida) : s.tiempoCorrida,
     compresionesSinAmbar: s.compresionesSinAmbar + (s.colores[0] === 0 ? 1 : 0),

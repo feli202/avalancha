@@ -10,7 +10,7 @@ de SPEC_CAPA1.md y las constantes de config.json (Capa 0) + config_capa1.json (C
 El tiempo cuenta desde el primer Infinito (la Capa 0 completa dura ~3 h y no cambia).
 Todo numero grande vive en log10.
 """
-import json, math, os, random, sys
+import json, math, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 def _load(name):
@@ -51,7 +51,7 @@ class Player:
         s.est_open = 0; s.perm = [0] * 8; s.pres = [0] * 8; s.s = [NEG] * 8
         s.done = set(); s.retry_at = {}
         s.esc_on = False; s.logX = 0.0; s.esq = NEG; s.escup = {k: 0 for k in L1['escarcha']['mejoras']}; s.polish = {t: 0 for t in s.relic}
-        s.rng = random.Random(L1['relicario']['semilla'])
+        s.casc_lk = 0; s.last_D = 1.0
         s.last_logG = 10.0; s.last_mut = [0, 0, 0, 0]; s.last_pres = 0.0
 
     def v(s, node, key, default=0):
@@ -70,6 +70,21 @@ class Player:
     def relic_level(s, t):
         c = s.relic[t] + s.polish[t]
         return int(math.floor(math.log(c, 3) + 1e-9)) if c >= 1 else -1
+    def pieces(s, t, extra=0):
+        """inventario fusionado: 3 iguales -> 1 del color siguiente, o sea los digitos en base 3 del conteo"""
+        c = s.relic[t] + s.polish[t] + extra; out = []; n = 0
+        while c: out += [n] * (c % 3); c //= 3; n += 1
+        return out
+    def sep(s): return s.v('capilaridad', 'separacion', L1['estratos']['separacion_log10'])
+    def presion(s):
+        if not s.v('estratos', 'flujo_x', 0): return 0.0
+        E = L1['estratos']; wx = s.v('presion', 'w_x', 1); e = s.v('sedimento2', 'exp_profundidad', 1)
+        ab = s.v('abismo', 'lleno_x', 1); sep = s.sep(); pr = 0.0
+        for k in range(s.est_open):
+            lleno = k == 0 or s.s[k] >= s.s[k - 1] - sep - 1e-9  # el primero no tiene tope: cuenta como lleno
+            w = E['w_base_por_profundidad'] * (k + 1) ** e * wx * (1 + E['presion']['suma_w'] * s.pres[k]) * (ab if lleno else 1)
+            pr += w * max(0.0, s.s[k]) ** E['exponente_presion']
+        return pr
     def slots(s):
         return max(1, s.v('engarces', 'espacios', 1), s.v('engarces2', 'espacios', 1))
 
@@ -84,37 +99,29 @@ class Player:
         if 'impureza' in s.done: m['cBonus'] += 0.1
         if 'frontera' in s.done: m['dAdd'] += 0.2
         if not noRed:
-            m['dAdd'] += s.v('compactacion', 'densidad') + s.v('compactacion2', 'densidad')
+            m['dAdd'] += s.v('compactacion', 'densidad')
             m['cascMax'] = s.v('cascada_plus', 'nivel_max_extra'); m['mutMax'] = s.v('mutacion_plus', 'nivel_max_extra')
             m['keep'] = max(s.v('memoria', 'conservar_compresiones'), s.v('sedimentacion', 'conservar_compresiones'))
-            p = s.v('eco', 'p') + s.v('eco2', 'p_extra')
+            p = s.v('eco', 'p')
             m['eco'] = 0.0 if defect == 'vidrio' else p * max(0.0, s.Ctot)
-            if s.v('estratos', 'flujo_x', 0):
-                wx = s.v('presion', 'w_x', 1) * s.v('sedimento2', 'w_x', 1) * s.v('abismo', 'w_x', 1)
-                pr = 0.0
-                for k in range(s.est_open):
-                    w = L1['estratos']['w_base_por_profundidad'] * (k + 1) * wx * (1 + L1['estratos']['presion']['suma_w'] * s.pres[k])
-                    pr += w * max(0.0, s.s[k]) ** L1['estratos']['exponente_presion']
-                m['presion'] = pr; s.last_pres = pr
+            m['presion'] = s.presion(); s.last_pres = m['presion']
         if defect != 'vidrio':
-            for t in s.equipped:
-                n = s.relic_level(t)
-                if n < 0: continue
-                if t == 'cauce': m['cauceX'] = R['cauce_colores_pct_por_nivel'] * (n + 1)
+            for t, n in s.equipped:  # piezas equipadas (tipo, nivel); dos del mismo tipo se suman
+                if t == 'cauce': m['cauceX'] += R['cauce_colores_pct_por_nivel'] * (n + 1)
                 if t == 'cascada': m['cBonus'] += R['cascada_c_por_nivel'] * (n + 1)
-                if t == 'mutaciones': m['mutEff'] = R['mutaciones_efecto_por_nivel'] * (n + 1)
+                if t == 'mutaciones': m['mutEff'] += R['mutaciones_efecto_por_nivel'] * (n + 1)
         m['extraV'] = m['presion'] + m['eco'] + m['cauce']
         return m
     def crys_mult(s, defect):
         if defect == 'vidrio': return 0.0
-        x = s.v('ruptura', 'cristales_log10') + s.v('cristalografia', 'cristales_log10') + s.v('cristalografia2', 'cristales_log10')
+        x = s.v('ruptura', 'cristales_log10') + s.v('cristalografia', 'cristales_log10') + s.v('cristalografia2', 'cristales_log10_por_defecto') * len(s.done)
         if 'vidrio' in s.done: x += L1['defectos']['vidrio']['cristales_log10']
         return x
     def Q(s): return L1['cristales']['Q_ordenes_por_x10'] - s.v('ruptura2', 'Q_resta')
     def broken(s): return s.red['ruptura'] >= 1
     def esc_params(s):
         E = L1['escarcha']; up = s.escup; M = E['mejoras']
-        g = E['g_log10_por_s'] * (1 + E.get('g_por_presion', 0.01) * s.last_pres) * M['crecimiento']['x'] ** up['crecimiento'] * s.v('germen', 'escarcha_g_x', 1) * (2 if 'fatiga' in s.done else 1)
+        g = E['g_log10_por_s'] * (1 + E.get('g_por_presion', 0.01) * s.last_pres) * M['crecimiento']['x'] ** up['crecimiento'] * s.v('germen', 'escarcha_g_x', 1) * (2 if 'fatiga' in s.done else 1) * (1 + s.v('eco2', 'escarcha_eco') * max(0.0, s.Ctot))
         H = E['H'] * M['aguante']['x_H'] ** up['aguante'] * s.v('frio', 'escarcha_H_x', 1) * (1.5 if 'inclusion' in s.done else 1)
         m = E['m'] + M['brillo']['suma_m'] * up['brillo']
         return g, H, m
@@ -130,11 +137,12 @@ class Arena:
         s.reset_run(); s.maxE_ever = NEG
         s.unl_colors = 1; s.plateau_E = NEG; s.plateau_t = 0.0
     def reset_run(s):
-        s.E = NEG; s.lG = NEG; s.Lf = 0; s.Lc = [0, 0, 0, 0]; s.Lk = 0; s.rt = 0.0; s.maxE = NEG
+        s.E = NEG; s.lG = NEG; s.Lf = 0; s.Lc = [0, 0, 0, 0]; s.rt = 0.0; s.maxE = NEG
+        s.Lk = getattr(s, 'Lk', s.P.casc_lk) if s.P.v('sedimentacion', 'conserva_cascada') else 0  # Sedimentacion nv4: ni la Compresion ni el Infinito la reinician
     def D(s):
         if s.defect == 'frontera': return 1.0
-        if s.defect == 'macla': return 0.85 * (1 + L0['compresion']['densidad_por_nivel'] * s.tier + s.m['dAdd'])
-        return 1 + L0['compresion']['densidad_por_nivel'] * s.tier + s.m['dAdd']
+        d = 1 + L0['compresion']['densidad_por_nivel'] * s.tier + s.m['dAdd'] + s.P.v('compactacion2', 'densidad_por_anillo') * s.rings()
+        return 0.85 * d if s.defect == 'macla' else d
     def flow(s): return CAU['granos_base'] * 2 ** s.Lf * 3 ** (s.mut[0] * (1 + s.m['mutEff']))
     def lF(s): return CAU['granos_base'] * 0 + s.Lf * 0.30103 + s.mut[0] * (1 + s.m['mutEff']) * 0.4771
     def rings(s):
@@ -225,8 +233,8 @@ def play_arena(P, defect, check, t_now, stats):
     meta = L1['defectos'][defect]['meta_log10'] if defect else None
     cap_t = L1['defectos']['abandono_min'] * 60 if defect else 6 * 3600
     t = 0.0; next_check = 0.0; next_auto = 0.0; best_rate = NEG; best_t = 0; est = L1['estratos']
-    fx = P.v('estratos', 'flujo_x', 0) * P.v('inercia', 'flujo_x', 1) * P.v('capilaridad', 'flujo_x', 1)
-    gam0 = est['gamma_log10_por_s'] * fx
+    gam0 = est['gamma_log10_por_s'] * P.v('estratos', 'flujo_x', 0)
+    imp = P.v('inercia', 'impulso_x', 1); sep = P.sep(); emp = est['empuje_por_estrato_inferior']
     while True:
         dt = 0.5 if A.rt < 30 else 1.0 if A.rt < 300 else 2.0
         r = A.lograte()
@@ -237,13 +245,12 @@ def play_arena(P, defect, check, t_now, stats):
         # estratos (persisten entre Infinitos)
         if gam0 and P.est_open and defect != 'vidrio':
             fc = est['factor_caudal']; f1 = min(fc['max'], max(fc['min'], A.lF() / fc['div']))
-            sep = est['separacion_log10']
+            g = gam0 * (1 + (imp - 1) * min(1.0, t / est['impulso_s']))  # Inercia: sube lineal hasta los 10 min de la corrida
             for k in range(P.est_open):
-                gk = gam0 * (1 + est['permeabilidad']['suma_gamma'] * P.perm[k]) * (f1 if k == 0 else 1)
-                if P.s[k] == NEG: P.s[k] = 0.0
+                push = 1 + emp * max(0.0, P.s[k + 1]) if k + 1 < P.est_open else 1  # el de abajo empuja
+                gk = g * (1 + est['permeabilidad']['suma_gamma'] * P.perm[k]) * (f1 if k == 0 else 1) * push
                 ns = P.s[k] + gk * dt
                 if k > 0: ns = min(ns, P.s[k - 1] - sep)
-                ns = min(ns, est['capacidad_log10'][k] * P.v('abismo', 'capacidad_x', 1) * P.v('capilaridad', 'capacidad_x', 1))
                 P.s[k] = max(P.s[k], ns)
         human = t >= next_check
         if human: next_check = t + check
@@ -320,7 +327,7 @@ def esq_items(P):
     M = L1['escarcha']['mejoras']; out = [('esc', k, M[k]['c0'] + M[k]['paso'] * P.escup[k]) for k in M]  # costo en log10 de Esquirlas
     px = P.v('engarces2', 'pulido_x', 1.0)
     for t in P.relic:
-        if t in P.equipped:
+        if t in {e[0] for e in P.equipped}:
             out.append(('pul', t, L1['escarcha']['pulido']['c0'] + L1['escarcha']['pulido']['paso'] * P.polish[t] * px + l10(max(1, P.relic[t])) ))
     return out
 def do_shop(P, t, log, stats):
@@ -333,7 +340,11 @@ def do_shop(P, t, log, stats):
         P.C = sublog(P.C, c); bought += 1
         if kind == 'red':
             P.red[k] += 1; nm = f'Red {k} nv{P.red[k]}'
-        elif kind == 'abrir': P.est_open += 1; nm = f'Abrir estrato {P.est_open}'
+        elif kind == 'abrir':
+            p0 = P.presion(); k = P.est_open; E = L1['estratos']
+            P.s[k] = E['s1_inicial'] if k == 0 else P.s[k - 1] - P.sep()  # se llena de golpe hasta su tope
+            P.est_open += 1; nm = f'Abrir estrato {P.est_open}'
+            stats.setdefault('aperturas', []).append((t, P.est_open, P.presion() - p0, P.last_D))
         elif kind == 'perm': P.perm[k] += 1; nm = f'Permeabilidad E{k + 1} nv{P.perm[k]}'
         else: P.pres[k] += 1; nm = f'Presion E{k + 1} nv{P.pres[k]}'
         log(t, nm, kind == 'red' or kind == 'abrir')
@@ -347,10 +358,8 @@ def do_shop(P, t, log, stats):
     return bought
 
 def pick_relic(P, A):
-    R = L1['relicario']; n = P.v('engarces', 'ofertas', R['ofertas_por_infinito'])
-    tipos = R['tipos']
-    offer = [P.rng.choice(tipos) for _ in range(n)]
-    if len(set(offer)) == 1: offer[-1] = tipos[(tipos.index(offer[0]) + 1) % 3]
+    """cada Infinito el jugador elige el tipo de la reliquia nueva (Ambar); fusiona y equipa las mejores piezas"""
+    R = L1['relicario']; tipos = R['tipos']
     # valor estimado de cada tipo (en log10 de produccion)
     D = A.D(); lg = max(10.0, A.lG)
     def val(t, lvl):
@@ -358,13 +367,16 @@ def pick_relic(P, A):
         if t == 'cauce': return D * R['cauce_colores_pct_por_nivel'] * (lvl + 1) * 0.3 * max(30.0, A.maxE)
         if t == 'cascada': return D * R['cascada_c_por_nivel'] * (lvl + 1) * CAS['exp_G'] * lg
         return D * R['mutaciones_efecto_por_nivel'] * (lvl + 1) * (A.mut[1] + 0.477 * A.mut[0] + 1)
-    def gain(t):
+    def best(extra):
+        pz = [(t, n) for t in tipos for n in P.pieces(t, extra.get(t, 0))]
+        return sorted(pz, key=lambda p: -val(*p))[:P.slots()]
+    def gain(t):  # cuanto sube su mejor pieza (el bot fusiona siempre)
         lv = P.relic_level(t)
         P.relic[t] += 1; lv2 = P.relic_level(t); P.relic[t] -= 1
         return val(t, lv2) - val(t, lv)
-    choice = max(set(offer), key=lambda t: (gain(t), val(t, P.relic_level(t))))
+    choice = max(tipos, key=lambda t: (gain(t), val(t, P.relic_level(t))))
     P.relic[choice] += 1
-    P.equipped = sorted(tipos, key=lambda t: -val(t, P.relic_level(t)))[:P.slots()]
+    P.equipped = best({})
 
 # ------------------------------------------------------------------ partida completa
 def simulate(check=15.0, tmax=24 * 3600, verbose=False, horizon_end=True):
@@ -380,7 +392,7 @@ def simulate(check=15.0, tmax=24 * 3600, verbose=False, horizon_end=True):
             if verbose: print(f'{tt / 3600:6.2f} h  ** {msg}')
     # primer Infinito: 1 cristal y la primera reliquia
     P.C = 0.0; P.Ctot = 0.0; P.ninf = 1; stats['infinitos'] = 1
-    A0 = Arena(P, None); A0.lG = 18.0
+    A0 = Arena(P, None); A0.lG = 18.0; A0.maxE = INF  # el primer Infinito llego a 1e308
     pick_relic(P, A0); do_shop(P, t, log, stats)
     while t < tmax:
         # defecto disponible?
@@ -395,6 +407,7 @@ def simulate(check=15.0, tmax=24 * 3600, verbose=False, horizon_end=True):
             defect = d; break
         dur, A, ok = play_arena(P, defect, check, t, stats)
         t += dur; P.ninf += 1; stats['infinitos'] += 1
+        P.casc_lk = A.Lk; P.last_D = A.D()
         pp = A.logV_parts()
         stats.setdefault('runs', []).append((round(t / 3600, 2), round(dur / 60, 1), defect, round(A.E, 1), round(P.Ctot, 2),
             {k: round(v, 1) for k, v in pp.items()}, round(A.D(), 2), P.perm[:P.est_open], P.pres[:P.est_open], [round(x) for x in P.s[:P.est_open]]))
@@ -429,6 +442,8 @@ def report(st):
             'Defecto inclusion', 'Defecto vidrio', 'FIN CAPA 1: 1e308 Cristales']
     for k in keys: print(f'  {k:42s} {ev[k] / 3600:6.2f} h' if k in ev else f'  {k:42s}   --')
     print(f"  infinitos {st['infinitos']}  rupturas de escarcha {st['rupturas_escarcha']}  hueco max entre compras de la Capa 1 (desde 1.5 h) {st['hueco_max'] / 60:.1f} min")
+    ap = st.get('aperturas', [])
+    if ap: print('  abrir estrato (h, k, x produccion = 10^(D*dPresion)): ' + '  '.join(f'{t / 3600:.2f}h E{k} x1e{d * D:.1f}' for t, k, d, D in ap))
     for name in ('partes11', 'partes12'):
         if st[name]:
             parts, D, _ = st[name]; tot = sum(parts.values())

@@ -1,6 +1,7 @@
 """Ajuste rapido: aplica cambios a la config en memoria y corre la simulacion."""
 import json, sys, sim_capa1 as S
 def setp(d, path, v):
+    if path.startswith('nodo.'): d, path = S.RED, path[5:]  # nodos de la Red (anillo3_1.2 tiene un punto en el nombre)
     ks = path.split('.')
     for k in ks[:-1]: d = d[int(k)] if isinstance(d, list) else d[k]
     k = ks[-1]

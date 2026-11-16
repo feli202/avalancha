@@ -46,6 +46,7 @@ export function tick(s: State, dt: number): State {
     granosTotales: s.granosTotales + granos,
     tiempoCorrida: s.tiempoCorrida + dt,
     tiempoTotal: s.tiempoTotal + dt,
+    tiempoInfinito: s.tiempoInfinito + dt,
     maxEnergia: Decimal.max(s.maxEnergia, energia),
     estratos: crecerEstratos(s, dt, Math.log10(caudal(s))), // §7.2: por segundo de juego de Arena
     relojAuto: s.relojAuto + dt,

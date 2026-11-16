@@ -34,28 +34,29 @@ Tiempo de juego **desde el primer Infinito** (la Capa 0 completa dura ~3 h y no 
 | Hito | revisa cada 15 s | cada 60 s | cada 5 min |
 |---|---|---|---|
 | Segundo Infinito | 1,10 h | 1,25 h | 2,25 h |
-| Romper el Infinito (nodo) | 2,35 h | 2,51 h | 3,54 h |
+| Romper el Infinito (nodo) | 2,34 h | 2,50 h | 3,53 h |
 | Memoria completa (Infinito automático) | 1,64 h | 1,80 h | 2,83 h |
 | Estratos (primer estrato abierto) | 2,26 h | 2,42 h | 3,45 h |
-| Defecto Vacancia | 2,44 h | 2,60 h | 3,63 h |
-| Defecto Dislocación | 4,34 h | 4,49 h | 5,53 h |
-| Defecto Macla | 5,21 h | 5,37 h | 6,40 h |
-| Defecto Impureza | 6,04 h | 6,20 h | 7,24 h |
-| **FIN 1.1**: Estrato 8 lleno → Escarcha | **6,96 h** | 7,12 h | 8,15 h |
-| Defecto Fatiga | 9,43 h | 9,59 h | 10,63 h |
-| Defecto Frontera | 11,89 h | 12,05 h | 13,08 h |
-| Defecto Inclusión | 12,44 h | 12,60 h | 13,64 h |
-| Defecto Vidrio | 13,49 h | 13,68 h | 14,74 h |
-| **FIN CAPA 1**: 1e308 Cristales | **14,99 h** | 15,20 h | 16,27 h |
+| Defecto Vacancia | 2,41 h | 2,57 h | 3,60 h |
+| Defecto Dislocación | 3,53 h | 3,69 h | 4,72 h |
+| Defecto Macla | 4,52 h | 4,68 h | 5,72 h |
+| Defecto Impureza | 5,52 h | 5,67 h | 6,71 h |
+| **FIN 1.1**: Estrato 8 lleno → Escarcha | **7,30 h** | 7,45 h | 8,49 h |
+| Defecto Fatiga | 9,70 h | 9,85 h | 10,89 h |
+| Defecto Frontera | 12,21 h | 12,32 h | 13,36 h |
+| Defecto Inclusión | 12,81 h | 13,00 h | 14,05 h |
+| Defecto Vidrio | 13,82 h | 14,03 h | 15,08 h |
+| **FIN CAPA 1**: 1e308 Cristales | **14,82 h** | 15,04 h | 16,09 h |
 
-- Hueco máximo entre compras de la Capa 1 (después de la hora 1,5): **32 min** (35 min para el jugador de cada 5 min). Durante esos huecos siempre hay compras de Arena y la Escarcha creciendo; son las corridas largas del final, donde el jugador espera un Infinito grande.
+- Hueco máximo entre compras de la Capa 1 (después de la hora 1,5): **31 min** (35 min para el jugador de cada 5 min). Durante esos huecos siempre hay compras de Arena y la Escarcha creciendo; son las corridas largas del final, donde el jugador espera un Infinito grande.
+- **Abrir un estrato se nota enseguida** (se llena de golpe, §7.2). Lo que multiplica la producción en el momento de abrirlo, `10^(D × Presión que suma)`, medido en el simulador: E1 ×1e2,3 · E2 ×1e6,3 · E3 ×1e13 · E4 ×1e16 · E5 ×1e19 · E6 ×1e40 · E7 ×1e72 · E8 ×1e103. El mínimo pedido es ×100.
 - La segunda corrida (~1 h) es intencional: es la Capa 0 de nuevo pero con la primera reliquia y la primera compra de la Red; enseña que "volver a empezar" ahora es rápido.
 - Peso de cada fuente de producción (en log10 de V) al final de cada parte:
 
 | | Colores | Anillos | Cascada | Mutaciones | **Presión** | Eco | Cauce | **Escarcha** |
 |---|---|---|---|---|---|---|---|---|
-| Fin 1.1 | 23 % | 2 % | 4 % | 1 % | **55 %** | 13 % | 2 % | — |
-| Fin 1.2 | 6 % | 1 % | 1 % | 0 % | **59 %** | 6 % | 1 % | **26 %** |
+| Fin 1.1 | 19 % | 2 % | 4 % | 0 % | **57 %** | 12 % | 5 % | — |
+| Fin 1.2 | 7 % | 1 % | 1 % | 0 % | **43 %** | 5 % | 2 % | **41 %** |
 
   La Presión (Estratos) es el motor de la capa a propósito: es el sistema nuevo más visual. Si en las pruebas con gente se siente que "solo importan los estratos", el primer ajuste es bajar `estratos.w_base_por_profundidad` y subir `escarcha.g_log10_por_s`, siempre volviendo a correr el simulador.
 
@@ -89,7 +90,7 @@ si lc > 50:  lc = 50 + (lc − 50) × 0,3            (blando, para que no explot
 si lc < 6:   Cristales = floor(10^lc)             (números chicos enteros)
 ```
 
-- `mult` (en log10) = Ruptura (0/1/2/3) + Cristalografía (0,5/1/1,5/2) + Cristalografía II (1/2/3/4) + 3 si completaste Vidrio. En el Defecto Vidrio `mult` = 0.
+- `mult` (en log10) = Ruptura (0/1/2/3) + Cristalografía (0,5/1/1,5/2) + Cristalografía II (0,125/0,25/0,375/0,5 por Defecto completo) + 3 si completaste Vidrio. En el Defecto Vidrio `mult` = 0.
 - **Cuándo hacer Infinito** (cuando la Energía ya pasó 1e308): conviene cuando los Cristales por segundo (`10^lc / duración`) dejan de subir. La interfaz muestra "Cristales al hacer Infinito: X (Y/min)" y marca con un brillo el momento óptimo. El Infinito automático (Memoria nivel 4) usa exactamente esa regla (configurable: "en el óptimo" o "al llegar a X Cristales").
 - `Cristales totales` (nunca bajan) es lo que piden los Defectos 5–8 y el fin de la capa (1e308).
 
@@ -163,8 +164,8 @@ Bases del anillo 3: Eco II 45, Defectos II 55, Germen 65, Compactación II 78, F
 |---|---|
 | **Memoria** | Autocompradores y compresión automática desde el inicio de cada Infinito / + Cascada automática / + Mutaciones automáticas / + Infinito automático. Conserva 3/5/7/9 compresiones. |
 | **Eco** | `+p × log10(Cristales totales)` a log V; p = 0,5 / 1,5 / 3 / 5. ("Los cristales recuerdan la arena".) |
-| **Sedimentación** | Conserva 11/13/15/17 compresiones. |
-| **Estratos** | Abre la pantalla de Estratos. Flujo de los estratos ×1 / ×1,5 / ×2 / ×3. |
+| **Sedimentación** | Conserva 11/13/15/17 compresiones. nv4 además conserva los niveles de Cascada (ni la Compresión ni el Infinito los reinician). |
+| **Estratos** | Abre la pantalla de Estratos. Velocidad del flujo ×1 / ×1,5 / ×2 / ×3. |
 | **Defectos** | Abre Vacancia / Dislocación / Macla / Impureza. |
 | **Ruptura** | nv1 = **Romper el Infinito**. Cristales ×1 / ×10 / ×100 / ×1000 (log 0/1/2/3). |
 | **Compactación** | Densidad +0,08 / 0,16 / 0,24 / 0,32. |
@@ -172,20 +173,22 @@ Bases del anillo 3: Eco II 45, Defectos II 55, Germen 65, Compactación II 78, F
 | **Engarces** | Espacios de reliquia 2/2/3/3; ofertas 3/4/4/4. |
 | **Cascada+** | Nivel máximo de Cascada +5/10/15/20 (y amplía el panel). |
 | **Mutación+** | Nivel máximo de Mutaciones +1/2/3/5. |
-| **Inercia** | Flujo de los estratos ×1,2/1,4/1,6/2. |
+| **Inercia** | Impulso: dentro de cada Infinito el flujo sube lineal con el tiempo de corrida hasta ×1,2/1,4/1,6/2 a los 10 min, y se queda ahí. |
 | **Cristalografía** | Cristales ×10^0,5 / 10^1 / 10^1,5 / 10^2. |
-| **Eco II** | p +0,5/1/1,5/2. |
+| **Eco II** | Eco de la Escarcha: su crecimiento × (1 + 0,001/0,002/0,003/0,004 × log10(Cristales totales)). |
 | **Defectos II** | Abre Fatiga / Frontera / Inclusión / Vidrio. |
 | **Germen** | Crecimiento de la Escarcha ×1,5/2,25/3,4/5,1. |
 | **Frío** | Aguante H de la Escarcha ×1,5/2,25/3,4/5,1. |
-| **Compactación II** | Densidad +0,1/0,2/0,3/0,4. |
-| **Sedimento II** | Peso de la Presión ×1,15/1,3/1,45/1,6. |
-| **Capilaridad** | Flujo de los estratos ×1,1/1,2/1,3/1,4. |
-| **Abismo** | Peso de la Presión ×1,1/1,2/1,3/1,4. |
-| **Engarces II** | Espacios 3; Pulido más barato (×0,7/0,5/0,35/0,25 en el exponente). |
-| **Cristalografía II** | Cristales ×10/100/1e3/1e4. |
+| **Compactación II** | Densidad +0,0001/0,0002/0,0003/0,0004 por cada anillo de la corrida actual. |
+| **Sedimento II** | Profundidad: el peso de cada estrato pasa de `k` a `k^1,05 / k^1,1 / k^1,15 / k^1,2`. |
+| **Capilaridad** | Separación entre estratos: el tope pasa de `s_(k−1) − 2` a `− 1,75 / − 1,5 / − 1,25 / − 1`. |
+| **Abismo** | Estratos llenos: cada estrato en su tope pesa ×1,1/1,2/1,3/1,4 (el estrato 1 no tiene tope: cuenta siempre como lleno). |
+| **Engarces II** | Fusión automática de reliquias, espacios 3 y Pulido más barato (×0,7/0,5/0,35/0,25 en el exponente). |
+| **Cristalografía II** | Facetas: Cristales ×10^(0,125/0,25/0,375/0,5 × Defectos completos). Con los 8 y nv4, ×1e4. |
 | **Deshielo** | Rompe la Escarcha sola cada 30 min; Esquirlas ×1/2/4/8. |
 | **Ruptura II** | Q −1/−2/−3/−4. |
+
+Cada nodo tiene una mecánica propia (ninguno repite el efecto de otro). Los valores de Compactación II y Eco II salen del simulador: con los del primer borrador (+0,001 de Densidad por anillo, +0,05 por orden de Cristales) la 1.2 duraba menos de una hora.
 
 **Romper el Infinito es un nodo** (Ruptura nv1, anillo 2, detrás de Eco). El primer Defecto (Vacancia) se juega antes o justo después; los siguientes ya con el Infinito roto.
 
@@ -200,13 +203,20 @@ Debajo de la pila principal hay 8 pilas más (estratos 1 a 8, de arriba a abajo)
 ### 7.2 Fórmulas (por segundo de juego de Arena; no corren en el Defecto Vidrio)
 
 ```
-flujo   = 0,0013 × Estratos.flujo_x × Inercia.flujo_x × Capilaridad.flujo_x          (log10/s)
-γ_k     = flujo × (1 + 0,3 × Permeabilidad_k) × (k == 1 ? f1 : 1)
+al abrir el estrato k:  s_1 = 25,  s_k = s_(k−1) − sep          (se llena de golpe hasta su tope)
+sep     = 2, o 1,75 / 1,5 / 1,25 / 1 con Capilaridad
+flujo   = 0,00042 × Estratos.flujo_x × impulso                    (log10/s)
+impulso = 1 + (Inercia.impulso_x − 1) × min(1, t / 600)          (t = segundos desde el último Infinito)
+γ_k     = flujo × (1 + 0,3 × Permeabilidad_k) × (k == 1 ? f1 : 1) × (1 + 0,003 × s_(k+1))
 f1      = clamp(log10(Caudal) / 30, 0,5, 3)          (más Caudal, más rápido se llena el primero)
-s_k    += γ_k × dt,  pero nunca más que s_(k−1) − 2  (un estrato no puede pasar al de arriba)
-Presión = Σ_k  0,009 × k × wx × (1 + 0,25 × NivelPresión_k) × s_k
-wx      = Presión.w_x × Sedimento II.w_x × Abismo.w_x
+s_k    += γ_k × dt,  pero nunca más que s_(k−1) − sep  (un estrato no puede pasar al de arriba)
+Presión = Σ_k  0,03 × k^e × Presión.w_x × (1 + 0,25 × NivelPresión_k) × lleno_k × s_k
+e       = 1, o 1,05 / 1,1 / 1,15 / 1,2 con Sedimento II
+lleno_k = Abismo.lleno_x si el estrato está en su tope (el 1 siempre), si no 1
 ```
+
+- **Empuje**: el estrato de abajo acelera al de arriba (`empuje_por_estrato_inferior` = 0,003 por orden de magnitud de `s_(k+1)`; el último abierto no tiene empuje). Abrir uno profundo acelera a los de arriba. Con 0,1 (el primer borrador) la cadena crece sin control: el fin de la capa llegaba a las 3 h.
+- El salto al abrir es el "cada estrato te destraba" (§2): la Presión que suma el estrato nuevo es `0,03 × k × s_k` desde el primer segundo.
 
 La Presión se **suma a log10 V** (o sea, queda multiplicada por la Densidad como todo lo demás).
 
@@ -387,6 +397,6 @@ El test puede ser lento: correrlo con un paso de tiempo grande (2 s) y marcarlo 
 
 - El bot elige reliquias y compras con reglas simples ("lo más barato primero", con prioridades). Una persona va a ir un poco más rápido o más lento; la robustez (cada 60 s / 5 min) muestra que el ritmo aguanta.
 - Las corridas del final de la 1.2 duran 30–60 min (Infinitos grandes). Si en pruebas reales se sienten largas, bajar `cristales.blando_factor` hace más corto cada Infinito pero acelera el final: volver a calibrar `escarcha.g_por_presion`.
-- La Presión pesa 55–59 %. Está pensado así, pero es lo primero a revisar con jugadores.
+- La Presión pesa 57 % al final de la 1.1 y 43 % al final de la 1.2. Está pensado así, pero es lo primero a revisar con jugadores.
 - Los Defectos 6 y 7 (Frontera, Inclusión) quedan a ~30 min uno del otro; está bien, pero se pueden separar subiendo el requisito de Inclusión.
 - El offline no está simulado (ver §12).

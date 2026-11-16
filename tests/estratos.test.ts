@@ -1,7 +1,7 @@
 import Decimal from 'break_infinity.js'
 import { describe, expect, it } from 'vitest'
 import {
-  CFG, CFG1, INFINITO, abrirEstrato, costoAbrir, costoAbrirLog10, costoMejoraLog10, densidad, enInfinito, estadoInicial, factorCaudal,
+  CFG, CFG1, ESTRATOS, INFINITO, abrirEstrato, costoAbrir, costoAbrirLog10, costoMejoraLog10, densidad, enInfinito, estadoInicial, factorCaudal,
   infinito, mejorarEstrato, presion, presionEstrato, produccion, tick, valor, type State,
 } from '../src/core'
 import { deserializar, serializar } from '../src/guardado/guardado'
@@ -28,13 +28,22 @@ describe('Estratos', () => {
       expect(c.s.some((x) => x > 0)).toBe(true)
     })
 
-  it('fórmulas de §7.2: flujo de la Red, Permeabilidad, f1 y el tope s_(k−1) − 2', () => {
+  it('fórmulas de §7.2: flujo de la Red, Impulso, Permeabilidad, f1, empuje y el tope s_(k−1) − separación', () => {
     expect([0, 15, 45, 300].map(factorCaudal)).toEqual([E.factor_caudal.min, 0.5, 1.5, E.factor_caudal.max])
     const crece = (s: State, k = 0) => tick(s, 1).estratos.s[k] - s.estratos.s[k]
     const base = con({ estratos: 1 }, { abiertos: 1 })
-    expect(crece(base)).toBeCloseTo(E.gamma_log10_por_s * E.factor_caudal.min)
-    expect(crece(con({ estratos: 4, inercia: 4 }, { abiertos: 1 }))).toBeCloseTo(E.gamma_log10_por_s * 3 * 2 * E.factor_caudal.min)
-    expect(crece(con({ estratos: 1 }, { abiertos: 1, perm: [2, 0, 0, 0, 0, 0, 0, 0] }))).toBeCloseTo(E.gamma_log10_por_s * 1.6 * E.factor_caudal.min)
+    const g0 = E.gamma_log10_por_s * E.factor_caudal.min
+    // Cocientes (no toBeCloseTo de números chicos, que pasa con cualquier cosa).
+    expect(crece(base) / g0).toBeCloseTo(1, 9)
+    expect(crece(con({ estratos: 4 }, { abiertos: 1 })) / g0).toBeCloseTo(3, 9)
+    // Inercia nv4: el Impulso sube lineal desde ×1 recién hecho el Infinito hasta ×2 a los 10 min, y se queda ahí.
+    const iner = (t: number) => crece(con({ estratos: 1, inercia: 4 }, { abiertos: 1 }, { tiempoInfinito: t })) / g0
+    expect([iner(0), iner(E.impulso_s / 2), iner(E.impulso_s), iner(5 * E.impulso_s)].map((x) => +x.toFixed(9))).toEqual([1, 1.5, 2, 2])
+    expect(crece(con({ estratos: 1 }, { abiertos: 1, perm: [2, 0, 0, 0, 0, 0, 0, 0] })) / g0).toBeCloseTo(1.6, 9)
+    // Empuje: el estrato de abajo acelera al de arriba × (1 + empuje × s_(k+1)); el último abierto no tiene.
+    const emp = con({ estratos: 1 }, { abiertos: 2, s: [100, 50, 0, 0, 0, 0, 0, 0] })
+    expect(crece(emp) / g0).toBeCloseTo(1 + E.empuje_por_estrato_inferior * 50, 9)
+    expect(crece(emp, 1) / E.gamma_log10_por_s).toBeCloseTo(1, 9)
     expect(crece(con({}, { abiertos: 1 }))).toBe(0) // sin el nodo Estratos no corren
     expect(crece(con({ estratos: 1 }, {}))).toBe(0) // sin abrir, tampoco
     // El segundo no pasa del primero menos la separación, ni baja si ya estaba por encima.
@@ -45,17 +54,47 @@ describe('Estratos', () => {
     expect(crece({ ...base, energia: INFINITO })).toBe(0)
   })
 
-  it('Presión: Σ w × (k+1) × wx × (1 + 0,25 × nivel) × s_k, sumada a log10 V (queda multiplicada por la Densidad)', () => {
+  it('Presión: Σ w × (k+1) × Presión × (1 + 0,25 × nivel) × s_k, sumada a log10 V (queda multiplicada por la Densidad)', () => {
     const s = con({ estratos: 1, presion: 2 }, { abiertos: 3, s: [20, 10, 5, 99, 0, 0, 0, 0], pres: [0, 2, 0, 0, 0, 0, 0, 0] }, { granos: 1000, compresiones: 4 })
     const w = E.w_base_por_profundidad * 1.44
-    expect(presionEstrato(s, 0)).toBeCloseTo(w * 1 * 20)
-    expect(presionEstrato(s, 1)).toBeCloseTo(w * 2 * 1.5 * 10)
+    expect(presionEstrato(s, 0)).toBeCloseTo(w * 1 * 20, 9)
+    expect(presionEstrato(s, 1)).toBeCloseTo(w * 2 * 1.5 * 10, 9)
     expect(presionEstrato(s, 3)).toBe(0) // sin abrir no cuenta
-    expect(presion(s)).toBeCloseTo(w * (20 + 30 + 15))
+    expect(presion(s)).toBeCloseTo(w * (20 + 30 + 15), 9)
     const sin = { ...s, estratos: estadoInicial().estratos }
     expect(valor(s).div(valor(sin)).log10()).toBeCloseTo(presion(s))
     expect(produccion(s).div(produccion(sin)).log10()).toBeCloseTo(presion(s) * densidad(s))
     expect(presion({ ...s, red: estadoInicial().red })).toBe(0) // sin el nodo Estratos
+  })
+
+  it('nodos de la corrección 6: Sedimento II (profundidad), Abismo (llenos) y Capilaridad (separación)', () => {
+    const w = E.w_base_por_profundidad
+    const e = { abiertos: 3, s: [30, 28, 20, 0, 0, 0, 0, 0] } // el 2.o en su tope (30 − 2), el 3.o no
+    expect(presionEstrato(con({ estratos: 1, sedimento2: 4 }, e), 2)).toBeCloseTo(w * 3 ** 1.2 * 20, 9)
+    const ab = con({ estratos: 1, abismo: 4 }, e)
+    expect([0, 1, 2].map((k) => presionEstrato(ab, k) / presionEstrato(con({ estratos: 1 }, e), k))).toEqual([1.4, 1.4, 1].map((x) => expect.closeTo(x, 9)))
+    // Capilaridad nv4: la separación pasa a 1, así que el 2.o ya no está en su tope y puede crecer.
+    const cap = con({ estratos: 1, capilaridad: 4, abismo: 4 }, e)
+    expect(presionEstrato(cap, 1) / presionEstrato(con({ estratos: 1 }, e), 1)).toBeCloseTo(1, 9)
+    expect(tick(cap, 1).estratos.s[1]).toBeGreaterThan(28)
+    const sin = tick(con({ estratos: 1 }, e), 1).estratos.s
+    expect(sin[1]).toBeCloseTo(sin[0] - E.separacion_log10, 9) // sin Capilaridad sigue pegado al tope
+  })
+
+  it('al abrir un estrato se llena de golpe hasta su tope y multiplica la producción por ×100 o más', () => {
+    // Densidad del jugador cuando abre el primero (sim_capa1.py: 17 compresiones, D ≈ 3).
+    let s = con({ estratos: 1 }, {}, { cristales: new Decimal('1e40'), granos: 1e6, compresiones: 17 })
+    const tope = [E.s1_inicial]
+    for (let k = 0; k < ESTRATOS; k++) {
+      const antes = produccion(s)
+      s = abrirEstrato(s)
+      if (k) tope.push(tope[k - 1] - E.separacion_log10)
+      expect(s.estratos.s[k]).toBe(tope[k])
+      expect(produccion(s).div(antes).log10()).toBeGreaterThanOrEqual(2)
+    }
+    // Con Capilaridad el tope queda más cerca del de arriba.
+    const c = abrirEstrato(abrirEstrato(con({ estratos: 1, capilaridad: 1 }, {}, { cristales: new Decimal(1000) })))
+    expect(c.estratos.s.slice(0, 2)).toEqual([E.s1_inicial, E.s1_inicial - 1.75])
   })
 
   it('compras de §7.3: abrir 0/2/4/7/11/16/22/29 y Permeabilidad/Presión con costo cúbico', () => {

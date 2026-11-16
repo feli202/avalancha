@@ -840,7 +840,7 @@ Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `bala
 Lista en `correcciones-capa1/correcciones-capa1/CORRECCIONES_CAPA1.md` (13 bloques); prompts en `PROMPTS.md` de la misma carpeta. Ese archivo manda sobre `SPEC_CAPA1.md` donde se contradigan. Los hitos C6–C14 siguen después.
 
 - [x] Sesión 1 — bloques 1 a 4: antiparpadeo, sonido, bug del AUTO, guías una sola vez (2026-11-15; falta que lo revises jugando: ver abajo)
-- [ ] Sesión 2 — bloques 5 y 6: balance de Estratos y Red
+- [x] Sesión 2 — bloques 5 y 6: balance de Estratos y Red (2026-11-16; el Relicario como inventario solo en el simulador, el núcleo va en la sesión 5)
 - [ ] Sesión 3 — bloque 13: estética de cristal y escarcha, barra lateral
 - [ ] Sesión 4 — bloque 7: multiplicadores visibles
 - [ ] Sesión 5 — bloque 8: Relicario como inventario
@@ -886,6 +886,50 @@ Lista en `correcciones-capa1/correcciones-capa1/CORRECCIONES_CAPA1.md` (13 bloqu
 - **Decisión (revisar):** la frase de arriba ("Autocompradores de Ámbar y Coral: compran solos…") sigue saliendo una vez por autocomprador nuevo; lo que quedó en una sola vez es el indicador que señala el interruptor.
 
 **Cierre de la sesión 1:** 200 tests, `tsc` y `svelte-check` en verde. No se tocó el balance (`balance/`, `SPEC_CAPA1.md`, `config_capa1.json`). Las capturas de `correcciones-capa1/correcciones-capa1/capturas/` de las otras sesiones (01–04, 06–08) no las miré: solo la 05.
+
+### Sesión 2 (2026-11-16) — balance: Estratos que destraban y una mecánica por nodo
+
+Orden seguido: simulador → calibración con `tune.py` → tabla aprobada → `config_capa1.json` → `SPEC_CAPA1.md` (§2, §4, §6, §7) → núcleo.
+
+**Tabla nueva** (`python balance/sim_capa1.py --robustez`):
+
+| Hito | 15 s | 60 s | 5 min | Rango |
+|---|---|---|---|---|
+| Segundo Infinito | 1,10 h | 1,25 | 2,25 | 1,0–1,3 |
+| Memoria completa | 1,64 h | 1,80 | 2,83 | |
+| Estratos | 2,26 h | 2,42 | 3,45 | |
+| Romper el Infinito | 2,34 h | 2,50 | 3,53 | |
+| Vacancia / Dislocación / Macla / Impureza | 2,41 / 3,53 / 4,52 / 5,52 h | | | |
+| **FIN 1.1** | **7,30 h** | 7,45 | 8,49 | 6,5–7,5 |
+| Fatiga / Frontera / Inclusión / Vidrio | 9,70 / 12,21 / 12,81 / 13,82 h | | | |
+| **FIN CAPA 1** | **14,82 h** | 15,04 | 16,09 | 14–16 |
+| Hueco máximo | 30,6 min | 30,8 | 35,0 | < 40 |
+
+Peso al final de la 1.2: Presión 43 %, Escarcha 41 %, Colores 7 % (antes 59 / 26 / 6).
+
+**Abrir un estrato** (×producción en el momento, `10^(D × Presión que suma)`): E1 ×1e2,3 · E2 ×1e6,3 · E3 ×1e13 · E4 ×1e16 · E5 ×1e19 · E6 ×1e40 · E7 ×1e72 · E8 ×1e103. Mínimo pedido ×100: lo cumple el primero con ×200. El simulador lo imprime en cada corrida.
+
+**Qué cambió**
+
+- Estratos (bloque 5): al abrirse se llenan de golpe (`s_1 = 25`, `s_k = s_(k−1) − separación`); el de abajo empuja al de arriba `× (1 + 0,003 × s_(k+1))`. Recalibrado: `w_base` 0,009 → 0,03, `γ` 0,0013 → 0,00042. Costos de apertura sin cambios. Se sacó `capacidad_log10` (no hacía nada).
+- Red (bloque 6): Inercia = Impulso (sube los primeros 10 min de cada Infinito; `tiempoInfinito` nuevo en el estado, no se reinicia con la Compresión); Capilaridad = separación 1,75…1; Sedimento II = peso `k^1,05…1,2`; Abismo = ×1,1…1,4 a los estratos en su tope (el 1 cuenta siempre como lleno); Cristalografía II = ×10^(0,125…0,5 × Defectos completos); Compactación II = +0,0001…0,0004 de Densidad por anillo; Eco II = crecimiento de la Escarcha × (1 + 0,001…0,004 × log10 Cristales totales); Sedimentación nv4 conserva la Cascada (ni Compresión ni Infinito la reinician).
+- Tooltips de los 25 nodos (es y en) en una frase sobre qué cambia en el juego.
+- Relicario (bloque 8, solo números, en el simulador): el jugador elige el tipo, 3 iguales se fusionan, se equipan las mejores piezas y dos del mismo tipo se suman.
+- Bot: el primer Infinito no tenía la Energía máxima cargada y elegía Cascada como primera reliquia (segundo Infinito a 2,1 h). Arreglado.
+- `ref_estratos.py` corre la Arena del simulador sin Energía (antes hacía decenas de Infinitos en 600 s y eso reiniciaba el Impulso) y tiene un caso nuevo con los nodos del anillo 3.
+
+**Verificación**: 204 tests en verde (balance de la Capa 0 incluido; `balance_capa1.test.ts` todavía no existe, es C8), `tsc` y `svelte-check` sin errores. En el navegador integrado: abrir E1 y E2 con Presión nv4 llenó 25 y 23 y subió la producción ×10^4,7 y ×10^8,7; la pantalla de Estratos muestra el estrato 1 con 1,07e25 granos; los tooltips se leen bien. No medí fps (no se tocó nada visual).
+
+**Decisiones (revisar)**
+
+1. **Empuje 0,003, no 0,1.** Con 0,1 la cadena crece sin control (fin de la capa a las 3 h, Presión 91 %).
+2. **Compactación II y Eco II diez y cincuenta veces más chicos** que en el bloque: con esos valores la 1.2 duraba menos de una hora.
+3. **Fusionar reliquias resta** con efecto `(n+1)` por pieza y piezas repetidas que se suman: 3 Ámbar equipadas valen 3, una Coral vale 2. El bot fusiona siempre. Con "una por tipo" el fin da 15,5 h (también en rango). Hay que decidir la regla en la sesión 5.
+4. **Inercia casi no rinde**: las corridas del bot duran 12–25 s, así que el Impulso llega a ×1,03.
+5. **El bot elige siempre Cauce** (ya no hay ofertas al azar): Cauce pesa 5 % al final de la 1.1.
+6. **Cristalografía II no suma nada todavía**: los Defectos llegan en C7 (`defectosCompletos` devuelve 0). Eco II no tiene dónde actuar hasta la Escarcha (C10).
+7. **El núcleo del Relicario no se tocó** (ofertas con semilla, como en C3): el inventario es la sesión 5. El tooltip de Engarces II ya describe la fusión automática.
+8. En el navegador integrado quedó la partida de prueba con Cristales y nodos puestos a mano.
 
 ## Plan (SPEC_CAPA1 §16)
 

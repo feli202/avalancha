@@ -112,6 +112,25 @@ describe('Red', () => {
     expect(cristalesAlInfinito(conRed({ cristalografia: 2 }, { infinitos: 1 }))).toBe(Math.floor(10 ** (1 + CFG1.cristales.base_log10)))
   })
 
+  it('nodos de la corrección 6: Compactación II, Sedimentación nv4, Eco II y Cristalografía II', () => {
+    // Compactación II: Densidad por cada anillo de la corrida (64 granos = 1 anillo, cada ×2 uno más).
+    const g = { granos: CFG.anillos.granos_primer_anillo * 2 ** 99 } // 100 anillos
+    expect(densidad(conRed({ compactacion2: 4 }, g)) - densidad(conRed({}, g))).toBeCloseTo(0.04, 9)
+    // Sedimentación nv4: la Cascada no vuelve a cero con la Compresión ni con el Infinito.
+    const u = CFG.compresion.umbrales_log10
+    const comp = (red: Record<string, number>) =>
+      tick(conRed(red, { compresiones: 3, cascada: 7, energia: Decimal.pow10(u[3]), auto: { ...estadoInicial().auto, compresion_auto: true } }), 0.001)
+    expect([comp({ memoria: 1 }).compresiones, comp({ memoria: 1 }).cascada]).toEqual([4, 0])
+    expect([comp({ memoria: 1, sedimentacion: 4 }).compresiones, comp({ memoria: 1, sedimentacion: 4 }).cascada]).toEqual([4, 7])
+    const inf = (red: Record<string, number>) => infinito(conRed(red, { cascada: 7, energia: INFINITO, infinitos: 1 })).cascada
+    expect([inf({ sedimentacion: 3 }), inf({ sedimentacion: 4 })]).toEqual([0, 7])
+    // Eco II ya no suma al exponente del Eco (ahora es de la Escarcha, C10).
+    const eco = conRed({ eco: 1, eco2: 4 }, { granos: 100, cristalesTotales: new Decimal(100) })
+    expect(valor(eco).div(valor({ ...eco, red: estadoInicial().red })).log10()).toBeCloseTo(0.5 * 2, 9)
+    // Cristalografía II crece con los Defectos completos; sin Defectos (llegan en C7) no suma.
+    expect(cristalesAlInfinito(conRed({ cristalografia2: 4 }, { infinitos: 1 }))).toBe(Math.floor(10 ** CFG1.cristales.base_log10))
+  })
+
   it('el guardado conserva la Red y no recorta una Cascada subida por Cascada+', () => {
     let s = rico()
     for (const k of ['memoria', 'memoria', 'memoria', 'memoria', 'eco', 'eco', 'eco', 'eco', 'cascada_plus']) s = comprarRed(s, k)

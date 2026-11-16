@@ -63,12 +63,17 @@ export const memoria = (s: State) => nivelRed(s, CENTRO)
 /** Compresiones que conserva el Infinito (Memoria o Sedimentación, la mayor). */
 export const compresionesConservadas = (s: State) =>
   Math.max(efectoRed(s, CENTRO, 'conservar_compresiones'), efectoRed(s, 'sedimentacion', 'conservar_compresiones'))
-export const densidadRed = (s: State) => efectoRed(s, 'compactacion', 'densidad') + efectoRed(s, 'compactacion2', 'densidad')
+/** Densidad fija de la Red (Compactación); la de Compactación II depende de los anillos y se suma en `densidad`. */
+export const densidadRed = (s: State) => efectoRed(s, 'compactacion', 'densidad')
+/** Sedimentación nv4: ni la Compresión ni el Infinito reinician la Cascada. */
+export const conservaCascada = (s: State) => efectoRed(s, 'sedimentacion', 'conserva_cascada') > 0
 export const cascadaExtra = (s: State) => efectoRed(s, 'cascada_plus', 'nivel_max_extra')
 export const mutacionExtra = (s: State) => efectoRed(s, 'mutacion_plus', 'nivel_max_extra')
 /** Eco: + p × log10(Cristales totales) a log10 V. */
-export const ecoLog10 = (s: State) =>
-  (efectoRed(s, 'eco', 'p') + efectoRed(s, 'eco2', 'p_extra')) * Math.max(0, s.cristalesTotales.log10())
-/** Multiplicador de Cristales en log10 (Ruptura, Cristalografía, Cristalografía II). */
+export const ecoLog10 = (s: State) => efectoRed(s, 'eco', 'p') * Math.max(0, s.cristalesTotales.log10())
+// shortcut: los Defectos llegan en C7; hasta entonces no hay ninguno completo y Cristalografía II no suma.
+export const defectosCompletos = (_s: State) => 0
+/** Multiplicador de Cristales en log10 (Ruptura, Cristalografía y Cristalografía II, que crece con los Defectos completos). */
 export const cristalesRedLog10 = (s: State) =>
-  efectoRed(s, 'ruptura', 'cristales_log10') + efectoRed(s, 'cristalografia', 'cristales_log10') + efectoRed(s, 'cristalografia2', 'cristales_log10')
+  efectoRed(s, 'ruptura', 'cristales_log10') + efectoRed(s, 'cristalografia', 'cristales_log10') +
+  efectoRed(s, 'cristalografia2', 'cristales_log10_por_defecto') * defectosCompletos(s)

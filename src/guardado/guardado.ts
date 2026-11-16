@@ -113,7 +113,7 @@ export function deserializar(texto: string): Partida {
       relicario: { semilla: ent(e.relicario.semilla), reliquias, equipadas, pendiente }, cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
       mutaciones: Object.fromEntries(MUTACIONES.map((m) => [m, ent(e.mutaciones[m], maxMutacion(conRed))])) as State['mutaciones'],
       coloresDesbloqueados: ent(e.coloresDesbloqueados, CFG.colores.length), infinitos,
-      tiempoTotal: pos(e.tiempoTotal), tiempoCorrida: pos(e.tiempoCorrida),
+      tiempoTotal: pos(e.tiempoTotal), tiempoCorrida: pos(e.tiempoCorrida), tiempoInfinito: pos(e.tiempoInfinito),
   }
   return {
     // SPEC_CAPA1 §13: quien ya tenía el Infinito de la Capa 0 arranca la Capa 1 con ese Infinito cobrado (1 Cristal).

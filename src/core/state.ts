@@ -34,6 +34,8 @@ export interface State {
   /** SPEC_CAPA1 §7. `s`: log10 de granos de cada estrato; `perm` y `pres`: niveles de Permeabilidad y Presión. */
   estratos: { abiertos: number; s: number[]; perm: number[]; pres: number[] }
   tiempoTotal: number
+  /** Segundos de Arena desde el último Infinito (no se reinicia con la Compresión): el Impulso de Inercia. */
+  tiempoInfinito: number
   // --- estadísticas (SPEC 7: logros que pasan dentro del tick, también fuera de línea) ---
   /** Granos soltados en toda la partida (Caudal y Puñados). */
   granosTotales: number
@@ -67,6 +69,7 @@ export const estadoInicial =(): State => ({
   relicario: { semilla: CFG1.relicario.semilla, reliquias: Object.fromEntries(CFG1.relicario.tipos.map((t) => [t, 0])), equipadas: [], pendiente: 0 },
   estratos: { abiertos: 0, s: ceros(), perm: ceros(), pres: ceros() },
   tiempoTotal: 0,
+  tiempoInfinito: 0,
   granosTotales: 0,
   mejorCorrida: 0,
   compresionesSinAmbar: 0,
