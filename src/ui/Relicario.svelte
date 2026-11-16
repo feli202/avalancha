@@ -145,7 +145,7 @@
   .oferta { display: grid; justify-items: center; gap: 0.5rem; width: 100%; }
   .cartas { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-top: 0.5rem; }
   .cartas button {
-    --b: 1.4rem; --corte: var(--b); display: grid; justify-items: center; align-content: start; gap: 0.35rem; width: min(12.5rem, calc(50% - 0.375rem)); padding: 1.25rem 1.6rem 1.4rem;
+    --b: 1.4rem; display: grid; justify-items: center; align-content: start; gap: 0.35rem; width: min(12.5rem, calc(50% - 0.375rem)); padding: 1.25rem 1.6rem 1.4rem;
     clip-path: polygon(50% 0, 100% var(--b), 100% calc(100% - var(--b)), 50% 100%, 0 calc(100% - var(--b)), 0 var(--b)); /* una gema de punta arriba y abajo */
     transition: --encendido 0.6s ease-out, translate 0.2s;
   }
@@ -156,17 +156,17 @@
   .engarces h2, .engarces small { flex-basis: 100%; text-align: center; }
   /* El engarce: un hueco hexagonal. Vacío queda apagado; con su reliquia se enciende del color de ella. */
   .espacio {
-    --corte: 25%; display: grid; place-content: center; justify-items: center; gap: 0.25rem; width: 7rem; height: 8rem; padding: 0; font-size: 0.875rem;
+    display: grid; place-content: center; justify-items: center; gap: 0.25rem; width: 7rem; height: 8rem; padding: 0; font-size: 0.875rem;
     clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
   }
   .espacio:not(.lleno)::before { background: radial-gradient(closest-side, transparent 60%, rgb(0 0 0 / 0.45)), var(--tex-escarcha), var(--hielo-hondo); }
 
   .pilas { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.75rem; width: min(100%, 48rem); }
   .pila { --f: 1rem; display: grid; justify-items: center; align-content: start; gap: 0.3rem; padding: 1.25rem 0.75rem; border: 0; text-align: center; }
-  /* Engarzada: la arista toma su color y el hielo se tiñe apenas. */
+  /* Engarzada: la arista toma su color y le sube luz de ese color desde abajo. */
   .pila.puesta {
-    --hielo-arista: var(--c);
-    --luz: linear-gradient(color-mix(in srgb, var(--c) 9%, transparent), color-mix(in srgb, var(--c) 9%, transparent));
+    --hielo-arista: linear-gradient(155deg, rgb(255 255 255 / 0.75), var(--c) 22%, color-mix(in srgb, var(--c) 35%, transparent) 60%, var(--c));
+    --luz: radial-gradient(80% 60% at 50% 115%, color-mix(in srgb, var(--c) 22%, transparent), transparent 70%);
   }
   .pila.nada { opacity: 0.55; cursor: default; }
   .pila .cristal { width: 4.5rem; height: 4.5rem; }

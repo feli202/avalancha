@@ -1,8 +1,8 @@
 /* Estética de la Capa 1 (correcciones, bloque 13): hielo y cristal, de la misma familia que la Arena (misma letra y cifras).
    Piezas reutilizables, todas por clase (se ponen sobre el elemento que ya existe, sin envolverlo):
-   - .placa            placa de hielo: azul noche, escarcha en ruido, esquinas facetadas a 60°, brillo frío en la arista de arriba.
-     .placa.grietas    con grietas tenues en una esquina. `--luz`: una capa de luz extra adentro (p. ej. lo elegido).
-   - .gema             botón de cristal biselado (hexágono alargado) con un reflejo lento. Sin `aria-disabled`/`disabled` = alcanza:
+   - .placa            placa de vidrio de hielo: esquinas facetadas a 60°, arista especular, espesor, escarcha fina.
+     .placa.grietas    con grietas tenues en una esquina. `--luz`: una capa de luz extra adentro; `--hielo-arista`: la arista.
+   - .gema             botón de vidrio (hexágono alargado) con un reflejo lento. Sin `aria-disabled`/`disabled` = alcanza:
                        se enciende desde adentro. `--c` cambia el color de la luz (por defecto, hielo).
    - .pestanas-hielo   barra de pestañas rectas con ícono propio; la elegida, con una raya de hielo y un cristal sobre la línea.
    - Escarcha.svelte   partículas de escarcha cayendo detrás.
@@ -12,7 +12,7 @@
   --hielo-hondo: #050a14;
   --hielo-placa: #0a1526;
   --hielo-placa-2: #060d1a;
-  --hielo-arista: rgb(159 227 245 / 0.2);
+  --hielo-arista: linear-gradient(155deg, rgb(255 255 255 / 0.62), rgb(190 235 255 / 0.2) 18%, rgb(159 227 245 / 0.07) 45%, rgb(159 227 245 / 0.05) 70%, rgb(200 240 255 / 0.3));
   --hielo-linea: rgb(159 227 245 / 0.16);
   /* Escarcha: puntos sueltos finos + manchas grandes muy tenues. */
   --tex-escarcha: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .8 0 0 0 0 .94 0 0 0 0 1 .9 0 0 0 -.5'/%3E%3C/filter%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='3' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .85 0 0 0 0 1 .26 0 0 0 -.11'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)' opacity='.55'/%3E%3C/svg%3E");
@@ -21,14 +21,15 @@
 @property --encendido { syntax: '<number>'; inherits: true; initial-value: 0; }
 
 /* ---------- Placa ---------- */
-/* Hielo tallado, no vidrio con resplandor: bordes y caras de corte duro, sin degradados blandos ni brillos que se esfuman. */
+/* Vidrio de hielo grueso ("liquid glass" sin desenfoque de fondo): cuerpo apenas translúcido, arista con luz especular
+   (fuerte arriba a la izquierda, un rebote abajo a la derecha), espesor con sombras internas, reflejo arriba y una
+   cáustica tenue abajo. Sin backdrop-filter: detrás cae la escarcha y obligaría a recalcular el desenfoque en cada cuadro. */
 .placa {
   --f: 0.75rem;                       /* cateto horizontal de la faceta; el vertical sale de los 60° */
   --fv: calc(var(--f) * 1.732);
   position: relative; isolation: isolate;
   clip-path: polygon(var(--f) 0, 100% 0, 100% calc(100% - var(--fv)), calc(100% - var(--f)) 100%, 0 100%, 0 var(--fv));
-  /* La arista: el fondo del elemento asoma 1 px alrededor del relleno, parejo. */
-  background: var(--hielo-arista);
+  background: var(--hielo-arista); /* asoma 1 px alrededor del cuerpo */
 }
 .placa::before {
   content: ''; position: absolute; inset: 1px; z-index: -1; pointer-events: none;
@@ -36,15 +37,19 @@
   background:
     var(--luz, none),
     var(--grieta, none) right top / min(15rem, 70%) auto no-repeat,
+    radial-gradient(130% 70% at 18% -18%, rgb(220 245 255 / 0.14), transparent 55%),
+    radial-gradient(90% 55% at 85% 118%, rgb(120 210 255 / 0.09), transparent 60%),
     var(--tex-escarcha),
-    /* Dos caras de corte: una más clara arriba a la izquierda, otra apenas abajo a la derecha. */
-    linear-gradient(118deg, rgb(159 227 245 / 0.05) 0 34%, transparent 34% 78%, rgb(0 0 0 / 0.18) 78%),
-    var(--hielo-placa);
+    linear-gradient(180deg, rgb(17 33 58 / 0.9), rgb(6 13 26 / 0.93));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    inset 0 22px 30px -24px rgb(210 240 255 / 0.28),
+    inset 0 -18px 28px -20px rgb(0 0 0 / 0.6);
 }
-/* El filo de arriba: una línea dura más clara. */
+/* El destello especular del filo: arranca en la faceta y se apaga hacia la derecha. */
 .placa::after {
-  content: ''; position: absolute; top: 0; left: var(--f); right: 0; height: 1px; pointer-events: none;
-  background: rgb(220 245 255 / 0.45);
+  content: ''; position: absolute; top: 1px; left: var(--f); width: 45%; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, rgb(255 255 255 / 0.8), rgb(255 255 255 / 0.15) 60%, transparent);
 }
 .placa.grietas { --grieta: var(--tex-grietas); }
 
@@ -56,23 +61,32 @@
   padding: 0.6rem calc(var(--b) + 0.6rem);
   border: 0; font: inherit; color: var(--apagado); cursor: default; text-align: center;
   clip-path: polygon(var(--b) 0, calc(100% - var(--b)) 0, 100% 50%, calc(100% - var(--b)) 100%, var(--b) 100%, 0 50%);
-  background: color-mix(in srgb, var(--c) calc(22% + var(--encendido) * 50%), transparent); /* la arista */
+  /* La arista: luz blanca arriba que se vuelve del color de la gema, y un rebote abajo. */
+  background: linear-gradient(165deg,
+    rgb(255 255 255 / calc(0.4 + var(--encendido) * 0.3)),
+    color-mix(in srgb, var(--c) calc(28% + var(--encendido) * 40%), transparent) 30%,
+    color-mix(in srgb, var(--c) calc(10% + var(--encendido) * 18%), transparent) 65%,
+    color-mix(in srgb, var(--c) calc(25% + var(--encendido) * 45%), transparent));
   transition: --encendido 0.6s ease-out, color 0.6s ease-out;
 }
 .gema::before {
-  /* El cuerpo: corona clara arriba y pabellón oscuro abajo, con el corte duro en el medio (el bisel; `--corte` lo mueve).
-     Cuando alcanza, todo el cristal toma su color de adentro. */
+  /* El cuerpo de vidrio: una cúpula de luz arriba, espesor con sombras internas y, cuando alcanza, luz de su color
+     que sube desde adentro. */
   content: ''; position: absolute; inset: 1px; z-index: -1; pointer-events: none; clip-path: inherit;
   background:
-    linear-gradient(180deg, rgb(234 246 255 / 0.08) 0 var(--corte, 50%), rgb(0 0 0 / 0.28) var(--corte, 50%)),
-    linear-gradient(color-mix(in srgb, var(--c) calc(var(--encendido) * 9%), transparent), color-mix(in srgb, var(--c) calc(var(--encendido) * 9%), transparent)),
+    radial-gradient(120% 80% at 50% -25%, rgb(255 255 255 / calc(0.1 + var(--encendido) * 0.06)), transparent 60%),
+    radial-gradient(85% 75% at 50% 125%, color-mix(in srgb, var(--c) calc(var(--encendido) * 36%), transparent), transparent 72%),
     var(--tex-escarcha),
-    #0a1424;
+    linear-gradient(180deg, rgb(19 36 62 / 0.92), rgb(7 15 29 / 0.94));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
+    inset 0 -1px 0 color-mix(in srgb, var(--c) calc(var(--encendido) * 55%), transparent),
+    inset 0 -14px 20px -14px rgb(0 0 0 / 0.55);
 }
 .gema::after {
-  /* El reflejo: un filo de luz angosto, de bordes duros, que cruza cada tanto. */
+  /* El reflejo: una franja de luz que cruza cada tanto. */
   content: ''; position: absolute; inset: 0 auto 0 0; width: 70%; pointer-events: none;
-  background: linear-gradient(115deg, transparent 0 46%, rgb(255 255 255 / 0.1) 46% 50%, transparent 50% 53%, rgb(255 255 255 / 0.05) 53% 54%, transparent 54%);
+  background: linear-gradient(105deg, transparent 32%, rgb(255 255 255 / 0.13) 47%, rgb(255 255 255 / 0.04) 53%, transparent 66%);
   transform: translateX(-100%); animation: reflejo 11s ease-in-out infinite;
 }
 .gema:not([aria-disabled='true'], :disabled) { --encendido: 1; color: var(--escarcha); cursor: pointer; }
