@@ -1474,3 +1474,23 @@ Capturas en `correcciones-capa1/capturas_despues/bloque9/` (Red, derrumbe a mita
 2. Los nombres de los cerrados no se muestran a la vista (aparecen al pasar el puntero o al elegirlos); con 25 nombres la pila no se leía.
 3. El suelo y las bases no proyectan sombra (no hay shadowMap): el resplandor frío debajo de la pila la apoya.
 4. **Celular real: sin medir.** La fila de 390×844 es emulación en la notebook.
+
+## Correcciones Capa 1, bloque 9 (v3): la Red plana en SVG (2026-11-16)
+
+Reemplaza la pila 3D de three.js por el boceto `correcciones-capa1/bocetos-red/escarcha-v3.html`, llevado al juego.
+
+- `src/ui/Red.svelte`: la Red en SVG. Cada nodo es una mini pila abeliana teñida con el color de su nivel, con emblema, nombre y cuatro cuadros de nivel. Los completos se unen a sus vecinos con escarcha (trazo fino con ramitas a 60°). El viewBox se ajusta a los nodos (sin los puntos de hielo del anillo 3), así la red llena su caja.
+- Ficha al costado, como en el boceto: cara del nodo, "Nv 3 · Jade", efecto, siguiente nivel, botón con el costo a la derecha y la regla abajo.
+- Derrumbe al completar: el nodo late y salen tres fragmentos hacia cada vecino (se saltea con "Reducir destellos").
+- `src/render/redCaras.ts`: caras (canvas → data URL, en caché), escarcha y emblemas. Los colores salen de las variables CSS (respetan daltonismo).
+- Responsive: con la caja de la red por debajo de 560 px de ancho pasa a modo compacto (nombres cortos, letra y cuadros más grandes en unidades del dibujo, rombo más apretado). En ≤760 px la ficha va debajo y compacta, sin la regla; en celulares bajos (≤740 px de alto) también sin el "siguiente nivel".
+- Borrados: `src/render/redVisual.ts` y `scripts/medir-red.mjs` (eran del 3D). three.js queda solo para los Estratos.
+- Teclado: cada nodo es un botón (Tab, Enter o Espacio).
+
+### Verificación
+- Sin scroll de página en 1366×768, 768×1024, 390×844 y 360×640. Sin errores en consola. Compra y derrumbe probados (Estratos 3 → 4: abre Inercia y Presión).
+- `vitest`: 222 de 222. `svelte-check`: 0 errores. Build ok.
+
+### Decisiones (revisar)
+- Sin giro ni arrastre: la red es plana.
+- Emblemas nuevos para Presión, Engarces e Inercia. Los del anillo 3 todavía no tienen y muestran solo el disco.
