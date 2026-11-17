@@ -1,7 +1,7 @@
 // SPEC_CAPA1 §6: la Red. Los nodos (posición, efectos por nivel, costo del anillo 3) se leen de config_capa1.json:
 // agregar un nodo no requiere tocar código.
 import Decimal from 'break_infinity.js'
-import { precioLog10 } from './config'
+import { CFG, precioLog10 } from './config'
 import { CFG1 } from './config1'
 import { defectosCompletos } from './defectos'
 import type { State } from './state'
@@ -57,7 +57,11 @@ export const puedeComprarRed = (s: State, id: string) =>
 export function comprarRed(s: State, id: string): State {
   if (!puedeComprarRed(s, id)) return s
   const n = nivelRed(s, id)
-  return { ...s, cristales: s.cristales.sub(costoRed(id, n)), red: { ...s.red, [id]: n + 1 } }
+  const t = { ...s, cristales: s.cristales.sub(costoRed(id, n)), red: { ...s.red, [id]: n + 1 } }
+  // Memoria y Sedimentación: si la corrida está más abajo de lo que el nodo conserva, salta ahí ya (como sim_capa1.py,
+  // que compra antes de armar la corrida). La corrida sigue con lo que tenía; solo sube la Densidad (la pila implosiona).
+  const tope = Math.min(compresionesConservadas(t), CFG.compresion.umbrales_log10.length)
+  return tope > t.compresiones ? { ...t, compresiones: tope } : t
 }
 
 /** El valor del efecto `clave` del nodo en su nivel actual, o `def` si está en 0 (como `v()` de sim_capa1.py). */

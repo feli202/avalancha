@@ -4,16 +4,17 @@
   import Decimal from 'break_infinity.js'
   import { CFG, produccion } from '../core'
     import { txt } from '../strings'
-  import { desglose } from './desglose'
+  import { FUENTES_V, desglose, desgloseV } from './desglose'
   import { formato, formatoMult } from './formato'
   import { historial, juego } from './juego.svelte'
   import { ayuda } from './ayudas.svelte'
   import Histograma from './Histograma.svelte'
   import Pantalla from './Pantalla.svelte'
 
-  const PESTANAS = ['produccion', 'corridas', 'avalanchas', 'general'] as const
+  // C8: con la Capa 1 aparece "Valor": log10 V por fuente (SPEC_CAPA1 §10).
   let activa = $state(0)
   const s = $derived(juego.s)
+  const PESTANAS = $derived(s.infinitos > 0 ? ['produccion', 'valor', 'corridas', 'avalanchas', 'general'] : ['produccion', 'corridas', 'avalanchas', 'general'])
 
   // ---------- Producción ----------
   /** Color de cada factor: los cuatro colores del juego y, para el resto, tonos que no se confunden con ellos. */
@@ -31,6 +32,17 @@
   const cifra = (k: string) => ({ titulo: txt.estadisticas[k as 'record'], que: txt.guia.cifra[k] })
   const mult = (log: number) => `×${formatoMult(Decimal.pow10(log))}`
   const n = (x: number) => x.toLocaleString(txt.locale, { maximumFractionDigits: 2 })
+
+  // ---------- Valor (C8) ----------
+  const COLOR_V: Record<string, string> = {
+    colores: 'var(--ambar)', anillos: '#e8e9f3', cascada: '#3cc8e8', mutaciones: '#ff7ad9', presion: 'var(--hielo)',
+    eco: '#b9a7ff', reliquias: 'var(--jade)', defectos: 'var(--coral)',
+  }
+  const fuentes = $derived(desgloseV(s))
+  const logV = $derived(fuentes.reduce((a, f) => a + f.log, 0))
+  const positivoV = $derived(fuentes.reduce((a, f) => a + Math.max(0, f.log), 0) || 1)
+  const pct = (log: number) => (log > 0 ? `${Math.round((log / positivoV) * 100)} %` : '—')
+  const v = txt.estadisticas.valorV
 
   // ---------- historial (se relee una vez por segundo) ----------
   const h = $derived.by(() => {
@@ -109,6 +121,43 @@
               {/each}
             </ul>
           </div>
+        </section>
+
+      {:else if PESTANAS[activa] === 'valor'}
+        <section class="valor-v">
+          <div class="total">
+            <p class="rotulo">{v.titulo}</p>
+            <p class="cifra hielo num">×10^{n(logV)}</p>
+            <p class="ayuda">{v.ayuda}</p>
+          </div>
+          <div class="barra-v placa" aria-hidden="true">
+            {#each fuentes as f (f.id)}
+              {#if f.log > 0}
+                <span role="presentation" class="segmento" class:apagado={resaltado && resaltado !== f.id} style:flex-grow={f.log}
+                  style:background={COLOR_V[f.id]} onpointerenter={() => (resaltado = f.id)} onpointerleave={() => (resaltado = null)}></span>
+              {/if}
+            {/each}
+          </div>
+          <ul class="factores fuentes">
+            {#each FUENTES_V as id (id)}
+              {@const f = fuentes.find((x) => x.id === id)!}
+              <li class:resaltado={resaltado === id} class:nula={!f.log} onpointerenter={() => (resaltado = id)} onpointerleave={() => (resaltado = null)}>
+                <div class="fila quieta">
+                  <span class="punto" style:background={COLOR_V[id]}></span>
+                  <span class="nombre">{v.fuentes[id]}</span>
+                  <span class="parte num">{pct(f.log)}</span>
+                  <span class="valor num">{f.log < 0 ? '−' : '+'}{n(Math.abs(f.log))}</span>
+                </div>
+                {#if f.partes && f.log > 0}
+                  <ul class="partes">
+                    {#each f.partes.filter((p) => p.log > 0) as p (p.id)}
+                      <li><span>{v.reliquias[p.id]}</span><span class="valor num">+{n(p.log)}</span></li>
+                    {/each}
+                  </ul>
+                {/if}
+              </li>
+            {/each}
+          </ul>
         </section>
 
       {:else if PESTANAS[activa] === 'corridas'}
@@ -230,6 +279,15 @@
   .partes { padding: 0 0.5rem 0.75rem 2rem; animation: fundido 0.25s ease-out; }
   .partes li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.25rem 1.625rem 0.25rem 0; font-size: 0.875rem; color: var(--tenue); }
 
+  /* Valor (C8): la Capa 1, en hielo. Barra horizontal sobre una placa y filas fijas (sin desplegar). */
+  .valor-v { display: grid; gap: 1.25rem; }
+  .cifra.hielo { color: var(--hielo); text-shadow: 0 0 2rem color-mix(in srgb, var(--hielo) 30%, transparent); }
+  .barra-v { display: flex; gap: 2px; height: 1.75rem; padding: 0.375rem; }
+  .barra-v .segmento { min-width: 2px; min-height: 0; }
+  .fuentes > li { border-top-color: var(--hielo-linea, var(--borde)); }
+  .fila.quieta { cursor: default; grid-template-columns: 0.625rem 1fr auto 9rem; min-height: 2.5rem; }
+  .fuentes .nula { opacity: 0.45; }
+
   /* Corridas */
   .tabla { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
   .tabla th { padding: 0 0.75rem 0.625rem; font-size: 0.8125rem; font-weight: 400; color: var(--tenue); text-align: right; }
@@ -270,6 +328,8 @@
     .desglose { grid-template-columns: 1.5rem 1fr; gap: 1rem; }
     .fila { grid-template-columns: 0.5rem 1fr auto 0.75rem; gap: 0.625rem; font-size: 0.9375rem; }
     .fila .parte { display: none; }
+    .fila.quieta { grid-template-columns: 0.5rem 1fr auto auto; min-height: 2.25rem; }
+    .fila.quieta .parte { display: inline; }
     .tabla { font-size: 0.8125rem; }
     .tabla td, .tabla th { padding-left: 0.375rem; padding-right: 0.375rem; }
     .tabla .ancha { width: auto; }

@@ -833,7 +833,7 @@ Todos: texto grande desde el primer cuadro, dentro de la zona segura (arriba, ce
 
 Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `balance/sim_capa1.py`.
 
-**Hito actual: C8 (sin empezar). C7 terminado el 2026-11-16 (ver abajo; falta medir fps con los Defectos). C5: falta probarlo en un celular de verdad.**
+**Hito actual: C8 terminado el 2026-11-17 (test de balance de la 1.1 en verde con el núcleo real; ver C8 al final). Sigue C9. C7 terminado el 2026-11-16 (ver abajo; falta medir fps con los Defectos). C5: falta probarlo en un celular de verdad.**
 
 ## Correcciones de la Capa 1 (9 sesiones)
 
@@ -1735,3 +1735,99 @@ Requisitos: sin cambios (Defectos nv1–4; 0 / 3 / 5 / 7 estratos). Siguen funci
 - **Ganar con la meta por debajo de 1e308** (Vacancia) da los Cristales de un Infinito sin romper; antes el simulador no daba nada.
 - El aviso "+X Cristales" puede decir +0 cuando lo ganado es mucho menor que los Cristales totales (resta de `Decimal`); ya pasaba con el Infinito automático.
 - El estado de debug "Lista para los Defectos" es tan fuerte que, desde cero, hace un Infinito automático por tick: sirve para entrar, no para jugar adentro.
+
+## C8 — Test de balance de la 1.1, offline y Estadísticas (2026-11-17)
+
+### Qué se hizo
+
+| Archivo | Contenido |
+| --- | --- |
+| `tests/balance_capa1.test.ts` | Nuevo, **lento** (no corre con `npm test`; `npm run test:lento`, ~2 s de reloj). El bot de `sim_capa1.py` con el núcleo real hasta el fin de la 1.1: humano cada 15 s (Caudal y colores lo más barato primero, Cascada y Mutaciones con margen, Compresión, Infinito a mano antes de Memoria nv4), mismos pasos (0,5 / 1 / 2 s), tienda de la Capa 1 lo más barato primero con `prioridad_bot`, Defectos en orden con el abandono del sim (0,5 órdenes en 2 min a más de 2 de la meta, o 45 min) y el reintento ×30. Reliquias: la regla del panel de Automatización (Completar fusiones) y engarzar las mejores; fusiona a mano mientras no hay Engarces II. Infinito automático "en el óptimo". Verifica la tabla de §2 con ±10 %, Estratos ≥ Romper, hueco < 40 min, y 12 h offline < 12 h activas. |
+| `src/core/offline.ts` | `fueraDeLinea(s, segundos, eficiencia = 1)`: simula `segundos × eficiencia` de juego con el mismo tick. Ya no corta en 1e308: con el Infinito automático prendido sigue haciendo Infinitos (la reliquia la elige la regla, dentro de tick); si no, para ahí. Devuelve además Infinitos, Cristales ganados y los `s_k` de antes. |
+| `src/ui/juego.svelte.ts` | El primer salto después de cargar (juego cerrado) usa `fuera_de_linea_eficiencia` (0,7) si ya hay Capa 1. Los saltos con la pestaña abierta pero oculta siguen enteros. La tarjeta sale si algo cambió (antes no salía con la Energía en 1e308, que con el Infinito roto es casi siempre). |
+| `src/ui/Paneles.svelte` | "Mientras no estabas" de la Capa 1: placa de hielo con los Cristales ganados (o la Energía, sin Infinitos), Infinitos y reliquias con su regla, cuánto creció cada estrato (×10^x) y la nota "rinde ×0,7 del tiempo". La de la Capa 0 no cambió. |
+| `src/ui/desglose.ts`, `src/ui/Estadisticas.svelte` | `desgloseV`: log10 V por fuente (colores, anillos, Cascada, Mutaciones, Presión, Eco, reliquias engarzadas, Defectos) que suma exacto `valor(s).log10()`. Cada fuente se mide sin Defectos; "Defectos" es lo que cambian sus recompensas (positivo) y la regla en curso (negativo). Pestaña nueva **Valor** en Estadísticas (aparece con el primer Infinito): barra sobre placa de hielo y filas con su % y +log10. |
+| `src/core/config1.ts`, `src/core/tick.ts` | Tipos de `prioridad_bot`, `abandono_min`, `meta_1_1_estrato8_log10`, `fuera_de_linea_eficiencia`; `comprarConMargen` exportada (la usa el bot). |
+| `src/strings/es.ts`, `en.ts` | Textos de la tarjeta y de la pestaña Valor. |
+| `tests/desglose.test.ts` | 3 tests de `desgloseV` (suma exacta, Eco, recompensas suman y una regla resta). |
+
+### El test de balance no da: en qué se diferencia el juego del simulador
+
+`python balance/sim_capa1.py` da la tabla de §2 (fin 1.1 6,75 h). El núcleo con el bot:
+
+| Hito | Juego | Sim | | Juego con la diferencia 1 "arreglada" (solo diagnóstico) |
+|---|---|---|---|---|
+| Segundo Infinito | 1,87 h | 1,21 | +55 % | **1,21** |
+| Memoria completa | 3,06 h | 1,81 | | **1,81** |
+| Romper = Estratos | 3,73 h | 2,46 | | 2,23 (−9 %) |
+| Vacancia | 3,78 h | 2,53 | | 2,28 (−10 %) |
+| Dislocación | 6,04 h | 3,78 | | 4,54 (+20 %) |
+| Macla | 6,66 h | 4,62 | | 5,16 |
+| Impureza | 7,20 h | 5,67 | | 5,70 |
+| **Fin 1.1** | 7,50 h | **6,75** | +11 % | 6,01 (−11 %) |
+| Hueco máximo | 71 min | 31 | | 45 |
+
+No cambié ningún número. Las diferencias, en orden de peso:
+
+1. **La Memoria comprada después del Infinito no le da sus compresiones a la corrida que ya empezó.** En el juego el Infinito reinicia la Arena con las compresiones que conserva la Red *en ese momento*; el jugador recién después compra Memoria nv1 y su corrida sigue en la Compresión 0. El simulador compra en la Red *antes* de armar la corrida siguiente y arranca en la 3. Son 3 corridas de más (15,5 + 13,4 + 10,6 = 39,5 min); el resto de esa corrida coincide al décimo de minuto (72,9 min en los dos). Pasa con cada nivel de Memoria y de Sedimentación. Dándole al bot esas compresiones (solo para medir), el segundo Infinito y la Memoria completa salen idénticos al sim: la Arena del núcleo y la del sim son la misma.
+2. **Las reliquias.** El bot del sim elige con su propia estimación y en el 2.º y 3.er Infinito toma Mutaciones y Cascada, que no puede engarzar (un solo espacio). La regla del panel (Completar fusiones) apila Cauce y llega antes a Coral y Jade: el juego rompe el Infinito ~14 min antes. Además, en el sim **abandonar un Defecto también da reliquia** (`pick_relic` corre después de cada corrida); en el juego no.
+3. **El abandono de los Defectos está en el filo.** Más allá de 1e308 la Energía dentro de un Defecto sube ~0,25–0,5 órdenes por minuto, justo alrededor del umbral de abandono (0,5 en 2 min). El sim abandona la Dislocación a los ~8 min y reintenta con ×30 Cristales; el juego, que entra con 4 estratos (por 1 y 2) en vez de 3, sube ~1 orden/min, nunca "se estanca" y se queda los 45 min enteros sin ganar nada, tres veces (2,25 h perdidas). Eso explica la Dislocación tarde y el hueco de 45–71 min.
+
+Falta decidir: (a) si la Memoria/Sedimentación comprada sube las compresiones de la corrida en curso (lo que asume el sim y lo que un jugador espera al comprarla), o si el sim compra después de armar la corrida; (b) si el bot del test elige reliquias como el sim o con la regla del panel (se pidió la regla); (c) si abandonar da reliquia; (d) un criterio de abandono más robusto en los dos bots (por ejemplo, "al ritmo actual no llega a la meta antes de N min") en vez del umbral de 0,5 órdenes.
+
+### Verificación
+
+- `npm test`: 280 tests en verde (el lento, saltado). `npm run test:lento`: el offline y "Estratos ≥ Romper" pasan; los tiempos fallan (tabla de arriba). `tsc` y `svelte-check` sin errores.
+- Juego abierto (1366×768 y 390×844, sin scroll de página): partida de mitad de la 1.1 (Ruptura nv1, 4 estratos, Infinito automático en el óptimo) guardada y atrasada 12 h → 2.679 Infinitos automáticos, +1,53e6 Cristales, cada estrato ×10^30,8, en la placa de hielo. Pestaña Valor con Presión y Eco y su %. Sin errores en consola.
+- **No medido:** fps (pantallas de DOM quieto con una animación de entrada); cuánto tarda el cálculo de 12 h en el navegador (unos segundos en negro tras "Continuar"; en Node, ~1 s); celular real.
+
+### Decisiones (revisar)
+
+- **El ×0,7 es del tiempo, no de la producción.** 12 h afuera = 8,4 h de juego (Energía, Estratos, Infinitos con su reliquia). Multiplicar la producción por 0,7 en un juego exponencial casi no cambia nada. Así "offline nunca rinde más que activo" vale por construcción.
+- **Solo con el juego cerrado y solo en la Capa 1.** La pestaña abierta (oculta) sigue entera (§1: "nunca castiga al que deja la pestaña abierta"); la Capa 0 offline sigue como antes.
+- **Los Infinitos offline no tienen foto de la pila** (esas reliquias quedan sin cara, como las migradas).
+- En "Valor", el % es sobre la suma de lo que suma (como en Producción); una fuente que resta muestra "—".
+
+### C8, segunda parte (2026-11-17): las cuatro decisiones, y el test da
+
+1. **Memoria y Sedimentación, en el juego** (`src/core/red.ts`, `comprarRed`): si la corrida está en menos compresiones de las que el nodo conserva, salta ahí al comprarlo. La corrida conserva lo que tenía (Energía, niveles); solo sube la Densidad, y la pila hace la implosión de la Compresión (la que ya tenía `Pila.svelte` al subir `compresiones`). Test en `tests/red.test.ts`.
+2. **Reliquias, en el simulador** (`pick_relic` de `sim_capa1.py`): la regla por defecto del panel (Completar fusiones, como `tipoAutomatico`), nunca un tipo que no puede engarzar, y engarza las mejores como `equiparMejores`. Abandonar un Defecto ya no da reliquia ni cuenta como Infinito. **Además encontré otro desvío del sim**: al abandonar con la Energía pasada de 1e308 cobraba los Cristales de ese Infinito (`infinity_reward` no miraba si se ganó); el juego no da nada. Arreglado en el sim.
+3. **Abandono de Defectos** (sim y test, mismo criterio, constantes nuevas en `config_capa1.json`): desde los 10 min de Defecto, si al ritmo de los últimos 3 min la meta queda a más de 30 min, abandona (o a los 45 min, como antes); se reintenta con ×30 Cristales totales.
+4. **Offline sin pantalla negra**: `fueraDeLineaPasos` (generador en `src/core/offline.ts`; `fueraDeLinea` lo consume entero). El bucle corre ~12 ms de cálculo por cuadro y `Paneles.svelte` muestra una barra (placa de hielo en la Capa 1, ámbar en la Capa 0). Mientras calcula no avanza ni guarda nada nuevo (si se cierra, el guardado sigue siendo el de antes de la ausencia). Medido: 12 h de una partida de mitad de la 1.1 en ~2,5 s, con la barra. **No hice** los "saltos grandes donde no hay decisiones": con el Infinito automático hay decisiones cada pocos segundos de juego (cada Infinito), así que un salto largo cambiaría el resultado; queda para cuando haga falta.
+
+**Simulador** (`python balance/sim_capa1.py --robustez`, sin recalibrar: la tabla se movió poco y quedó en rango, no toqué multiplicadores):
+
+| Hito | 15 s | 60 s | 5 min | antes (15 s) |
+|---|---|---|---|---|
+| Segundo Infinito | 1,21 | 1,37 | 2,33 | 1,21 |
+| Memoria completa | 1,81 | 1,97 | 3,00 | 1,81 |
+| Romper = Estratos | 2,30 | 2,46 | 3,49 | 2,46 |
+| Vacancia | 2,37 | 2,53 | 3,56 | 2,53 |
+| Dislocación | 3,70 | 3,85 | 4,88 | 3,78 |
+| Macla | 4,52 | 4,68 | 5,71 | 4,62 |
+| Impureza | 5,29 | 5,45 | 6,48 | 5,67 |
+| **Fin 1.1** | **6,63** | 6,78 | 7,82 | 6,75 |
+| **Fin capa** | **14,16** | 14,35 | 15,42 | 14,29 |
+| Hueco máximo (min) | 30,6 | 30,8 | 40,0 | 30,6 |
+
+Ningún hueco de más de 40 min (el jugador de cada 5 min queda justo en 40,0, como antes). Pesos por fuente sin cambios (fin 1.1: Presión 58 %, Colores 19 %, Eco 13 %).
+
+**Test de balance con el núcleo real** (`npm run test:lento`, 12/12 en verde):
+
+| Hito | Juego | Sim | |
+|---|---|---|---|
+| Segundo Infinito | 1,21 | 1,21 | 0 % |
+| Memoria completa | 1,81 | 1,81 | 0 % |
+| Romper = Estratos | 2,30 | 2,30 | 0 % |
+| Vacancia | 2,35 | 2,37 | −1 % |
+| Dislocación | 3,59 | 3,70 | −3 % |
+| Macla | 4,19 | 4,52 | −7 % |
+| Impureza | 5,36 | 5,29 | +1 % |
+| **Fin 1.1** | **6,26** | 6,63 | −6 % |
+| Hueco máximo | 32,4 min | 30,6 | |
+
+Lo que queda de diferencia (dentro del ±10 %) está en los Defectos: el Infinito automático del juego corta en el óptimo analítico (un poco antes que el sim, que espera a que el ritmo caiga 0,01) y los autocompradores compran por tipo en orden fijo en vez de lo más barato primero (ya pasaba en la Capa 0, +3 %).
+
+**Verificación**: 281 tests en verde con `npm test`, 12/12 en `npm run test:lento`, `svelte-check` 0 errores. En el navegador: la barra de hielo avanza (35/100 al segundo y medio) y después sale la tarjeta de regreso. `SPEC_CAPA1.md` al día: §2 (tabla, aperturas de estratos, nota C8), §6.3 (Memoria a mitad de corrida), §8 (abandono), §12 (offline), §17.
+
+**Decisión (revisar)**: comprar Memoria a mitad de corrida **no reinicia** la corrida (sube la Densidad y sigue). Es lo que favorece al jugador; el sim siempre la compra al principio, así que para el balance da igual.

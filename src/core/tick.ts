@@ -29,7 +29,7 @@ export function autocomprar(s: State): State {
 }
 
 const MARGEN = Decimal.pow10(CFG1.autocompradores_umbral_log10)
-function comprarConMargen(s: State, ids: ItemId[], max: number): State {
+export function comprarConMargen(s: State, ids: ItemId[], max: number): State {
   for (let i = 0; i < max; i++) {
     const ok = ids.filter((id) => puedeComprar(s, id) && s.energia.gte(costo(s, id).mul(MARGEN)))
     if (!ok.length) return s

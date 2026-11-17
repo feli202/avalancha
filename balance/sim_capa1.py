@@ -10,7 +10,7 @@ de SPEC_CAPA1.md y las constantes de config.json (Capa 0) + config_capa1.json (C
 El tiempo cuenta desde el primer Infinito (la Capa 0 completa dura ~3 h y no cambia).
 Todo numero grande vive en log10.
 """
-import json, math, os, sys
+import collections, json, math, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 def _load(name):
@@ -249,7 +249,7 @@ def play_arena(P, defect, check, t_now, stats):
     broken = P.broken() and defect != 'vidrio' or (P.broken() and defect == 'vidrio')
     meta = L1['defectos'][defect]['meta_log10'] if defect else None
     cap_t = L1['defectos']['abandono_min'] * 60 if defect else 6 * 3600
-    t = 0.0; next_check = 0.0; next_auto = 0.0; best_rate = NEG; best_t = 0; est = L1['estratos']
+    t = 0.0; next_check = 0.0; next_auto = 0.0; best_rate = NEG; best_t = 0; est = L1['estratos']; hist = collections.deque()
     gam0 = est['gamma_log10_por_s'] * P.v('estratos', 'flujo_x', 0)
     imp = P.v('inercia', 'impulso_x', 1); sep = P.sep(); emp = est['empuje_por_estrato_inferior']
     while True:
@@ -312,10 +312,12 @@ def play_arena(P, defect, check, t_now, stats):
                 if rate > best_rate: best_rate, best_t = rate, t
                 elif (human or mem >= 4) and rate < best_rate - 0.01 and t - best_t > 5:
                     return t, A, False
-        if defect and ABANDONA:  # una persona abandona el Defecto cuando deja de avanzar 2 minutos
-            prog = A.tier * 1e5 + A.maxE
-            if prog > getattr(A, 'plateau_E', NEG) + 0.5: A.plateau_E, A.plateau_t = prog, t
-            elif t - A.plateau_t > 120 and meta - A.maxE > 2: return t, A, False  # a 2 ordenes de la meta, espera
+        if defect and ABANDONA:  # desde los 10 min: si al ritmo de los ultimos 3 min la meta queda a mas de 30 min, abandona
+            hist.append((t, A.maxE_ever))
+            while len(hist) > 1 and hist[1][0] <= t - DFX['abandono_ventana_min'] * 60: hist.popleft()
+            if t >= DFX['abandono_revisar_min'] * 60:
+                t0, e0 = hist[0]; ritmo = (A.maxE_ever - e0) / max(1e-9, (t - t0) / 60)
+                if ritmo <= 0 or (meta - A.maxE_ever) / ritmo > DFX['abandono_meta_max_min']: return t, A, False
         if t >= cap_t:
             return t, A, False
 
@@ -378,25 +380,17 @@ def do_shop(P, t, log, stats):
     return bought
 
 def pick_relic(P, A):
-    """cada Infinito el jugador elige el tipo de la reliquia nueva (Ambar); fusiona y equipa las mejores piezas"""
-    R = L1['relicario']; tipos = R['tipos']
-    # valor estimado de cada tipo (en log10 de produccion)
-    D = A.D(); lg = max(10.0, A.lG)
-    def val(t, lvl):
-        if lvl < 0: return 0
-        if t == 'cauce': return D * R['cauce_colores_pct_por_nivel'] * (lvl + 1) * 0.3 * max(30.0, A.maxE)
-        if t == 'cascada': return D * R['cascada_c_por_nivel'] * (lvl + 1) * CAS['exp_G'] * lg
-        return D * R['mutaciones_efecto_por_nivel'] * (lvl + 1) * (A.mut[1] + 0.477 * A.mut[0] + 1)
-    def best(extra):
-        pz = [(t, n) for t in tipos for n in P.pieces(t, extra.get(t, 0))]
-        return sorted(pz, key=lambda p: -val(*p))[:P.slots()]
-    def gain(t):  # cuanto sube su mejor pieza (el bot fusiona siempre)
-        lv = P.relic_level(t)
-        P.relic[t] += 1; lv2 = P.relic_level(t); P.relic[t] -= 1
-        return val(t, lv2) - val(t, lv)
-    choice = max(tipos, key=lambda t: (gain(t), val(t, P.relic_level(t))))
+    """cada Infinito elige el tipo con la regla por defecto del panel de Automatizacion del juego (Completar fusiones,
+    tipoAutomatico de relicario.ts): al que le falten menos Ambar para fusionar; empate, el que tiene alguna engarzada; despues
+    el orden de los tipos. Nunca un tipo que no puede engarzar (sin pieza puesta y sin espacio libre). Fusiona (como el bot
+    del test) y engarza las mejores: mayor nivel primero; empate, la que ya estaba y el orden de los tipos (equiparMejores)."""
+    tipos = L1['relicario']['tipos']; puestos = {t for t, n in P.equipped}
+    def ambar(t): return (P.relic[t] + P.polish[t]) % 3
+    cands = [t for t in tipos if t in puestos or len(P.equipped) < P.slots()] or tipos
+    choice = min(cands, key=lambda t: ((3 - ambar(t)) * 2 - (1 if t in puestos else 0), tipos.index(t)))
     P.relic[choice] += 1
-    P.equipped = best({})
+    pz = [(t, n) for t in tipos for n in P.pieces(t)]
+    P.equipped = sorted(pz, key=lambda p: (-p[1], p not in P.equipped, tipos.index(p[0])))[:P.slots()]
 
 # ------------------------------------------------------------------ partida completa
 def simulate(check=15.0, tmax=24 * 3600, verbose=False, horizon_end=True):
@@ -426,7 +420,9 @@ def simulate(check=15.0, tmax=24 * 3600, verbose=False, horizon_end=True):
             if P.retry_at.get(d, NEG) > P.Ctot: continue
             defect = d; break
         dur, A, ok = play_arena(P, defect, check, t, stats)
-        t += dur; P.ninf += 1; stats['infinitos'] += 1
+        abandono = defect and not ok  # abandonar no es un Infinito: sin Cristales ni reliquia
+        t += dur
+        if not abandono: P.ninf += 1; stats['infinitos'] += 1
         P.casc_lk = A.Lk; P.last_D = A.D()
         pp = A.logV_parts()
         stats.setdefault('runs', []).append((round(t / 3600, 2), round(dur / 60, 1), defect, round(A.E, 1), round(P.Ctot, 2),
@@ -435,10 +431,10 @@ def simulate(check=15.0, tmax=24 * 3600, verbose=False, horizon_end=True):
         if defect:
             if ok: P.done.add(defect); mark(t, f'Defecto {defect}')
             else: P.retry_at[defect] = P.Ctot + DFX['reintento_cristales_totales_log10']
-        lc = infinity_reward(P, A, defect, ok)
+        lc = NEG if abandono else infinity_reward(P, A, defect, ok)  # abandonar no cobra, aunque haya pasado 1e308
         if lc > NEG:
             P.C = addlog(P.C, lc); P.Ctot = addlog(P.Ctot, lc)
-        pick_relic(P, A)
+        if not abandono: pick_relic(P, A)
         P.last_logG = max(10.0, A.lG)
         do_shop(P, t, log, stats)
         if P.red['memoria'] >= 4: mark(t, 'Memoria completa')

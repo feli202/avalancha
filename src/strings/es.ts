@@ -272,6 +272,8 @@ export const es = {
       zoomPista: 'Zoom de la Red: rueda o pellizco; arrastrá para moverla. Doble clic: encuadre.',
       nv: (n: number, color?: string) => (color ? `Nv ${n} · ${color}` : 'Sin comprar'),
       siguiente: (e: string) => `Siguiente nivel: ${e}`,
+      verNivel: (n: number, color: string) => `Ver qué da el nivel ${n} (${color})`,
+      enNivel: (n: number, color: string) => `Con el nivel ${n} · ${color}`,
       cerrado: 'Se abre cuando un vecino más cerca de Memoria llega a Violeta.',
       hielo: 'Bajo el hielo: se abre con la Escarcha.',
       requiere: 'Se abre con Romper el Infinito (Ruptura nv1): es lo que te deja ir más allá del Infinito.',
@@ -307,12 +309,22 @@ export const es = {
 
   // Fuera de línea y guardado (SPEC 8)
   ausencia: {
+    calculando: 'Calculando lo que pasó mientras no estabas…',
     titulo: 'Mientras no estabas',
     tiempo: (d: string) => `${d} afuera`,
     tope: (horas: number) => `Más de ${horas} h afuera: la pila trabajó ${horas} h sin vos`,
     energia: 'de Energía',
     compresiones: (n: number) => (n === 1 ? '1 compresión' : `${n.toLocaleString('es-AR')} compresiones`),
     seguir: 'Seguir',
+    // SPEC_CAPA1 §12: la tarjeta de hielo de la Capa 1.
+    cristales: 'Cristales',
+    infinitos: (n: number) => (n === 1 ? '1 Infinito automático' : `${n.toLocaleString('es-AR')} Infinitos automáticos`),
+    reliquias: (n: number, regla: string) => `${n === 1 ? '1 reliquia' : `${n.toLocaleString('es-AR')} reliquias`} (${regla})`,
+    sinInfinito: 'Sin Infinito automático: la Arena te espera en 1e308',
+    estratos: 'Estratos',
+    estrato: (k: number) => `E${k}`,
+    crecio: (x: string) => `×10^${x}`,
+    eficiencia: (x: string) => `Con el juego cerrado, la Capa 1 rinde ×${x} del tiempo`,
   },
   zoom: { nombre: 'Zoom de la pila', pista: 'Zoom de la pila. Doble clic: encuadre automático.' },
   sinWebGL: 'Este navegador no puede dibujar la pila (falta WebGL2). El juego sigue andando: probá con otro navegador o activá la aceleración por hardware.',
@@ -350,7 +362,14 @@ export const es = {
   },
   estadisticas: {
     titulo: 'Estadísticas',
-    pestanas: { produccion: 'Producción', corridas: 'Corridas', avalanchas: 'Avalanchas', general: 'General' } as Record<string, string>,
+    pestanas: { produccion: 'Producción', valor: 'Valor', corridas: 'Corridas', avalanchas: 'Avalanchas', general: 'General' } as Record<string, string>,
+    // C8: log10 V por fuente (SPEC_CAPA1 §10).
+    valorV: {
+      titulo: 'Cada derrumbe vale',
+      ayuda: 'Cuántos órdenes de magnitud (log₁₀) suma cada fuente al valor V de un derrumbe. Después, la Densidad eleva todo a ^D.',
+      fuentes: { colores: 'Colores', anillos: 'Anillos', cascada: 'Cascada', mutaciones: 'Mutaciones', presion: 'Presión (Estratos)', eco: 'Eco', reliquias: 'Reliquias engarzadas', defectos: 'Defectos' } as Record<string, string>,
+      reliquias: { cauce: 'Cauce (a los colores)', cascada: 'Cascada (a c)', mutaciones: 'Mutaciones (a la de Colores)' } as Record<string, string>,
+    },
     // Producción: el desglose de la Energía/s
     energiaPorSegundo: 'Energía por segundo',
     ayudaBarra: 'Cada factor ocupa en la barra lo que aporta en órdenes de magnitud (log10).',

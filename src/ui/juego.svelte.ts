@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, CFG1, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, infinitoRoto, fueraDeLinea, hayEstratos, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
+import { CFG, CFG1, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, hayEstratos, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
 import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
@@ -37,6 +37,8 @@ class Juego {
   eta = $state<number | null>(null)
   /** La avalancha más grande de la pila visual, en derrumbes. */
   record = $state(0)
+  /** C8: fracción hecha del cálculo de la ausencia (null = no hay cálculo en curso). */
+  calculo = $state<number | null>(null)
   /** "Mientras no estabas": lo que pasó en la última ausencia, hasta que se cierra. */
   ausencia = $state.raw<Ausencia | null>(null)
   /** El guardado no se pudo leer: no se guarda nada hasta que el jugador acepta empezar de nuevo. */
@@ -380,6 +382,8 @@ export function arrancar() {
   let antes = Date.now()
   let acum = 0
   let p: ReturnType<typeof cargar> = null
+  let calculo: { pasos: Generator<number, Ausencia>; real: number } | null = null
+  let cerrado = false // SPEC_CAPA1 §12: el primer salto tras cargar es tiempo con el juego cerrado (no una pestaña oculta)
   try { p = cargar(almacenLocal, Date.now()) } catch (e) { console.warn(e) } // sin almacenamiento: se juega sin guardar
   if (p === 'corrupto') juego.guardadoRoto = true
   else if (p) {
@@ -396,6 +400,7 @@ export function arrancar() {
     // Recién migrado de la Capa 0 (o se cerró antes de leer la presentación): entra por Cristalización.
     if (p.estado.infinitos > 0 && !p.vistos.cristales) juego.capa = 'cristalizacion'
     antes = p.guardadoEn // el primer cuadro simula lo que pasó desde el guardado
+    cerrado = true
   }
   simuladoHasta = antes
   // Sin partida o sin tiempo jugado (recién borrada, o se recargó en el título): partida nueva, que arranca al entrar.
@@ -424,18 +429,34 @@ export function arrancar() {
     let s = juego.s
     // Bloque 8: la pila de antes de estos pasos, por si en ellos llega un Infinito automático (una vez por segundo basta).
     if (ahora - fotoEn > 1000) (fotoActual = fotoPila()), (fotoEn = ahora)
-    if (acum > MAX_PASOS * PASO) {
-      const a = fueraDeLinea(s, acum)
-      // Contra el tiempo real (M11): a ×50 un tirón de 1,2 s no es una ausencia.
-      if (real >= AVISAR_DESDE && !enInfinito(s) && !enInfinito(a.s)) juego.ausencia = a
+    if (!calculo && acum > MAX_PASOS * PASO) {
+      // Con el juego cerrado la Capa 1 rinde ×0,7 del tiempo; la pestaña abierta (oculta) nunca se castiga.
+      calculo = { pasos: fueraDeLineaPasos(s, acum, cerrado && s.infinitos > 0 ? CFG1.fuera_de_linea_eficiencia : 1), real }
+      acum = 0
+    }
+    if (calculo) {
+      // C8: de a tramos de ~12 ms por cuadro, con la barra de Paneles.svelte; mientras tanto, nada más avanza ni se guarda nuevo.
+      const hasta = performance.now() + 12
+      let r = calculo.pasos.next()
+      while (!r.done && performance.now() < hasta) r = calculo.pasos.next()
+      if (!r.done) {
+        juego.calculo = r.value
+        requestAnimationFrame(cuadro)
+        return
+      }
+      const a = r.value
+      // Contra el tiempo real (M11): a ×50 un tirón de 1,2 s no es una ausencia. En la Capa 0 no tapa la llegada al primer Infinito.
+      if (calculo.real >= AVISAR_DESDE && a.s !== s && !(s.infinitos === 0 && enInfinito(a.s))) juego.ausencia = a
+      juego.calculo = null
+      calculo = null
       juego.saltos++
       s = a.s
-      acum = 0
     } else {
       const a = s
       for (; acum >= PASO; acum -= PASO) s = tick(s, PASO)
       transicion(a, s, juego.zoomMaxS).forEach(ganarSecreto)
     }
+    cerrado = false
     // Contra el último estado que vio el bucle, no juego.s: comprimir a mano (botón, tecla C) lo reemplaza entre cuadros.
     registrar(historial, previo, s)
     // SPEC_CAPA1 §5: una oferta sin elegir se elige sola a los 30 s reales (no corre con un cartel ni durante la presentación;

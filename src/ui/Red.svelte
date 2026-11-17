@@ -27,6 +27,9 @@
 
   let elegido = $state('memoria')
   let hover = $state<string | null>(null)
+  // Tocar un cuadro de nivel muestra qué da ese nivel; vale solo para el nodo en que se tocó (cambiar de nodo lo olvida).
+  let ver = $state<{ id: string; n: number } | null>(null)
+  const verN = $derived(ver?.id === elegido ? ver.n : 0)
   const n = $derived(nivelRed(s, elegido))
   // Sorpresa: lo que da un nodo se ve recién cuando se abre. Los del hielo, además, no dicen ni su nombre.
   const oculto = (id: string) => bajoHielo(id) || (!abierto(s, id) && nivelRed(s, id) === 0)
@@ -307,13 +310,18 @@
         <div>
           <h2>{titulo(elegido)}</h2>
           <p class="nv num">
-            <span class="cuadros" aria-hidden="true">{#each COLORES as c, i}<i style:background={i < n ? `var(${c})` : null}></i>{/each}</span>
+            <span class="cuadros">{#each COLORES as c, i}<button style:--c="var({c})" class:lleno={i < n} aria-pressed={verN === i + 1} disabled={oculto(elegido)}
+              aria-label={r.verNivel(i + 1, txt.colores[i])} title={r.verNivel(i + 1, txt.colores[i])}
+              onclick={() => (ver = verN === i + 1 ? null : { id: elegido, n: i + 1 })}><i></i></button>{/each}</span>
             {r.nv(n, txt.colores[n - 1])}
           </p>
         </div>
       </header>
-      {#if oculto(elegido)}<p class="sig">{r.sorpresa}</p>{:else}<p class="hace">{efecto(elegido, Math.max(1, n))}</p>{/if}
-      {#if n > 0 && n < NIVEL_MAX_RED}<p class="sig">{r.siguiente(efecto(elegido, n + 1))}</p>{/if}
+      {#if verN}<p class="sig">{r.enNivel(verN, txt.colores[verN - 1])}</p><p class="hace">{efecto(elegido, verN)}</p>
+      {:else}
+        {#if oculto(elegido)}<p class="sig">{r.sorpresa}</p>{:else}<p class="hace">{efecto(elegido, Math.max(1, n))}</p>{/if}
+        {#if n > 0 && n < NIVEL_MAX_RED}<p class="sig">{r.siguiente(efecto(elegido, n + 1))}</p>{/if}
+      {/if}
       {#if estado}<p class="estado">{estado}</p>{/if}
       {#if n < NIVEL_MAX_RED && !oculto(elegido)}
         <button class="compra gema" style:--c="var({COLORES[n]})" aria-disabled={!puedeComprarRed(s, elegido)} onclick={comprar}
@@ -383,8 +391,16 @@
   h2 { margin: 0; font-size: 1.125rem; font-weight: 600; line-height: 1.2; hyphens: manual; }
   p { margin: 0; }
   .nv { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.3rem; color: var(--tenue); font-size: 0.8125rem; }
-  .cuadros { display: inline-flex; gap: 3px; }
-  .cuadros i { width: 0.5rem; height: 0.5rem; background: rgb(159 227 245 / 0.14); }
+  .cuadros { display: inline-flex; }
+  /* Cada cuadro es un botón con área de toque más grande que el cuadro dibujado. */
+  .cuadros button { display: grid; place-items: center; width: 0.75rem; height: 1.5rem; margin: -0.5rem 0; padding: 0; border: 0; background: none; cursor: pointer; }
+  .cuadros button:disabled { cursor: default; }
+  .cuadros i { width: 0.5rem; height: 0.5rem; background: rgb(159 227 245 / 0.14); transition: transform 0.15s; }
+  .cuadros .lleno i { background: var(--c); }
+  .cuadros button[aria-pressed='true'] i { outline: 1px solid var(--c); outline-offset: 2px; background: color-mix(in srgb, var(--c) 55%, transparent); }
+  .cuadros .lleno[aria-pressed='true'] i { background: var(--c); }
+  .cuadros button:not(:disabled):hover i { transform: scale(1.3); }
+  .cuadros button:focus-visible { outline: 2px solid var(--hielo); outline-offset: -2px; }
   .hace { font-size: 0.9375rem; color: var(--escarcha); }
   .sig { font-size: 0.8125rem; color: var(--tenue); }
   .estado { color: var(--hielo); font-size: 0.8125rem; }

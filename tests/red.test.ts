@@ -144,3 +144,18 @@ describe('Red', () => {
     expect(p.estado.cascada).toBe(CFG.cascada.nivel_max + 3)
   })
 })
+
+describe('Memoria y Sedimentación en medio de una corrida (C8)', () => {
+  it('la corrida salta a las compresiones que conserva el nodo, sin perder lo que tenía', async () => {
+    const { comprarRed, estadoInicial } = await import('../src/core')
+    const b = estadoInicial()
+    const s = { ...b, infinitos: 1, cristales: b.cristales.add(1e6), energia: b.energia.add(1e5), caudal: 7, compresiones: 1 }
+    const m = comprarRed(s, 'memoria')
+    expect(m.compresiones).toBe(3)
+    expect(m.caudal).toBe(7)
+    expect(m.energia.eq(s.energia)).toBe(true)
+    const mas = { ...m, red: { ...m.red, memoria: 4 }, compresiones: 12 } // ya más arriba: no baja
+    expect(comprarRed(mas, 'sedimentacion').compresiones).toBe(12)
+    expect(comprarRed({ ...mas, compresiones: 2 }, 'sedimentacion').compresiones).toBe(11)
+  })
+})

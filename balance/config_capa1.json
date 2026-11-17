@@ -475,6 +475,10 @@
    "cristales_log10": 3
   },
   "abandono_min": 45,
+  "_abandono": "Bots (sim y test): desde abandono_revisar_min de Defecto, si al ritmo de los ultimos abandono_ventana_min la meta queda a mas de abandono_meta_max_min, abandona.",
+  "abandono_revisar_min": 10,
+  "abandono_ventana_min": 3,
+  "abandono_meta_max_min": 30,
   "reintento_cristales_totales_log10": 1.5,
   "requisitos": {
    "vacancia": {

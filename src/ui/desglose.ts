@@ -2,7 +2,7 @@
 // Usa las fórmulas del núcleo; los factores con partes internas las traen en `partes`.
 import {
   CFG, CFG1, anillos, cascadaC, cascadaRel, caudal, cauceRel, densidad, efectoRed, empuje, factorCaudal, hayEstratos, impulso, multAnillos,
-  multCascada, multColor, mutacionesRel, presion, presionEstrato, valor, type State,
+  multCascada, multColor, mutacionesRel, presion, presionEstrato, valor, ecoLog10, type State,
 } from '../core'
 
 export interface Factor {
@@ -103,4 +103,35 @@ export function velocidadEstrato(s: State, k: number) {
     { id: 'empuje', x: empuje(s, k) },
   ]
   return { base: E.gamma_log10_por_s, factores, gamma: factores.reduce((g, f) => g * f.x, E.gamma_log10_por_s) }
+}
+
+// ---------- C8: log10 V por fuente (SPEC_CAPA1 §10, la tabla de §2) ----------
+export const FUENTES_V = ['colores', 'anillos', 'cascada', 'mutaciones', 'presion', 'eco', 'reliquias', 'defectos'] as const
+export interface FuenteV { id: (typeof FUENTES_V)[number]; log: number; partes?: Parte[] }
+
+/** log10 V partido por fuente; la suma es exactamente valor(s).log10(). Cada fuente se mide sin Defectos (ni reglas ni
+ * recompensas); `defectos` es lo que cambian ellos (negativo si la regla en curso resta). `reliquias`: lo que suman las
+ * engarzadas a V (Cauce a los colores, Cascada a c, Mutaciones a la de Colores; la de Caudal mueve F, no V). */
+export function desgloseV(s: State): FuenteV[] {
+  const s0: State = { ...s, defectos: { completos: [], actual: '', reintento: {} } }
+  const colores = s0.colores.reduce((a, n, i) => a + multColor(i, n).log10(), 0)
+  const casc = multCascada(s0).log10(), c = cascadaC(s0), cR = s0.cascada >= 1 ? cascadaRel(s0) : 0
+  const cascRel = c > 0 ? (casc * cR) / c : 0
+  const mut = s0.mutaciones.colores * lg(CFG.mutaciones.colores.por_nivel)
+  const rel = [
+    { id: 'cauce', log: colores * cauceRel(s0) },
+    { id: 'cascada', log: cascRel },
+    { id: 'mutaciones', log: mut * mutacionesRel(s0) },
+  ]
+  const partes: FuenteV[] = [
+    { id: 'colores', log: colores },
+    { id: 'anillos', log: multAnillos(s0).log10() },
+    { id: 'cascada', log: casc - cascRel },
+    { id: 'mutaciones', log: mut },
+    { id: 'presion', log: hayEstratos(s0) ? presion(s0) : 0 },
+    { id: 'eco', log: ecoLog10(s0) },
+    { id: 'reliquias', log: rel.reduce((a, p) => a + p.log, 0), partes: rel },
+  ]
+  const sinDefectos = valor(s0).log10()
+  return [...partes, { id: 'defectos', log: valor(s).log10() - sinDefectos }]
 }

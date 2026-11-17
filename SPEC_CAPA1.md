@@ -35,24 +35,25 @@ Tiempo de juego **desde el primer Infinito** (la Capa 0 completa dura ~3 h 30). 
 |---|---|---|---|
 | Segundo Infinito | 1,21 h | 1,37 h | 2,33 h |
 | Memoria completa (Infinito automático) | 1,81 h | 1,97 h | 3,00 h |
-| Romper el Infinito (nodo) | 2,46 h | 2,61 h | 3,64 h |
-| Estratos (primer estrato abierto, en la misma tanda) | 2,46 h | 2,62 h | 3,65 h |
-| Defecto Vacancia | 2,53 h | 2,68 h | 3,72 h |
-| Defecto Dislocación | 3,78 h | 3,94 h | 4,97 h |
-| Defecto Macla | 4,62 h | 4,77 h | 5,81 h |
-| Defecto Impureza | 5,67 h | 5,83 h | 6,86 h |
-| **FIN 1.1**: Estrato 8 lleno → Escarcha | **6,75 h** | 6,90 h | 7,94 h |
-| Defecto Fatiga | 9,22 h | 9,37 h | 10,41 h |
-| Defecto Frontera | 11,72 h | 11,88 h | 12,91 h |
-| Defecto Inclusión | 12,28 h | 12,45 h | 13,51 h |
-| Defecto Vidrio | 13,29 h | 13,47 h | 14,54 h |
-| **FIN CAPA 1**: 1e308 Cristales | **14,29 h** | 14,48 h | 15,55 h |
+| Romper el Infinito (nodo) | 2,30 h | 2,46 h | 3,49 h |
+| Estratos (primer estrato abierto, en la misma tanda) | 2,30 h | 2,46 h | 3,49 h |
+| Defecto Vacancia | 2,37 h | 2,53 h | 3,56 h |
+| Defecto Dislocación | 3,70 h | 3,85 h | 4,88 h |
+| Defecto Macla | 4,52 h | 4,68 h | 5,71 h |
+| Defecto Impureza | 5,29 h | 5,45 h | 6,48 h |
+| **FIN 1.1**: Estrato 8 lleno → Escarcha | **6,63 h** | 6,78 h | 7,82 h |
+| Defecto Fatiga | 9,11 h | 9,26 h | 10,30 h |
+| Defecto Frontera | 11,61 h | 11,76 h | 12,80 h |
+| Defecto Inclusión | 12,16 h | 12,31 h | 13,38 h |
+| Defecto Vidrio | 13,16 h | 13,34 h | 14,40 h |
+| **FIN CAPA 1**: 1e308 Cristales | **14,16 h** | 14,35 h | 15,42 h |
 
 - Hueco máximo entre compras de la Capa 1 (después de la hora 1,5): **31 min** (31 min cada 60 s; 40 min para el jugador de cada 5 min). Durante esos huecos siempre hay compras de Arena y la Escarcha creciendo; son las corridas largas del final, donde el jugador espera un Infinito grande.
-- **Abrir un estrato se nota enseguida** (se llena de golpe, §7.2). Lo que multiplica la producción en el momento de abrirlo, `10^(D × Presión que suma)`, medido en el simulador: E1 ×1e2,3 · E2 ×1e7,9 · E3 ×1e13,0 · E4 ×1e17,8 · E5 ×1e25,1 · E6 ×1e45,2 · E7 ×1e77,8 · E8 ×1e127,6 (las tres revisiones dan lo mismo). El mínimo pedido es ×100.
+- **Abrir un estrato se nota enseguida** (se llena de golpe, §7.2). Lo que multiplica la producción en el momento de abrirlo, `10^(D × Presión que suma)`, medido en el simulador: E1 ×1e2,3 · E2 ×1e7,9 · E3 ×1e13,0 · E4 ×1e18,2 · E5 ×1e27,1 · E6 ×1e47,8 · E7 ×1e80,6 · E8 ×1e118,8. El mínimo pedido es ×100.
 - **El softcap casi no mueve la capa** (sin él: fin 1.1 a las 7,24 h y fin de la capa a las 14,78 h): con el Infinito roto la producción la llevan la Presión, el Eco y la Escarcha, no los niveles de color. Frena sobre todo las Mutaciones y los colores altos en los Defectos largos (~0,1 h cada uno). No hubo que recalibrar multiplicadores.
-- **Estratos después de Romper**: el bot compra Ruptura nv1 y en la misma tanda el nodo Estratos y el primer estrato (2,46 h). La Vacancia se juega antes (sin estratos ni Infinito roto, a las 2,17 h); el bot la abandona y la gana al reintentar, justo después de Romper. Dislocación, Macla e Impureza piden 3, 5 y 7 estratos: Dislocación entra apenas se abre el 3.º (2,53 h), Impureza apenas se abre el 7.º.
-- **Defectos (C7)**: dentro de un Defecto el Infinito (a mano o automático) no corre; solo termina en la meta o abandonando. Antes el bot salía por el "Infinito óptimo" a los ~12 s y las metas viejas se ganaban en menos de un minuto. Con las metas nuevas (§8) cada Defecto pide ~30 min con el estado de su hora; el bot (como una persona) abandona si se estanca lejos de la meta y vuelve con ~×30 Cristales totales, y en ese reintento gana enseguida.
+- **Estratos después de Romper**: el bot compra Ruptura nv1 y en la misma tanda el nodo Estratos y el primer estrato (2,30 h). La Vacancia se juega antes (sin estratos ni Infinito roto); el bot la abandona y la gana al reintentar, justo después de Romper. Dislocación, Macla e Impureza piden 3, 5 y 7 estratos.
+- **Defectos (C7)**: dentro de un Defecto el Infinito (a mano o automático) no corre; solo termina en la meta o abandonando. Antes el bot salía por el "Infinito óptimo" a los ~12 s y las metas viejas se ganaban en menos de un minuto. Con las metas nuevas (§8) cada Defecto pide ~30 min con el estado de su hora; el bot (como una persona) abandona si al ritmo de los últimos 3 min la meta queda lejos (§8) y vuelve con ~×30 Cristales totales, y en ese reintento gana enseguida.
+- **C8, el bot igual al juego**: elige las reliquias con la regla por defecto del panel de Automatización (Completar fusiones; nunca un tipo que no puede engarzar) y engarza las mejores; abandonar un Defecto no da reliquia ni Cristales (antes el sim daba los dos, aunque la Energía hubiera pasado 1e308); y la Memoria o la Sedimentación compradas suben en el momento las compresiones de la corrida (§6.3). La tabla se movió ~0,1 h (fin 1.1 6,75 → 6,63 h) y quedó en rango sin recalibrar. `tests/balance_capa1.test.ts` (núcleo real) da la columna de 15 s con ±10 % hasta el fin de la 1.1.
 - La segunda corrida (~1 h) es intencional: es la Capa 0 de nuevo pero con la primera reliquia y la primera compra de la Red; enseña que "volver a empezar" ahora es rápido.
 - Peso de cada fuente de producción (en log10 de V) al final de cada parte:
 
@@ -173,7 +174,7 @@ Bases del anillo 3: Eco II 45, Defectos II 55, Germen 65, Compactación II 78, F
 
 | Nodo | nv1 / nv2 / nv3 / nv4 |
 |---|---|
-| **Memoria** | Autocompradores y compresión automática desde el inicio de cada Infinito / + Cascada automática / + Mutaciones automáticas / + Infinito automático. Conserva 3/5/7/9 compresiones. |
+| **Memoria** | Autocompradores y compresión automática desde el inicio de cada Infinito / + Cascada automática / + Mutaciones automáticas / + Infinito automático. Conserva 3/5/7/9 compresiones (comprada a mitad de una corrida que está más abajo, la corrida salta ahí en el momento; igual Sedimentación). |
 | **Eco** | `+p × log10(Cristales totales)` a log V; p = 0,5 / 1,5 / 3 / 5. ("Los cristales recuerdan la arena".) |
 | **Sedimentación** | Conserva 11/13/15/17 compresiones. nv4 además conserva los niveles de Cascada (ni la Compresión ni el Infinito los reinician). |
 | **Estratos** | **Pide Ruptura nv1** (`requiere` en config) además de Memoria en 4: es lo que te deja ir más allá del Infinito. Abre la pantalla de Estratos. Velocidad del flujo ×1 / ×1,5 / ×2 / ×3. Un guardado que ya lo tenía sin Ruptura lo conserva y lo sigue subiendo. |
@@ -281,7 +282,7 @@ Un Defecto es un Infinito con una regla rota. Se entra desde su pantalla (sale d
   **Ojo**: más allá de 1e308 la curva dentro de un Defecto es casi plana (E ≈ cte + log t: las mejoras cuestan ×10 cada nivel y la Presión no crece en 30 min). La ventana de 20–40 min es de 1–2 órdenes: un jugador un poco más fuerte gana en un minuto y uno un poco más débil no llega. El Defecto lo decide sobre todo el estado con que se entra (estratos, Cristales totales), no el tiempo adentro. La Vacancia (antes de Romper) sí tiene una curva real. Las metas 5–8 (C12) todavía son las viejas y no se volvieron a medir.
 - Los requisitos siguen teniendo sentido con los Estratos detrás de Romper: Vacancia no pide estratos y se juega antes de Romper; Dislocación pide 3 estratos (y por lo tanto el Infinito roto, que es lo que necesita una regla sobre la Presión); Macla y Impureza piden 5 y 7, y en el simulador Impureza entra justo al abrir el 7.º. El nivel del nodo Defectos (anillo 1, 1 Cristal por nivel) no frena: frenan el orden y los estratos.
 - En la Vacancia el color Violeta aparece "agrietado" y su número tachado: se ve que se compra pero no suma.
-- Si fallás (abandonás), el juego sugiere volver cuando tengas ~30 veces más Cristales totales (`reintento_cristales_totales_log10` = 1,5; el bot reintenta ahí). El bot abandona cuando avanza menos de 0,5 órdenes en 2 min y está a más de 2 órdenes de la meta.
+- Si fallás (abandonás), el juego sugiere volver cuando tengas ~30 veces más Cristales totales (`reintento_cristales_totales_log10` = 1,5; el bot reintenta ahí). Los bots (simulador y test) abandonan así: desde los 10 min de Defecto, si al ritmo de los últimos 3 min la meta queda a más de 30 min (`abandono_revisar_min`, `abandono_ventana_min`, `abandono_meta_max_min`), o a los 45 min.
 - Todos los números de las reglas y recompensas están en `config_capa1.json` (`defectos.*`); el simulador y el juego los leen de ahí. `balance/ref_defectos.py` escribe el fixture con que `tests/defectos.test.ts` compara el núcleo contra `Arena.D`, `Arena.logV_parts` y `Arena.lograte`.
 - Los multiplicadores que cambia el Defecto se ven en la Arena (debajo de los contadores) y en su ficha: el valor adentro y, tachado, el de afuera.
 - Visualmente cada Defecto deforma la pila: grieta (Vacancia), corrimiento (Dislocación), espejo (Macla), manchas (Impureza), pulso que se apaga (Fatiga), bordes duros (Frontera), burbujas (Inclusión), pila de vidrio sin color (Vidrio).
@@ -342,9 +343,9 @@ Pantalla de estadísticas (estilo AD): desglose de log10 V por fuente, con porce
 
 ## 12. Offline
 
-Mismo sistema de la Capa 0, con eficiencia **0,7** (`fuera_de_linea_eficiencia`) aplicada a la Energía, al llenado de los Estratos y al crecimiento de la Escarcha. Infinitos offline solo con Memoria nv4 (con la regla del Infinito automático). La Escarcha no se rompe sola offline salvo con Deshielo. Pantalla de regreso: qué ganaste (Cristales, estratos, Escarcha) en una tarjeta simple con la estética helada.
+Mismo sistema de la Capa 0. Con el juego **cerrado** y ya en la Capa 1, la ausencia rinde **×0,7 del tiempo** (`fuera_de_linea_eficiencia`): 12 h afuera se simulan como 8,4 h de juego con el mismo tick (Energía, llenado de los Estratos, crecimiento de la Escarcha e Infinitos). La pestaña abierta pero oculta no se castiga (corre entera) y la Capa 0 offline sigue como antes. Infinitos offline solo con el Infinito automático prendido (Memoria nv4), con la regla de reliquias. La Escarcha no se rompe sola offline salvo con Deshielo. El cálculo va de a tramos de ~12 ms por cuadro con una barra de progreso (de hielo en la Capa 1): 12 h tardan unos segundos y la pantalla nunca queda en negro. Pantalla de regreso: Cristales, Infinitos y reliquias, cuánto creció cada estrato (×10^x) y la Escarcha, en una placa de hielo.
 
-El simulador no modela el offline: hay que probarlo con un test aparte (12 h offline nunca rinden más que 12 h activas).
+El simulador no modela el offline: lo prueba `tests/balance_capa1.test.ts` (12 h offline rinden menos que 12 h activas).
 
 ---
 
@@ -408,13 +409,12 @@ El simulador no modela el offline: hay que probarlo con un test aparte (12 h off
 
 `tests/balance_capa1.test.ts` corre el núcleo real del juego con un bot igual al de `sim_capa1.py` (revisa cada 15 s) y verifica, con ±10 %:
 
-- Segundo Infinito ~1,2 h; Memoria completa ~1,8 h; Romper ~2,45 h; Vacancia ~2,5 h; Estratos nunca antes que Romper.
-- Fin 1.1 en 6,5–7,5 h; fin de la capa en 14–16 h.
+- La columna de 15 s de §2 hasta el fin de la 1.1 (segundo Infinito, Memoria completa, Romper, Estratos, Defectos 1–4, fin 1.1); Estratos nunca antes que Romper.
+- Fin de la capa en 14–16 h y ninguna fuente de log V > 65 % al final de la 1.2: con C13 (la Escarcha todavía no está en el núcleo).
 - Hueco máximo entre compras de la Capa 1 (desde la hora 1,5) < 40 min.
-- Ninguna fuente de log V > 65 % al final de la 1.2.
 - 12 h offline < 12 h activas.
 
-El test puede ser lento: correrlo con un paso de tiempo grande (2 s) y marcarlo como "lento" (no en cada guardado, sí al cerrar cada hito).
+Es "lento": no corre con `npm test`; se corre con `npm run test:lento` al cerrar cada hito. Usa los pasos del simulador (0,5 / 1 / 2 s) y su bot (C8): la 1.1 entera tarda unos segundos.
 
 ---
 

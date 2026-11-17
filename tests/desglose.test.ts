@@ -1,7 +1,7 @@
 // Bloque 7: el número que muestra cada mejora y cada estrato sale del núcleo, no de una cuenta aparte.
 import { describe, expect, it } from 'vitest'
-import { caudal, densidad, estadoInicial, gammaEstrato, migrarRelicario, presion, produccion, type State } from '../src/core'
-import { valorMejora, velocidadEstrato } from '../src/ui/desglose'
+import { caudal, densidad, estadoInicial, gammaEstrato, migrarRelicario, presion, produccion, valor, type State } from '../src/core'
+import { desgloseV, valorMejora, velocidadEstrato } from '../src/ui/desglose'
 
 // Una partida avanzada: Red, reliquias equipadas, Mutaciones, Cascada, Compresiones (Densidad) y estratos abiertos.
 const base = estadoInicial()
@@ -44,5 +44,29 @@ describe('Valores finales (bloque 7)', () => {
 
   it('cada derrumbe vale ×10^(Presión × Densidad): la Energía/s sin estratos cae eso', () => {
     cerca(presion(s) * densidad(s), prodLog(s) - prodLog({ ...s, estratos: { ...s.estratos, abiertos: 0 } }))
+  })
+})
+
+describe('log10 V por fuente (C8)', () => {
+  const suma = (t: State) => desgloseV(t).reduce((a, f) => a + f.log, 0)
+  it('las fuentes suman log10 V del núcleo', () => cerca(suma(s), valor(s).log10()))
+  it('reliquias, Presión y Eco aparecen; sin Defectos, Defectos = 0', () => {
+    const f = (id: string) => desgloseV(s).find((x) => x.id === id)!.log
+    expect(f('reliquias')).toBeGreaterThan(0)
+    cerca(f('presion'), presion(s))
+    cerca(f('eco'), 0) // sin Cristales totales
+    const conEco: State = { ...s, cristalesTotales: s.cristalesTotales.add(1e10) }
+    expect(desgloseV(conEco).find((x) => x.id === 'eco')!.log).toBeGreaterThan(0)
+    cerca(suma(conEco), valor(conEco).log10())
+    cerca(f('defectos'), 0)
+  })
+  it('recompensas suman y una regla en curso resta', () => {
+    const conRecompensas: State = { ...s, defectos: { completos: ['vacancia', 'dislocacion', 'impureza'], actual: '', reintento: {} } }
+    const f = (t: State) => desgloseV(t).find((x) => x.id === 'defectos')!.log
+    expect(f(conRecompensas)).toBeGreaterThan(0)
+    cerca(suma(conRecompensas), valor(conRecompensas).log10())
+    const enImpureza: State = { ...s, defectos: { completos: ['vacancia', 'dislocacion', 'macla'], actual: 'impureza', reintento: {} } }
+    expect(f(enImpureza)).toBeLessThan(0)
+    cerca(suma(enImpureza), valor(enImpureza).log10())
   })
 })
