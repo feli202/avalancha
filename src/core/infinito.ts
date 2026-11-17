@@ -4,6 +4,7 @@ import { CFG } from './config'
 import { CFG1 } from './config1'
 import { compresionesConservadas, conservaCascada, cristalesRedLog10, efectoRed } from './red'
 import { enInfinito, infinitoRoto, produccion } from './formulas'
+import { conReintento, enDefecto, metaAlcanzada, puedeEntrar, type DefectoId } from './defectos'
 import { elegirSola } from './relicario'
 import { estadoInicial, type State } from './state'
 
@@ -32,23 +33,53 @@ export function enElOptimo(s: State): boolean {
   return produccion(s).div(s.energia).toNumber() * s.tiempoInfinito * k <= ordenesQ(s)
 }
 
-/** Cobra los Cristales y reinicia todo lo de la Arena; si la Energía no llegó al Infinito, devuelve el mismo estado. */
-export function infinito(s: State): State {
-  if (!enInfinito(s)) return s
-  const c = cristalesAlInfinito(s)
-  const { auto, automat, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red, estratos } = s
+/** Reinicia todo lo de la Arena y conserva lo de la Capa 1 (§3): el Infinito y entrar o salir de un Defecto. */
+function reiniciarArena(s: State): State {
+  const { auto, automat, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red, estratos, relicario, cristales,
+    cristalesTotales, infinitos, defectos } = s
   return {
     ...estadoInicial(), granos: 0, // granos_iniciales es solo para la primera corrida
-    auto, automat, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red, estratos,
+    auto, automat, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red, estratos, relicario, cristales,
+    cristalesTotales, infinitos, defectos,
+    cascada: conservaCascada(s) ? s.cascada : 0,
+    compresiones: Math.min(compresionesConservadas(s), CFG.compresion.umbrales_log10.length),
+  }
+}
+
+/** Cobra los Cristales, trae la reliquia y reinicia la Arena. */
+function cerrarInfinito(s: State): State {
+  const c = cristalesAlInfinito(s)
+  return {
+    ...reiniciarArena(s),
     // Bloque 8: cada Infinito trae una reliquia que espera su tipo; si quedaba una sin elegir, se elige sola antes.
     // La pila de este Infinito la pone la interfaz (conFoto).
     relicario: { ...elegirSola(s).relicario, pendiente: s.infinitos + 1, foto: '' },
-    cascada: conservaCascada(s) ? s.cascada : 0,
-    compresiones: Math.min(compresionesConservadas(s), CFG.compresion.umbrales_log10.length),
     infinitos: s.infinitos + 1,
     cristales: s.cristales.add(c),
     cristalesTotales: s.cristalesTotales.add(c),
   }
+}
+
+/** Cobra los Cristales y reinicia todo lo de la Arena; si la Energía no llegó al Infinito, o si hay un Defecto en curso
+ * (solo termina en la meta o abandonando, §8), devuelve el mismo estado. */
+export const infinito = (s: State): State => (!enInfinito(s) || enDefecto(s) ? s : cerrarInfinito(s))
+
+/** §8: entra al Defecto. Sale de la corrida actual sin Cristales ni reliquia. Si no se puede, devuelve el mismo estado. */
+export const entrarDefecto = (s: State, id: DefectoId): State =>
+  puedeEntrar(s, id) ? { ...reiniciarArena(s), defectos: { ...s.defectos, actual: id } } : s
+
+/** §8: abandona sin castigo (y sin Cristales); anota con cuántos Cristales totales conviene volver (~×30). */
+export const abandonarDefecto = (s: State): State =>
+  enDefecto(s)
+    ? { ...reiniciarArena(s), defectos: { ...s.defectos, actual: '', reintento: conReintento(s, s.defectos.actual as DefectoId) } }
+    : s
+
+/** §8: llegó a la meta. Queda completo (la recompensa es permanente y Cristalografía II ya lo cuenta) y se cierra como un
+ * Infinito: Cristales normales y una reliquia. Si no llegó, devuelve el mismo estado. */
+export function ganarDefecto(s: State): State {
+  if (!metaAlcanzada(s)) return s
+  const { [s.defectos.actual]: _, ...reintento } = s.defectos.reintento
+  return cerrarInfinito({ ...s, defectos: { completos: [...s.defectos.completos, s.defectos.actual], actual: '', reintento } })
 }
 
 /** Bloque 10 y C6: el Infinito automático ya puede hacerse. Sin Romper, apenas llega; con el Infinito roto, en el óptimo

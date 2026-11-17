@@ -20,8 +20,19 @@ export interface Config1 {
     presion: { c0: number; por_profundidad: number; paso: number; cub: number; suma_w: number }
   }
   red: { costo_anillo_log10: number[]; paso_nivel_log10: number[]; nodos: Record<string, Nodo>; 'anillo3_1.2': Record<string, Nodo> }
+  /** SPEC_CAPA1 §8: reglas, metas y recompensas de los Defectos. */
+  defectos: {
+    vacancia: Defecto & { color_sin_efecto: number; recompensa_hito_mult: number }
+    dislocacion: Defecto & { cascada_x: number; presion_x: number; recompensa_anillo_mult: number }
+    macla: Defecto & { sin_mutaciones: boolean; densidad_x: number; recompensa_color_s_x: number }
+    impureza: Defecto & { derrumbes_tope_log10: number; colores_x: number; recompensa_cascada_c: number }
+    reintento_cristales_totales_log10: number
+    requisitos: Record<string, { red: (string | number)[]; estratos_abiertos?: number; cristales_totales_log10?: number }>
+  }
   /** Memoria: Cascada y Mutaciones automáticas compran solo si cuestan 10^esto veces menos que la Energía. */
   autocompradores_umbral_log10: number
 }
+
+type Defecto = { meta_log10: number }
 
 export const CFG1: Config1 = crudo

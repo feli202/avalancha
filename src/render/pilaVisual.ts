@@ -155,6 +155,11 @@ export class PilaVisual {
     this.lz.efecto = n
   }
 
+  /** SPEC_CAPA1 §8: la deformación del Defecto en curso (0 ninguno, 1..4 en el orden de DEFECTOS). */
+  set defecto(n: number) {
+    this.lz.defecto = n
+  }
+
   /** Fondo detrás de la pila (FONDOS). El Fractal carga la pila llena la primera vez. */
   set fondo(id: string) {
     this.lz.fondo = id

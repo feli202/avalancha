@@ -35,23 +35,24 @@ Tiempo de juego **desde el primer Infinito** (la Capa 0 completa dura ~3 h 30). 
 |---|---|---|---|
 | Segundo Infinito | 1,21 h | 1,37 h | 2,33 h |
 | Memoria completa (Infinito automático) | 1,81 h | 1,97 h | 3,00 h |
-| Defecto Vacancia | 2,18 h | 2,33 h | 3,36 h |
-| Romper el Infinito (nodo) | 2,26 h | 2,42 h | 3,45 h |
-| Estratos (primer estrato abierto, en la misma tanda) | 2,26 h | 2,42 h | 3,45 h |
-| Defecto Dislocación | 3,53 h | 3,69 h | 4,72 h |
-| Defecto Macla | 4,46 h | 4,62 h | 5,65 h |
-| Defecto Impureza | 5,53 h | 5,69 h | 6,72 h |
-| **FIN 1.1**: Estrato 8 lleno → Escarcha | **7,29 h** | 7,45 h | 8,48 h |
-| Defecto Fatiga | 9,71 h | 9,86 h | 10,90 h |
-| Defecto Frontera | 12,25 h | 12,32 h | 13,36 h |
-| Defecto Inclusión | 12,78 h | 12,99 h | 14,07 h |
-| Defecto Vidrio | 13,82 h | 14,01 h | 15,09 h |
-| **FIN CAPA 1**: 1e308 Cristales | **14,82 h** | 15,02 h | 16,11 h |
+| Romper el Infinito (nodo) | 2,46 h | 2,61 h | 3,64 h |
+| Estratos (primer estrato abierto, en la misma tanda) | 2,46 h | 2,62 h | 3,65 h |
+| Defecto Vacancia | 2,53 h | 2,68 h | 3,72 h |
+| Defecto Dislocación | 3,78 h | 3,94 h | 4,97 h |
+| Defecto Macla | 4,62 h | 4,77 h | 5,81 h |
+| Defecto Impureza | 5,67 h | 5,83 h | 6,86 h |
+| **FIN 1.1**: Estrato 8 lleno → Escarcha | **6,75 h** | 6,90 h | 7,94 h |
+| Defecto Fatiga | 9,22 h | 9,37 h | 10,41 h |
+| Defecto Frontera | 11,72 h | 11,88 h | 12,91 h |
+| Defecto Inclusión | 12,28 h | 12,45 h | 13,51 h |
+| Defecto Vidrio | 13,29 h | 13,47 h | 14,54 h |
+| **FIN CAPA 1**: 1e308 Cristales | **14,29 h** | 14,48 h | 15,55 h |
 
 - Hueco máximo entre compras de la Capa 1 (después de la hora 1,5): **31 min** (31 min cada 60 s; 40 min para el jugador de cada 5 min). Durante esos huecos siempre hay compras de Arena y la Escarcha creciendo; son las corridas largas del final, donde el jugador espera un Infinito grande.
-- **Abrir un estrato se nota enseguida** (se llena de golpe, §7.2). Lo que multiplica la producción en el momento de abrirlo, `10^(D × Presión que suma)`, medido en el simulador: E1 ×1e2,3 · E2 ×1e7,9 · E3 ×1e13,3 · E4 ×1e16,1 · E5 ×1e18,3 · E6 ×1e40,8 · E7 ×1e74,5 · E8 ×1e104 (las tres revisiones dan lo mismo). El mínimo pedido es ×100.
+- **Abrir un estrato se nota enseguida** (se llena de golpe, §7.2). Lo que multiplica la producción en el momento de abrirlo, `10^(D × Presión que suma)`, medido en el simulador: E1 ×1e2,3 · E2 ×1e7,9 · E3 ×1e13,0 · E4 ×1e17,8 · E5 ×1e25,1 · E6 ×1e45,2 · E7 ×1e77,8 · E8 ×1e127,6 (las tres revisiones dan lo mismo). El mínimo pedido es ×100.
 - **El softcap casi no mueve la capa** (sin él: fin 1.1 a las 7,24 h y fin de la capa a las 14,78 h): con el Infinito roto la producción la llevan la Presión, el Eco y la Escarcha, no los niveles de color. Frena sobre todo las Mutaciones y los colores altos en los Defectos largos (~0,1 h cada uno). No hubo que recalibrar multiplicadores.
-- **Estratos después de Romper**: el bot compra Ruptura nv1 y en la misma tanda el nodo Estratos y los primeros estratos (2,26 h). La Vacancia (sin estratos) queda justo antes; Dislocación, Macla e Impureza siguen pidiendo 3, 5 y 7 estratos y caen todos con el Infinito roto, en el mismo orden que antes.
+- **Estratos después de Romper**: el bot compra Ruptura nv1 y en la misma tanda el nodo Estratos y el primer estrato (2,46 h). La Vacancia se juega antes (sin estratos ni Infinito roto, a las 2,17 h); el bot la abandona y la gana al reintentar, justo después de Romper. Dislocación, Macla e Impureza piden 3, 5 y 7 estratos: Dislocación entra apenas se abre el 3.º (2,53 h), Impureza apenas se abre el 7.º.
+- **Defectos (C7)**: dentro de un Defecto el Infinito (a mano o automático) no corre; solo termina en la meta o abandonando. Antes el bot salía por el "Infinito óptimo" a los ~12 s y las metas viejas se ganaban en menos de un minuto. Con las metas nuevas (§8) cada Defecto pide ~30 min con el estado de su hora; el bot (como una persona) abandona si se estanca lejos de la meta y vuelve con ~×30 Cristales totales, y en ese reintento gana enseguida.
 - La segunda corrida (~1 h) es intencional: es la Capa 0 de nuevo pero con la primera reliquia y la primera compra de la Red; enseña que "volver a empezar" ahora es rápido.
 - Peso de cada fuente de producción (en log10 de V) al final de cada parte:
 
@@ -255,22 +256,34 @@ Correcciones, bloque 11: la escena 3D descendente de three.js se reemplazó por 
 
 ## 8. Defectos
 
-Un Defecto es un Infinito con una regla rota. Se entra desde su pantalla (sale de la corrida actual de Arena, sin Cristales). Se gana al llegar a la **meta** de Energía; entonces da los Cristales normales de ese Infinito y la recompensa permanente. Se puede abandonar cuando quieras (sin castigo, sin Cristales). Dentro de cada grupo se hacen en orden.
+Un Defecto es un Infinito con una regla rota. Se entra desde su pantalla (sale de la corrida actual de Arena, sin Cristales). Se gana al llegar a la **meta** de Energía; entonces termina como un Infinito: da los Cristales normales de ese Infinito (por debajo de 1e308, los de un Infinito sin romper), una reliquia (con la regla de Automatización si el Infinito automático está prendido) y la recompensa permanente. Se puede abandonar cuando quieras (sin castigo, sin Cristales). **El Infinito, a mano o automático, no saca de un Defecto**: solo termina en la meta o abandonando. Dentro de cada grupo se hacen en orden.
 
 | # | Defecto | Regla | Meta (log10 E) | Recompensa | Requisito |
 |---|---|---|---|---|---|
-| 1 | **Vacancia** | Los 4 colores siguen, pero **Violeta no multiplica** (se compra, no suma). | 200 | Hito de color ×4 → ×6 | Defectos nv1 |
-| 2 | **Dislocación** | La Cascada no funciona y la Presión vale la mitad. | 1250 | Multiplicador por anillo ×1,10 → ×1,12 | Defectos nv2, 3 estratos |
-| 3 | **Macla** | No hay Mutaciones y la Densidad vale ×0,85. | 1800 | Crecimiento cuadrático de los colores ×0,9 (más baratos) | Defectos nv3, 5 estratos |
-| 4 | **Impureza** | Derrumbes por grano con tope 1e4 y colores a la mitad. | 2900 | Cascada +0,1 de `c` | Defectos nv4, 7 estratos |
+| 1 | **Vacancia** | Los 4 colores siguen, pero **Violeta no multiplica** (se compra, no suma; el autocomprador no lo compra). | 237 | Hito de color ×4 → ×6 | Defectos nv1 |
+| 2 | **Dislocación** | La Cascada no funciona (c × 0) y la Presión vale ×0,5. | 1347 | Multiplicador por anillo ×1,10 → ×1,12 | Defectos nv2, 3 estratos |
+| 3 | **Macla** | No hay Mutaciones y la Densidad vale ×0,85. | 1816 | Crecimiento cuadrático de los colores ×0,9 (más baratos) | Defectos nv3, 5 estratos |
+| 4 | **Impureza** | Derrumbes por grano con tope 1e4 y colores a la mitad (^0,5, Cauce incluido). | 3471 | Cascada +0,1 de `c` | Defectos nv4, 7 estratos |
 | 5 | **Fatiga** | La producción se divide por 10 cada 10 min (`−t/600` en log). | 1200 | Escarcha crece ×2 | Defectos II nv1, 1e60 Cristales totales |
 | 6 | **Frontera** | Densidad = 1. | 700 | Densidad +0,2 | Defectos II nv2, 1e80 |
 | 7 | **Inclusión** | La Presión de los Estratos no funciona. | 1800 | Aguante de la Escarcha ×1,5 | Defectos II nv3, 1e105 |
 | 8 | **Vidrio** | Sin Relicario, sin Eco y sin Escarcha (la Red sí funciona). | 25000 | Cristales ×1000 | Defectos II nv4, 1e150 |
 
-- Las metas se calibraron con `balance/probe.py` (mide hasta dónde llega el jugador en cada Defecto con su estado de esa hora). Si cambia el balance, se vuelven a medir.
+- Las metas 1–4 se calibraron con `balance/probe.py` (C7, con el softcap pasado 1e308): el jugador de la tabla de §2 en la hora de cada Defecto juega el Defecto sin meta ni abandono, y la meta es lo que alcanza a los **30 min** (rango pedido: 20–40 min). Medido (log10 E a 1 / 20 / 30 / 40 min):
+
+  | Defecto | Estado de | 1 min | 20 min | 30 min | 40 min |
+  |---|---|---|---|---|---|
+  | Vacancia | 2,17 h (al entrar) | 215 | 235 | **237** | 238 |
+  | Dislocación | 3,53 h | 1340 | 1346 | **1347** | 1348 |
+  | Macla | 4,46 h | 1810 | 1816 | **1816** | 1817 |
+  | Impureza | 5,53 h | 3463 | 3470 | **3471** | 3472 |
+
+  **Ojo**: más allá de 1e308 la curva dentro de un Defecto es casi plana (E ≈ cte + log t: las mejoras cuestan ×10 cada nivel y la Presión no crece en 30 min). La ventana de 20–40 min es de 1–2 órdenes: un jugador un poco más fuerte gana en un minuto y uno un poco más débil no llega. El Defecto lo decide sobre todo el estado con que se entra (estratos, Cristales totales), no el tiempo adentro. La Vacancia (antes de Romper) sí tiene una curva real. Las metas 5–8 (C12) todavía son las viejas y no se volvieron a medir.
+- Los requisitos siguen teniendo sentido con los Estratos detrás de Romper: Vacancia no pide estratos y se juega antes de Romper; Dislocación pide 3 estratos (y por lo tanto el Infinito roto, que es lo que necesita una regla sobre la Presión); Macla y Impureza piden 5 y 7, y en el simulador Impureza entra justo al abrir el 7.º. El nivel del nodo Defectos (anillo 1, 1 Cristal por nivel) no frena: frenan el orden y los estratos.
 - En la Vacancia el color Violeta aparece "agrietado" y su número tachado: se ve que se compra pero no suma.
-- Si fallás, el juego sugiere volver cuando tengas ~30 veces más Cristales totales (el bot reintenta a +1,5 en log10).
+- Si fallás (abandonás), el juego sugiere volver cuando tengas ~30 veces más Cristales totales (`reintento_cristales_totales_log10` = 1,5; el bot reintenta ahí). El bot abandona cuando avanza menos de 0,5 órdenes en 2 min y está a más de 2 órdenes de la meta.
+- Todos los números de las reglas y recompensas están en `config_capa1.json` (`defectos.*`); el simulador y el juego los leen de ahí. `balance/ref_defectos.py` escribe el fixture con que `tests/defectos.test.ts` compara el núcleo contra `Arena.D`, `Arena.logV_parts` y `Arena.lograte`.
+- Los multiplicadores que cambia el Defecto se ven en la Arena (debajo de los contadores) y en su ficha: el valor adentro y, tachado, el de afuera.
 - Visualmente cada Defecto deforma la pila: grieta (Vacancia), corrimiento (Dislocación), espejo (Macla), manchas (Impureza), pulso que se apaga (Fatiga), bordes duros (Frontera), burbujas (Inclusión), pila de vidrio sin color (Vidrio).
 
 ---
@@ -322,7 +335,7 @@ Pantalla de estadísticas (estilo AD): desglose de log10 V por fuente, con porce
 - **Pantallas sin scroll**: cada pantalla entra entera en la ventana (1366×768 y 390×844); si hay una lista larga, scrollea solo esa caja.
 - Contadores arriba: Energía (Arena), Cristales, Cristales totales, Esquirlas (1.2).
 - Primer Infinito: cinemática corta (la pila se congela desde abajo, se rompe en cristales, la cámara cae a la pantalla de Cristalización). Explica en 3 líneas qué son los Cristales y abre el primer Relicario.
-- **Guías** (correcciones, bloques 4 y 12): cada guía tiene un id y se anota como vista en el guardado: sale **una sola vez en la vida de la partida**. Las de la Capa 1 salen la primera vez que se mira cada pantalla (así llegan de a una): Cristales (al cerrar la presentación), Relicario, Red, Estratos (cuando ya están abiertos) y Automatización. Cada una tiene su página en "Cómo funciona" (?) con la fórmula y los valores actuales. Defectos y Escarcha tienen su lugar preparado, cerrado hasta C7 y C10. Las de la Capa 0 se muestran con la Arena al frente; las de la Capa 1, fuera de ella.
+- **Guías** (correcciones, bloques 4 y 12): cada guía tiene un id y se anota como vista en el guardado: sale **una sola vez en la vida de la partida**. Las de la Capa 1 salen la primera vez que se mira cada pantalla (así llegan de a una): Cristales (al cerrar la presentación), Relicario, Red, Estratos (cuando ya están abiertos) y Automatización. Cada una tiene su página en "Cómo funciona" (?) con la fórmula y los valores actuales. La de Defectos sale una sola vez al desbloquearlos (Defectos nv1), cuando se mira su pantalla (C7). La Escarcha tiene su lugar preparado, cerrado hasta C10. Las de la Capa 0 se muestran con la Arena al frente; las de la Capa 1, fuera de ella.
 - Textos en español rioplatense en el archivo de cadenas.
 
 ---
@@ -395,7 +408,7 @@ El simulador no modela el offline: hay que probarlo con un test aparte (12 h off
 
 `tests/balance_capa1.test.ts` corre el núcleo real del juego con un bot igual al de `sim_capa1.py` (revisa cada 15 s) y verifica, con ±10 %:
 
-- Segundo Infinito ~1,2 h; Memoria completa ~1,8 h; Romper ~2,25 h; Vacancia ~2,2 h; Estratos nunca antes que Romper.
+- Segundo Infinito ~1,2 h; Memoria completa ~1,8 h; Romper ~2,45 h; Vacancia ~2,5 h; Estratos nunca antes que Romper.
 - Fin 1.1 en 6,5–7,5 h; fin de la capa en 14–16 h.
 - Hueco máximo entre compras de la Capa 1 (desde la hora 1,5) < 40 min.
 - Ninguna fuente de log V > 65 % al final de la 1.2.

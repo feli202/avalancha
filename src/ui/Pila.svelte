@@ -1,7 +1,7 @@
 <script lang="ts">
   // La pila ocupa toda la ventana, detrás de la interfaz. Clic, toque o barra espaciadora = Puñado.
   import { onMount } from 'svelte'
-  import { CFG, anillos, caudal, densidad, hayEstratos, multAnillos, multColor, punado } from '../core'
+  import { CFG, DEFECTOS, anillos, caudal, densidad, hayEstratos, multAnillos, multColor, punado, type DefectoId } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS, PilaVisual, brillo } from '../render/pilaVisual'
   import { txt } from '../strings'
   import { formato, formatoMult } from './formato'
@@ -127,6 +127,7 @@
       : PALETAS[elegido('paleta', Object.keys(PALETAS), ajustes.paleta, juego.logros)]))
     $effect(() => void (pila.efecto = EFECTOS.indexOf(elegido('efecto', EFECTOS, ajustes.efecto, juego.logros))))
     $effect(() => void (pila.fondo = elegido('fondo', FONDOS, ajustes.fondo, juego.logros)))
+    $effect(() => void (pila.defecto = DEFECTOS.indexOf(juego.s.defectos.actual as DefectoId) + 1))
     $effect(() => void (pila.radioMax = radioMax || Infinity))
     $effect(() => void (pila.acercar = juego.zoom))
     canvas.addEventListener('wheel', rueda, { passive: false })

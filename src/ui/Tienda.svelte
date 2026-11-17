@@ -3,7 +3,7 @@
   // Pestañas Cascada y Mutaciones cuando aparecen (SPEC 5): ahí se compra de a un nivel, son las decisiones.
   import Decimal from 'break_infinity.js'
   import {
-    CFG, MUTACIONES, aplicar, autoActivo, autoDisponible, comprar, comprarMax, comprarN, comprarTodo, costo, masAlla, nivel, type ItemId, type State,
+    CFG, MUTACIONES, aplicar, colorSinEfecto, autoActivo, autoDisponible, comprar, comprarMax, comprarN, comprarTodo, costo, masAlla, nivel, type ItemId, type State,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
   import { txt } from '../strings'
@@ -120,7 +120,7 @@
     {@const k = claveAuto(id)}
     {@const sola = ajustes.calma && automatica(juego.ver, id)}
     {@const ic = iconoDe(id)}
-    <li style:--c={i >= 0 ? COLOR_CSS[ALTURA_DE_COLOR[i]] : 'var(--tinta)'} data-guia={id === 'caudal' ? 'tienda' : id}
+    <li style:--c={i >= 0 ? COLOR_CSS[ALTURA_DE_COLOR[i]] : 'var(--tinta)'} data-guia={id === 'caudal' ? 'tienda' : id} class:agrietado={i >= 0 && colorSinEfecto(juego.ver, i)}
       use:ayuda={() => ayudaItem(juego.s, id)}>
       <button class="fila" class:puede={o.puede && !tope} class:sola disabled={!o.puede || tope} onclick={() => compra(id)}
         aria-label="{txt.comprar} {nombre(id)} · {tope ? txt.nivelMaximo : hablado(formato(o.c, true))}">
@@ -185,6 +185,9 @@
   .nombre { grid-area: n; font-size: 1rem; font-weight: 600; }
   .nv { margin-left: 0.25rem; font-size: 0.8125rem; font-weight: 400; color: var(--tenue); }
   .efecto { grid-area: e; font-size: 0.8125rem; color: var(--tenue); }
+  /* §8, Vacancia: Violeta se compra pero no suma. La muestra agrietada y su número tachado. */
+  .agrietado .muestra { width: 0.75rem; height: 0.75rem; background: linear-gradient(115deg, var(--c) 0 42%, transparent 42% 52%, var(--c) 52%); clip-path: polygon(0 0, 55% 0, 40% 45%, 62% 55%, 45% 100%, 0 100%, 0 0, 100% 0, 100% 100%, 50% 100%, 68% 52%, 46% 44%, 62% 0); opacity: 0.75; }
+  .agrietado .efecto, .agrietado .nombre .nv { text-decoration: line-through; text-decoration-color: var(--c); color: var(--apagado); }
   /* Softcap (SPEC §4.11): más allá del Infinito cada nivel cuesta ×10 más. Una gema de hielo chica, como la Capa 1. */
   .allende {
     display: inline-grid; place-items: center; width: 1.25rem; height: 1rem; margin-left: 0.4rem; vertical-align: 0.05rem;

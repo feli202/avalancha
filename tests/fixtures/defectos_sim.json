@@ -1,0 +1,144 @@
+{
+ "arena": {
+  "caudal": 40,
+  "colores": [
+   60,
+   55,
+   50,
+   30
+  ],
+  "cascada": 12,
+  "mut": [
+   3,
+   4,
+   2,
+   2
+  ],
+  "compresiones": 17,
+  "log_granos": 14.37
+ },
+ "red": {
+  "memoria": 4,
+  "eco": 2,
+  "estratos": 2,
+  "compactacion": 1
+ },
+ "estratos": {
+  "abiertos": 3,
+  "s": [
+   40.0,
+   38.0,
+   30.0
+  ],
+  "pres": [
+   1,
+   0,
+   2
+  ]
+ },
+ "ctot_log10": 12.5,
+ "casos": [
+  {
+   "nombre": "sin Defecto",
+   "defecto": "",
+   "hechos": [],
+   "D": 3.12,
+   "logV": 85.68762554876237,
+   "lograte": 293.7319597564889,
+   "costo_violeta_log10": 159
+  },
+  {
+   "nombre": "en vacancia",
+   "defecto": "vacancia",
+   "hechos": [],
+   "D": 3.12,
+   "logV": 70.77192791584454,
+   "lograte": 247.19498314178526,
+   "costo_violeta_log10": 159
+  },
+  {
+   "nombre": "en dislocacion",
+   "defecto": "dislocacion",
+   "hechos": [],
+   "D": 3.12,
+   "logV": 78.13418114876237,
+   "lograte": 270.1652132284889,
+   "costo_violeta_log10": 159
+  },
+  {
+   "nombre": "en macla",
+   "defecto": "macla",
+   "hechos": [],
+   "D": 2.652,
+   "logV": 81.68762554876237,
+   "lograte": 243.02215099966807,
+   "costo_violeta_log10": 159
+  },
+  {
+   "nombre": "en impureza",
+   "defecto": "impureza",
+   "hechos": [],
+   "D": 3.12,
+   "logV": 61.14803685244711,
+   "lograte": 208.254374979635,
+   "costo_violeta_log10": 159
+  },
+  {
+   "nombre": "con vacancia completo",
+   "defecto": "",
+   "hechos": [
+    "vacancia"
+   ],
+   "D": 3.12,
+   "logV": 86.92026436215214,
+   "lograte": 297.57779285426494,
+   "costo_violeta_log10": 159
+  },
+  {
+   "nombre": "con dislocacion completo",
+   "defecto": "",
+   "hechos": [
+    "dislocacion"
+   ],
+   "D": 3.12,
+   "logV": 86.0048573401611,
+   "lograte": 294.7217229456529,
+   "costo_violeta_log10": 159
+  },
+  {
+   "nombre": "con macla completo",
+   "defecto": "",
+   "hechos": [
+    "macla"
+   ],
+   "D": 3.12,
+   "logV": 85.68762554876237,
+   "lograte": 293.7319597564889,
+   "costo_violeta_log10": 147
+  },
+  {
+   "nombre": "con impureza completo",
+   "defecto": "",
+   "hechos": [
+    "impureza"
+   ],
+   "D": 3.12,
+   "logV": 86.36141154876238,
+   "lograte": 295.83417207648887,
+   "costo_violeta_log10": 159
+  },
+  {
+   "nombre": "tres completos, en impureza",
+   "defecto": "impureza",
+   "hechos": [
+    "dislocacion",
+    "macla",
+    "vacancia"
+   ],
+   "D": 3.12,
+   "logV": 62.081588050540724,
+   "lograte": 211.16705471768705,
+   "costo_violeta_log10": 147
+  }
+ ]
+}

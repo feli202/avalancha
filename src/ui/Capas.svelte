@@ -6,6 +6,7 @@
   import { formato } from './formato'
   import { hayCartel, juego } from './juego.svelte'
   import Escarcha from './Escarcha.svelte'
+  import Defectos from './Defectos.svelte'
   import Estratos from './Estratos.svelte'
   import './hielo.css'
   import Red from './Red.svelte'
@@ -60,7 +61,7 @@
             {/each}
           </nav>
           {#key juego.pantalla}
-            {#if juego.pantalla === 'red'}<Red />{:else if juego.pantalla === 'relicario'}<Relicario />{:else if juego.pantalla === 'estratos'}<Estratos />{:else}
+            {#if juego.pantalla === 'red'}<Red />{:else if juego.pantalla === 'relicario'}<Relicario />{:else if juego.pantalla === 'estratos'}<Estratos />{:else if juego.pantalla === 'defectos'}<Defectos />{:else}
             <section class="pantalla" aria-labelledby="c1-titulo">
               <svg viewBox="-100 -100 200 200" aria-hidden="true"><path d="M0-90 78-45V45L0 90-78 45V-45ZM0-90V90M-78-45 78 45M-78 45 78-45" /></svg>
               <h1 id="c1-titulo">{txt.cristal.pantallas[juego.pantalla]}</h1>

@@ -430,23 +430,27 @@
  },
  "defectos": {
   "vacancia": {
+   "color_sin_efecto": 3, "recompensa_hito_mult": 6,
    "regla": "Violeta no multiplica",
-   "meta_log10": 200,
+   "meta_log10": 237,
    "recompensa": "hito de color x4 -> x6"
   },
   "dislocacion": {
+   "cascada_x": 0, "presion_x": 0.5, "recompensa_anillo_mult": 1.12,
    "regla": "la Cascada no funciona y la Presion vale la mitad",
-   "meta_log10": 1250,
+   "meta_log10": 1347,
    "recompensa": "anillo x1,10 -> x1,12"
   },
   "macla": {
+   "sin_mutaciones": true, "densidad_x": 0.85, "recompensa_color_s_x": 0.9,
    "regla": "no hay Mutaciones y la Densidad vale x0,85",
-   "meta_log10": 1800,
+   "meta_log10": 1816,
    "recompensa": "crecimiento cuadratico de colores x0,9"
   },
   "impureza": {
+   "derrumbes_tope_log10": 4, "colores_x": 0.5, "recompensa_cascada_c": 0.1,
    "regla": "derrumbes por grano tope 1e4 y colores a la mitad",
-   "meta_log10": 2900,
+   "meta_log10": 3471,
    "recompensa": "Cascada +0,1 de c"
   },
   "fatiga": {
@@ -471,6 +475,7 @@
    "cristales_log10": 3
   },
   "abandono_min": 45,
+  "reintento_cristales_totales_log10": 1.5,
   "requisitos": {
    "vacancia": {
     "red": [

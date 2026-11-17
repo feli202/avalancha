@@ -7,10 +7,12 @@
     maxMutacion, multAnillos, multCascada, multColor, produccion, valor, type State,
     CFG1, ESTRATOS, NODOS, NIVEL_MAX_RED, cauceRel, cascadaRel, costoAbrir, cristalesAlInfinito, cristalesRedLog10, infinitoRoto, ordenesQ, espacios,
     gammaEstrato, memoria, mutacionesRel, nivelRed, presion, separacion,
+    DEFECTOS, baseAnillo, colorSX, completo, hitoColor, metaLog10,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
   import { txt } from '../strings'
   import { efecto } from './ayudas.svelte'
+  import { nombre as nombreDef, recompensa, regla } from './defectos'
   import { formato, formatoMult } from './formato'
   import Histograma from './Histograma.svelte'
   import { historial, juego, nombreAuto } from './juego.svelte'
@@ -56,17 +58,17 @@
           v: `= ${formato(caudal(s))} × (${d(K)} × ${G}) × ${formatoMult(valor(s))}^${d(D)} = ${formato(produccion(s))}` },
       ]),
       ...CFG.colores.map((col, i) => {
-        const n = s.colores[i], hitos = Math.floor(n / H.cada)
+        const n = s.colores[i], hitos = Math.floor(n / H.cada), hm = hitoColor(s) // Vacancia sube el hito
         return sec(`color${i}`, !!v[`color${i}`], COLOR_CSS[ALTURA_DE_COLOR[i]], [
-          { r: g.rotulo.mult, g: `${d(col.mult_por_nivel)}^${V.nivel} × ${H.mult}^⌊${V.nivel} / ${H.cada}⌋`,
-            v: `= ${d(col.mult_por_nivel)}^${n} × ${H.mult}^${hitos} = ×${formatoMult(multColor(i, n))}` },
-          curva(col, n, costoColor(i, n)),
-        ], g.colorTexto(txt.colores[i], txt.alturaColor[i], d(col.mult_por_nivel), H.cada, H.mult))
+          { r: g.rotulo.mult, g: `${d(col.mult_por_nivel)}^${V.nivel} × ${hm}^⌊${V.nivel} / ${H.cada}⌋`,
+            v: `= ${d(col.mult_por_nivel)}^${n} × ${hm}^${hitos} = ×${formatoMult(multColor(i, n, hm))}` },
+          curva({ ...col, s: col.s * colorSX(s) }, n, costoColor(i, n, colorSX(s))),
+        ], g.colorTexto(txt.colores[i], txt.alturaColor[i], d(col.mult_por_nivel), H.cada, hm))
       }),
       sec('anillos', !!v.anillos, '#e8e9f3', [
         { r: g.rotulo.anillos, g: `G ≥ ${A.granos_primer_anillo} ? ⌊log₂(G / ${A.granos_primer_anillo})⌋ + 1 : 0`, v: `G = ${G} → ${a}` },
-        { r: g.rotulo.multAnillos, g: `(${d(A.mult_por_anillo)} + ${d(M.expansion.por_nivel)} × ${V.expansion})^${V.anillos}`,
-          v: `= (${d(A.mult_por_anillo)} + ${d(M.expansion.por_nivel)} × ${s.mutaciones.expansion})^${a} = ×${formatoMult(multAnillos(s))}` },
+        { r: g.rotulo.multAnillos, g: `(${d(baseAnillo(s))} + ${d(M.expansion.por_nivel)} × ${V.expansion})^${V.anillos}`,
+          v: `= (${d(baseAnillo(s))} + ${d(M.expansion.por_nivel)} × ${s.mutaciones.expansion})^${a} = ×${formatoMult(multAnillos(s))}` },
         { r: g.rotulo.proximoAnillo, g: `G = ${A.granos_primer_anillo} × 2^${V.anillos}`,
           v: `= ${A.granos_primer_anillo} × 2^${a} = ${g.granosUnidad(formato(A.granos_primer_anillo * 2 ** a))}` },
       ]),
@@ -148,7 +150,10 @@
         { r: g.rotulo.memoria, g: `nv ${nMem} / ${NIVEL_MAX_RED}`, v: nMem ? mem[2](memX, nMem) : '—' },
         { r: g.rotulo.infinitoAuto, g: c1.espera, v: nMem >= NIVEL_MAX_RED ? '✓' : '—' },
       ]),
-      sec('c1_defectos', []),
+      // §8: una fila por Defecto: regla → recompensa, y la meta.
+      sec('c1_defectos', DEFECTOS.map((id) => ({
+        r: nombreDef(id), g: `${regla(id)} → ${recompensa(id)}`, v: `${txt.cristal.defectos.meta(metaLog10(id))}${completo(s, id) ? ' ✓' : ''}`,
+      }))),
       sec('c1_escarcha', []),
     ]
   }

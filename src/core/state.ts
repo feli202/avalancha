@@ -56,6 +56,9 @@ export interface State {
   relicario: { piezas: Pieza[]; equipadas: number[]; pendiente: number; foto: string; ultimo: string; regla: Regla }
   /** SPEC_CAPA1 §7. `s`: log10 de granos de cada estrato; `perm` y `pres`: niveles de Permeabilidad y Presión. */
   estratos: { abiertos: number; s: number[]; perm: number[]; pres: number[] }
+  /** SPEC_CAPA1 §8. `actual`: el Defecto en curso ('' = ninguno). `reintento`: log10 de los Cristales totales con que conviene
+   * volver a uno que se abandonó (~×30). */
+  defectos: { completos: string[]; actual: string; reintento: Record<string, number> }
   tiempoTotal: number
   /** Segundos de Arena desde el último Infinito (no se reinicia con la Compresión): el Impulso de Inercia. */
   tiempoInfinito: number
@@ -104,6 +107,7 @@ export const estadoInicial =(): State => ({
   red: Object.fromEntries(Object.keys(NODOS).map((k) => [k, 0])),
   relicario: { piezas: [], equipadas: [], pendiente: 0, foto: '', ultimo: '', regla: { modo: 'completar', orden: [...CFG1.relicario.tipos], fusionar: true, equipar: false } },
   estratos: { abiertos: 0, s: ceros(), perm: ceros(), pres: ceros() },
+  defectos: { completos: [], actual: '', reintento: {} },
   tiempoTotal: 0,
   tiempoInfinito: 0,
   granosTotales: 0,

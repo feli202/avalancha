@@ -33,6 +33,16 @@
     }
   }
 
+  // C7: a mitad de la 1.1, lista para los cuatro Defectos (Defectos nv4, Ruptura, 7 estratos llenos, Memoria completa).
+  function listaDefectos() {
+    const c = Decimal.pow10(25), s = juego.s
+    juego.s = {
+      ...s, infinitos: Math.max(s.infinitos, 5), cristales: c, cristalesTotales: c,
+      red: { ...s.red, memoria: 4, eco: 4, sedimentacion: 4, defectos: 4, ruptura: 1, estratos: 4, compactacion: 4, cristalografia: 4 },
+      estratos: { ...s.estratos, abiertos: 7, s: [60, 58, 56, 54, 52, 50, 48, 0] },
+    }
+  }
+
   function saltar() {
     const c = Math.max(0, Math.min(umbrales.length, Math.floor(n)))
     const alcanzada = c > 0 ? Decimal.pow10(umbrales[c - 1]) : new Decimal(0)
@@ -67,6 +77,7 @@
   <button onclick={darEnergia}>{txt.debug.darEnergia}</button>
   <button onclick={casiInfinito}>{txt.debug.casiInfinito}</button>
   <button onclick={() => { juego.s = { ...juego.s, energia: INFINITO }; infinitoYa() }}>{txt.debug.infinitoYa}</button>
+  <button onclick={listaDefectos}>{txt.debug.listaDefectos}</button>
   <button onclick={() => (juego.s = { ...juego.s, cristales: juego.s.cristales.mul(10).add(10), cristalesTotales: juego.s.cristalesTotales.add(juego.s.cristales.mul(9).add(10)) })}>{txt.debug.darCristales}</button>
   <label>
     {txt.debug.saltar}

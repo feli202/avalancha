@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, CFG1, anillos, autoDisponible, comprimir, conFoto, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, infinitoRoto, fueraDeLinea, hayEstratos, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
+import { CFG, CFG1, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, infinitoRoto, fueraDeLinea, hayEstratos, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
 import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
@@ -83,6 +83,7 @@ class Juego {
   ofertaS = $state(0)
 }
 export const juego = new Juego()
+if (import.meta.env.DEV) Object.assign(globalThis, { juego }) // para probar desde la consola
 
 /** Historial para Estadísticas (corridas, avalanchas, Energía en el tiempo). Se muta en el lugar: ver juego.verHistorial. */
 export let historial = historialVacio(Date.now())
@@ -112,7 +113,8 @@ const log10E = (s: State) => (s.energia.gt(1) ? s.energia.log10() : 0)
 export function progresoCompresion(s: State) {
   const u = CFG.compresion.umbrales_log10
   const final = s.compresiones >= u.length
-  const meta = final ? CFG.infinito_log10 : u[s.compresiones]
+  // En un Defecto la meta final es la del Defecto (§8), no el Infinito.
+  const meta = final ? (enDefecto(s) ? metaLog10(s.defectos.actual as DefectoId) : CFG.infinito_log10) : u[s.compresiones]
   const desde = u[s.compresiones - 1] ?? 0
   return { meta, final, p: Math.min(1, Math.max(0, (log10E(s) - desde) / (meta - desde))) }
 }
@@ -155,7 +157,9 @@ function condiciones(s: State): Record<string, boolean> {
   c.c1_automat = s.infinitos > 0 && juego.capa === 'automatizacion'
   // C6: la presentación de Romper el Infinito sale en la Arena, la primera vez que la Energía pasa de 1e308.
   c.c1_romper = infinitoRoto(s) && enInfinito(s) && s.infinitos > 0
-  c.c1_defectos = c.c1_escarcha = false
+  // C7: la de Defectos, una sola vez al desbloquearlos (Defectos nv1); espera en cola a que se mire su pantalla.
+  c.c1_defectos = s.infinitos > 0 && (s.red.defectos ?? 0) >= 1
+  c.c1_escarcha = false
   return c
 }
 
@@ -248,13 +252,31 @@ export function comprimirYa() {
 /** Infinito (botón, tecla C o el final de la cinemática): cobra los Cristales y reinicia la Arena. */
 export function infinitoYa() {
   const antes = juego.s
-  if (!enInfinito(antes)) return
+  if (!enInfinito(antes) || enDefecto(antes)) return // en un Defecto solo se termina en la meta o abandonando
   const s = conFoto(infinito(antes), fotoPila())
   juego.s = s
   juego.aMano++
   registrar(historial, antes, s)
   previo = s
   juego.aviso = { id: avisos++, texto: txt.cristal.ganados(formato(cristalesAlInfinito(antes))) }
+  guardarYa()
+}
+
+/** SPEC_CAPA1 §8: entrar a un Defecto (sale de la corrida sin Cristales) y abandonarlo. Llevan a la Arena / se quedan. */
+export function entrarDefectoYa(id: DefectoId) {
+  const s = entrarDefecto(juego.s, id)
+  if (s === juego.s) return
+  previo = juego.s = s
+  juego.capa = 'arena'
+  juego.aviso = { id: avisos++, texto: txt.cristal.defectos.entrado(txt.cristal.defectos.nombres[id]) }
+  guardarYa()
+}
+export function abandonarDefectoYa() {
+  const id = juego.s.defectos.actual
+  const s = abandonarDefecto(juego.s)
+  if (s === juego.s) return
+  previo = juego.s = s
+  juego.aviso = { id: avisos++, texto: txt.cristal.defectos.abandonado(txt.cristal.defectos.nombres[id]) }
   guardarYa()
 }
 
@@ -424,8 +446,10 @@ export function arrancar() {
       s = elegirSola(s)
       juego.aviso = { id: avisos++, texto: txt.cristal.relicario.sola(txt.cristal.relicario.tipos[s.relicario.ultimo][0]) }
     }
-    // Infinito automático (Memoria nv4): el mismo aviso que el botón.
-    if (s.infinitos > previo.infinitos) juego.aviso = { id: avisos++, texto: txt.cristal.ganados(formato(s.cristalesTotales.sub(previo.cristalesTotales))) }
+    // Defecto superado (§8): su aviso; si no, el Infinito automático (Memoria nv4) tiene el mismo aviso que el botón.
+    const nuevoDef = s.defectos.completos.length > previo.defectos.completos.length ? s.defectos.completos.at(-1)! : ''
+    if (nuevoDef) juego.aviso = { id: avisos++, texto: txt.cristal.defectos.ganado(txt.cristal.defectos.nombres[nuevoDef], txt.cristal.ganados(formato(s.cristalesTotales.sub(previo.cristalesTotales)))) }
+    else if (s.infinitos > previo.infinitos) juego.aviso = { id: avisos++, texto: txt.cristal.ganados(formato(s.cristalesTotales.sub(previo.cristalesTotales))) }
     previo = s
     if (Math.floor(s.tiempoTotal) !== Math.floor(juego.s.tiempoTotal)) juego.verHistorial++
     juego.s = s

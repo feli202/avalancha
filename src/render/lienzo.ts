@@ -87,6 +87,7 @@ uniform float u_foco;      // zoom: radio en px del círculo que se ve nítido; 
 uniform int u_fondo;       // FONDO en lienzo.ts
 uniform sampler2D u_fondoPila; // R8: la pila llena (altura + 1, 0 = afuera) para el fondo Fractal
 uniform vec3 u_colorP[4];  // los colores de la arena (lineales), para el fondo Fractal
+uniform int u_defecto;     // SPEC_CAPA1 §8: 0 ninguno, 1 grieta (Vacancia), 2 corrimiento (Dislocación), 3 espejo (Macla), 4 manchas (Impureza)
 const float L = ${LADO}.0;
 const vec3 LUZ = vec3(-0.5, 0.55, 0.67); // arriba a la izquierda (sin normalizar)
 
@@ -152,6 +153,44 @@ vec4 arenaEn(vec2 q) {
   float afuera = step(al, 0.0) + step(ar, 0.0) + step(ad, 0.0) + step(au, 0.0);
   float w = 1.0 - 0.6 * min(afuera, 1.0);
   return vec4((arena + em + mica * (0.3 + 0.7 * alb)) * w, w);
+}
+
+// SPEC_CAPA1 §8: cada Defecto deforma la pila. q en celdas; d desde el centro.
+float ruido(vec2 x) {
+  vec2 i = floor(x), f = fract(x);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+// Vacancia: distancia con signo (en celdas) a una grieta quebrada que cruza la pila.
+float grieta(vec2 d) { return d.y - (0.32 * d.x + 5.0 * sin(d.x * 0.045) + 2.5 * sin(d.x * 0.17 + 1.0) + 1.2 * sin(d.x * 0.6)); }
+// Dislocación: el plano de deslizamiento; Macla: el plano de macla (inclinado: la pila ya es simétrica en los ejes).
+float planoDesliz(vec2 d) { return d.y - 0.18 * d.x; }
+const vec2 MACLA_N = vec2(0.9397, -0.342); // normal del plano de macla (70°)
+float planoMacla(vec2 d) { return dot(d - vec2(L * 0.06, 0.0), MACLA_N); }
+vec2 deforma(vec2 q) {
+  vec2 d = q - L * 0.5;
+  if (u_defecto == 1) return q + vec2(0.0, grieta(d) > 0.0 ? -1.5 : 1.5); // las dos mitades se separan
+  if (u_defecto == 2 && planoDesliz(d) > 0.0) return q - vec2(14.0, 0.0);  // la mitad de arriba se corre 14 celdas
+  if (u_defecto == 3) { float k = planoMacla(d); if (k > 0.0) return q - 2.0 * k * MACLA_N; } // espejo
+  return q;
+}
+// Lo que se pinta encima: el borde de la grieta, la línea del plano o las manchas. a: la arena del píxel.
+vec3 marcaDefecto(vec3 col, vec3 fondo, vec4 a, vec2 q) {
+  vec2 d = q - L * 0.5;
+  float w = max(0.7, 1.5 * u_dpr / u_escala); // al menos ~1,5 px CSS
+  if (u_defecto == 1) {
+    float g = abs(grieta(d));
+    col = mix(col, fondo * 0.35, (1.0 - smoothstep(w * 0.6, w * 1.2, g)) * a.a);
+    col += u_colorP[1] * 0.5 * exp(-g / (w * 2.0)) * a.a; // la luz violeta que asoma por la grieta
+  } else if (u_defecto == 2 || u_defecto == 3) {
+    float k = abs(u_defecto == 2 ? planoDesliz(d) : planoMacla(d));
+    col += vec3(0.55, 0.85, 1.0) * 0.35 * exp(-k / w) * a.a;
+  } else if (u_defecto == 4) {
+    float n = 0.65 * ruido(q * 0.035) + 0.35 * ruido(q * 0.11 + 7.0);
+    float m = smoothstep(0.58, 0.68, n) * a.a;
+    col = mix(col, dot(col, vec3(0.3, 0.55, 0.15)) * vec3(0.6, 0.48, 0.32), 0.8 * m) * (1.0 - 0.35 * m);
+  }
+  return col;
 }
 
 // Los fondos (Ajustes > Aspecto): oscuros y quietos o casi, para no competir con la pila. p: px desde el centro.
@@ -220,9 +259,10 @@ void main() {
     float n = float(u_ss);
     for (int i = 0; i < u_ss; i++)
       for (int j = 0; j < u_ss; j++)
-        a += arenaEn((p + (vec2(i, j) + 0.5) / n - 0.5) / u_escala + L * 0.5);
+        a += arenaEn(deforma((p + (vec2(i, j) + 0.5) / n - 0.5) / u_escala + L * 0.5));
     a /= n * n;
     col = col * (1.0 - a.a) + a.rgb;
+    if (u_defecto > 0) col = marcaDefecto(col, fondo, a, q);
   }
   // El halo y la pila desenfocada se apagan antes del borde del canvas (en móvil no llega al borde de la ventana).
   vec2 e = min(gl_FragCoord.xy, u_tam - gl_FragCoord.xy);
@@ -254,7 +294,7 @@ export class Lienzo {
 
   /** I7: el contexto volvió después de perderse; lo dibujado se sube de nuevo (PilaVisual). */
   alRestaurar?: () => void
-  private valores = { colores: COLORES_PILA, destello: 1, efecto: 0, fondo: 'noche', fondoPila: null as Uint8Array | null }
+  private valores = { colores: COLORES_PILA, destello: 1, efecto: 0, fondo: 'noche', fondoPila: null as Uint8Array | null, defecto: 0 }
 
   constructor(readonly canvas: HTMLCanvasElement | OffscreenCanvas) {
     this.gl = canvas.getContext('webgl2', { alpha: false, antialias: false }) as WebGL2RenderingContext | null
@@ -288,7 +328,7 @@ export class Lienzo {
       return prog
     }
     this.progCeldas = programa(FRAG_CELDAS, ['u_alturas', 'u_derrumbe', 'u_ahora', 'u_destello', 'u_brillo', 'u_color', 'u_efecto'], this.uniC)
-    this.progPantalla = programa(FRAG_PANTALLA, ['u_celdas', 'u_luz', 'u_tam', 'u_escala', 'u_ahora', 'u_destello', 'u_dpr', 'u_brillo', 'u_ss', 'u_viejo', 'u_fundido', 'u_foco', 'u_fondo', 'u_fondoPila', 'u_colorP'], this.uniP)
+    this.progPantalla = programa(FRAG_PANTALLA, ['u_celdas', 'u_luz', 'u_tam', 'u_escala', 'u_ahora', 'u_destello', 'u_dpr', 'u_brillo', 'u_ss', 'u_viejo', 'u_fundido', 'u_foco', 'u_fondo', 'u_fondoPila', 'u_colorP', 'u_defecto'], this.uniP)
     gl.bindVertexArray(gl.createVertexArray())
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1) // 513 no es múltiplo de 4
     const textura = (unidad: number, interno: number, niveles = 1) => {
@@ -331,6 +371,7 @@ export class Lienzo {
     this.destello = this.valores.destello
     this.efecto = this.valores.efecto
     this.fondo = this.valores.fondo
+    this.defecto = this.valores.defecto
     if (this.valores.fondoPila) this.fondoPila(this.valores.fondoPila)
   }
 
@@ -373,6 +414,15 @@ export class Lienzo {
     gl.uniform1f(this.uniC.u_destello, v)
     gl.useProgram(this.progPantalla)
     gl.uniform1f(this.uniP.u_destello, v)
+  }
+
+  /** SPEC_CAPA1 §8: cómo deforma la pila el Defecto en curso (0 ninguno, 1..4 en el orden de DEFECTOS). */
+  set defecto(n: number) {
+    this.valores.defecto = n
+    const { gl } = this
+    if (!gl) return
+    gl.useProgram(this.progPantalla)
+    gl.uniform1i(this.uniP.u_defecto, n)
   }
 
   /** Índice en EFECTOS (paletas.ts). */

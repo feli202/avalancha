@@ -1,6 +1,9 @@
 // SPEC.md sección 4. Cada función es una fórmula de la spec, sin estado propio.
 import Decimal from 'break_infinity.js'
 import { CFG, precioLog10, type MutId } from './config'
+import {
+  baseAnillo, cascadaCExtra, cascadaX, colorSinEfecto, coloresX, densidadX, derrumbesTope, hitoColor, presionX, sinMutaciones,
+} from './defectos'
 import { presion } from './estratos'
 import { cascadaExtra, densidadRed, ecoLog10, efectoRed, mutacionExtra, nivelRed } from './red'
 import { cascadaRel, cauceRel, mutacionesRel } from './relicario'
@@ -11,7 +14,8 @@ const curva = (c0: number, g: number, s = 0): Exp => (n) => c0 + g * n + (s * n 
 
 /** Exponente normal (sin redondeo ni softcap) del costo de cada mejora de la Arena, nivel n → n+1. */
 export const expCaudal: Exp = curva(CFG.caudal.c0, CFG.caudal.g, CFG.caudal.s)
-export const expColor = (i: number): Exp => curva(CFG.colores[i].c0, CFG.colores[i].g, CFG.colores[i].s)
+/** `sx`: la recompensa de Macla abarata el término cuadrático (colorSX). */
+export const expColor = (i: number, sx = 1): Exp => curva(CFG.colores[i].c0, CFG.colores[i].g, CFG.colores[i].s * sx)
 export const expCascada: Exp = curva(CFG.cascada.c0, CFG.cascada.g)
 export const expMutacion = (id: MutId): Exp => curva(CFG.mutaciones[id].c0, CFG.mutaciones[id].g)
 
@@ -32,7 +36,7 @@ export function precioArenaLog10(f: Exp, n: number) {
 
 // ---------- costos (nivel n → n+1) ----------
 export const costoCaudal = (n: number) => Decimal.pow10(precioArenaLog10(expCaudal, n))
-export const costoColor = (i: number, n: number) => Decimal.pow10(precioArenaLog10(expColor(i), n))
+export const costoColor = (i: number, n: number, sx = 1) => Decimal.pow10(precioArenaLog10(expColor(i, sx), n))
 export const costoCascada = (n: number) => Decimal.pow10(precioArenaLog10(expCascada, n))
 export const costoMutacion = (id: MutId, n: number) => Decimal.pow10(precioArenaLog10(expMutacion(id), n))
 
@@ -46,8 +50,8 @@ export const infinitoRoto = (s: State) => nivelRed(s, 'ruptura') >= 1
 export const congelada = (s: State) => enInfinito(s) && !infinitoRoto(s)
 
 export const densidad = (s: State) =>
-  1 + CFG.compresion.densidad_por_nivel * s.compresiones + densidadRed(s) +
-  efectoRed(s, 'compactacion2', 'densidad_por_anillo') * anillos(s.granos) // Compactación II (SPEC_CAPA1 §6.3)
+  (1 + CFG.compresion.densidad_por_nivel * s.compresiones + densidadRed(s) +
+  efectoRed(s, 'compactacion2', 'densidad_por_anillo') * anillos(s.granos)) * densidadX(s) // Compactación II (§6.3); Macla (§8)
 
 /** Nivel máximo de Cascada y de cada Mutación (Cascada+ y Mutación+ de la Red lo suben). */
 export const maxCascada = (s: State) => CFG.cascada.nivel_max + cascadaExtra(s)
@@ -63,19 +67,19 @@ export function anillos(granos: number): number {
   return granos >= g0 ? Math.floor(Math.log2(granos / g0)) + 1 : 0
 }
 
-export const multColor = (i: number, nivel: number) =>
-  Decimal.pow(CFG.colores[i].mult_por_nivel, nivel).mul(
-    Decimal.pow(CFG.hito_colores.mult, Math.floor(nivel / CFG.hito_colores.cada)),
-  )
+/** `hito`: el multiplicador de cada hito de color (Vacancia lo sube: hitoColor). */
+export const multColor = (i: number, nivel: number, hito = CFG.hito_colores.mult) =>
+  Decimal.pow(CFG.colores[i].mult_por_nivel, nivel).mul(Decimal.pow(hito, Math.floor(nivel / CFG.hito_colores.cada)))
 
 export const multAnillos = (s: State) =>
   Decimal.pow(
-    CFG.anillos.mult_por_anillo + CFG.mutaciones.expansion.por_nivel * s.mutaciones.expansion,
+    baseAnillo(s) + CFG.mutaciones.expansion.por_nivel * s.mutaciones.expansion, // Dislocación sube la base (§8)
     anillos(s.granos),
   )
 
 export const cascadaC = (s: State) =>
-  CFG.cascada.c_por_nivel * s.cascada + (s.cascada >= 1 ? CFG.mutaciones.cascada.por_nivel * s.mutaciones.cascada + cascadaRel(s) : 0)
+  (CFG.cascada.c_por_nivel * s.cascada +
+    (s.cascada >= 1 ? CFG.mutaciones.cascada.por_nivel * s.mutaciones.cascada + cascadaRel(s) + cascadaCExtra(s) : 0)) * cascadaX(s)
 
 export const multCascada = (s: State) =>
   s.granos > 0
@@ -85,15 +89,16 @@ export const multCascada = (s: State) =>
 /** V: valor de cada derrumbe. */
 export const valor = (s: State) =>
   s.colores
-    .reduce((v, nivel, i) => v.mul(multColor(i, nivel)), new Decimal(1))
-    .pow(1 + cauceRel(s)) // reliquia Cauce: + colores_log10 × pct a log V
+    .reduce((v, nivel, i) => (colorSinEfecto(s, i) ? v : v.mul(multColor(i, nivel, hitoColor(s)))), new Decimal(1))
+    .pow((1 + cauceRel(s)) * coloresX(s)) // reliquia Cauce: + colores_log10 × pct a log V; Impureza: colores a la mitad
     .mul(multAnillos(s))
     .mul(multCascada(s))
-    .mul(Decimal.pow(CFG.mutaciones.colores.por_nivel, s.mutaciones.colores * (1 + mutacionesRel(s))))
-    .mul(Decimal.pow10(ecoLog10(s) + presion(s))) // Eco (SPEC_CAPA1 §6.3) y Presión de los Estratos (§7.2, §10)
+    .mul(Decimal.pow(CFG.mutaciones.colores.por_nivel, sinMutaciones(s) ? 0 : s.mutaciones.colores * (1 + mutacionesRel(s)))) // Macla
+    .mul(Decimal.pow10(ecoLog10(s) + presion(s) * presionX(s))) // Eco (SPEC_CAPA1 §6.3) y Presión de los Estratos (§7.2, §10)
 
 /** Energía que da un grano que cae ahora: (K × G) × V^D. */
-export const energiaPorGrano = (s: State) => valor(s).pow(densidad(s)).mul(CFG.K_derrumbes_por_grano * s.granos)
+export const energiaPorGrano = (s: State) =>
+  valor(s).pow(densidad(s)).mul(Math.min(CFG.K_derrumbes_por_grano * s.granos, derrumbesTope(s))) // Impureza: tope
 
 /** Energía/s = F × (K × G) × V^D. */
 export const produccion = (s: State) => energiaPorGrano(s).mul(caudal(s))

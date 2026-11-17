@@ -1,6 +1,7 @@
 <script lang="ts">
   // Interfaz principal (SPEC 6.4). Cada parte aparece recién cuando juego.vistos lo dice (SPEC 5).
-  import { anillos, autoDisponible, congelada, cristalesAlInfinito, densidad, enElOptimo, enInfinito, infinitoRoto, multAnillos, produccion, puedeComprimir } from '../core'
+  import { anillos, autoDisponible, congelada, cristalesAlInfinito, densidad, enElOptimo, enInfinito, infinitoRoto, metaLog10, multAnillos, produccion, puedeComprimir, type DefectoId } from '../core'
+  import { cambios, nombre as nombreDef } from './defectos'
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import Ayuda from './Ayuda.svelte'
@@ -18,7 +19,7 @@
   import Titulo from './Titulo.svelte'
   import { formato, formatoMult, hablado } from './formato'
   import { fade } from 'svelte/transition'
-  import { comprimirYa, hayCartel, hayPanel, infinitoYa, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
+  import { abandonarDefectoYa, comprimirYa, hayCartel, hayPanel, infinitoYa, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
   import { PX_MAX } from '../render/pilaVisual'
   import { foto, guardarImagen } from './foto.svelte'
 
@@ -38,7 +39,9 @@
   const comp = $derived(progresoCompresion(s))
   // SPEC_CAPA1 §4: con la Energía en 1e308 el botón pasa a Infinito. El primero llega solo, con su cinemática (juego.svelte.ts).
   const alInf = $derived(enInfinito(s))
-  const infinitoListo = $derived(alInf && s.infinitos > 0)
+  // §8: dentro de un Defecto no hay Infinito: termina en la meta o abandonando.
+  const def = $derived(s.defectos.actual as DefectoId | '')
+  const infinitoListo = $derived(alInf && s.infinitos > 0 && !def)
   const lista = $derived(puedeComprimir(s) || infinitoListo)
   const accion = () => (infinitoListo ? infinitoYa() : comprimirYa())
   const fin = $derived(juego.cinematica)
@@ -107,6 +110,14 @@
       <span class="linea num aparece" use:ayuda={() => ayudaDensidad(juego.s)}>{txt.densidad} <b>^{formatoMult(densidad(s))}</b></span>
     {/if}
     {#if s.infinitos > 0}<span class="linea num aparece">{txt.cristal.cristales} <b class="hielo">{formato(s.cristales)}</b></span>{/if}
+    {#if def}
+      <!-- §8: el Defecto en curso, su meta, lo que cambia y abandonar. -->
+      <div class="defecto aparece">
+        <span class="linea"><b>{txt.cristal.defectos.enArena(nombreDef(def))}</b> <span class="num">{txt.cristal.defectos.meta(metaLog10(def))}</span></span>
+        <ul class="num">{#each cambios(s) as c}<li>{txt.cristal.defectos.mult[c.id]} <b>{c.dentro}</b></li>{/each}</ul>
+        <button class="abandonar" onclick={abandonarDefectoYa}>{txt.cristal.defectos.abandonar}</button>
+      </div>
+    {/if}
   </header>
 
 
@@ -159,11 +170,11 @@
         {#if v.compresion}
           <!-- Después de la última Compresión la meta es el Infinito: el primero llega solo; los siguientes, con este botón. -->
           <button class="comprimir aparece" data-guia="compresion" use:ayuda={() => ayudaComprimir(juego.s)} disabled={!lista} onclick={accion} aria-keyshortcuts="C">
-            <span class="nombre">{comp.final || alInf ? txt.haciaInfinito : txt.comprimir}</span>
+            <span class="nombre">{comp.final || alInf ? (def ? nombreDef(def) : txt.haciaInfinito) : txt.comprimir}</span>
             <span class="meta num">
               {#if !comp.final}{txt.compresion(s.compresiones + 1)}{' · '}{/if}{txt.meta(comp.meta)} · <b>{txt.progreso(comp.p)}</b>
               {#if !lista && juego.eta !== null} · {txt.eta(txt.duracion(juego.eta))}{/if}
-              {#if s.infinitos > 0 && alInf && infinitoRoto(s)}
+              {#if s.infinitos > 0 && alInf && infinitoRoto(s) && !def}
                 <!-- C6 (§4): con el Infinito roto, cuánto daría y a qué ritmo; brilla cuando el ritmo deja de subir. -->
                 {@const c = cristalesAlInfinito(s)}
                 <b class="hielo cristales-inf" class:optimo={enElOptimo(s)} data-guia="c1_romper">{txt.cristal.alInfinito(formato(c), formatoMult(c.mul(60 / Math.max(1, s.tiempoInfinito))))}</b>
@@ -267,6 +278,15 @@
   .etiqueta { font-size: 0.875rem; color: var(--tenue); }
   .energia { font-size: clamp(2.5rem, 4vw, 3.75rem); font-weight: 600; line-height: 1; letter-spacing: -0.03em; margin: 0.125rem 0 0.5rem; }
   .linea { font-size: 1rem; color: var(--tenue); line-height: 1.6; }
+  /* §8: el Defecto en curso, con la sobriedad de la Arena: texto coral, multiplicadores en línea y abandonar como enlace. */
+  .defecto { display: grid; justify-items: start; gap: 0.15rem; margin-top: 0.4rem; padding-left: 0.6rem; border-left: 1px solid var(--coral); pointer-events: auto; }
+  .defecto .linea b { color: var(--coral); font-weight: 600; }
+  .defecto ul { display: flex; flex-wrap: wrap; gap: 0 0.8rem; margin: 0; padding: 0; list-style: none; font-size: 0.8125rem; color: var(--tenue); }
+  .defecto ul b { color: var(--tinta); font-weight: 600; }
+  .abandonar { min-height: 2.75rem; padding: 0; border: 0; background: none; color: var(--apagado); font: inherit; font-size: 0.875rem; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }
+  .abandonar:hover, .abandonar:focus-visible { color: var(--coral); }
+  /* En vertical la barra de capas baja a 7rem (Capas.svelte): el cartel se corre para no quedar debajo. */
+  @media (orientation: portrait) and (max-width: 1100px) { .con-capas .defecto { margin-left: 4.5rem; } }
 
   .aviso {
     position: fixed; top: var(--margen); left: 50%; translate: -50% 0; width: max-content;

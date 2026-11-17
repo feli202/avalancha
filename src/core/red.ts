@@ -3,6 +3,7 @@
 import Decimal from 'break_infinity.js'
 import { precioLog10 } from './config'
 import { CFG1 } from './config1'
+import { defectosCompletos } from './defectos'
 import type { State } from './state'
 
 /** Un nodo: posición en el rombo y, por cada efecto, un arreglo con el valor de cada nivel (1..4). */
@@ -78,8 +79,6 @@ export const cascadaExtra = (s: State) => efectoRed(s, 'cascada_plus', 'nivel_ma
 export const mutacionExtra = (s: State) => efectoRed(s, 'mutacion_plus', 'nivel_max_extra')
 /** Eco: + p × log10(Cristales totales) a log10 V. */
 export const ecoLog10 = (s: State) => efectoRed(s, 'eco', 'p') * Math.max(0, s.cristalesTotales.log10())
-// shortcut: los Defectos llegan en C7; hasta entonces no hay ninguno completo y Cristalografía II no suma.
-export const defectosCompletos = (_s: State) => 0
 /** Multiplicador de Cristales en log10 (Ruptura, Cristalografía y Cristalografía II, que crece con los Defectos completos). */
 export const cristalesRedLog10 = (s: State) =>
   efectoRed(s, 'ruptura', 'cristales_log10') + efectoRed(s, 'cristalografia', 'cristales_log10') +

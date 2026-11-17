@@ -3,6 +3,7 @@ import Decimal from 'break_infinity.js'
 import {
   congelada, expCascada, expCaudal, expColor, expMutacion, masAllaDelInfinito, maxCascada, maxMutacion, precioArenaLog10,
 } from './formulas'
+import { colorSX, sinMutaciones } from './defectos'
 import type { State } from './state'
 
 /** `color0`…`color3` siguen el orden de CFG.colores. */
@@ -20,18 +21,18 @@ export function nivel(s: State, id: ItemId): number {
 }
 
 /** Exponente normal del costo de la mejora (sin redondeo ni softcap). */
-function expDe(id: ItemId) {
+function expDe(s: State, id: ItemId) {
   const m = mutDe(id)
-  return m ? expMutacion(m) : id === 'caudal' ? expCaudal : id === 'cascada' ? expCascada : expColor(colorDe(id))
+  return m ? expMutacion(m) : id === 'caudal' ? expCaudal : id === 'cascada' ? expCascada : expColor(colorDe(id), colorSX(s))
 }
 
-export const costo = (s: State, id: ItemId): Decimal => Decimal.pow10(precioArenaLog10(expDe(id), nivel(s, id)))
+export const costo = (s: State, id: ItemId): Decimal => Decimal.pow10(precioArenaLog10(expDe(s, id), nivel(s, id)))
 
 /** El próximo nivel ya cuesta más de 1e308: corre el softcap (cada nivel más, ×10). La tienda lo marca. */
-export const masAlla = (s: State, id: ItemId) => masAllaDelInfinito(expDe(id), nivel(s, id))
+export const masAlla = (s: State, id: ItemId) => masAllaDelInfinito(expDe(s, id), nivel(s, id))
 
 export const mutacionesDisponibles = (s: State) =>
-  s.compresiones >= CFG.mutaciones.compresiones_para_desbloquear &&
+  !sinMutaciones(s) && s.compresiones >= CFG.mutaciones.compresiones_para_desbloquear &&
   s.maxEnergia.log10() >= CFG.mutaciones.energia_para_desbloquear_log10
 
 /** Lo que la tienda ofrece ahora (desbloqueado y por debajo del nivel máximo). */

@@ -178,6 +178,55 @@ export const es = {
       },
       hay: 'Hay una reliquia para elegir',
     },
+    // SPEC_CAPA1 §8
+    defectos: {
+      que: 'Un Defecto es un Infinito con una regla rota. Entrar te saca de la corrida sin Cristales. Si llegás a la meta te da los Cristales de ese Infinito, una reliquia y la recompensa para siempre. Podés abandonar cuando quieras, sin castigo.',
+      nombres: { vacancia: 'Vacancia', dislocacion: 'Dislocación', macla: 'Macla', impureza: 'Impureza' } as Record<string, string>,
+      /** Qué defecto de un cristal es cada uno (una línea, debajo del nombre). */
+      cristal: { vacancia: 'Falta un átomo en la red', dislocacion: 'Media red se corrió', macla: 'La red se refleja en un plano', impureza: 'Un átomo que no es de acá' } as Record<string, string>,
+      regla: {
+        vacancia: (_x: number) => 'Violeta se compra, pero no multiplica.',
+        dislocacion: (x: number) => `La Cascada no funciona y la Presión vale ×${f(x)}.`,
+        macla: (x: number) => `No hay Mutaciones y la Densidad vale ×${f(x)}.`,
+        impureza: (x: number) => `Los derrumbes por grano tienen tope 1e${x} y los colores valen a la mitad (^0,5).`,
+      } as Record<string, (x: number) => string>,
+      recompensa: {
+        vacancia: (a: number, b: number) => `El hito de cada color ×${f(a)} → ×${f(b)}`,
+        dislocacion: (a: number, b: number) => `Cada anillo ×${f(a)} → ×${f(b)}`,
+        macla: (_a: number, b: number) => `Colores más baratos: su término cuadrático ×${f(b)}`,
+        impureza: (_a: number, b: number) => `Cascada: +${f(b)} a c`,
+      } as Record<string, (a: number, b: number) => string>,
+      rotulos: { regla: 'Regla', meta: 'Meta', requisito: 'Requisito', recompensa: 'Recompensa', cambia: 'Lo que cambia ahora' },
+      meta: (e: number) => `1e${e} de Energía`,
+      requisito: (nv: number, est: number) => (est ? `Defectos nv${nv} en la Red y ${est} estratos abiertos` : `Defectos nv${nv} en la Red`),
+      falta: {
+        hecho: 'Superado: la recompensa ya es tuya.',
+        otro: 'Hay otro Defecto en curso.',
+        anterior: (n: string) => `Primero superá ${n}.`,
+        red: (nv: number) => `Pide el nodo Defectos en nv${nv}.`,
+        estratos: (n: number, hay: number) => `Pide ${n} estratos abiertos (tenés ${hay}).`,
+        cristales: 'Pide más Cristales totales.',
+      },
+      entrar: 'Entrar',
+      entrarQue: 'Sale de esta corrida sin Cristales.',
+      abandonar: 'Abandonar',
+      abandonarQue: 'Sin castigo: volvés a una corrida normal.',
+      superado: 'Superado',
+      enCurso: 'En curso',
+      cerrado: 'Cerrado',
+      volver: (x: string, hay: string) => `Para la próxima, conviene volver con ${x} Cristales totales (tenés ${hay}).`,
+      // en la Arena, mientras se juega uno
+      enArena: (n: string) => `Defecto · ${n}`,
+      // avisos
+      entrado: (n: string) => `Entraste a ${n}`,
+      abandonado: (n: string) => `Abandonaste ${n}`,
+      ganado: (n: string, c: string) => `${n} superado · ${c}`,
+      // lo que cambia: [nombre del multiplicador]
+      mult: { violeta: 'Violeta', cascada: 'Cascada', presion: 'Presión', densidad: 'Densidad', mutaciones: 'Mutaciones', derrumbes: 'Derrumbes por grano', colores: 'Colores' } as Record<string, string>,
+      fuera: (x: string) => `fuera ${x}`,
+      emblema: (n: string, estado: string) => `${n}: ${estado}`,
+      lista: 'Los cuatro Defectos, en orden',
+    },
     // SPEC_CAPA1 §7 y correcciones, bloque 11 (el embudo en 2D)
     estratos: {
       cerrado: 'Los Estratos son lo que te deja ir más allá del Infinito: se abren con el nodo Estratos de la Red, que pide Romper el Infinito.',
@@ -573,8 +622,8 @@ export const es = {
       c1_estratos: 'Más allá del Infinito: los estratos aprietan la pila desde abajo y cada derrumbe vale más. Cada estrato que abrís llega lleno y te destraba.',
       c1_romper: 'Rompiste el Infinito: la Energía sigue de largo y cuanto más pasa de 1e308, más Cristales. Brilla cuando conviene hacer Infinito. Arriba de 1e308 las mejoras se encarecen (∞), y en la Red ya podés abrir los Estratos.',
       c1_automat: 'Acá elegís todo lo que se hace solo: cada cuánto compra cada autocomprador, cuándo comprimir y cuándo hacer Infinito.',
-      // Preparadas (cerradas hasta C7 y C10): se terminan de escribir en esos hitos.
-      c1_defectos: 'Un Defecto es un Infinito con una regla rota. Ganalo y la recompensa queda para siempre.',
+      c1_defectos: 'Un Defecto es un Infinito con una regla rota. Llegá a la meta y la recompensa queda para siempre. Se hacen en orden y podés abandonar cuando quieras.',
+      // Preparada (cerrada hasta C10).
       c1_escarcha: 'La Escarcha crece sola con el tiempo y multiplica todo. Rompela para ganar Esquirlas.',
     } as Record<string, string>,
     auto: 'Este interruptor prende y apaga el autocomprador.',
@@ -733,8 +782,13 @@ export const es = {
         'Cada autocomprador compra cada tanto (como mucho una vez por segundo) la cantidad que elijas: ×1, ×10 o Máx. Memoria los deja andando desde el inicio de cada Infinito y suma la Cascada, las Mutaciones y el Infinito automáticos.',
         'El Infinito automático se hace apenas llegás. Con Romper el Infinito puede esperar al momento óptimo (cuando los Cristales por minuto dejan de subir) o hasta dar X Cristales.',
       ]],
-      // Preparadas (cerradas hasta C7 y C10)
-      c1_defectos: ['Defectos', ['Un Defecto es un Infinito con una regla rota. Si llegás a la meta, la recompensa queda para siempre.']],
+      c1_defectos: ['Defectos', [
+        'Un Defecto es un Infinito con una regla rota. Entrar te saca de la corrida actual sin Cristales; adentro jugás la Arena como siempre, pero con esa regla.',
+        'Si llegás a la meta de Energía, termina como un Infinito: te da sus Cristales y una reliquia, y además una recompensa que queda para siempre.',
+        'El Infinito automático no te saca de un Defecto: solo termina en la meta o si lo abandonás. Abandonar no tiene castigo.',
+        'Se hacen en orden y cada uno pide más nivel del nodo Defectos y más estratos abiertos. Si no llegás, volvé con unas 30 veces más Cristales totales.',
+      ]],
+      // Preparada (cerrada hasta C10)
       c1_escarcha: ['Escarcha', ['La Escarcha crece sola con el tiempo y multiplica todo. Rompela cada tanto para ganar Esquirlas.']],
     } as Record<string, [string, string[]]>,
     colorTexto: (nombre: string, altura: string, mult: string, cada: number, hito: number) => [
@@ -765,6 +819,7 @@ export const es = {
     darEnergia: 'Dar Energía',
     casiInfinito: 'Energía a 1e307 (casi Infinito)',
     darCristales: 'Cristales ×10 (+10)',
+    listaDefectos: 'Lista para los Defectos (mitad de la 1.1)',
     infinitoYa: 'Infinito ya',
     saltar: 'Saltar a la Compresión',
     ir: 'Ir',

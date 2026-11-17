@@ -1,6 +1,6 @@
 // Guardado (SPEC 8): la partida como JSON con versión. Puro: el almacenamiento entra como Almacen.
 import Decimal from 'break_infinity.js'
-import { CFG, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, type Pieza, type State } from '../core'
+import { CFG, DEFECTOS, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, type Pieza, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
 import type { Contadores } from '../ui/secretos'
@@ -110,7 +110,7 @@ export function deserializar(texto: string): Partida {
       cristales: deDec(e.cristales), cristalesTotales: deDec(e.cristalesTotales),
       granos: pos(e.granos), granosTotales: pos(e.granosTotales), caudal: ent(e.caudal), colores: e.colores.map((n) => ent(n)),
       red, estratos: { abiertos: ent(e.estratos.abiertos, ESTRATOS), s: e.estratos.s.map(pos), perm: e.estratos.perm.map((n) => ent(n)), pres: e.estratos.pres.map((n) => ent(n)) },
-      relicario, automat: leerAutomat(e.automat), cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
+      relicario, automat: leerAutomat(e.automat), defectos: leerDefectos(e.defectos), cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
       mutaciones: Object.fromEntries(MUTACIONES.map((m) => [m, ent(e.mutaciones[m], maxMutacion(conRed))])) as State['mutaciones'],
       coloresDesbloqueados: ent(e.coloresDesbloqueados, CFG.colores.length), infinitos,
       tiempoTotal: pos(e.tiempoTotal), tiempoCorrida: pos(e.tiempoCorrida), tiempoInfinito: pos(e.tiempoInfinito),
@@ -131,6 +131,14 @@ export function deserializar(texto: string): Partida {
 }
 
 /** Bloque 10: la configuración de los autocompradores, con modos que existen e intervalos y esperas posibles. */
+/** Solo Defectos que existen, sin repetir; uno en curso que ya estaba completo no cuenta. */
+function leerDefectos(x: State['defectos']): State['defectos'] {
+  const ok = (id: unknown): id is string => (DEFECTOS as readonly unknown[]).includes(id)
+  const completos = [...new Set(x.completos.filter(ok))]
+  const reintento = Object.fromEntries(Object.entries(x.reintento).filter(([k, v]) => ok(k) && typeof v === 'number' && Number.isFinite(v)))
+  return { completos, actual: ok(x.actual) && !completos.includes(x.actual) ? x.actual : '', reintento }
+}
+
 function leerAutomat(x: State['automat']): State['automat'] {
   const base = estadoInicial().automat
   const min = CFG.automatizacion.intervalo_s

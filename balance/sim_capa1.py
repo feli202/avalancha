@@ -51,7 +51,8 @@ def ring(k): x, y = POS[k]; return abs(x) + abs(y)
 def red_cost(k, lvl):
     r = ring(k); base = RED[k].get('costo_base_log10', L1['red']['costo_anillo_log10'][r])
     return precio(base + L1['red']['paso_nivel_log10'][r] * lvl)
-DEFS = [k for k in L1['defectos'] if k not in ('abandono_min', 'requisitos')]
+DFX = L1['defectos']
+DEFS = [k for k, v in DFX.items() if isinstance(v, dict) and 'meta_log10' in v]
 DEF_REQ = {'vacancia': ('defectos', 1), 'dislocacion': ('defectos', 2), 'macla': ('defectos', 3), 'impureza': ('defectos', 4),
            'fatiga': ('defectos2', 1), 'frontera': ('defectos2', 2), 'inclusion': ('defectos2', 3), 'vidrio': ('defectos2', 4)}
 
@@ -106,10 +107,10 @@ class Player:
         R = L1['relicario']; noRed = False  # vidrio: sin Relicario, Eco ni Escarcha (la Red sigue)
         m = dict(extraV=0.0, dAdd=0.0, cBonus=0.0, cascMax=0, mutMax=0, mutEff=0.0, keep=0, hito=4.0, ringBase=1.10,
                  colorS=1.0, presion=0.0, eco=0.0, cauce=0.0, cauceX=0.0)
-        if 'vacancia' in s.done: m['hito'] = 6.0
-        if 'dislocacion' in s.done: m['ringBase'] = 1.12
-        if 'macla' in s.done: m['colorS'] = 0.9
-        if 'impureza' in s.done: m['cBonus'] += 0.1
+        if 'vacancia' in s.done: m['hito'] = DFX['vacancia']['recompensa_hito_mult']
+        if 'dislocacion' in s.done: m['ringBase'] = DFX['dislocacion']['recompensa_anillo_mult']
+        if 'macla' in s.done: m['colorS'] = DFX['macla']['recompensa_color_s_x']
+        if 'impureza' in s.done: m['cBonus'] += DFX['impureza']['recompensa_cascada_c']
         if 'frontera' in s.done: m['dAdd'] += 0.2
         if not noRed:
             m['dAdd'] += s.v('compactacion', 'densidad')
@@ -155,7 +156,7 @@ class Arena:
     def D(s):
         if s.defect == 'frontera': return 1.0
         d = 1 + L0['compresion']['densidad_por_nivel'] * s.tier + s.m['dAdd'] + s.P.v('compactacion2', 'densidad_por_anillo') * s.rings()
-        return 0.85 * d if s.defect == 'macla' else d
+        return DFX['macla']['densidad_x'] * d if s.defect == 'macla' else d
     def flow(s): return CAU['granos_base'] * 2 ** s.Lf * 3 ** (s.mut[0] * (1 + s.m['mutEff']))
     def lF(s): return CAU['granos_base'] * 0 + s.Lf * 0.30103 + s.mut[0] * (1 + s.m['mutEff']) * 0.4771
     def rings(s):
@@ -164,12 +165,12 @@ class Arena:
         return r
     def casc_c(s):
         c = s.Lk * CAS['c_por_nivel'] + (0.03 * s.mut[3] if s.Lk else 0) + (s.m['cBonus'] if s.Lk else 0)
-        return 0.0 if s.defect == 'dislocacion' else c
+        return DFX['dislocacion']['cascada_x'] * c if s.defect == 'dislocacion' else c
     def logV_parts(s):
         h = L0['hito_colores']
         col = 0.0
         for i, c in enumerate(COLS):
-            if s.defect == 'vacancia' and i == 3: continue
+            if s.defect == 'vacancia' and i == DFX['vacancia']['color_sin_efecto']: continue  # se compra, pero no suma
             col += s.Lc[i] * l10(c['mult_por_nivel']) + (s.Lc[i] // h['cada']) * l10(s.m['hito'])
         cauce = col * s.m['cauceX']
         rg = s.rings() * l10(s.m['ringBase'] + 0.02 * s.mut[2])
@@ -177,10 +178,10 @@ class Arena:
         cs = max(0.0, s.casc_c() * (CAS['exp_G'] * lg - CAS['exp_penal']))
         mu = s.mut[1] * (1 + s.m['mutEff'])
         pres = s.m['presion']
-        if s.defect == 'dislocacion': pres *= 0.5
+        if s.defect == 'dislocacion': pres *= DFX['dislocacion']['presion_x']
         if s.defect == 'inclusion': pres = 0.0
         if s.defect == 'macla': mu = 0.0
-        if s.defect == 'impureza': col *= 0.5; cauce *= 0.5
+        if s.defect == 'impureza': col *= DFX['impureza']['colores_x']; cauce *= DFX['impureza']['colores_x']
         esc = 0.0
         P = s.P
         if P.esc_on and s.defect != 'vidrio':
@@ -190,7 +191,7 @@ class Arena:
         if s.lG == NEG: return NEG
         lg = s.lG
         tpg = l10(L0['K_derrumbes_por_grano']) + lg
-        if s.defect == 'impureza': tpg = min(tpg, 4.0)
+        if s.defect == 'impureza': tpg = min(tpg, DFX['impureza']['derrumbes_tope_log10'])
         r = s.lF() + tpg + s.D() * sum(s.logV_parts().values())
         P = s.P
         if P.esc_on and s.defect != 'vidrio':
@@ -210,7 +211,7 @@ class Arena:
         while n < 200:
             opts = [('f', s.flow_cost())] if 'f' in which else []
             for i in range(4):
-                if i < s.unl_colors and str(i) in which and not (s.defect == 'vacancia' and i == 3):
+                if i < s.unl_colors and str(i) in which and not (s.defect == 'vacancia' and i == DFX['vacancia']['color_sin_efecto']):
                     opts.append((i, s.color_cost(i)))
             opts = [o for o in opts if o[1] <= s.E]
             if not opts: return
@@ -236,6 +237,9 @@ class Arena:
                 if c <= s.E - L1['autocompradores_umbral_log10'] and (best is None or c < best[1]): best = (j, c)
             if not best: return
             s.E = sublog(s.E, best[1]); s.mut[best[0]] += 1
+
+CURVA = None      # probe.py: lista donde anotar (t, logE) de la corrida
+ABANDONA = True   # probe.py lo apaga para medir la curva entera
 
 def play_arena(P, defect, check, t_now, stats):
     """Una corrida de la Arena (de Infinito a Infinito). Devuelve (duracion_s, logE_final, cumplio_meta)."""
@@ -295,7 +299,10 @@ def play_arena(P, defect, check, t_now, stats):
         # metas
         if defect and A.E >= meta:
             return t, A, True
-        if not broken:
+        if CURVA is not None: CURVA.append((t, A.E))
+        if defect:  # el Infinito (a mano o automatico) no saca de un Defecto: solo la meta o abandonar
+            if not broken: A.E = min(A.E, INF)
+        elif not broken:
             if A.E >= INF and (human or mem >= 4):
                 A.E = min(A.E, INF); return t, A, False if defect else False
         else:
@@ -305,10 +312,10 @@ def play_arena(P, defect, check, t_now, stats):
                 if rate > best_rate: best_rate, best_t = rate, t
                 elif (human or mem >= 4) and rate < best_rate - 0.01 and t - best_t > 5:
                     return t, A, False
-        if defect:  # una persona abandona el Defecto cuando deja de avanzar 2 minutos
+        if defect and ABANDONA:  # una persona abandona el Defecto cuando deja de avanzar 2 minutos
             prog = A.tier * 1e5 + A.maxE
             if prog > getattr(A, 'plateau_E', NEG) + 0.5: A.plateau_E, A.plateau_t = prog, t
-            elif t - A.plateau_t > 120: return t, A, False
+            elif t - A.plateau_t > 120 and meta - A.maxE > 2: return t, A, False  # a 2 ordenes de la meta, espera
         if t >= cap_t:
             return t, A, False
 
@@ -316,9 +323,9 @@ def soft(lc):
     S, k = L1['cristales']['blando_desde_log10'], L1['cristales']['blando_factor']
     return lc if lc <= S else S + (lc - S) * k
 
-def infinity_reward(P, A, defect):
+def infinity_reward(P, A, defect, ganado=False):
     E = min(A.E, INF) if not P.broken() else A.E
-    if E < INF: return NEG
+    if E < INF and not ganado: return NEG  # ganar un Defecto con meta < 1e308 da los Cristales de un Infinito sin romper
     lc = soft(P.crys_mult(defect) + L1['cristales']['base_log10'] + (max(0.0, E - INF) / P.Q()) ** L1['cristales']['beta'])
     if lc < 6: lc = l10(max(1, math.floor(10 ** lc)))
     return lc
@@ -427,8 +434,8 @@ def simulate(check=15.0, tmax=24 * 3600, verbose=False, horizon_end=True):
         if P.ninf == 2: mark(t, 'segundo Infinito')
         if defect:
             if ok: P.done.add(defect); mark(t, f'Defecto {defect}')
-            else: P.retry_at[defect] = P.Ctot + 1.5
-        lc = infinity_reward(P, A, defect)
+            else: P.retry_at[defect] = P.Ctot + DFX['reintento_cristales_totales_log10']
+        lc = infinity_reward(P, A, defect, ok)
         if lc > NEG:
             P.C = addlog(P.C, lc); P.Ctot = addlog(P.Ctot, lc)
         pick_relic(P, A)

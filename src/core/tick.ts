@@ -2,7 +2,8 @@ import Decimal from 'break_infinity.js'
 import { CFG, MUTACIONES } from './config'
 import { CFG1 } from './config1'
 import { crecerEstratos } from './estratos'
-import { infinito, infinitoAutoListo } from './infinito'
+import { colorSinEfecto, enDefecto, metaAlcanzada } from './defectos'
+import { ganarDefecto, infinito, infinitoAutoListo } from './infinito'
 import { elegirSola } from './relicario'
 import { autoActivo, comprimir, puedeComprimir } from './compress'
 import { INFINITO, caudal, congelada, enInfinito, energiaPorGrano, infinitoRoto, produccion } from './formulas'
@@ -17,7 +18,7 @@ export function autocomprar(s: State): State {
     cantidad[k] === 0 ? comprarMax(t, id) : cantidad[k] === 1 ? comprar(t, id) : comprarN(t, id, cantidad[k])
   if (toca('caudal')) s = compra(s, 'caudal', 'caudal')
   CFG.colores.forEach((c, i) => {
-    if (toca(c.id)) s = compra(s, c.id, `color${i}`)
+    if (toca(c.id) && !colorSinEfecto(s, i)) s = compra(s, c.id, `color${i}`) // Vacancia: Violeta a mano sí, solo no
   })
   // Memoria nv2 y nv3 (SPEC_CAPA1 §6.3): Cascada y Mutaciones automáticas, lo más barato primero y dejando un margen
   // de Energía (como sim_capa1.py), para no frenar a los colores.
@@ -51,7 +52,9 @@ function comprimirSola(s: State, dt: number): State {
 export function tick(s: State, dt: number): State {
   // Con Memoria nv4 y el interruptor, el Infinito se hace solo cuando lo diga su modo (bloque 10 y C6). Elige su reliquia
   // con la regla (SPEC_CAPA1 §5). Sin Romper, la economía queda congelada en 1e308 hasta el Infinito.
-  if (enInfinito(s) && autoActivo(s, 'infinito') && infinitoAutoListo(s)) return elegirSola(infinito(s))
+  // Dentro de un Defecto el Infinito automático no corre: solo termina en la meta (ganar, con la misma regla de reliquia).
+  if (!enDefecto(s) && enInfinito(s) && autoActivo(s, 'infinito') && infinitoAutoListo(s)) return elegirSola(infinito(s))
+  if (metaAlcanzada(s)) return autoActivo(s, 'infinito') ? elegirSola(ganarDefecto(s)) : ganarDefecto(s)
   if (congelada(s)) return s
   const suma = s.energia.add(produccion(s).mul(dt))
   const energia = infinitoRoto(s) ? suma : Decimal.min(INFINITO, suma) // sin Romper, se frena en 1e308

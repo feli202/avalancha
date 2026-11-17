@@ -833,7 +833,7 @@ Todos: texto grande desde el primer cuadro, dentro de la zona segura (arriba, ce
 
 Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `balance/sim_capa1.py`.
 
-**Hito actual: C7 (sin empezar). C6 terminado el 2026-11-16 (ver abajo). C5: falta probarlo en un celular de verdad.**
+**Hito actual: C8 (sin empezar). C7 terminado el 2026-11-16 (ver abajo; falta medir fps con los Defectos). C5: falta probarlo en un celular de verdad.**
 
 ## Correcciones de la Capa 1 (9 sesiones)
 
@@ -1108,7 +1108,7 @@ Solo interfaz: no se tocó `src/core/`, `balance/` ni las escenas WebGL.
 - [x] C4 — Estratos: lógica (`s_k`, Presión, compras) + interfaz 2D provisoria
 - [x] C5 — Estratos: escena three.js descendente + optimización
 - [x] C6 — Romper el Infinito + fórmula de Cristales + Infinito automático óptimo
-- [ ] C7 — Defectos 1–4 + visuales
+- [x] C7 — Defectos 1–4 + visuales
 - [ ] C8 — Test de balance de la 1.1 + offline + estadísticas
 - [ ] C9 — Pulido y auditoría 1.1 → publicar
 
@@ -1683,3 +1683,55 @@ No hace falta migración: los precios se calculan, no se guardan. Un guardado qu
 - El +3 de `mult` por completar Vidrio y el `mult = 0` dentro del Defecto Vidrio quedan para C7/C12 (Defectos).
 - El indicador Y/min usa `tiempoInfinito`, que empieza en cada Infinito (no en cada Compresión).
 
+## C7 — Defectos 1–4 (2026-11-16)
+
+### Metas y requisitos, medidos de nuevo
+
+Antes de programar: el simulador sacaba al bot de cada Defecto por el "Infinito óptimo" a los ~12 s, así que las metas viejas (200 / 1250 / 1800 / 2900) se ganaban en menos de un minuto. Con la regla nueva (dentro de un Defecto el Infinito no corre), `probe.py` mide la curva entera con el estado del jugador a la hora de la tabla de §2 (la foto sale del simulador de antes de este cambio, para que sea "la hora de la tabla actual"):
+
+| Defecto | Estado de | 1 min | 20 min | 30 min | 40 min | Meta vieja → nueva |
+|---|---|---|---|---|---|---|
+| Vacancia | 2,17 h (al entrar) | 215 | 235 | 237 | 238 | 200 → **237** |
+| Dislocación | 3,53 h | 1340 | 1346 | 1347 | 1348 | 1250 → **1347** |
+| Macla | 4,46 h | 1810 | 1816 | 1816 | 1817 | 1800 → **1816** |
+| Impureza | 5,53 h | 3463 | 3470 | 3471 | 3472 | 2900 → **3471** |
+
+**Ojo (revisar):** más allá de 1e308 la curva dentro de un Defecto es casi plana (≈ +1 orden cada 10 min): la ventana de 20–40 min es de 1–2 órdenes. Lo que decide un Defecto es el estado con que se entra, no el tiempo adentro. Si se quiere que los 30 min "se jueguen", hace falta una mecánica (por ejemplo, que algo crezca dentro del Defecto), no otra meta. La Vacancia, antes de Romper, sí tiene curva.
+
+Requisitos: sin cambios (Defectos nv1–4; 0 / 3 / 5 / 7 estratos). Siguen funcionando como compuertas: la Vacancia se juega antes de Romper; Dislocación entra apenas se abre el 3.er estrato (y así exige el Infinito roto, que su regla sobre la Presión necesita); Impureza, apenas se abre el 7.º.
+
+`sim_capa1.py`: dentro de un Defecto el Infinito no saca (sin romper, la Energía se frena en 1e308); ganar con meta < 1e308 da los Cristales de un Infinito sin romper; el bot espera si está a ≤ 2 órdenes de la meta. Las reglas y recompensas se leen de `config_capa1.json` (antes estaban escritas a mano en el sim). Tabla nueva (`--robustez`, en rango): Romper 2,46 h, Vacancia 2,53 h, Dislocación 3,78 h, Macla 4,62 h, Impureza 5,67 h, **fin 1.1 6,75 h**, **fin de la capa 14,29 h**; hueco máximo 30,6 / 30,8 / 40,0 min. Actualizado en `SPEC_CAPA1.md` §2, §8, §11 y §17. Las metas 5–8 (C12) no se volvieron a medir.
+
+### Qué se hizo
+
+| Archivo | Contenido |
+| --- | --- |
+| `balance/config_capa1.json` | Metas nuevas; números de cada regla (`color_sin_efecto`, `cascada_x`, `presion_x`, `sin_mutaciones`, `densidad_x`, `derrumbes_tope_log10`, `colores_x`), de cada recompensa (`recompensa_*`) y `reintento_cristales_totales_log10` (1,5). |
+| `balance/probe.py` | Reescrito: foto a la hora pedida, saca ese Defecto y los siguientes de los completos y juega sin meta ni abandono; imprime log10 E a 1/5/10/20/30/40 min. |
+| `balance/ref_defectos.py`, `tests/fixtures/defectos_sim.json` | Una Arena fija del simulador en cada Defecto y con cada recompensa: `Arena.D`, `logV_parts` y `lograte`. |
+| `src/core/defectos.ts` | Qué cambia cada regla y cada recompensa, `falta` (requisitos, en orden), `puedeEntrar`, `metaAlcanzada`, `conReintento`. |
+| `src/core/formulas.ts`, `shop.ts` | Las fórmulas consultan `defectos.ts`: Violeta sin efecto, Cascada × 0, Presión × 0,5, sin Mutaciones, Densidad × 0,85, tope de derrumbes por grano, colores ^0,5; hito ×6, anillo ×1,12, término cuadrático ×0,9, +0,1 a c. |
+| `src/core/infinito.ts` | `reiniciarArena` (la comparten el Infinito, entrar y abandonar), `entrarDefecto`, `abandonarDefecto`, `ganarDefecto`. `infinito()` no hace nada dentro de un Defecto. |
+| `src/core/tick.ts` | El Infinito automático no corre en un Defecto; al llegar a la meta se gana (con `elegirSola` si el Infinito automático está prendido). El autocomprador de Violeta no compra en la Vacancia. |
+| `src/core/red.ts` | Cristalografía II cuenta los Defectos completos. |
+| `src/core/state.ts`, `guardado/guardado.ts` | `defectos: { completos, actual, reintento }`; al cargar se descartan ids que no existen. Sin versión nueva (lo completa `completar`). |
+| `src/ui/Defectos.svelte` | La pantalla: los cuatro en una cadena de escarcha, cada uno con su red cristalina rota (un átomo que falta, media red corrida, la red reflejada, un átomo ajeno); ficha de placa con regla, meta, requisito y recompensa; gema Entrar (con lo que falta) o Abandonar (con lo que cambia: adentro y, tachado, afuera). Sugerencia "volvé con X Cristales totales" después de abandonar. |
+| `src/ui/defectos.ts` | Textos de regla y recompensa con los números de config, y `cambios(s)`: los multiplicadores del Defecto en curso con y sin la regla. |
+| `src/ui/App.svelte` | En la Arena, debajo de los contadores: "Defecto · X", la meta, los multiplicadores que cambia y Abandonar. El botón de abajo muestra la meta del Defecto en vez del Infinito. |
+| `src/ui/Tienda.svelte` | Vacancia: la muestra de Violeta agrietada y su nivel y efecto tachados. |
+| `src/render/lienzo.ts`, `pilaVisual.ts`, `Pila.svelte` | `u_defecto` en la pasada a pantalla: grieta con luz violeta (Vacancia), la mitad de arriba corrida 14 celdas (Dislocación), espejo en un plano inclinado (Macla), manchas apagadas (Impureza). |
+| `src/ui/juego.svelte.ts` | `entrarDefectoYa`, `abandonarDefectoYa`; aviso al ganar; guía `c1_defectos` una sola vez al tener Defectos nv1 (sale al mirar su pantalla); el botón de Infinito no hace nada en un Defecto. En desarrollo, `juego` queda en `window`. |
+| `src/ui/ComoFunciona.svelte` | Página de Defectos: una fila por Defecto (regla → recompensa, meta, ✓). Las fórmulas de colores y anillos usan el hito, el término cuadrático y la base con sus recompensas. |
+| `src/ui/Debug.svelte` | "Lista para los Defectos (mitad de la 1.1)". |
+
+### Verificación
+- `vitest` 277/277 (24 nuevos en `tests/defectos.test.ts`: las 10 combinaciones contra el simulador, cada regla, cada recompensa, requisitos, entrar/abandonar/ganar, el Infinito automático que no saca, Cristalografía II y el guardado). `svelte-check` 0 errores.
+- Juego abierto (1366×768 y 390×844, sin scroll de página): entrar a Dislocación (la Energía pasa 1e308 y el Infinito automático no la saca; el cartel muestra Cascada ×1 y la Presión a la mitad), abandonar (sin perder Cristales, con la sugerencia ×30), ganar Vacancia (queda superada, da Cristales y la reliquia la elige la regla). Las cuatro deformaciones de la pila y Violeta agrietado, vistos.
+- **No medí fps**: el panel del navegador quedó oculto (la página corre en segundo plano). El cambio en el shader son unas pocas operaciones por píxel y solo con un Defecto en curso.
+
+### Decisiones (revisar)
+- **Macla** apaga el multiplicador de la Mutación de Colores (como `logV_parts`) además de sacar las Mutaciones de la tienda; como entrar reinicia la corrida, en el juego es lo mismo.
+- **Vacancia**: el autocomprador de Violeta no compra dentro del Defecto (el bot del simulador tampoco); a mano sí se puede.
+- **Ganar con la meta por debajo de 1e308** (Vacancia) da los Cristales de un Infinito sin romper; antes el simulador no daba nada.
+- El aviso "+X Cristales" puede decir +0 cuando lo ganado es mucho menor que los Cristales totales (resta de `Decimal`); ya pasaba con el Infinito automático.
+- El estado de debug "Lista para los Defectos" es tan fuerte que, desde cero, hace un Infinito automático por tick: sirve para entrar, no para jugar adentro.
