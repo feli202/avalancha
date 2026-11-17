@@ -1,6 +1,6 @@
 <script lang="ts">
   // Interfaz principal (SPEC 6.4). Cada parte aparece recién cuando juego.vistos lo dice (SPEC 5).
-  import { anillos, autoDisponible, cristalesAlInfinito, densidad, enInfinito, multAnillos, produccion, puedeComprimir } from '../core'
+  import { anillos, autoDisponible, congelada, cristalesAlInfinito, densidad, enElOptimo, enInfinito, infinitoRoto, multAnillos, produccion, puedeComprimir } from '../core'
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import Ayuda from './Ayuda.svelte'
@@ -101,7 +101,7 @@
 
   <header class="izq">
     <span class="etiqueta">{txt.energia}</span>
-    {#if alInf}<span class="energia infinito">{txt.infinito}</span>{:else}{#key juego.primera}<span use:ayuda={ayudaEnergia} class="energia num" class:salta={juego.primera} aria-hidden="true">{formato(s.energia)}</span>{/key}<span class="sr">{hablado(formato(s.energia))}</span>{/if}
+    {#if congelada(s)}<span class="energia infinito">{txt.infinito}</span>{:else}{#key juego.primera}<span use:ayuda={ayudaEnergia} class="energia num" class:salta={juego.primera} aria-hidden="true">{formato(s.energia)}</span>{/key}<span class="sr">{hablado(formato(s.energia))}</span>{/if}
     {#if v.tienda}<span class="linea num aparece" use:ayuda={() => ayudaProduccion(juego.s)}><b class="ambar" aria-hidden="true">+{formato(produccion(s))}</b><span class="sr">{hablado(formato(produccion(s)))}</span> {txt.energiaPorSegundo}</span>{/if}
     {#if s.compresiones > 0}
       <span class="linea num aparece" use:ayuda={() => ayudaDensidad(juego.s)}>{txt.densidad} <b>^{formatoMult(densidad(s))}</b></span>
@@ -163,7 +163,11 @@
             <span class="meta num">
               {#if !comp.final}{txt.compresion(s.compresiones + 1)}{' · '}{/if}{txt.meta(comp.meta)} · <b>{txt.progreso(comp.p)}</b>
               {#if !lista && juego.eta !== null} · {txt.eta(txt.duracion(juego.eta))}{/if}
-              {#if s.infinitos > 0 && (comp.final || alInf)} · <b class="hielo">{txt.cristal.ganados(cristalesAlInfinito(s))}</b>{/if}
+              {#if s.infinitos > 0 && alInf && infinitoRoto(s)}
+                <!-- C6 (§4): con el Infinito roto, cuánto daría y a qué ritmo; brilla cuando el ritmo deja de subir. -->
+                {@const c = cristalesAlInfinito(s)}
+                <b class="hielo cristales-inf" class:optimo={enElOptimo(s)} data-guia="c1_romper">{txt.cristal.alInfinito(formato(c), formatoMult(c.mul(60 / Math.max(1, s.tiempoInfinito))))}</b>
+              {:else if s.infinitos > 0 && (comp.final || alInf)} · <b class="hielo">{txt.cristal.ganados(formato(cristalesAlInfinito(s)))}</b>{/if}
             </span>
           </button>
           {#if autoDisponible(s, 'compresion_auto') && !comp.final}
@@ -321,6 +325,11 @@
   .fin .izq { animation: irse 0.8s 2.2s ease-in forwards; }
   @keyframes irse { to { opacity: 0; visibility: hidden; } }
   .hielo { color: var(--hielo); }
+  /* C6: el indicador de Cristales con el Infinito roto; en el óptimo (§4) brilla. */
+  .cristales-inf { display: block; transition: text-shadow 0.4s; }
+  .cristales-inf.optimo { animation: brillo-optimo 1.6s ease-in-out infinite; }
+  .quieto .cristales-inf.optimo { animation: none; text-shadow: 0 0 0.6rem var(--hielo); }
+  @keyframes brillo-optimo { 50% { text-shadow: 0 0 0.8rem var(--hielo), 0 0 0.2rem var(--hielo); } }
 
   .destello { position: fixed; inset: 0; z-index: 20; background: #fff; pointer-events: none; opacity: 0; animation: destello 0.6s ease-out; }
   .destello.quieto { animation-duration: 0.9s; animation-name: destelloSuave; }

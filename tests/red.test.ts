@@ -113,7 +113,7 @@ describe('Red', () => {
     expect(disponibles(c)).toContain('cascada')
     const eco = conRed({ eco: 1 }, { granos: 100, cristalesTotales: new Decimal(100) })
     expect(valor(eco).div(valor({ ...eco, red: estadoInicial().red })).log10()).toBeCloseTo(0.5 * 2)
-    expect(cristalesAlInfinito(conRed({ cristalografia: 2 }, { infinitos: 1 }))).toBe(Math.floor(10 ** (1 + CFG1.cristales.base_log10)))
+    expect(cristalesAlInfinito(conRed({ cristalografia: 2 }, { infinitos: 1 })).toNumber()).toBe(Math.floor(10 ** (1 + CFG1.cristales.base_log10)))
   })
 
   it('nodos de la corrección 6: Compactación II, Sedimentación nv4, Eco II y Cristalografía II', () => {
@@ -132,7 +132,7 @@ describe('Red', () => {
     const eco = conRed({ eco: 1, eco2: 4 }, { granos: 100, cristalesTotales: new Decimal(100) })
     expect(valor(eco).div(valor({ ...eco, red: estadoInicial().red })).log10()).toBeCloseTo(0.5 * 2, 9)
     // Cristalografía II crece con los Defectos completos; sin Defectos (llegan en C7) no suma.
-    expect(cristalesAlInfinito(conRed({ cristalografia2: 4 }, { infinitos: 1 }))).toBe(Math.floor(10 ** CFG1.cristales.base_log10))
+    expect(cristalesAlInfinito(conRed({ cristalografia2: 4 }, { infinitos: 1 })).toNumber()).toBe(Math.floor(10 ** CFG1.cristales.base_log10))
   })
 
   it('el guardado conserva la Red y no recorta una Cascada subida por Cascada+', () => {

@@ -1,7 +1,9 @@
 // El bucle del juego (src/ui/juego.svelte.ts), sin DOM.
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CFG, INFINITO, estadoInicial, infinito } from '../src/core'
-import { guardarYa, guiaEnSuLugar, juego, partidaActual, reemplazarPartida, revelar, tomarCandado, yaVisto } from '../src/ui/juego.svelte'
+// formato lee los ajustes, que tocan el DOM al cargar.
+vi.mock('../src/ui/ajustes.svelte', () => ({ ajustes: { notacion: 'cientifica' } }))
+const { guardarYa, guiaEnSuLugar, juego, partidaActual, reemplazarPartida, revelar, tomarCandado, yaVisto } = await import('../src/ui/juego.svelte')
 
 afterEach(() => vi.useRealTimers())
 

@@ -4,7 +4,10 @@ import crudo from '../../balance/config_capa1.json'
 import type { Nodo } from './red'
 
 export interface Config1 {
-  cristales: { primer_infinito: number; base_log10: number }
+  cristales: {
+    primer_infinito: number; base_log10: number; Q_ordenes_por_x10: number; beta: number
+    blando_desde_log10: number; blando_factor: number
+  }
   relicario: {
     tipos: string[]; casilleros: number; espera_eleccion_s: number
     cauce_colores_pct_por_nivel: number; cascada_c_por_nivel: number; mutaciones_efecto_por_nivel: number

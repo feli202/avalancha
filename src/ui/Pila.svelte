@@ -4,7 +4,7 @@
   import { CFG, anillos, caudal, densidad, hayEstratos, multAnillos, multColor, punado } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS, PilaVisual, brillo } from '../render/pilaVisual'
   import { txt } from '../strings'
-  import { formatoMult } from './formato'
+  import { formato, formatoMult } from './formato'
   import { ajustes } from './ajustes.svelte'
   import { COLORES_DALTONISMO, EFECTOS, FONDOS, PALETAS, css } from '../render/paletas'
   import { contarAvalancha, muestraAvalancha } from '../guardado/historial'
@@ -185,7 +185,7 @@
       cineAntes = juego.cinematica
       if (s.infinitos > infAntes && infAntes > 0) {
         if (aMano) sonido.hito('milestone')
-        efecto({ texto: txt.cristal.ganados(s.cristales.sub(cristalesAntes).toNumber()) })
+        efecto({ texto: txt.cristal.ganados(formato(s.cristales.sub(cristalesAntes))) })
       }
       cristalesAntes = s.cristales
       infAntes = s.infinitos

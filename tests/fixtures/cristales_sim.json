@@ -1,0 +1,44 @@
+[
+ {
+  "nombre": "sin romper",
+  "red": {
+   "cristalografia": 1
+  },
+  "E": 400.0,
+  "lc": 0.8450980400142568
+ },
+ {
+  "nombre": "roto",
+  "red": {
+   "ruptura": 2
+  },
+  "E": 1500.0,
+  "lc": 9.294968666666668
+ },
+ {
+  "nombre": "sobre el blando",
+  "red": {
+   "ruptura": 4,
+   "cristalografia": 4
+  },
+  "E": 8000.0,
+  "lc": 51.9884906
+ },
+ {
+  "nombre": "chico",
+  "red": {
+   "ruptura": 1
+  },
+  "E": 600.0,
+  "lc": 2.294466226161593
+ },
+ {
+  "nombre": "ruptura II",
+  "red": {
+   "ruptura": 1,
+   "ruptura2": 4
+  },
+  "E": 1000.0,
+  "lc": 5.087980069191666
+ }
+]

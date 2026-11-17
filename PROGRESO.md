@@ -833,7 +833,7 @@ Todos: texto grande desde el primer cuadro, dentro de la zona segura (arriba, ce
 
 Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `balance/sim_capa1.py`.
 
-**Hito actual: C6 (sin empezar). C5 terminado el 2026-11-15; falta probarlo en un celular de verdad (ver abajo).**
+**Hito actual: C7 (sin empezar). C6 terminado el 2026-11-16 (ver abajo). C5: falta probarlo en un celular de verdad.**
 
 ## Correcciones de la Capa 1 (9 sesiones)
 
@@ -1107,7 +1107,7 @@ Solo interfaz: no se tocó `src/core/`, `balance/` ni las escenas WebGL.
 - [x] C3 — Relicario: ofertas con semilla, fusión, engarces, efectos
 - [x] C4 — Estratos: lógica (`s_k`, Presión, compras) + interfaz 2D provisoria
 - [x] C5 — Estratos: escena three.js descendente + optimización
-- [ ] C6 — Romper el Infinito + fórmula de Cristales + Infinito automático óptimo
+- [x] C6 — Romper el Infinito + fórmula de Cristales + Infinito automático óptimo
 - [ ] C7 — Defectos 1–4 + visuales
 - [ ] C8 — Test de balance de la 1.1 + offline + estadísticas
 - [ ] C9 — Pulido y auditoría 1.1 → publicar
@@ -1330,7 +1330,7 @@ En los dos casos con Caudal fijo el script reemplaza `Arena.lF` por una constant
 
 1. **Costos redondeados para arriba a Cristales enteros** cuando son menores a 1e6 (10^0,15 = 1,41 → 2). El simulador cobra el costo exacto en log10. Anillo 1: 1/2/2/3 en vez de 1/1,41/2/2,82; anillo 2: 40/80/159/317. Diferencia chica, no corrí el simulador con esto.
 2. **Cascada y Mutaciones automáticas no tienen interruptor** (los autocompradores de la Capa 0 sí). Compran después de Caudal y colores, que casi siempre se gastan la Energía antes: igual que el orden del simulador.
-3. **El Infinito automático es inmediato** al llegar a 1e308. El "en el óptimo / al llegar a X Cristales" de §4 es de C6 (con el Infinito roto).
+3. ~~**El Infinito automático es inmediato** al llegar a 1e308.~~ Hecho en C6: con el Infinito roto, "en el óptimo" o "al llegar a X Cristales".
 4. **Efectos que esperan su hito:** Estratos (flujo), Defectos, Engarces, Presión, Inercia y Ruptura nv1 (Romper el Infinito) solo guardan el nivel y muestran el texto; los lee C3, C4, C6 y C7 con `efectoRed`. Ya actúan: Memoria, Sedimentación, Eco, Compactación, Cascada+, Mutación+, Cristalografía y los ×10 de Ruptura nv2+.
 5. **Nombres en inglés** de la Red (Lattice, Echo, Settings…) son provisorios.
 6. Aviso "+N Cristales" también para el Infinito automático.
@@ -1656,3 +1656,30 @@ No hace falta migración: los precios se calculan, no se guardan. Un guardado qu
 - Con el redondeo, algunos precios seguidos quedan iguales (Caudal nv2 y nv3 cuestan 1.000) y el anillo 1 de la Red cuesta 1 Cristal por nivel (antes 1, 2, 2, 3); el anillo 2 cuesta 100, 100, 100, 1000 (antes 40…317).
 - El jugador de cada 5 min queda con un hueco de 40,0 min en la Capa 1 (antes 35), justo en el límite. El de referencia, 30,8.
 - La gema "∞" usa colores fijos de hielo, no una variable CSS de la Capa 1 (no hay una de cian suelta).
+
+## C6 — Romper el Infinito, fórmula de Cristales, Infinito automático en el óptimo (2026-11-16)
+
+| Archivo | Contenido |
+| --- | --- |
+| `src/core/formulas.ts` | `infinitoRoto` (Ruptura nv1, se mudó desde `infinito.ts`) y `congelada`: la economía solo se frena en 1e308 sin Romper. `enInfinito` sigue siendo "llegó a 1e308, se puede hacer Infinito". |
+| `src/core/tick.ts`, `shop.ts`, `compress.ts`, `offline.ts` | Usan `congelada` donde antes `enInfinito` frenaba todo. Con el Infinito roto la Energía (tick y Puñado) pasa de 1e308 y se sigue comprando; el softcap de precios ya estaba. |
+| `src/core/infinito.ts` | `cristalesAlInfinito` devuelve `Decimal`: `lc = mult + 0,35 + max(0, E − INF)/Q` (elevado a `beta`), blando sobre 1e50, enteros debajo de 1e6, `Q = 150 − Ruptura II` (`ordenesQ`). `enElOptimo`: el ritmo `10^lc / t` dejó de subir, `(P/E) × t × k ≤ Q`. `infinitoAutoListo` con tres modos: `llegar`, `optimo`, `cristales`. |
+| `src/core/config1.ts`, `state.ts`, `guardado/guardado.ts` | Tipos de las constantes de Cristales; modo `optimo` (el guardado lo acepta; sin migración). |
+| `src/ui/App.svelte` | Con el Infinito roto y la Energía pasada de 1e308: "Cristales al hacer Infinito: X (Y/min)" en el botón de Infinito, que brilla en el óptimo (fijo con "reducir destellos"). La Energía se ve como número, no "∞". |
+| `src/ui/Automatizacion.svelte` | El modo "En el óptimo" se suma a los del Infinito automático (sale de las cadenas) con su nota. |
+| `src/ui/juego.svelte.ts` | Guía nueva `c1_romper` (la presentación de Romper el Infinito): sale en la Arena la primera vez que la Energía pasa 1e308 con el Infinito roto y señala el indicador. Dice que la Energía sigue de largo, que brilla en el óptimo, que arriba de 1e308 las mejoras se encarecen (∞) y que en la Red ya se abren los Estratos. |
+| `src/ui/ComoFunciona.svelte` | Sección "Romper el Infinito": fórmula con los valores de ahora, el blando y el precio con softcap. |
+| `src/strings/es.ts`, `en.ts` | Textos de lo anterior; el nodo Ruptura nv1 menciona Estratos y softcap. `cristal.ganados` recibe el número ya formateado (los Cristales pueden pasar de 1e308). |
+| `balance/ref_cristales.py`, `tests/fixtures/cristales_sim.json`, `tests/cristales.test.ts` | 5 casos contra `infinity_reward` de `sim_capa1.py` (sin romper, roto, sobre el blando, chico, con Ruptura II), más el freno/paso de 1e308 en el tick y los modos del automático. |
+
+### Verificación
+- `vitest` 253/253. `svelte-check` 0 errores.
+- Juego abierto en 1366×768 y 390×844, sin scroll de página: la Energía pasa de 1e308 con Ruptura nv1; el indicador muestra X e Y/min y brilla cuando el ritmo baja; el Infinito automático "en el óptimo" lo hace en ese momento y "apenas llegás" sigue igual; la guía `c1_romper` aparece sobre el indicador; el panel de Automatización muestra los tres modos. Sin errores en consola.
+- **No medí fps**: es texto y una animación CSS de `text-shadow`.
+
+### Decisiones (revisar)
+- **Óptimo analítico, no con memoria.** `sim_capa1.py` guarda el mejor ritmo y corta cuando cae 0,01 en log10 durante 5 s; el núcleo usa la derivada (`(P/E) × t × k ≤ Q`), sin estado nuevo en el guardado. Corta un poco antes que el simulador (cuando deja de subir, no cuando ya bajó un 2 %). Como en el simulador, si al pasar 1e308 el ritmo ya baja, el óptimo es enseguida. `t` es `tiempoInfinito`.
+- **El primer Infinito sigue dando `primer_infinito` (1)**, como antes; `sim_capa1.py` no tiene ese caso especial (da 2). No lo toqué.
+- El +3 de `mult` por completar Vidrio y el `mult = 0` dentro del Defecto Vidrio quedan para C7/C12 (Defectos).
+- El indicador Y/min usa `tiempoInfinito`, que empieza en cada Infinito (no en cada Compresión).
+

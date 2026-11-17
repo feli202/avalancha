@@ -1,6 +1,6 @@
 import Decimal from 'break_infinity.js'
 import { CFG } from './config'
-import { enInfinito, produccion } from './formulas'
+import { congelada, produccion } from './formulas'
 import type { State } from './state'
 import { tick } from './tick'
 
@@ -21,7 +21,7 @@ export function fueraDeLinea(s: State, segundos: number): Ausencia {
   const dt = t / pasos
   const antes = s.compresiones
   let energia = new Decimal(0)
-  for (let i = 0; i < pasos && !enInfinito(s); i++) {
+  for (let i = 0; i < pasos && !congelada(s); i++) {
     energia = energia.add(produccion(s).mul(dt))
     s = tick(s, dt)
   }

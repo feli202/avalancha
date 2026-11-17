@@ -5,7 +5,7 @@
   import {
     CFG, MUTACIONES, anillos, autoDisponible, caudal, cascadaC, costoCascada, costoCaudal, costoColor, costoMutacion, densidad,
     maxMutacion, multAnillos, multCascada, multColor, produccion, valor, type State,
-    CFG1, ESTRATOS, NODOS, NIVEL_MAX_RED, cauceRel, cascadaRel, costoAbrir, cristalesAlInfinito, cristalesRedLog10, espacios,
+    CFG1, ESTRATOS, NODOS, NIVEL_MAX_RED, cauceRel, cascadaRel, costoAbrir, cristalesAlInfinito, cristalesRedLog10, infinitoRoto, ordenesQ, espacios,
     gammaEstrato, memoria, mutacionesRel, nivelRed, presion, separacion,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
@@ -115,6 +115,12 @@
           v: s.infinitos === 0 ? `= ${CFG1.cristales.primer_infinito}` : `= ⌊10^(${d(mult)} + ${d(CFG1.cristales.base_log10)})⌋ = ${formato(cristalesAlInfinito(s))}` },
         { r: g.rotulo.multRed, g: c1.multRed, v: `= ${d(mult)}` },
         { r: g.rotulo.totales, g: formato(s.cristalesTotales), v: '' },
+      ]),
+      sec('c1_romper', [
+        { r: g.rotulo.roto, g: `lc = mult + ${d(CFG1.cristales.base_log10)} + (log₁₀E − ${d(CFG.infinito_log10)}) / Q · Q = ${CFG1.cristales.Q_ordenes_por_x10} − ${txt.cristal.red.nodos.ruptura2[0]}`,
+          v: infinitoRoto(s) ? `Q = ${d(ordenesQ(s))} · lc = ${d(cristalesAlInfinito(s).log10())} → ${formato(cristalesAlInfinito(s))}` : '' },
+        { r: g.rotulo.blando, g: `lc > ${CFG1.cristales.blando_desde_log10} → ${CFG1.cristales.blando_desde_log10} + (lc − ${CFG1.cristales.blando_desde_log10}) × ${d(CFG1.cristales.blando_factor)}`, v: '' },
+        { r: g.rotulo.softcap, g: `10^(exp(n) + n − n₁ₑ₃₀₈)`, v: '' },
       ]),
       sec('c1_red', [
         { r: g.rotulo.anillo, g: '|x| + |y|', v: R.costo_anillo_log10.slice(0, 3).map((_, a) => c1.anillo(a, costoAnillo(a))).join(' · ') },

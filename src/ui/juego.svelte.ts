@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, CFG1, anillos, autoDisponible, comprimir, conFoto, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, fueraDeLinea, hayEstratos, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
+import { CFG, CFG1, anillos, autoDisponible, comprimir, conFoto, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, infinitoRoto, fueraDeLinea, hayEstratos, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
 import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
@@ -7,6 +7,7 @@ import { instantanea } from '../render/instantanea'
 import type { Toma } from '../render/marcos'
 import { PX_MAX, type Medidas } from '../render/pilaVisual'
 import { txt } from '../strings'
+import { formato } from './formato'
 import { nuevosLogros, primerDerrumbe } from './logros'
 import { Vigia, contadoresVacios, transicion, volviste } from './secretos'
 
@@ -152,6 +153,8 @@ function condiciones(s: State): Record<string, boolean> {
   for (const p of ['relicario', 'red']) c[`c1_${p}`] = cris && juego.pantalla === p
   c.c1_estratos = cris && juego.pantalla === 'estratos' && hayEstratos(s)
   c.c1_automat = s.infinitos > 0 && juego.capa === 'automatizacion'
+  // C6: la presentación de Romper el Infinito sale en la Arena, la primera vez que la Energía pasa de 1e308.
+  c.c1_romper = infinitoRoto(s) && enInfinito(s) && s.infinitos > 0
   c.c1_defectos = c.c1_escarcha = false
   return c
 }
@@ -162,6 +165,7 @@ export const esGuiaCapa1 = (k: string) => k.startsWith('c1_')
 export function guiaEnSuLugar(k: string): boolean {
   if (!esGuiaCapa1(k)) return juego.capa === 'arena'
   if (k === 'c1_automat') return juego.capa === 'automatizacion'
+  if (k === 'c1_romper') return juego.capa === 'arena'
   return juego.capa === 'cristalizacion' && (k === 'c1_cristales' || juego.pantalla === k.slice(3))
 }
 
@@ -250,7 +254,7 @@ export function infinitoYa() {
   juego.aMano++
   registrar(historial, antes, s)
   previo = s
-  juego.aviso = { id: avisos++, texto: txt.cristal.ganados(cristalesAlInfinito(antes)) }
+  juego.aviso = { id: avisos++, texto: txt.cristal.ganados(formato(cristalesAlInfinito(antes))) }
   guardarYa()
 }
 
@@ -421,7 +425,7 @@ export function arrancar() {
       juego.aviso = { id: avisos++, texto: txt.cristal.relicario.sola(txt.cristal.relicario.tipos[s.relicario.ultimo][0]) }
     }
     // Infinito automático (Memoria nv4): el mismo aviso que el botón.
-    if (s.infinitos > previo.infinitos) juego.aviso = { id: avisos++, texto: txt.cristal.ganados(s.cristalesTotales.sub(previo.cristalesTotales).toNumber()) }
+    if (s.infinitos > previo.infinitos) juego.aviso = { id: avisos++, texto: txt.cristal.ganados(formato(s.cristalesTotales.sub(previo.cristalesTotales))) }
     previo = s
     if (Math.floor(s.tiempoTotal) !== Math.floor(juego.s.tiempoTotal)) juego.verHistorial++
     juego.s = s

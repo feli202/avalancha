@@ -109,11 +109,12 @@ export const es = {
     condicion: 'Condición',
     compresion: { umbral: 'Al llegar al umbral', esperar: 'Esperar más' } as Record<string, string>,
     esperar: 'Segundos de espera',
-    infinito: { llegar: 'Apenas llegás', cristales: 'Al llegar a X Cristales' } as Record<string, string>,
+    infinito: { llegar: 'Apenas llegás', optimo: 'En el óptimo', cristales: 'Al llegar a X Cristales' } as Record<string, string>,
     cristales: 'Cristales',
     daria: (x: string) => `Hoy el Infinito da ${x}`,
     apenas: 'Hace el Infinito apenas llegás.',
-    mejora: 'Con Romper el Infinito (Ruptura nv1) puede esperar a dar X Cristales.',
+    mejora: 'Con Romper el Infinito (Ruptura nv1) puede esperar al momento óptimo o a dar X Cristales.',
+    optimo: 'En el óptimo: cuando los Cristales por minuto dejan de subir.',
     reliquia: 'Reliquia de cada Infinito',
     bloqueado: (n: number) => `Con ${n} compresiones o Memoria nv1`,
     memoria: (n: number) => `Con Memoria nv${n}`,
@@ -122,10 +123,13 @@ export const es = {
   cristal: {
     cristales: 'Cristales',
     totales: 'Cristales totales',
+      roto: 'Cristales con el Infinito roto (log₁₀)', blando: 'Blando', softcap: 'Mejoras más allá de 1e308',
     sistemas: 'Sistemas de Cristalización',
     pantallas: { red: 'Red', estratos: 'Estratos', defectos: 'Defectos', escarcha: 'Escarcha', relicario: 'Relicario' } as Record<string, string>,
     vacia: 'Todavía no hay nada acá.',
-    ganados: (n: number) => (n === 1 ? '+1 Cristal' : `+${n.toLocaleString('es-AR')} Cristales`),
+    ganados: (x: string) => (x === '1' ? '+1 Cristal' : `+${x} Cristales`),
+    // C6: con el Infinito roto, en la Arena; brilla en el momento óptimo (§4).
+    alInfinito: (x: string, y: string) => `Cristales al hacer Infinito: ${x} (${y}/min)`,
     intro: [
       'La pila llegó al Infinito y se cristalizó.',
       'Cada Infinito te da Cristales, que se gastan acá.',
@@ -228,7 +232,7 @@ export const es = {
         sedimentacion: ['Sedimen­tación', 'Sed', (x, n) => `La pila conserva ${x.conservar_compresiones} compresiones en cada Infinito${n >= 4 ? ' y la Cascada ya no vuelve a cero' : ''}`],
         estratos: ['Estratos', 'Est', (x, n) => (n <= 1 ? 'Abre los Estratos, lo que te deja ir más allá del Infinito: ocho pilas debajo de la principal que se llenan solas y multiplican todo' : `Los estratos se llenan ${f(x.flujo_x)} veces más rápido`)],
         defectos: ['Defectos', 'Def', (_, n) => `Abre ${['Vacancia', 'Dislocación', 'Macla', 'Impureza'].slice(0, n).join(', ')}`],
-        ruptura: ['Ruptura', 'Rup', (x) => `La Energía pasa de 1e308 y los Cristales crecen con cuánto la pasás${x.cristales_log10 ? `; cada Infinito da ${f(10 ** x.cristales_log10)} veces más` : ''}`],
+        ruptura: ['Ruptura', 'Rup', (x) => `La Energía pasa de 1e308 y los Cristales crecen con cuánto la pasás${x.cristales_log10 ? `; cada Infinito da ${f(10 ** x.cristales_log10)} veces más` : '. Abre los Estratos; arriba de 1e308 las mejoras de la Arena se encarecen'}`],
         compactacion: ['Compac­tación', 'Comp', (x) => `Cada derrumbe pesa más: la Densidad sube ${f(x.densidad)}`],
         presion: ['Presión', 'Pres', (x) => `La Presión de los estratos vale ${f(x.w_x)} veces más`],
         engarces: ['Engarces', 'Eng', (x) => `Podés equipar ${x.espacios} reliquias a la vez`],
@@ -567,6 +571,7 @@ export const es = {
       c1_relicario: 'Cada Infinito te deja una reliquia con la pila de esa corrida. Elegí qué hace: tres iguales se fusionan, y solo dan efecto las engarzadas.',
       c1_red: 'Cada nodo tiene cuatro niveles. Al maxear uno, se derrumba y despierta a sus vecinos.',
       c1_estratos: 'Más allá del Infinito: los estratos aprietan la pila desde abajo y cada derrumbe vale más. Cada estrato que abrís llega lleno y te destraba.',
+      c1_romper: 'Rompiste el Infinito: la Energía sigue de largo y cuanto más pasa de 1e308, más Cristales. Brilla cuando conviene hacer Infinito. Arriba de 1e308 las mejoras se encarecen (∞), y en la Red ya podés abrir los Estratos.',
       c1_automat: 'Acá elegís todo lo que se hace solo: cada cuánto compra cada autocomprador, cuándo comprimir y cuándo hacer Infinito.',
       // Preparadas (cerradas hasta C7 y C10): se terminan de escribir en esos hitos.
       c1_defectos: 'Un Defecto es un Infinito con una regla rota. Ganalo y la recompensa queda para siempre.',
@@ -648,7 +653,7 @@ export const es = {
       proximo: (n: number, c: string) => `Estrato ${n} · cuesta ${c}`,
       todos: 'Los ocho están abiertos',
       intervalo: (s: number) => `cada ${s} s o más`,
-      espera: 'apenas llega, o al llegar a X Cristales (con Romper el Infinito)',
+      espera: 'apenas llega; con Romper el Infinito, en el óptimo o al llegar a X Cristales',
     },
     rotulo: {
       caudal: 'Granos por segundo', costo: 'Costo del próximo nivel', produccion: 'Energía por segundo',
@@ -711,6 +716,12 @@ export const es = {
         'Cada reliquia lleva grabada la pila de su Infinito. Nace Ámbar; tres iguales (mismo tipo y mismo color) se fusionan en una del color siguiente. Después de Violeta vuelve Ámbar, con un +1.',
         'Todas van al inventario, pero solo dan efecto las engarzadas. Empezás con un engarce y el nodo Engarces suma más. Dos engarzadas del mismo tipo se suman.',
       ]],
+      c1_romper: ['Romper el Infinito', [
+        'Romper el Infinito es el primer nivel del nodo Ruptura. Desde ahí la Energía ya no se frena en 1e308: sigue creciendo y cada orden de magnitud de más suma Cristales al próximo Infinito.',
+        'Cuándo hacer Infinito lo decidís vos: la Arena te muestra cuántos Cristales darías y a qué ritmo por minuto, y el número brilla en el momento óptimo, cuando ese ritmo deja de subir. El Infinito automático puede esperar a ese momento.',
+        'Más allá de 1e308 las mejoras de la Arena se encarecen: cada nivel que pasa de ahí multiplica su precio por 10 (en la tienda se marcan con ∞). Para seguir subiendo hacen falta los Estratos.',
+        'Romperlo es la llave de los Estratos: el nodo Estratos de la Red no se abre sin Ruptura nv1.',
+      ]],
       c1_estratos: ['Estratos', [
         'Romper el Infinito abre la puerta y los Estratos te llevan más allá: debajo de la pila hay ocho estratos. La arena que se escurre llena el primero, y cada uno alimenta al de abajo. No se pierden en el Infinito.',
         'Los estratos aprietan la pila desde abajo: eso es la Presión, y hace que cada derrumbe valga más. Cuanto más lleno y más profundo está un estrato, más aprieta.',
@@ -720,7 +731,7 @@ export const es = {
       c1_automat: ['Automatización', [
         'Todo lo que se hace solo, en una pantalla: los autocompradores de la Arena, la Compresión y el Infinito automáticos, y la regla con que se eligen las reliquias.',
         'Cada autocomprador compra cada tanto (como mucho una vez por segundo) la cantidad que elijas: ×1, ×10 o Máx. Memoria los deja andando desde el inicio de cada Infinito y suma la Cascada, las Mutaciones y el Infinito automáticos.',
-        'El Infinito automático se hace apenas llegás. Con Romper el Infinito puede esperar hasta dar X Cristales.',
+        'El Infinito automático se hace apenas llegás. Con Romper el Infinito puede esperar al momento óptimo (cuando los Cristales por minuto dejan de subir) o hasta dar X Cristales.',
       ]],
       // Preparadas (cerradas hasta C7 y C10)
       c1_defectos: ['Defectos', ['Un Defecto es un Infinito con una regla rota. Si llegás a la meta, la recompensa queda para siempre.']],

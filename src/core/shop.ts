@@ -1,7 +1,7 @@
 import { CFG, MUTACIONES, type MutId } from './config'
 import Decimal from 'break_infinity.js'
 import {
-  enInfinito, expCascada, expCaudal, expColor, expMutacion, masAllaDelInfinito, maxCascada, maxMutacion, precioArenaLog10,
+  congelada, expCascada, expCaudal, expColor, expMutacion, masAllaDelInfinito, maxCascada, maxMutacion, precioArenaLog10,
 } from './formulas'
 import type { State } from './state'
 
@@ -55,7 +55,7 @@ export function aplicar(s: State, id: ItemId): State {
 }
 
 export const puedeComprar = (s: State, id: ItemId) =>
-  !enInfinito(s) && disponibles(s).includes(id) && s.energia.gte(costo(s, id))
+  !congelada(s) && disponibles(s).includes(id) && s.energia.gte(costo(s, id))
 
 /** Compra un nivel; si no se puede, devuelve el mismo estado. */
 export const comprar = (s: State, id: ItemId): State =>

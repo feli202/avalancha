@@ -114,7 +114,7 @@
               {/if}
             {:else if si && k === 'infinito'}
               {@const inf = s.automat.infinito}
-              <!-- Siempre apenas llega; Romper el Infinito lo mejora: puede esperar a dar X Cristales. -->
+              <!-- Siempre apenas llega; Romper el Infinito lo mejora: en el óptimo (C6) o al dar X Cristales. -->
               {#if infinitoRoto(s)}
               <div class="modos" role="radiogroup" aria-label="{a.condicion} · {nombreAuto(k)}">
                 {#each Object.keys(a.infinito) as m (m)}
@@ -129,7 +129,7 @@
                     onchange={(e) => { const x = Number(e.currentTarget.value.replace(',', '.')); automat({ infinito: { ...juego.s.automat.infinito, log10: x > 1 ? Math.log10(x) : 0 } }) }} />
                 </label>
               {/if}
-              <small class="nota">{#if !infinitoRoto(s)}{a.apenas} {/if}{a.daria(txt.cristal.ganados(cristalesAlInfinito(s)).replace('+', ''))}.{#if !infinitoRoto(s)} {a.mejora}{/if}</small>
+              <small class="nota">{#if !infinitoRoto(s)}{a.apenas} {/if}{a.daria(txt.cristal.ganados(formato(cristalesAlInfinito(s))).replace('+', ''))}.{#if !infinitoRoto(s)} {a.mejora}{:else if inf.modo === 'optimo'}{' '}{a.optimo}{/if}</small>
 
               <h3>{a.reliquia}</h3>
               <div class="modos" role="radiogroup" aria-label={rr.regla.titulo}>

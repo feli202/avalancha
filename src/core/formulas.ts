@@ -2,7 +2,7 @@
 import Decimal from 'break_infinity.js'
 import { CFG, precioLog10, type MutId } from './config'
 import { presion } from './estratos'
-import { cascadaExtra, densidadRed, ecoLog10, efectoRed, mutacionExtra } from './red'
+import { cascadaExtra, densidadRed, ecoLog10, efectoRed, mutacionExtra, nivelRed } from './red'
 import { cascadaRel, cauceRel, mutacionesRel } from './relicario'
 import type { State } from './state'
 
@@ -38,8 +38,12 @@ export const costoMutacion = (id: MutId, n: number) => Decimal.pow10(precioArena
 
 // ---------- producción ----------
 export const INFINITO = Decimal.pow10(CFG.infinito_log10)
-/** La Energía llegó a 1e308: la economía espera el Infinito (SPEC_CAPA1 §4, sin Romper). */
+/** La Energía llegó a 1e308: ya se puede hacer Infinito. */
 export const enInfinito = (s: State) => s.energia.gte(INFINITO)
+/** Romper el Infinito: Ruptura nv1 (SPEC_CAPA1 §6.3). La Energía pasa de 1e308. */
+export const infinitoRoto = (s: State) => nivelRed(s, 'ruptura') >= 1
+/** Sin Romper, en 1e308 la economía se congela hasta el Infinito (SPEC_CAPA1 §4). */
+export const congelada = (s: State) => enInfinito(s) && !infinitoRoto(s)
 
 export const densidad = (s: State) =>
   1 + CFG.compresion.densidad_por_nivel * s.compresiones + densidadRed(s) +

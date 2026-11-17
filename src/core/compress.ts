@@ -1,6 +1,6 @@
 import Decimal from 'break_infinity.js'
 import { CFG } from './config'
-import { enInfinito } from './formulas'
+import { congelada } from './formulas'
 import { conservaCascada, memoria } from './red'
 import { AUTOS, estadoInicial, type State } from './state'
 
@@ -8,7 +8,7 @@ import { AUTOS, estadoInicial, type State } from './state'
 export const umbralLog10 = (s: State) => CFG.compresion.umbrales_log10[s.compresiones] ?? Infinity
 
 // Contra la Energía y no su log10 (M4): la misma regla que las compras, sin el redondeo del logaritmo.
-export const puedeComprimir = (s: State) => !enInfinito(s) && umbralLog10(s) < Infinity && s.energia.gte(Decimal.pow10(umbralLog10(s)))
+export const puedeComprimir = (s: State) => !congelada(s) && umbralLog10(s) < Infinity && s.energia.gte(Decimal.pow10(umbralLog10(s)))
 
 /** SPEC 4.7: reinicia la corrida y sube la Densidad; si no se llegó al umbral, devuelve el mismo estado. */
 export function comprimir(s: State): State {

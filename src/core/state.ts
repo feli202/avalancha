@@ -11,14 +11,14 @@ export interface Pieza { id: number; tipo: string; nivel: number; foto: string; 
 /** Bloque 10: cuánto compra un autocomprador cada vez (0 = el máximo). */
 export type Cantidad = 1 | 10 | 0
 /** Bloque 10, el panel de Automatización. `intervalo` y `cantidad`, por autocomprador de compras (COMPRAS_AUTO).
- * `compresion`: comprimir al llegar al umbral o esperar `segundos` más. `infinito`: apenas llega o, con Romper el Infinito,
+ * `compresion`: comprimir al llegar al umbral o esperar `segundos` más. `infinito`: apenas llega o, con Romper el Infinito, en el óptimo (§4) o
  * al llegar a 10^`log10` Cristales. `segundos`: segundos de autocompradores contados en la corrida (los intervalos son múltiplos);
  * `espera`: segundos que lleva la Compresión lista. */
 export interface Automat {
   intervalo: Record<string, number>
   cantidad: Record<string, Cantidad>
   compresion: { modo: 'umbral' | 'esperar'; segundos: number }
-  infinito: { modo: 'llegar' | 'cristales'; log10: number }
+  infinito: { modo: 'llegar' | 'optimo' | 'cristales'; log10: number }
   segundos: number
   espera: number
 }

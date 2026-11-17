@@ -5,7 +5,7 @@ import { crecerEstratos } from './estratos'
 import { infinito, infinitoAutoListo } from './infinito'
 import { elegirSola } from './relicario'
 import { autoActivo, comprimir, puedeComprimir } from './compress'
-import { INFINITO, caudal, enInfinito, energiaPorGrano, produccion } from './formulas'
+import { INFINITO, caudal, congelada, enInfinito, energiaPorGrano, infinitoRoto, produccion } from './formulas'
 import { comprar, comprarMax, comprarN, costo, puedeComprar, type ItemId } from './shop'
 import type { State } from './state'
 
@@ -49,10 +49,12 @@ function comprimirSola(s: State, dt: number): State {
 
 /** Avanza la economía dt segundos (Euler explícito, igual que balance/sim.py). */
 export function tick(s: State, dt: number): State {
-  // Economía congelada hasta el Infinito (core/infinito.ts); con Memoria nv4 y el interruptor, se hace solo cuando lo diga
-  // su modo (bloque 10). Elige su reliquia con la regla (SPEC_CAPA1 §5).
-  if (enInfinito(s)) return autoActivo(s, 'infinito') && infinitoAutoListo(s) ? elegirSola(infinito(s)) : s
-  const energia = Decimal.min(INFINITO, s.energia.add(produccion(s).mul(dt))) // sin Romper, se frena en 1e308
+  // Con Memoria nv4 y el interruptor, el Infinito se hace solo cuando lo diga su modo (bloque 10 y C6). Elige su reliquia
+  // con la regla (SPEC_CAPA1 §5). Sin Romper, la economía queda congelada en 1e308 hasta el Infinito.
+  if (enInfinito(s) && autoActivo(s, 'infinito') && infinitoAutoListo(s)) return elegirSola(infinito(s))
+  if (congelada(s)) return s
+  const suma = s.energia.add(produccion(s).mul(dt))
+  const energia = infinitoRoto(s) ? suma : Decimal.min(INFINITO, suma) // sin Romper, se frena en 1e308
   const granos = caudal(s) * dt
   let n: State = {
     ...s,
@@ -72,7 +74,7 @@ export function tick(s: State, dt: number): State {
     n.maxEnergia.log10() >= CFG.colores[n.coloresDesbloqueados].desbloqueo_log10
   )
     n.coloresDesbloqueados++
-  if (enInfinito(n)) return n
+  if (congelada(n)) return n
   const paso = CFG.automatizacion.intervalo_s
   if (n.relojAuto >= paso) {
     n.relojAuto %= paso
@@ -83,8 +85,9 @@ export function tick(s: State, dt: number): State {
 
 /** SPEC 4.10: suelta un puñado de granos; cada uno rinde como un grano del Caudal. */
 export function punado(s: State): State {
-  if (enInfinito(s) || s.enfriamientoPunado > 0) return s
-  const energia = Decimal.min(INFINITO, s.energia.add(energiaPorGrano(s).mul(CFG.punado.granos)))
+  if (congelada(s) || s.enfriamientoPunado > 0) return s
+  const suma = s.energia.add(energiaPorGrano(s).mul(CFG.punado.granos))
+  const energia = infinitoRoto(s) ? suma : Decimal.min(INFINITO, suma)
   return {
     ...s,
     energia,
