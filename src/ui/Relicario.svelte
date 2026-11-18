@@ -56,14 +56,14 @@
   }
 
   // ---------- fusión con animación: las tres vuelan al lugar de la nueva y se cristalizan ----------
-  let celdas: Record<number, HTMLElement> = {}
+  const celda = (id: number) => document.querySelector<HTMLElement>(`.grilla [data-pieza="${id}"]`)
   let vuelos = $state<{ k: number; x: number; y: number; w: number; c: string }[]>([])
   let destino = $state<{ x: number; y: number; w: number } | null>(null)
   let nacida = $state<number | null>(null)
   let k = 0
   async function conAnimacion(cambio: () => void) {
     const antes = new Map(rel.piezas.map((p) => [p.id, p]))
-    const rect = new Map([...antes.keys()].map((id) => [id, celdas[id]?.getBoundingClientRect()]))
+    const rect = new Map([...antes.keys()].map((id) => [id, celda(id)?.getBoundingClientRect()]))
     cambio()
     await despues()
     const nuevas = juego.s.relicario.piezas.filter((p) => !antes.has(p.id))
@@ -72,7 +72,7 @@
     const ultima = nuevas.reduce((a, b) => (b.nivel > a.nivel ? b : a))
     nacida = ultima.id
     elegida = null
-    const el = celdas[ultima.id]
+    const el = celda(ultima.id)
     el?.scrollIntoView({ block: 'nearest' })
     const d = el?.getBoundingClientRect()
     const idas = [...antes.keys()].filter((id) => !juego.s.relicario.piezas.some((p) => p.id === id))
@@ -188,7 +188,7 @@
     <div class="grilla" role="listbox" aria-label={r.inventario}>
       {#each piezas as p (p.id)}
         <button
-          bind:this={celdas[p.id]} animate:flip={{ duration: 300 }}
+          data-pieza={p.id} animate:flip={{ duration: 300 }}
           class="pieza" class:puesta={puestas.has(p.id)} class:elegido={p.id === elegida} class:mas={escalon(p.nivel).vuelta > 0}
           class:lista={!!grupoDe(p)} class:nace={p.id === nacida} style:--c={color(p.nivel)}
           role="option" aria-selected={p.id === elegida} aria-label="{r.pieza(nombre(p.tipo), grado(p.nivel))}{puestas.has(p.id) ? `, ${r.puesta}` : ''}"

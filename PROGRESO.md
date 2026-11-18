@@ -1856,3 +1856,23 @@ Lo que queda de diferencia (dentro del ±10 %) está en los Defectos: el Infinit
 - En el celular, las casillas de Ajustes quedan siempre a la derecha (antes bajaban a la izquierda según el largo del texto).
 
 **Verificación**: 283 tests en verde, `tsc` y `svelte-check` 0 errores. En el navegador: la sección abre, el contador marca 5/6 al apagar uno y queda guardado en el almacenamiento local; sin scroll de página en 1366×768 ni en 390×844 (solo scrollea la lista de Ajustes).
+
+## Auditoría de la 1.1: fps, iframe y accesibilidad (2026-11-18)
+
+Medido en Edge headless (GPU por ANGLE/D3D11), servidor de desarrollo, con el Relicario lleno (24 piezas con foto), la Red, 8 estratos abiertos, la Arena y Automatización:
+
+| Pantalla | 1366×768 | 390×844 (dpr 3) | Scroll de página |
+|---|---|---|---|
+| Relicario lleno | 60 fps (un cuadro de 67 ms al dibujarlo por primera vez; en una segunda medición de 6 s, ninguno de más de 25 ms) | 60 | no |
+| Red, Estratos, Arena, Automatización | 60 fps, peor cuadro 17 ms | 60 | no |
+
+**Ojo con las mediciones por CDP**: después de editar un módulo, Vite lo sirve con `?t=` y `import('/src/ui/juego.svelte.ts')` da otra copia; hay que importar la URL que figura en `performance.getEntriesByType('resource')`. La primera tanda de esta auditoría midió la Arena cinco veces por eso.
+
+**Build en el iframe de itch** (`scripts/itch-falso.mjs`: subcarpeta, otro origen, gzip): arranca, 1280×720 sin scroll, carga el worker de la pila y el almacenamiento local funciona dentro del iframe. Las pantallas de la Capa 1 dentro del iframe no se probaron (en el build no se puede inyectar un estado).
+
+**Accesibilidad** (revisión por DOM de Relicario, Red, Estratos, Defectos y Automatización, sin el panel de debug): ningún control sin nombre, ningún texto con contraste por debajo de 4,5 (3 en texto grande), ningún `tabindex` positivo. Arreglado:
+- Los cuadros de nivel de la ficha de la Red ("Ver qué da el nivel N") medían 12×24 px; ahora 24×24 (WCAG 2.5.8). El cuadro visible sigue de 8 px, solo más separados.
+- `Relicario.svelte`: `bind:this` a un objeto común daba un aviso de Svelte por pieza; ahora las celdas se buscan por `data-pieza`. La animación de fusión sigue (3 vuelos y la nueva naciendo).
+- La casilla de "Comprimir sola" mide 17×20, pero su etiqueta entera (200×44) es tocable: está bien.
+
+**Queda afuera**: Lighthouse sobre las pantallas de la Capa 1 (Lighthouse solo mira la carga, que es la pantalla de título); probar con lector de pantalla real.

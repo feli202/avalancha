@@ -393,7 +393,7 @@
   .nv { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.3rem; color: var(--tenue); font-size: 0.8125rem; }
   .cuadros { display: inline-flex; }
   /* Cada cuadro es un botón con área de toque más grande que el cuadro dibujado. */
-  .cuadros button { display: grid; place-items: center; width: 0.75rem; height: 1.5rem; margin: -0.5rem 0; padding: 0; border: 0; background: none; cursor: pointer; }
+  .cuadros button { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; /* 24 px: objetivo táctil mínimo (WCAG 2.5.8); el cuadro visible sigue de 8 px */ margin: -0.5rem 0; padding: 0; border: 0; background: none; cursor: pointer; }
   .cuadros button:disabled { cursor: default; }
   .cuadros i { width: 0.5rem; height: 0.5rem; background: rgb(159 227 245 / 0.14); transition: transform 0.15s; }
   .cuadros .lleno i { background: var(--c); }
