@@ -14,6 +14,8 @@ export const escalon = (nivel: number) => ({ color: nivel % 4, vuelta: Math.floo
 export const espacios = (s: State) => Math.max(1, efectoRed(s, 'engarces', 'espacios', 1), efectoRed(s, 'engarces2', 'espacios', 1))
 /** Engarces II: la fusión puede ser automática. */
 export const fusionAutomatica = (s: State) => (s.red.engarces2 ?? 0) >= 1
+/** Sin casillero libre el Infinito no deja reliquia (hasta fusionar, a mano o con Engarces II). */
+export const inventarioLleno = (s: State) => s.relicario.piezas.length >= R.casilleros
 
 const pieza = (s: State, id: number) => s.relicario.piezas.find((p) => p.id === id)
 const nuevoId = (s: State) => Math.max(0, ...s.relicario.piezas.map((p) => p.id)) + 1
@@ -96,15 +98,17 @@ export function tipoAutomatico(s: State): string {
   }
 }
 
-/** Agrega la reliquia del Infinito pendiente, del tipo t (con la pila de ese Infinito). Después, lo que diga la regla:
+/** Agrega la reliquia del Infinito pendiente, del tipo t (con la pila de ese Infinito); sin lugar en el inventario, se pierde. Después, lo que diga la regla:
  * fusionar solas (con Engarces II) y engarzar las mejores. Sin Infinito pendiente o con un tipo que no existe, el mismo estado. */
 export function elegir(s: State, t: string): State {
   const rel = s.relicario
   if (!rel.pendiente || !TIPOS.includes(t)) return s
   const p: Pieza = { id: nuevoId(s), tipo: t, nivel: 0, foto: rel.foto, inf: rel.pendiente }
-  s = conRel(s, { piezas: [...rel.piezas, p], pendiente: 0, foto: '', ultimo: t })
-  if (rel.regla.fusionar && fusionAutomatica(s)) s = fusionarTodo(s)
-  return rel.regla.equipar ? equiparMejores(s) : s
+  let n = conRel(s, { piezas: [...rel.piezas, p], pendiente: 0, foto: '', ultimo: t })
+  if (rel.regla.fusionar && fusionAutomatica(n)) n = fusionarTodo(n)
+  // Inventario lleno: se pierde, salvo que la fusión automática le haga lugar (la nueva completa tres iguales).
+  if (inventarioLleno(s) && n.relicario.piezas.length > Math.max(R.casilleros, rel.piezas.length)) return conRel(s, { pendiente: 0, foto: '' })
+  return rel.regla.equipar ? equiparMejores(n) : n
 }
 /** Sin elegir a tiempo, o con Infinito automático: la regla. */
 export const elegirSola = (s: State): State => (s.relicario.pendiente ? elegir(s, tipoAutomatico(s)) : s)

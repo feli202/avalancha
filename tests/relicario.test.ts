@@ -36,6 +36,19 @@ describe('Relicario: elegir el tipo', () => {
     expect(dos.relicario.pendiente).toBe(3)
   })
 
+  it('con el inventario lleno el Infinito no deja reliquia, salvo que la fusión automática le haga lugar', () => {
+    const llenas = [pz('cauce'), pz('cauce'), ...Array.from({ length: R.casilleros - 2 }, (_, i) => pz(TIPOS[1], 1 + (i % 2) + 2 * Math.floor(i / 2)))]
+    const s = con({ piezas: llenas, pendiente: 9, regla: regla({ fusionar: true, equipar: false }) })
+    const perdida = elegir(s, 'cauce')
+    expect(perdida.relicario.piezas).toBe(llenas)
+    expect(perdida.relicario.pendiente).toBe(0)
+    expect(elegirSola(s).relicario.piezas).toBe(llenas) // el Infinito automático tampoco
+    // Con Engarces II la nueva completa tres Cauce Ámbar: entra y se fusiona.
+    const fusiona = elegir({ ...s, red: { ...s.red, engarces2: 1 } }, 'cauce')
+    expect(fusiona.relicario.piezas.length).toBe(R.casilleros - 1)
+    expect(elegir({ ...s, red: { ...s.red, engarces2: 1 } }, 'mutaciones').relicario.piezas).toBe(llenas)
+  })
+
   it('la foto llega también a la pieza que el Infinito automático eligió en el mismo tick', () => {
     const s = con({}, { ...lleno, infinitos: 1, red: { ...estadoInicial().red, memoria: 4 } })
     const t = tick(s, 0.05)

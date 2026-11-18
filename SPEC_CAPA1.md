@@ -110,7 +110,7 @@ Tres tipos de reliquia. Efectos pasivos y moderados:
 | **Cascada** | +0,02 × (n+1) al exponente `c` de la Cascada. |
 | **Mutaciones** | Las Mutaciones de Caudal y Colores ^(1 + 0,08 × (n+1)) (su exponente × (1 + 0,08 × (n+1))). |
 
-**Inventario (correcciones, bloque 8)**: cada Infinito te da **una** reliquia y **vos elegís el tipo** (Cauce, Cascada o Mutaciones); nace Ámbar (nivel 0) y va a una grilla de casilleros (24 al principio; si se llena, crece). La cara de cada reliquia es **la pila de ese Infinito**: una instantánea de 32×32 celdas a 2 bits (256 bytes) teñida con el color de su nivel, dibujada por el generador de miniaturas compartido.
+**Inventario (correcciones, bloque 8)**: cada Infinito te da **una** reliquia y **vos elegís el tipo** (Cauce, Cascada o Mutaciones); nace Ámbar (nivel 0) y va a una grilla de 24 casilleros fijos. **Con el inventario lleno el Infinito no deja reliquia** (se explica en el Relicario, y en la elección hay tiempo de fusionar para hacerle lugar); por eso importa la fusión automática de Engarces II (1.2). Fusionando, un jugador nunca lo llena (`tests/balance_capa1.test.ts` lo comprueba), así que no cambia el balance. La cara de cada reliquia es **la pila de ese Infinito**: una instantánea de 32×32 celdas a 2 bits (256 bytes) teñida con el color de su nivel, dibujada por el generador de miniaturas compartido.
 
 **Fusión (escalera de colores)**: **3 reliquias del mismo tipo y nivel se fusionan en 1 del nivel siguiente** (a mano: arrastrando una sobre otra igual o con "Fusionar"; con Engarces II, sola si está la opción). La nueva conserva la pila de la más vieja. Una reliquia de nivel n sale de 3^n Ámbar:
 

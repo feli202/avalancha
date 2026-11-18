@@ -1831,3 +1831,17 @@ Lo que queda de diferencia (dentro del ±10 %) está en los Defectos: el Infinit
 **Verificación**: 281 tests en verde con `npm test`, 12/12 en `npm run test:lento`, `svelte-check` 0 errores. En el navegador: la barra de hielo avanza (35/100 al segundo y medio) y después sale la tarjeta de regreso. `SPEC_CAPA1.md` al día: §2 (tabla, aperturas de estratos, nota C8), §6.3 (Memoria a mitad de corrida), §8 (abandono), §12 (offline), §17.
 
 **Decisión (revisar)**: comprar Memoria a mitad de corrida **no reinicia** la corrida (sube la Densidad y sigue). Es lo que favorece al jugador; el sim siempre la compra al principio, así que para el balance da igual.
+
+## Auditoría de la 1.1: inventario de reliquias con tope (2026-11-18)
+
+**Problema**: el inventario crecía sin límite. Con el Infinito automático en el óptimo hay un Infinito cada ~10 s, y en la 1.1 no hay fusión automática (Engarces II es del anillo 3, 1.2): miles de piezas offline, guardado de ~1 MB y una grilla enorme.
+
+**Decisión (del usuario)**: 24 casilleros fijos. **Con el inventario lleno el Infinito no deja reliquia**, y se explica. Así la fusión automática de Engarces II pasa a importar.
+
+- `src/core/relicario.ts`: `inventarioLleno(s)`; `elegir` descarta la reliquia si no hay lugar, salvo que con Engarces II la nueva complete tres iguales y la fusión le haga lugar. Un guardado viejo con más de 24 conserva todas sus piezas, pero no suma ninguna hasta bajar de su cantidad.
+- `Relicario.svelte`: la grilla ya no crece (muestra todas si son más de 24); el encabezado dice `n/24` (en rojo coral si está lleno); en la elección, la cuenta cambia a "Inventario lleno: fusioná en N s o se pierde"; sin elección pendiente, la ayuda explica que los Infinitos no dejan reliquias hasta fusionar y que Engarces II las fusiona solas. Cadenas en `es.ts` y `en.ts`.
+- **Balance sin cambios**: el sim modela el inventario siempre fusionado y el bot del test lento fusiona en cada revisión; el test lento ahora comprueba que **el inventario nunca se llena** jugando así (13/13). No hizo falta tocar el simulador. `SPEC_CAPA1.md` §5 al día.
+
+**Verificación**: 282 tests en verde (`npm test`, uno nuevo en `relicario.test.ts`), 13/13 en `npm run test:lento`, `tsc` y `svelte-check` 0 errores. En el navegador con 24 piezas: 1366×768 y 390×844 sin scroll de página (el aviso en una línea con la cuenta; la primera versión, en un renglón aparte, empujaba la elección 27 px fuera de la ventana). En el celular el `n/24` no se ve (el encabezado del inventario se oculta en móvil), pero sí los avisos.
+
+**Pendiente de la auditoría**: el aviso "+X Cristales" en cada Infinito automático (uno cada pocos segundos, va contra "Reducir destellos"); fps con el Relicario lleno; el build dentro de un iframe; terminar la pasada de accesibilidad.

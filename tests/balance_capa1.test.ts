@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import {
   CFG1, DEFECTOS, INFINITO, NODOS, abandonarDefecto, abrirEstrato, colorSinEfecto, comprarConMargen, comprarRed, comprarTodo,
   comprimir, completo, costoAbrirLog10, costoMejoraLog10, costoRedLog10, disponibles, elegirSola, enDefecto, enInfinito,
-  entrarDefecto, equiparMejores, estadoInicial, fueraDeLinea, fusionAutomatica, fusionarTodo, infinito, memoria, metaLog10,
+  entrarDefecto, equiparMejores, estadoInicial, fueraDeLinea, fusionAutomatica, fusionarTodo, infinito, inventarioLleno, memoria, metaLog10,
   mejorarEstrato, puedeAbrir, puedeComprarRed, puedeComprimir, puedeEntrar, puedeMejorar, tick, MUTACIONES,
   type DefectoId, type ItemId, type MejoraEstrato, type State,
 } from '../src/core'
@@ -49,6 +49,7 @@ export function jugar1(revisa = 15, tmax = 9 * H): Partida1 {
   let hist: [number, number][] = []
 
   const entre = (x: State): State => { // lo que hace el bot entre dos corridas
+    if (inventarioLleno(x)) marca('lleno', t) // fusionando siempre, el inventario no debería llenarse nunca
     if (x.relicario.pendiente) x = elegirSola(x)
     if (!fusionAutomatica(x)) x = equiparMejores(fusionarTodo(x))
     x = tienda(x, t, compras)
@@ -123,6 +124,7 @@ describe.skipIf(lento)('balance de la 1.1: núcleo real, revisa cada 15 s (lento
 
   for (const [k, h] of TABLA)
     it(`${k} a ±10 % de ${h} h`, () => expect(Math.abs(p.eventos[k] / H / h - 1)).toBeLessThanOrEqual(0.1))
+  it('jugando y fusionando, el inventario nunca se llena', () => expect(p.eventos.lleno).toBeUndefined())
   it('Estratos nunca antes que Romper', () => expect(p.eventos.estratos).toBeGreaterThanOrEqual(p.eventos.romper))
   it('hueco máximo entre compras de la Capa 1 (desde 1,5 h) < 40 min', () => expect(p.hueco).toBeLessThan(40 * 60))
 })

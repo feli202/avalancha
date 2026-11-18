@@ -7,7 +7,7 @@
   import { flip } from 'svelte/animate'
   import {
     CFG1, TIPOS, desequipar, efectoNivel, elegir, equipadas, equipar, escalon, espacios, fusionables,
-    fusionar, fusionarTodo, type Pieza,
+    fusionar, fusionarTodo, inventarioLleno, type Pieza,
   } from '../core'
   import { caraReliquia } from '../render/miniPilas'
   import { txt } from '../strings'
@@ -28,7 +28,9 @@
 
   // La grilla: las mejores arriba, las iguales juntas (así se ve qué falta para fusionar).
   const piezas = $derived([...rel.piezas].sort((a, b) => b.nivel - a.nivel || TIPOS.indexOf(a.tipo) - TIPOS.indexOf(b.tipo) || a.inf - b.inf || a.id - b.id))
-  const casilleros = $derived(Math.ceil(Math.max(CFG1.relicario.casilleros, piezas.length + 1) / 8) * 8)
+  // Fijos: sin lugar el Infinito no deja reliquia. Un guardado de antes con más piezas las muestra todas.
+  const casilleros = $derived(Math.max(CFG1.relicario.casilleros, piezas.length))
+  const sinLugar = $derived(inventarioLleno(s))
   const puestas = $derived(new Set(rel.equipadas.slice(0, espacios(s))))
   const grupos = $derived(fusionables(s))
   const totales = $derived(TIPOS.map((t) => [t, equipadas(s).reduce((a, p) => a + (p.tipo === t ? efectoNivel(t, p.nivel) : 0), 0)] as const).filter(([, x]) => x > 0))
@@ -156,7 +158,7 @@
         <div class="nueva">{@render cara({ foto: rel.foto, nivel: 0 })}</div>
         <div class="texto">
           <h2>{r.elegir}</h2>
-          <small class="num">{r.cuenta(cuenta)}</small>
+          {#if sinLugar}<small class="num aviso">{r.llenoElegir(cuenta)}</small>{:else}<small class="num">{r.cuenta(cuenta)}</small>{/if}
         </div>
         <div class="tipos">
           {#each TIPOS as t (t)}
@@ -169,6 +171,8 @@
           {/each}
         </div>
       </div>
+    {:else if sinLugar}
+      <small class="ayuda aviso" role="status">{r.lleno}</small>
     {:else}
       <small class="ayuda">{r.comoEngarzar}</small>
     {/if}
@@ -176,7 +180,7 @@
 
   <div class="inventario">
     <div class="cabeza">
-      <h2>{r.inventario}</h2>
+      <h2>{r.inventario} <small class="num" class:aviso={sinLugar}>{r.ocupados(piezas.length, CFG1.relicario.casilleros)}</small></h2>
       {#if grupos.length}<button class="gema" onclick={fusionarTodas}>{r.fusionarTodo}</button>{/if}
       <!-- La regla automática se configura en Automatización (bloque 10); acá solo se ve cuál es y se va hasta ella. -->
       <button class="regla" onclick={() => (juego.capa = 'automatizacion')}>{r.regla.titulo}<span>: <b>{r.regla.modos[rel.regla.modo]}</b></span></button>
@@ -243,6 +247,7 @@
   .totales { display: grid; gap: 0.2rem; margin: 0; padding: 0; list-style: none; color: var(--tenue); font-size: 0.875rem; }
   .totales li { display: flex; gap: 0.45rem; align-items: center; }
   .ayuda { text-align: center; }
+  .aviso { color: var(--coral); }
 
   /* Ficha de la reliquia elegida. */
   .detalle { display: grid; grid-template-columns: 5rem 1fr; gap: 0.7rem 0.9rem; align-items: center; padding: 1rem; }
