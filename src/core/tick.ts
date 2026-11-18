@@ -2,6 +2,7 @@ import Decimal from 'break_infinity.js'
 import { CFG, MUTACIONES } from './config'
 import { CFG1 } from './config1'
 import { crecerEstratos } from './estratos'
+import { crecerEscarcha, puedeRomperEscarcha, romperEscarcha } from './escarcha'
 import { colorSinEfecto, enDefecto, metaAlcanzada } from './defectos'
 import { ganarDefecto, infinito, infinitoAutoListo } from './infinito'
 import { elegirSola } from './relicario'
@@ -69,6 +70,7 @@ export function tick(s: State, dt: number): State {
     tiempoInfinito: s.tiempoInfinito + dt,
     maxEnergia: Decimal.max(s.maxEnergia, energia),
     estratos: crecerEstratos(s, dt, Math.log10(caudal(s))), // §7.2: por segundo de juego de Arena
+    escarcha: crecerEscarcha(s, dt), // §9: también fuera de línea y dentro de los Defectos (menos Vidrio)
     relojAuto: s.relojAuto + dt,
     enfriamientoPunado: Math.max(0, s.enfriamientoPunado - dt),
   }
@@ -77,6 +79,7 @@ export function tick(s: State, dt: number): State {
     n.maxEnergia.log10() >= CFG.colores[n.coloresDesbloqueados].desbloqueo_log10
   )
     n.coloresDesbloqueados++
+  if (autoActivo(n, 'escarcha') && puedeRomperEscarcha(n)) n = romperEscarcha(n) // Deshielo
   if (congelada(n)) return n
   const paso = CFG.automatizacion.intervalo_s
   if (n.relojAuto >= paso) {

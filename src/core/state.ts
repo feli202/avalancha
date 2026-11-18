@@ -59,6 +59,9 @@ export interface State {
   /** SPEC_CAPA1 §8. `actual`: el Defecto en curso ('' = ninguno). `reintento`: log10 de los Cristales totales con que conviene
    * volver a uno que se abandonó (~×30). */
   defectos: { completos: string[]; actual: string; reintento: Record<string, number> }
+  /** SPEC_CAPA1 §9. `abierta`: llegó al hito de la 1.1 (queda para siempre). `logX`: el espesor (log10). `esquirlas`: enteras
+   * y chicas (unas decenas por ruptura), así que van como número. `reloj`: segundos desde la última ruptura. */
+  escarcha: { abierta: boolean; logX: number; esquirlas: number; mejoras: Record<MejoraEscarcha, number>; reloj: number }
   tiempoTotal: number
   /** Segundos de Arena desde el último Infinito (no se reinicia con la Compresión): el Impulso de Inercia. */
   tiempoInfinito: number
@@ -77,7 +80,8 @@ export interface State {
 /** Autocompradores que compran ítems de la tienda (tienen intervalo y cantidad). */
 export const COMPRAS_AUTO = ['caudal', ...CFG.colores.map((c) => c.id), 'cascada', 'mutaciones']
 /** Todos los interruptores, en el orden del panel. */
-export const AUTOS = [...COMPRAS_AUTO, 'compresion_auto', 'infinito']
+export const AUTOS = [...COMPRAS_AUTO, 'compresion_auto', 'infinito', 'escarcha']
+export type MejoraEscarcha = 'crecimiento' | 'brillo' | 'aguante'
 
 const ceros = () => Array<number>(CFG1.estratos.cantidad).fill(0)
 
@@ -108,6 +112,7 @@ export const estadoInicial =(): State => ({
   relicario: { piezas: [], equipadas: [], pendiente: 0, foto: '', ultimo: '', regla: { modo: 'completar', orden: [...CFG1.relicario.tipos], fusionar: true, equipar: false } },
   estratos: { abiertos: 0, s: ceros(), perm: ceros(), pres: ceros() },
   defectos: { completos: [], actual: '', reintento: {} },
+  escarcha: { abierta: false, logX: 0, esquirlas: 0, mejoras: { crecimiento: 0, brillo: 0, aguante: 0 }, reloj: 0 },
   tiempoTotal: 0,
   tiempoInfinito: 0,
   granosTotales: 0,

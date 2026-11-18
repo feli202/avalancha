@@ -7,11 +7,12 @@
   import { flip } from 'svelte/animate'
   import {
     CFG1, TIPOS, desequipar, efectoNivel, elegir, equipadas, equipar, escalon, espacios, fusionables,
-    fusionar, fusionarTodo, inventarioLleno, type Pieza,
+    fusionar, fusionarTodo, inventarioLleno, costoPulido, puedePulir, pulir, type Pieza,
   } from '../core'
   import { caraReliquia } from '../render/miniPilas'
   import { txt } from '../strings'
   import IconoTipo from './IconoTipo.svelte'
+  import { formato } from './formato'
   import { juego } from './juego.svelte'
   import * as sonido from './sonido'
 
@@ -83,6 +84,15 @@
   }
   const fusionarGrupo = (g: number[]) => conAnimacion(() => (juego.s = fusionar(juego.s, g)))
   const fusionarTodas = () => conAnimacion(() => (juego.s = fusionarTodo(juego.s)))
+  // Pulido (1.2): la pieza sube un color en su lugar; si con Engarces II completa tres iguales, se fusiona con animación.
+  function pulirSel() {
+    if (!sel || !puedePulir(juego.s, sel.id)) return
+    const id = sel.id
+    conAnimacion(() => (juego.s = pulir(juego.s, id)))
+    nacida = id
+    setTimeout(() => (nacida = null), 1500)
+    sonido.compra('other')
+  }
 
   // Arrastre (HTML5, en escritorio): a un engarce lo engarza; sobre otra igual, fusiona esas dos con la más vieja que quede.
   let arrastrada: number | null = null
@@ -151,6 +161,12 @@
         <div class="acciones">
           <button class="gema" onclick={engarzarSel}>{puestas.has(sel.id) ? r.quitar('') : r.engarzar('')}</button>
           {#if g}<button class="gema" style:--c={color(sel.nivel + 1)} onclick={() => fusionarGrupo(g)}>{r.fusionar} → {grado(sel.nivel + 1)}</button>{/if}
+          {#if s.escarcha.abierta}
+            <button class="gema" style:--c={color(sel.nivel + 1)} aria-disabled={!puedePulir(s, sel.id)} onclick={pulirSel} title={r.pulidoQue}
+              aria-label="{r.pulir(grado(sel.nivel + 1))}. {txt.cristal.cuantasEsquirlas(formato(costoPulido(s, sel.nivel)))}">
+              {r.pulir(grado(sel.nivel + 1))} · <span class="num">{formato(costoPulido(s, sel.nivel))}</span>
+            </button>
+          {/if}
         </div>
       </div>
     {:else if rel.pendiente}

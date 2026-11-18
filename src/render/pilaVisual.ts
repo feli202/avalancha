@@ -160,6 +160,11 @@ export class PilaVisual {
     this.lz.defecto = n
   }
 
+  /** SPEC_CAPA1 §9: la escarcha del borde, 0..1. */
+  set escarcha(x: number) {
+    this.lz.escarcha = x
+  }
+
   /** Fondo detrás de la pila (FONDOS). El Fractal carga la pila llena la primera vez. */
   set fondo(id: string) {
     this.lz.fondo = id

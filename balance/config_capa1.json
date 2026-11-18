@@ -456,7 +456,8 @@
   "fatiga": {
    "regla": "produccion x10^(-t/600)",
    "meta_log10": 1200,
-   "recompensa": "crecimiento de Escarcha x2"
+   "recompensa": "crecimiento de Escarcha x2",
+   "recompensa_escarcha_g_x": 2
   },
   "frontera": {
    "regla": "Densidad = 1",
@@ -466,7 +467,8 @@
   "inclusion": {
    "regla": "la Presion de los Estratos no funciona",
    "meta_log10": 1800,
-   "recompensa": "la Escarcha crece x1,5"
+   "recompensa": "la Escarcha aguanta x1,5 (H)",
+   "recompensa_escarcha_H_x": 1.5
   },
   "vidrio": {
    "regla": "sin Relicario, sin Eco y sin Escarcha",
@@ -562,9 +564,10 @@
     "x_H": 1.5
    }
   },
+  "_pulido": "Pulido (5): subir una pieza de nivel n a n+1 cuesta 10^round(c0 + paso * n * pulido_x) Esquirlas; calibrado con sim_capa1.py para que no reemplace a la fusion",
   "pulido": {
    "c0": 1,
-   "paso": 0.477
+   "paso": 1.5
   },
   "dentro_de_densidad": true,
   "conserva_al_romper": 0.5,

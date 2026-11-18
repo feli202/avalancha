@@ -1,0 +1,110 @@
+[
+ {
+  "nombre": "recien abierta",
+  "red": {
+   "estratos": 1
+  },
+  "abiertos": 3,
+  "s0": [
+   40,
+   30,
+   27.5,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "logX0": 0.0,
+  "mejoras": {
+   "crecimiento": 0,
+   "brillo": 0,
+   "aguante": 0
+  },
+  "done": [],
+  "Ctot": 0.0,
+  "segundos": 3600.0,
+  "check": 15.0,
+  "logX": 10.965192899999868,
+  "esquirlas": 0,
+  "rupturas": 1,
+  "g": 0.004065699999999999,
+  "H": 50.0,
+  "m": 1.0
+ },
+ {
+  "nombre": "con mejoras",
+  "red": {
+   "estratos": 2,
+   "presion": 1,
+   "germen": 2,
+   "eco2": 3,
+   "frio": 1
+  },
+  "abiertos": 6,
+  "s0": [
+   80,
+   70,
+   65,
+   60,
+   50,
+   40,
+   0,
+   0
+  ],
+  "logX0": 120.0,
+  "mejoras": {
+   "crecimiento": 5,
+   "brillo": 3,
+   "aguante": 4
+  },
+  "done": [
+   "fatiga",
+   "inclusion"
+  ],
+  "Ctot": 150.0,
+  "segundos": 3600.0,
+  "check": 15.0,
+  "logX": 199.39477277970894,
+  "esquirlas": 10,
+  "rupturas": 1,
+  "g": 0.05168512153493178,
+  "H": 569.53125,
+  "m": 1.12
+ },
+ {
+  "nombre": "deshielo",
+  "red": {
+   "estratos": 4,
+   "germen": 4,
+   "deshielo": 3
+  },
+  "abiertos": 8,
+  "s0": [
+   120,
+   110,
+   100,
+   90,
+   80,
+   70,
+   60,
+   50
+  ],
+  "logX0": 300.0,
+  "mejoras": {
+   "crecimiento": 2,
+   "brillo": 1,
+   "aguante": 1
+  },
+  "done": [],
+  "Ctot": 250.0,
+  "segundos": 3600.0,
+  "check": 15.0,
+  "logX": 117.75434741760449,
+  "esquirlas": 112,
+  "rupturas": 2,
+  "g": 0.031669886976000004,
+  "H": 75.0,
+  "m": 1.04
+ }
+]

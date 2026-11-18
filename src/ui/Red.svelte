@@ -183,6 +183,19 @@
     return out
   })
 
+  // C11: al abrirse la Escarcha, el hielo grueso del anillo 3 se derrite (una sola vez en la partida, la primera vez que se
+  // mira la Red con la Escarcha abierta; se anota en `vistos`, que va al guardado). Con Reducir destellos solo se anota.
+  let derrite = $state(false)
+  $effect(() => {
+    if (!escarchaAbierta(s) || juego.vistos.red_anillo3) return
+    juego.vistos = { ...juego.vistos, red_anillo3: true }
+    if (ajustes.reducirDestellos) return
+    derrite = true
+    sonido.hito('ring')
+    setTimeout(() => (derrite = false), 3800)
+  })
+  const orden3 = [...ANILLO3]
+
   const colorDe = (v: Vista) => (v.modo === 'cristal' ? hex[v.n - 1] : null)
 
   // El derrumbe al completar un nodo: un fragmento de cristal sale hacia cada vecino.
@@ -271,6 +284,16 @@
                   {#each COLORES as c, i}
                     <rect x={-2 * M.paso + (M.paso - M.cuadro) / 2 + i * M.paso} y={-M.cuadro / 2} width={M.cuadro} height={M.cuadro}
                       fill={i < v.n ? `var(${c})` : 'rgb(159 227 245 / 0.14)'} />
+                  {/each}
+                </g>
+              {/if}
+              {#if derrite && ANILLO3.has(v.id)}
+                <!-- El bloque de hielo grueso: se agrieta, gotea y se derrite (uno detrás de otro alrededor del rombo). -->
+                <g class="derrite" style:--d="{orden3.indexOf(v.id) * 110}ms">
+                  <circle class="grueso" r={v.r + 8} />
+                  <path class="grieta" d="M{-v.r * 0.6} {-v.r * 0.2}L{-v.r * 0.1} {v.r * 0.1}L{v.r * 0.2} {-v.r * 0.4}M{-v.r * 0.1} {v.r * 0.1}L{v.r * 0.05} {v.r * 0.6}" />
+                  {#each [-0.45, 0.1, 0.5] as dx, j}
+                    <rect class="gota" x={dx * v.r - 1.5} y={v.r * 0.6} width="3" height="5" style:--g="{j * 160}ms" />
                   {/each}
                 </g>
               {/if}
@@ -377,6 +400,15 @@
   .cerrado { fill: var(--apagado); }
   .nodo.visto .nom, .nodo.visto .cerrado { fill: #fff; }
   .nodo.elegido .nom { fill: var(--hielo); }
+
+  /* C11, deshielo del anillo 3: el bloque grueso se agrieta, gotea y se va; el nodo de abajo aparece. */
+  .derrite { pointer-events: none; animation: derretir 2.2s ease-in var(--d) both; transform-box: fill-box; transform-origin: center; }
+  .grueso { fill: rgb(159 227 245 / 0.4); stroke: var(--hielo); stroke-width: 2; }
+  .grieta { fill: none; stroke: #fff; stroke-width: 1.2; stroke-linecap: round; opacity: 0; animation: grieta 0.5s ease-out calc(var(--d) + 0.3s) forwards; }
+  .gota { fill: var(--hielo); animation: gotea 1.1s ease-in calc(var(--d) + 0.7s + var(--g)) both; }
+  @keyframes derretir { 0%, 35% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: 1 0.6; translate: 0 10px; } }
+  @keyframes grieta { to { opacity: 0.9; } }
+  @keyframes gotea { 0% { opacity: 0; translate: 0 0; } 20% { opacity: 1; } 100% { opacity: 0; translate: 0 34px; } }
 
   /* El derrumbe: el nodo late y los fragmentos vuelan a los vecinos. */
   .nodo.cae { animation: latido 0.6s ease-out; }

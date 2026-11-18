@@ -5,6 +5,7 @@
   import { ajustes } from './ajustes.svelte'
   import { formato } from './formato'
   import { hayCartel, juego } from './juego.svelte'
+  import Nevada from './Nevada.svelte'
   import Escarcha from './Escarcha.svelte'
   import Defectos from './Defectos.svelte'
   import Estratos from './Estratos.svelte'
@@ -48,11 +49,12 @@
   <div class="capa1" class:quieto={ajustes.reducirDestellos} class:calma={ajustes.calma} inert={hayCartel()}>
     {#if juego.capa === 'cristalizacion'}
       <main class="cristalizacion" class:llega={!juego.vistos.cristales} class:fija={juego.vistos.cristales}>
-        <Escarcha />
+        <Nevada />
         <dl class="contadores num">
           <div class="principal" data-guia="c1_cristales">{@render cristal('emblema')}<div><dt>{txt.cristal.cristales}</dt><dd class="cristales">{formato(s.cristales)}</dd></div></div>
           <div><dt>{txt.cristal.totales}</dt><dd>{formato(s.cristalesTotales)}</dd></div>
           <div><dt>{txt.energia} · {txt.capas.arena}</dt><dd>{formato(s.energia)}</dd></div>
+          {#if s.escarcha.abierta}<div class="esquirlas"><dt>{txt.cristal.esquirlas}</dt><dd>{formato(s.escarcha.esquirlas)}</dd></div>{/if}
         </dl>
         {#if juego.vistos.cristales}
           <nav class="sistemas pestanas-hielo" aria-label={txt.cristal.sistemas}>
@@ -61,7 +63,7 @@
             {/each}
           </nav>
           {#key juego.pantalla}
-            {#if juego.pantalla === 'red'}<Red />{:else if juego.pantalla === 'relicario'}<Relicario />{:else if juego.pantalla === 'estratos'}<Estratos />{:else if juego.pantalla === 'defectos'}<Defectos />{:else}
+            {#if juego.pantalla === 'red'}<Red />{:else if juego.pantalla === 'relicario'}<Relicario />{:else if juego.pantalla === 'estratos'}<Estratos />{:else if juego.pantalla === 'defectos'}<Defectos />{:else if juego.pantalla === 'escarcha'}<Escarcha />{:else}
             <section class="pantalla" aria-labelledby="c1-titulo">
               <svg viewBox="-100 -100 200 200" aria-hidden="true"><path d="M0-90 78-45V45L0 90-78 45V-45ZM0-90V90M-78-45 78 45M-78 45 78-45" /></svg>
               <h1 id="c1-titulo">{txt.cristal.pantallas[juego.pantalla]}</h1>

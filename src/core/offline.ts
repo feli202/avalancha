@@ -16,6 +16,8 @@ export interface Ausencia {
   cristales: Decimal
   /** log10 de granos de cada estrato al irse (para mostrar cuánto crecieron). */
   estratosAntes: number[]
+  /** Espesor de la Escarcha al irse (logX). */
+  escarchaAntes: number
 }
 
 /** SPEC 8 y SPEC_CAPA1 §12: el tiempo ausente con el mismo tick, en pasos de paso_s hasta max_pasos (después, pasos más
@@ -48,5 +50,6 @@ export function* fueraDeLineaPasos(s: State, segundos: number, eficiencia = 1, c
     infinitos: s.infinitos - antes.infinitos,
     cristales: s.cristalesTotales.sub(antes.cristalesTotales),
     estratosAntes: antes.estratos.s.slice(0, antes.estratos.abiertos),
+    escarchaAntes: antes.escarcha.logX,
   }
 }

@@ -110,6 +110,8 @@ export function deserializar(texto: string): Partida {
       cristales: deDec(e.cristales), cristalesTotales: deDec(e.cristalesTotales),
       granos: pos(e.granos), granosTotales: pos(e.granosTotales), caudal: ent(e.caudal), colores: e.colores.map((n) => ent(n)),
       red, estratos: { abiertos: ent(e.estratos.abiertos, ESTRATOS), s: e.estratos.s.map(pos), perm: e.estratos.perm.map((n) => ent(n)), pres: e.estratos.pres.map((n) => ent(n)) },
+      escarcha: { ...e.escarcha, logX: pos(e.escarcha.logX), esquirlas: ent(e.escarcha.esquirlas), reloj: pos(e.escarcha.reloj),
+        mejoras: { crecimiento: ent(e.escarcha.mejoras.crecimiento), brillo: ent(e.escarcha.mejoras.brillo), aguante: ent(e.escarcha.mejoras.aguante) } },
       relicario, automat: leerAutomat(e.automat), defectos: leerDefectos(e.defectos), cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
       mutaciones: Object.fromEntries(MUTACIONES.map((m) => [m, ent(e.mutaciones[m], maxMutacion(conRed))])) as State['mutaciones'],
       coloresDesbloqueados: ent(e.coloresDesbloqueados, CFG.colores.length), infinitos,

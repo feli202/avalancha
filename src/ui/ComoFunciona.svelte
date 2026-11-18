@@ -8,6 +8,7 @@
     CFG1, ESTRATOS, NODOS, NIVEL_MAX_RED, cauceRel, cascadaRel, costoAbrir, cristalesAlInfinito, cristalesRedLog10, infinitoRoto, ordenesQ, espacios,
     gammaEstrato, memoria, mutacionesRel, nivelRed, presion, separacion,
     DEFECTOS, baseAnillo, colorSX, completo, hitoColor, metaLog10,
+    aguanteEscarcha, aporteEscarcha, brilloEscarcha, crecimientoEscarcha, esquirlasAlRomper, penalEscarcha, efectoRed,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
   import { txt } from '../strings'
@@ -102,7 +103,7 @@
   /** Correcciones, bloque 12: una sección por sistema de la Capa 1, con su fórmula (CFG1 y el núcleo). Defectos y Escarcha,
    * cerradas hasta sus hitos. */
   function capa1(s: State): Seccion[] {
-    const v = juego.vistos, c1 = g.c1, R = CFG1.red, E = CFG1.estratos, RL = CFG1.relicario
+    const v = juego.vistos, c1 = g.c1, R = CFG1.red, E = CFG1.estratos, RL = CFG1.relicario, EC = CFG1.escarcha
     const sec = (id: string, f: Formula[]): Seccion => ({ id, abierta: !!v[id], color: 'var(--hielo)', titulo: g.secciones[id][0], texto: g.secciones[id][1], f })
     const mult = cristalesRedLog10(s), D = densidad(s), P = presion(s)
     const ids = Object.keys(NODOS), completos = ids.filter((id) => nivelRed(s, id) >= NIVEL_MAX_RED).length
@@ -136,6 +137,7 @@
         { r: `${g.rotulo.efectoRel} · ${tipos.mutaciones[0]}`, g: `^(1 + ${d(RL.mutaciones_efecto_por_nivel, 4)} × (n + 1))`, v: tipos.mutaciones[1](mutacionesRel(s)) },
         { r: g.rotulo.fusion, g: c1.fusion, v: '' },
         { r: g.rotulo.engarces, g: c1.engarces(espacios(s)), v: '' },
+        ...(s.escarcha.abierta ? [{ r: g.rotulo.pulido, g: `10^round(${d(EC.pulido.c0)} + ${d(EC.pulido.paso)} × n × pulido_x)`, v: `pulido_x = ${d(efectoRed(s, 'engarces2', 'pulido_x', 1))}` }] : []),
       ]),
       sec('c1_estratos', [
         { r: g.rotulo.presion, g: c1.presion(d(E.w_base_por_profundidad), d(E.presion.suma_w)),
@@ -154,7 +156,12 @@
       sec('c1_defectos', DEFECTOS.map((id) => ({
         r: nombreDef(id), g: `${regla(id)} → ${recompensa(id)}`, v: `${txt.cristal.defectos.meta(metaLog10(id))}${completo(s, id) ? ' ✓' : ''}`,
       }))),
-      sec('c1_escarcha', []),
+      sec('c1_escarcha', [
+        { r: g.rotulo.gEsc, g: c1.gEsc(d(EC.g_log10_por_s, 4), d(EC.g_por_presion, 4)), v: s.escarcha.abierta ? `= ${d(crecimientoEscarcha(s), 5)}` : '' },
+        { r: g.rotulo.aporteEsc, g: c1.aporteEsc, v: s.escarcha.abierta ? `m = ${d(brilloEscarcha(s))} → +${d(aporteEscarcha(s))}` : '' },
+        { r: g.rotulo.frenoEsc, g: c1.frenoEsc(d(EC.H)), v: s.escarcha.abierta ? `H = ${d(aguanteEscarcha(s))} → −${d(penalEscarcha(s), 3)}` : '' },
+        { r: g.rotulo.romperEsc, g: c1.romperEsc(EC.ruptura_bot_min, d(EC.conserva_al_romper), EC.esquirlas_por_ruptura_div), v: s.escarcha.abierta ? txt.cristal.cuantasEsquirlas(String(esquirlasAlRomper(s))) : '' },
+      ]),
     ]
   }
 

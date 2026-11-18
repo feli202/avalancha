@@ -2,7 +2,7 @@
   // Lo que flota sobre la pila: "Mientras no estabas" y el guardado dañado. Y Escape y el foco de todas las pantallas.
   // Un solo lenguaje: velo oscuro translúcido, sin cajas, jerarquía por tamaño, números con cifras tabulares.
   import { untrack } from 'svelte'
-  import { CFG, CFG1 } from '../core'
+  import { CFG, CFG1, infinitoRoto } from '../core'
   import { almacenLocal } from '../guardado/almacen'
   import { RESPALDO } from '../guardado/guardado'
   import { txt } from '../strings'
@@ -95,7 +95,7 @@
       <ul class="ganado num">
         <li>{a.infinitos > 0
           ? `${txt.ausencia.infinitos(a.infinitos)} · ${txt.ausencia.reliquias(a.infinitos, txt.cristal.relicario.regla.modos[a.s.relicario.regla.modo])}`
-          : txt.ausencia.sinInfinito}</li>
+          : infinitoRoto(a.s) ? txt.ausencia.sinInfinitoRoto : txt.ausencia.sinInfinito}</li>
         {#if ab > 0}
           <li class="estratos">
             <span>{txt.ausencia.estratos}</span>
@@ -104,6 +104,9 @@
               <span class="chip">{txt.ausencia.estrato(k + 1)} {txt.ausencia.crecio(d.toLocaleString(txt.locale, { maximumFractionDigits: 1 }))}</span>
             {/each}
           </li>
+        {/if}
+        {#if a.s.escarcha.logX > a.escarchaAntes}
+          <li>{txt.ausencia.escarcha((a.s.escarcha.logX - a.escarchaAntes).toLocaleString(txt.locale, { maximumFractionDigits: 1 }))}</li>
         {/if}
       </ul>
       <p class="detalle num">
@@ -183,9 +186,12 @@
   @keyframes fundido { from { opacity: 0; } }
 
   /* Capa 1: la misma jerarquía, sobre una placa de hielo (hielo.css) y con el premio en cian. */
-  .hielo { padding: 1.75rem 1.5rem 1.5rem; }
+  /* La placa de hielo: el ancho incluye el relleno y nada se sale de ella (cifras de miles de dígitos, ocho estratos). */
+  .hielo { box-sizing: border-box; width: min(34rem, 100% - 2rem); padding: 1.75rem 1.5rem 1.5rem; }
+  .hielo > * { max-width: 100%; min-width: 0; }
+  .hielo .detalle { text-wrap: balance; }
   .hielo .cifra { color: var(--hielo); text-shadow: 0 0 2.5rem color-mix(in srgb, var(--hielo) 40%, transparent), 0 0 0.75rem color-mix(in srgb, var(--hielo) 25%, transparent); }
-  .hielo .cifra { font-size: clamp(2.75rem, 9vw, 5rem); }
+  .hielo .cifra { font-size: clamp(2.25rem, 8vw, 4rem); overflow-wrap: anywhere; }
   .hielo .unidad { color: var(--hielo); }
   .hielo .detalle { margin-bottom: 1.5rem; font-size: 0.875rem; }
   .ganado { display: grid; gap: 0.5rem; margin: 0 0 1rem; padding: 0; list-style: none; font-size: 1rem; color: var(--tinta); }

@@ -1026,7 +1026,7 @@ Balance sin cambios: el simulador ya modelaba el inventario desde la sesión 2 (
 4. **Completar fusiones** cuenta Ámbar sueltas (lo que nace siempre es Ámbar).
 5. **El inventario no tiene tope**: 24 casilleros a la vista y, si se llenan, aparece otra fila. Nada se pierde.
 6. **La instantánea es de la pila visual**, no de la economía (el núcleo no tiene pila). Con la pila llena se muestrea de a ~16 celdas: se ve el dibujo grande, no el detalle. Si el Infinito automático llega mientras la Arena no está a la vista, la foto es la de la última vez que se dibujó la pila (shortcut; no lo noté en las pruebas).
-7. **Pulido (C11)** suma "reliquias virtuales" a un tipo según la spec vieja: con piezas hay que redefinirlo (¿sube el nivel de una pieza?). Queda para C11.
+7. ~~**Pulido (C11)** suma "reliquias virtuales" a un tipo según la spec vieja: con piezas hay que redefinirlo (¿sube el nivel de una pieza?). Queda para C11.~~ Resuelto en C11: sube una pieza un color.
 8. Arrastrar una sobre otra igual fusiona esas dos con la más vieja que quede del mismo tipo y nivel.
 
 **Vuelta de revisión (pedidos sobre la primera versión)**
@@ -1114,8 +1114,8 @@ Solo interfaz: no se tocó `src/core/`, `balance/` ni las escenas WebGL.
 
 **Actualización 1.2**
 
-- [ ] C10 — Escarcha (lógica + visual)
-- [ ] C11 — Anillo 3 de la Red, Pulido, Deshielo
+- [x] C10 — Escarcha (lógica + visual)
+- [x] C11 — Anillo 3 de la Red, Pulido, Deshielo
 - [ ] C12 — Defectos 5–8
 - [ ] C13 — Fin de la Capa 1 (hito + pantalla) + test de balance completo
 - [ ] C14 — Pulido y auditoría 1.2 → publicar
@@ -1876,3 +1876,56 @@ Medido en Edge headless (GPU por ANGLE/D3D11), servidor de desarrollo, con el Re
 - La casilla de "Comprimir sola" mide 17×20, pero su etiqueta entera (200×44) es tocable: está bien.
 
 **Queda afuera**: Lighthouse sobre las pantallas de la Capa 1 (Lighthouse solo mira la carga, que es la pantalla de título); probar con lector de pantalla real.
+
+## C10: la Escarcha (2026-11-18)
+
+**Hito actual: C10 terminado.** Sigue C11 (anillo 3 de la Red, Pulido, Deshielo completo).
+
+**Antes de programar**, `python balance/sim_capa1.py` con los números de antes del rebalanceo: fin de la capa 14,16 h (rango 14–16), Defectos 5–8 a 9,11 / 11,61 / 12,16 / 13,16 h, hueco máximo 30,6 min (< 40), fuente más pesada al fin de la 1.2 Presión 45 % (Escarcha 40 %, < 65 %). **No hizo falta recalibrar.**
+
+Hecho:
+- **Núcleo** (`src/core/escarcha.ts`): `logX` crece con `g = g_base × (1 + g_por_presion × Presión) × 1,12^Crecimiento × Germen × Eco II × Fatiga`; aporte `m × logX` a log10 V (dentro de la Densidad) y penalidad `−log10(1 + logX/H)` en `energiaPorGrano` (la Producción y el Puñado). Romper: reloj de 30 min, conserva ×0,5 y da `⌊logX × 0,5 / 10⌋ × Deshielo` Esquirlas. Mejoras Crecimiento, Brillo y Aguante a `10^round(c0 + paso × L)` Esquirlas. No corre en el Defecto Vidrio. Se abre (y queda abierta) con el Estrato 8 en 1e100 y los 4 primeros Defectos; con ella se abre el anillo 3 de la Red (`escarchaAbierta`). Deshielo la rompe sola desde `tick` (interruptor `auto.escarcha`).
+- **Offline**: sin cálculo aparte; la hace crecer el mismo `tick` del worker de a tramos (×0,7 del tiempo). La tarjeta de regreso muestra "Escarcha: espesor +x".
+- **Guardado**: `escarcha` en el estado (completado y saneado al cargar); persiste en el Infinito y al entrar o salir de un Defecto.
+- **Interfaz**: pantalla Escarcha (`src/ui/Escarcha.svelte`, placa de hielo y gemas): placa de 61 hexágonos que se cubre de escarcha desde el borde con el espesor y salta en pedazos al romperla (con Reducir destellos o Reducir movimiento solo se apaga); ficha con Espesor, Suma (×), Frena (÷), los factores de g, Romper con su cuenta regresiva y las tres mejoras con efecto y fórmula; tooltips con la cuenta. Contador de Esquirlas arriba. Fila "Romper la Escarcha" en Automatización → Reinicios (se ve desde que se abre; se activa con Deshielo). Estadísticas: Escarcha en Valor y en Producción (aporte y freno). "Cómo funciona" con sus cuatro fórmulas. Guía `c1_escarcha` abierta. La nevada decorativa se llama ahora `Nevada.svelte`.
+- **Pila**: uniforme `u_escarcha` en `lienzo.ts`: una franja fría fina por dentro del borde y un ribete de cristales por fuera, que se ensanchan con `logX / (logX + 50)`; los cristales no titilan con Reducir destellos.
+- **Test**: `balance/ref_escarcha.py` → `tests/fixtures/escarcha_sim.json` (3 casos, 1 h con el mismo estado: logX, Esquirlas, rupturas, g, H, m). `tests/escarcha.test.ts`: los 3 casos idénticos al sim, más producción, Vidrio, hito, persistencia en el Infinito, romper, mejoras, offline y guardado.
+- **Arreglo de la tarjeta de regreso** (pedido durante el hito): la cifra, las fichas de los estratos y el pie se salían de la placa; ahora el ancho incluye el relleno y la cifra se achica. Con el Infinito roto y sin Infinitos en la ausencia decía "la Arena te espera en 1e308" (falso): ahora dice "Sin Infinitos en este rato: la Energía siguió subiendo".
+
+**Decisiones (revisar)**:
+- Las recompensas de Fatiga e Inclusión para la Escarcha estaban escritas a mano en el sim (×2, ×1,5): pasaron a `config_capa1.json` y el sim las lee (salida idéntica).
+- `g` lee la Presión en vivo; el sim la toma al empezar cada corrida. El test compara con los estratos quietos.
+- El hito se marca en `tick` apenas se cumple; el sim lo marca al terminar ese Infinito (unos minutos de diferencia).
+- El anillo 3 se puede comprar desde que se abre la Escarcha, pero Sedimento II, Capilaridad, Abismo, Engarces II y Cristalografía II ya tenían efecto; **Defectos II no abre nada todavía** (Defectos 5–8 son de C12) y el Pulido es de C11.
+
+**Verificación**: 292 tests en verde (`npm test`), 13/13 en `npm run test:lento`, `tsc` y `svelte-check` 0 errores, el sim da lo mismo que antes. En el navegador (1366×768 y 390×844, sin scroll de página): pantalla Escarcha, romper (60,9 → 30,5 de espesor, +3 Esquirlas, reloj a 30 min; la animación de los hexágonos verificada por su estado a mitad de camino), fila de Automatización con Deshielo, contador arriba, tarjeta de regreso arreglada, franja de escarcha en el borde de la pila. Durante la prueba apareció y se arregló un bug: el Infinito borraba la Escarcha (`reiniciarArena` no la conservaba).
+
+**No medido**: fps (el panel del navegador estaba oculto); celular real.
+
+**Ajuste de la ficha de la Escarcha**: los nombres de las mejoras quedaban amontonados porque la ficha tenía alto fijo y la grilla aplastaba las gemas (con `overflow` oculto pueden achicarse por debajo de su contenido, y se perdía la línea del efecto). Ahora la ficha toma el alto de lo que tiene (si no entra, scrollea solo ella), los botones no se achican y tienen más aire. En ventanas bajas se oculta la fórmula y en el celular los factores de g (están en los tooltips y en "Cómo funciona"). Medido: entra entera, sin scroll, en 1366×768, 1280×720 y 390×844.
+
+## C11: anillo 3 de la Red, Pulido y Deshielo (2026-11-18)
+
+**Hito actual: C11 terminado.** Sigue C12 (Defectos 5–8).
+
+**Qué ya estaba** (de C10 y del rebalanceo del bloque 6), revisado contra `sim_capa1.py`: Capilaridad (separación), Sedimento II (`k^e`), Abismo (estratos llenos), Cristalografía II (facetas por Defecto), Compactación II (Densidad por anillo), Eco II, Germen y Frío (en g y H de la Escarcha), Ruptura II (Q), Deshielo (rompe sola desde `tick` con el interruptor `auto.escarcha`, Esquirlas ×), Engarces II (3 espacios y fusión automática en `elegir`). La apertura del anillo 3 con la Escarcha también.
+
+Hecho:
+- **Pulido nuevo** (`pulir`, `puedePulir`, `costoPulido(Log10)` en `relicario.ts`): gasta Esquirlas y sube **una** pieza un color, sin fusionar; conserva pila y engarce; si completa tres iguales con "fusionar solas" y Engarces II, se fusiona. Costo `10^round(1 + 1,5 × n × pulido_x)` (`escarcha.pulido` en config; Engarces II da `pulido_x`).
+- **Calibración en el simulador**: `esq_items` ofrece pulir cada pieza engarzada (la más barata primero) y al comprar suma `2 × 3^n` al conteo en base 3 (es pasar una pieza de n a n+1). Probado (Ámbar equivalente que da el Pulido en toda la partida, contra 1531 Infinitos): `paso` 0,477 → 1,59 M (Cauce de nv6 a nv13 en la última media hora); 1 → 2126 (reemplaza a la fusión); `c0` 2 → nunca se compra; **1,5 → 56** (Ámbar → Coral a las 11,5 h y nv3 → nv4 con Engarces II nv4). La tabla de §2 no cambia (fin 14,16 h, hueco 30,6 min). `SPEC_CAPA1.md` §5 lo explica.
+- **Relicario**: en la ficha de la pieza, con la Escarcha abierta, "Pulir → Color · costo" (gema; apagada si no alcanza; tooltip y etiqueta con las Esquirlas). La pieza se cristaliza al subir y, si se fusiona, vuelan las tres.
+- **Red**: la primera vez que se mira con la Escarcha abierta, el hielo grueso de los 12 nodos del anillo 3 se agrieta, gotea y se derrite en cadena (~3,5 s); se anota en `vistos.red_anillo3` (guardado), una vez por partida. Con Reducir destellos solo se anota.
+- **Tooltips** en una frase: Eco II ("Cuantos más Cristales juntaste, más rápido crece la Escarcha: × (1 + 0,001 por cada orden…)") y Ruptura II ("Pasar el Infinito rinde más: cada ×10 de Cristales pide N órdenes de Energía menos"), en español e inglés.
+- **Cómo funciona**: fila del Pulido en el Relicario (fórmula y `pulido_x` actual) con la Escarcha abierta.
+- **Tests**: `tests/anillo3.test.ts` (9): apertura con la Escarcha, Germen, Eco II, Frío, Ruptura II, Deshielo (rompe desde `tick`, Esquirlas ×, no sin el nodo ni con el interruptor apagado), Engarces II (3 espacios), costo del Pulido (crece con el nivel, Engarces II lo abarata), pulir (sube una, gasta, no hace nada sin alcanzar / sin Escarcha / con id falso) y fusión al completar tres.
+
+**Decisiones (revisar)**:
+- Se puede pulir cualquier pieza (también sin engarzar); el bot del sim solo pule las engarzadas.
+- `pulido_x` multiplica solo el término del nivel (como en la spec vieja): pulir una Ámbar cuesta 10 siempre.
+- **Defectos II** sigue sin abrir nada: los Defectos 5–8 son de C12.
+
+**Verificación**: 301 tests en verde, `tsc` y `svelte-check` 0 errores, `python balance/sim_capa1.py` igual que antes. En el navegador (1366×768 y 390×844, sin scroll de página): deshielo del anillo 3 (los 12 bloques en el DOM a 0,6 s y a la vista en captura), Pulir Coral +1 → Jade +1 (5.000 → 4.000 Esquirlas, engarce y efecto ^1,105 al día), Deshielo nv2 rompiendo sola (100 → 50 de espesor, +10 Esquirlas) con la fila "AUTO" en Automatización, Red y Relicario enteros en el celular.
+
+**Después (pedido del usuario): la placa de Escarcha crece de verdad.** En [Escarcha.svelte](src/ui/Escarcha.svelte) la placa nace como un solo hexágono y se agranda hacia afuera con el espesor (6 anillos, 127 hexágonos). Cada hexágono aparece chico y crece cuando el borde lo alcanza, y el ruido hace el borde irregular. El alcance es `0,6 + 6,5 × logX / (logX + H)`, con H la base de config (es solo visual). El borde que está creciendo titila apenas. Al romperla, la placa se sacude, se raja con 7 grietas blancas desde el centro y los hexágonos que había saltan en pedazos; debajo queda la placa con la mitad del espesor, ya más chica. Con Reducir destellos o con prefers-reduced-motion no hay sacudón ni vuelo, los pedazos solo se apagan. Probado en el navegador: espesor 0,5 → semilla, 15 → 7 hexágonos, 400 → casi entera; Romper con 120 → pedazos volando y placa de 60. Sin scroll en 390×844.
+
+**No medido**: fps (la animación del deshielo son 12 grupos SVG con CSS, unos segundos y una vez); no corrí `npm run test:lento`.

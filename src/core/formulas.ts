@@ -4,6 +4,7 @@ import { CFG, precioLog10, type MutId } from './config'
 import {
   baseAnillo, cascadaCExtra, cascadaX, colorSinEfecto, coloresX, densidadX, derrumbesTope, hitoColor, presionX, sinMutaciones,
 } from './defectos'
+import { aporteEscarcha, penalEscarcha } from './escarcha'
 import { presion } from './estratos'
 import { cascadaExtra, densidadRed, ecoLog10, efectoRed, mutacionExtra, nivelRed } from './red'
 import { cascadaRel, cauceRel, mutacionesRel } from './relicario'
@@ -94,11 +95,12 @@ export const valor = (s: State) =>
     .mul(multAnillos(s))
     .mul(multCascada(s))
     .mul(Decimal.pow(CFG.mutaciones.colores.por_nivel, sinMutaciones(s) ? 0 : s.mutaciones.colores * (1 + mutacionesRel(s)))) // Macla
-    .mul(Decimal.pow10(ecoLog10(s) + presion(s) * presionX(s))) // Eco (SPEC_CAPA1 §6.3) y Presión de los Estratos (§7.2, §10)
+    .mul(Decimal.pow10(ecoLog10(s) + presion(s) * presionX(s) + aporteEscarcha(s))) // Eco (§6.3), Presión (§7.2) y Escarcha (§9)
 
 /** Energía que da un grano que cae ahora: (K × G) × V^D. */
 export const energiaPorGrano = (s: State) =>
   valor(s).pow(densidad(s)).mul(Math.min(CFG.K_derrumbes_por_grano * s.granos, derrumbesTope(s))) // Impureza: tope
+    .mul(Decimal.pow10(-penalEscarcha(s))) // SPEC_CAPA1 §10: la penalidad de la Escarcha, fuera de la Densidad
 
 /** Energía/s = F × (K × G) × V^D. */
 export const produccion = (s: State) => energiaPorGrano(s).mul(caudal(s))

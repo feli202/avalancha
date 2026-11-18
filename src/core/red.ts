@@ -25,8 +25,8 @@ export const vecinos = (id: string) => {
   return [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]].map((p) => POR_POS.get(p.join(','))).filter((v): v is string => !!v)
 }
 
-/** La Escarcha llega en C10; hasta entonces el anillo 3 queda cerrado. */
-export const escarchaAbierta = (_s: State) => false
+/** El anillo 3 se abre con la Escarcha (hito de la 1.1). */
+export const escarchaAbierta = (s: State) => s.escarcha.abierta
 
 /** Lo que pide el nodo además del vecino (`requiere` en config: Estratos pide Ruptura nv1). Solo para abrirlo: un
  * guardado que ya lo tenía sigue subiéndolo. */

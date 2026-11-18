@@ -128,7 +128,7 @@ Tres tipos de reliquia. Efectos pasivos y moderados:
 - *Mutante* (Mutaciones + Cauce): en los Defectos sin Cascada (Dislocación).
 - *Avalancha* (Cascada + Mutaciones): con Romper el Infinito y pilas enormes.
 
-**Pulido (1.2)**: con Esquirlas sumás reliquias "virtuales" a un tipo equipado. Costo (log10 de Esquirlas) = `1 + 0,477 × pulidos × pulido_x + log10(reliquias del tipo)`. `pulido_x` = 1, o 0,7/0,5/0,35/0,25 con Engarces II.
+**Pulido (1.2, C11)**: gastás Esquirlas para subir **una** reliquia un color sin fusionar (nivel n → n+1; conserva su pila y su engarce; si completa tres iguales y está "fusionar solas" con Engarces II, se fusiona). Costo = `10^round(1 + 1,5 × n × pulido_x)` Esquirlas (`escarcha.pulido` en config); `pulido_x` = 1, o 0,7/0,5/0,35/0,25 con Engarces II. Ámbar → Coral cuesta 10; una Violeta (n = 3), 10^6 sin Engarces II y 10^2 con nv4. Calibrado con el simulador (el bot pule la pieza engarzada más barata): con `paso` = 1 el Pulido daba al final de la 1.2 más Ámbar equivalente (2126) que todos los Infinitos (1531) y reemplazaba a la fusión; con 1,5 da 56 (Ámbar → Coral a las 11,5 h y nv3 → nv4 con Engarces II) y los tiempos de §2 no cambian; con `c0` = 2 no se usa nunca.
 
 **Cómo se ve** (correcciones, bloque 8): pantalla fija. Engarces hexagonales y la elección (o la ficha de la reliquia elegida) a la izquierda, el inventario a la derecha (solo la grilla scrollea; 6 columnas en el celular). Cada tipo tiene su sello (`IconoTipo.svelte`): Cauce dos corrientes que se juntan, Cascada un derrumbe que se abre en anillos, Mutaciones una doble hélice; el mismo sello marca sus filas en la Arena. Sin porcentajes: los efectos se escriben como `^1,015`, `+0,02 a c`.
 
@@ -305,7 +305,8 @@ H       = 50 × 1,5^Aguante × Frío × (1,5 si Inclusión)
 - **Romper la Escarcha** (botón, cada 30 min como mínimo; automático con Deshielo): conserva el 50 % de `logX` y da `floor(logX × 0,5 / 10) × Deshielo.esquirlas_x` **Esquirlas**. Animación: el hielo se agrieta en hexágonos y salta.
 - **Mejoras con Esquirlas** (costo en log10 de Esquirlas, nivel L, redondeado al entero más cercano como todo precio, también el Pulido): Crecimiento `0 + 0,4L` (×1,12 a g), Brillo `0,5 + 0,5L` (+0,04 a m), Aguante `0,5 + 0,4L` (×1,5 a H). Y el Pulido de reliquias (§5).
 - No funciona en el Defecto Vidrio.
-- Se desbloquea al llegar al hito de la 1.1 (Estrato 8 lleno con los 4 primeros Defectos): los Defectos ayudan a abrirla.
+- Se desbloquea al llegar al hito de la 1.1 (Estrato 8 lleno con los 4 primeros Defectos): los Defectos ayudan a abrirla. Con ella se abre el anillo 3 de la Red.
+- **C10 (núcleo, `src/core/escarcha.ts`)**: `g` usa la Presión de los estratos sin el ×0,5 de Dislocación (como `last_pres` del simulador, que la toma al empezar la corrida; el juego la lee en vivo). Las recompensas de Fatiga (×2 a g) e Inclusión (×1,5 a H) están en `config_capa1.json` (`recompensa_escarcha_g_x`, `recompensa_escarcha_H_x`). El aporte va dentro de la Densidad (con la Presión y el Eco); la penalidad, fuera. El reloj de 30 min solo corre con la Escarcha activa (no en Vidrio). Las Esquirlas se guardan como número (son enteras y chicas). `tests/escarcha.test.ts` compara 1 h contra `balance/ref_escarcha.py` (mismo logX, Esquirlas, g, H y m).
 
 ---
 
@@ -336,7 +337,7 @@ Pantalla de estadísticas (estilo AD): desglose de log10 V por fuente, con porce
 - **Pantallas sin scroll**: cada pantalla entra entera en la ventana (1366×768 y 390×844); si hay una lista larga, scrollea solo esa caja.
 - Contadores arriba: Energía (Arena), Cristales, Cristales totales, Esquirlas (1.2).
 - Primer Infinito: cinemática corta (la pila se congela desde abajo, se rompe en cristales, la cámara cae a la pantalla de Cristalización). Explica en 3 líneas qué son los Cristales y abre el primer Relicario.
-- **Guías** (correcciones, bloques 4 y 12): cada guía tiene un id y se anota como vista en el guardado: sale **una sola vez en la vida de la partida**. Las de la Capa 1 salen la primera vez que se mira cada pantalla (así llegan de a una): Cristales (al cerrar la presentación), Relicario, Red, Estratos (cuando ya están abiertos) y Automatización. Cada una tiene su página en "Cómo funciona" (?) con la fórmula y los valores actuales. La de Defectos sale una sola vez al desbloquearlos (Defectos nv1), cuando se mira su pantalla (C7). La Escarcha tiene su lugar preparado, cerrado hasta C10. Las de la Capa 0 se muestran con la Arena al frente; las de la Capa 1, fuera de ella.
+- **Guías** (correcciones, bloques 4 y 12): cada guía tiene un id y se anota como vista en el guardado: sale **una sola vez en la vida de la partida**. Las de la Capa 1 salen la primera vez que se mira cada pantalla (así llegan de a una): Cristales (al cerrar la presentación), Relicario, Red, Estratos (cuando ya están abiertos) y Automatización. Cada una tiene su página en "Cómo funciona" (?) con la fórmula y los valores actuales. La de Defectos sale una sola vez al desbloquearlos (Defectos nv1), cuando se mira su pantalla (C7). La de la Escarcha sale la primera vez que se mira su pantalla ya abierta (C10). Las de la Capa 0 se muestran con la Arena al frente; las de la Capa 1, fuera de ella.
 - Textos en español rioplatense en el archivo de cadenas.
 
 ---

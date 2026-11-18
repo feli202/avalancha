@@ -6,7 +6,7 @@
   // Aparecen los que el jugador tiene, más el siguiente como silueta. Pantalla fija: solo scrollea cada lista.
   import { flip } from 'svelte/animate'
   import {
-    AUTOS, CFG, COMPRAS_AUTO, MODOS, autoDisponible, cristalesAlInfinito, encenderTodo, fusionAutomatica, infinitoRoto,
+    AUTOS, CFG, CFG1, COMPRAS_AUTO, MODOS, autoDisponible, esquirlasAlRomper, cristalesAlInfinito, encenderTodo, fusionAutomatica, infinitoRoto,
     type Automat, type Cantidad, type Regla,
   } from '../core'
   import { txt } from '../strings'
@@ -21,16 +21,17 @@
   const MAX_S = 3600 // tope de los campos de segundos: cosmético, la economía acepta cualquiera
   const COLOR: Record<string, string> = {
     caudal: 'var(--tinta)', ambar: 'var(--ambar)', coral: 'var(--coral)', jade: 'var(--jade)', violeta: 'var(--violeta)',
-    cascada: 'var(--ambar)', mutaciones: 'var(--ambar)', compresion_auto: 'var(--tinta)', infinito: 'var(--hielo)',
+    cascada: 'var(--ambar)', mutaciones: 'var(--ambar)', compresion_auto: 'var(--tinta)', infinito: 'var(--hielo)', escarcha: 'var(--hielo)',
   }
 
   /** Lo que se ve: lo que tiene y el primero que todavía no (silueta). */
   const tiene = $derived(new Set(AUTOS.filter((k) => autoDisponible(s, k))))
   const sig = $derived(AUTOS.find((k) => !tiene.has(k)))
   const compras = $derived(COMPRAS_AUTO.filter((k) => tiene.has(k) || k === sig))
-  const reinicios = $derived(['compresion_auto', 'infinito'].filter((k) => tiene.has(k) || k === sig))
+  // Romper la Escarcha (SPEC_CAPA1 §9): se ve desde que se abre la Escarcha; se activa con Deshielo.
+  const reinicios = $derived(['compresion_auto', 'infinito', 'escarcha'].filter((k) => tiene.has(k) || (k === 'escarcha' ? s.escarcha.abierta : k === sig)))
   const POR_MEMORIA: Record<string, number> = { cascada: 2, mutaciones: 3, infinito: 4 }
-  const desbloqueo = (k: string) => (k in POR_MEMORIA ? a.memoria(POR_MEMORIA[k]) : a.bloqueado(CFG.autocompradores[k]))
+  const desbloqueo = (k: string) => (k === 'escarcha' ? a.deshielo : k in POR_MEMORIA ? a.memoria(POR_MEMORIA[k]) : a.bloqueado(CFG.autocompradores[k]))
 
   const alternar = (k: string) => (juego.s = { ...juego.s, auto: { ...juego.s.auto, [k]: !juego.s.auto[k] } })
   const automat = (cambio: Partial<Automat>) => (juego.s = { ...juego.s, automat: { ...juego.s.automat, ...cambio } })
@@ -49,6 +50,7 @@
 
 {#snippet marca(k: string)}
   {#if k === 'cascada' || k === 'mutaciones'}<span class="ic"><IconoTipo tipo={k} /></span>
+  {:else if k === 'escarcha'}<svg class="cristal" viewBox="-8 -8 16 16" aria-hidden="true"><path d="M0-7V7M-6-3.5 6 3.5M-6 3.5 6-3.5M0-7-1.5-5.5M0-7 1.5-5.5M0 7-1.5 5.5M0 7 1.5 5.5" /></svg>
   {:else if k === 'infinito'}<svg class="cristal" viewBox="-12 -12 24 24" aria-hidden="true"><path d="M0-11 5.5-6V6L0 11-5.5 6V-6ZM0-3.5V11M0-11-5.5-6 0-3.5 5.5-6" /></svg>
   {:else}<i class="muestra" aria-hidden="true"></i>{/if}
 {/snippet}
@@ -95,7 +97,7 @@
       <ul>
         {#each reinicios as k (k)}
           {@const si = tiene.has(k)}
-          <li class="reinicio" class:hielo={k === 'infinito'} class:silueta={!si} class:apagado={si && !s.auto[k]} style:--c={COLOR[k]}>
+          <li class="reinicio" class:hielo={k === 'infinito' || k === 'escarcha'} class:silueta={!si} class:apagado={si && !s.auto[k]} style:--c={COLOR[k]}>
             <div class="arriba">
               <b>{@render marca(k)}{nombreAuto(k)}</b>
               {#if si}{@render interruptor(k)}{:else}<small>{desbloqueo(k)}</small>{/if}
@@ -112,6 +114,8 @@
                     onchange={(e) => automat({ compresion: { ...juego.s.automat.compresion, segundos: num(e, 0) } })} />{a.seg}
                 </label>
               {/if}
+            {:else if si && k === 'escarcha'}
+              <small class="nota">{a.escarchaNota(CFG1.escarcha.ruptura_bot_min, txt.cristal.cuantasEsquirlas(String(esquirlasAlRomper(s))))}</small>
             {:else if si && k === 'infinito'}
               {@const inf = s.automat.infinito}
               <!-- Siempre apenas llega; Romper el Infinito lo mejora: en el óptimo (C6) o al dar X Cristales. -->

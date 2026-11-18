@@ -152,7 +152,7 @@ function condiciones(s: State): Record<string, boolean> {
   for (let i = 1; i < CFG.colores.length; i++) c[`color${i}`] = s.coloresDesbloqueados > i
   for (const k of Object.keys(CFG.autocompradores)) c[`auto_${k}`] = autoDisponible(s, k)
   // Correcciones, bloque 12: las guías de la Capa 1 salen la primera vez que se mira cada pantalla (así llegan de a una).
-  // Defectos y Escarcha quedan preparadas pero cerradas hasta sus hitos (C7, C10).
+  // Defectos y Escarcha salen cuando están abiertas.
   const cris = s.infinitos > 0 && juego.capa === 'cristalizacion' && !!juego.vistos.cristales
   c.c1_cristales = cris
   for (const p of ['relicario', 'red']) c[`c1_${p}`] = cris && juego.pantalla === p
@@ -162,7 +162,7 @@ function condiciones(s: State): Record<string, boolean> {
   c.c1_romper = infinitoRoto(s) && enInfinito(s) && s.infinitos > 0
   // C7: la de Defectos, una sola vez al desbloquearlos (Defectos nv1); espera en cola a que se mire su pantalla.
   c.c1_defectos = s.infinitos > 0 && (s.red.defectos ?? 0) >= 1
-  c.c1_escarcha = false
+  c.c1_escarcha = cris && juego.pantalla === 'escarcha' && s.escarcha.abierta
   return c
 }
 

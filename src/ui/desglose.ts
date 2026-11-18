@@ -2,7 +2,7 @@
 // Usa las fórmulas del núcleo; los factores con partes internas las traen en `partes`.
 import {
   CFG, CFG1, anillos, cascadaC, cascadaRel, caudal, cauceRel, densidad, efectoRed, empuje, factorCaudal, hayEstratos, impulso, multAnillos,
-  multCascada, multColor, mutacionesRel, presion, presionEstrato, valor, ecoLog10, type State,
+  multCascada, multColor, mutacionesRel, presion, presionEstrato, valor, ecoLog10, aporteEscarcha, penalEscarcha, type State,
 } from '../core'
 
 export interface Factor {
@@ -48,6 +48,12 @@ export function desglose(s: State): Factor[] {
     // Presión de los Estratos (SPEC_CAPA1 §10): se suma a log10 V. Solo con estratos abiertos.
     ...(s.estratos.abiertos && hayEstratos(s)
       ? [{ id: 'presion', log: presion(s), partes: s.estratos.s.slice(0, s.estratos.abiertos).map((_, k) => ({ id: `estrato${k}`, log: presionEstrato(s, k), n: k + 1 })) }]
+      : []),
+    // La Escarcha (SPEC_CAPA1 §9): su aporte a V y su freno (fuera de la Densidad).
+    ...(s.escarcha.abierta
+      ? [{ id: 'escarcha', log: aporteEscarcha(s) - penalEscarcha(s), partes: [
+        { id: 'escarchaAporte', log: aporteEscarcha(s), n: s.escarcha.logX }, { id: 'escarchaPenal', log: -penalEscarcha(s) },
+      ] }]
       : []),
     // El exponente: V^D = V × V^(D−1). Lo que suma es (D − 1) × log10 V.
     { id: 'densidad', log: (densidad(s) - 1) * logV, partes: [{ id: 'exponente', log: (densidad(s) - 1) * logV, n: densidad(s) }] },
@@ -106,7 +112,7 @@ export function velocidadEstrato(s: State, k: number) {
 }
 
 // ---------- C8: log10 V por fuente (SPEC_CAPA1 §10, la tabla de §2) ----------
-export const FUENTES_V = ['colores', 'anillos', 'cascada', 'mutaciones', 'presion', 'eco', 'reliquias', 'defectos'] as const
+export const FUENTES_V = ['colores', 'anillos', 'cascada', 'mutaciones', 'presion', 'eco', 'escarcha', 'reliquias', 'defectos'] as const
 export interface FuenteV { id: (typeof FUENTES_V)[number]; log: number; partes?: Parte[] }
 
 /** log10 V partido por fuente; la suma es exactamente valor(s).log10(). Cada fuente se mide sin Defectos (ni reglas ni
@@ -130,6 +136,7 @@ export function desgloseV(s: State): FuenteV[] {
     { id: 'mutaciones', log: mut },
     { id: 'presion', log: hayEstratos(s0) ? presion(s0) : 0 },
     { id: 'eco', log: ecoLog10(s0) },
+    { id: 'escarcha', log: aporteEscarcha(s0) },
     { id: 'reliquias', log: rel.reduce((a, p) => a + p.log, 0), partes: rel },
   ]
   const sinDefectos = valor(s0).log10()

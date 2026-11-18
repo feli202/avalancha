@@ -88,6 +88,7 @@ uniform int u_fondo;       // FONDO en lienzo.ts
 uniform sampler2D u_fondoPila; // R8: la pila llena (altura + 1, 0 = afuera) para el fondo Fractal
 uniform vec3 u_colorP[4];  // los colores de la arena (lineales), para el fondo Fractal
 uniform int u_defecto;     // SPEC_CAPA1 §8: 0 ninguno, 1 grieta (Vacancia), 2 corrimiento (Dislocación), 3 espejo (Macla), 4 manchas (Impureza)
+uniform float u_escarcha;  // SPEC_CAPA1 §9: 0 sin Escarcha → 1 gruesa
 const float L = ${LADO}.0;
 const vec3 LUZ = vec3(-0.5, 0.55, 0.67); // arriba a la izquierda (sin normalizar)
 
@@ -193,6 +194,19 @@ vec3 marcaDefecto(vec3 col, vec3 fondo, vec4 a, vec2 q) {
   return col;
 }
 
+// SPEC_CAPA1 §9: escarcha en el borde de la pila. La cobertura desenfocada (alfa de la luz, 1 adentro) baja cerca del
+// borde: adentro, una franja fina que blanquea apenas la arena; afuera, un ribete de cristales. Más espesor, más ancho.
+// Con Reducir destellos los cristales no titilan.
+vec3 escarchaEn(vec3 col, vec4 a, vec2 q) {
+  float lod = mix(1.0, 3.5, u_escarcha);
+  float f = textureLod(u_luz, q / L, lod).a * redondo(q, lod);
+  float adentro = (1.0 - f) * a.a, afuera = f * (1.0 - a.a);
+  float brillo = hash(floor(q * 0.5)) * (0.75 + 0.25 * sin(u_ahora * 1.3 * u_destello + hash(floor(q)) * 6.3));
+  vec3 hielo = vec3(0.62, 0.85, 1.0);
+  col = mix(col, hielo * 0.9, 0.45 * u_escarcha * smoothstep(0.0, 0.6, adentro));
+  return col + hielo * 0.16 * u_escarcha * smoothstep(0.05, 0.5, afuera) * (0.5 + brillo);
+}
+
 // Los fondos (Ajustes > Aspecto): oscuros y quietos o casi, para no competir con la pila. p: px desde el centro.
 vec3 fondoEn(vec2 p) {
   if (u_fondo == 7) return vec3(0.0); // Vacío
@@ -263,6 +277,7 @@ void main() {
     a /= n * n;
     col = col * (1.0 - a.a) + a.rgb;
     if (u_defecto > 0) col = marcaDefecto(col, fondo, a, q);
+    if (u_escarcha > 0.0) col = escarchaEn(col, a, q);
   }
   // El halo y la pila desenfocada se apagan antes del borde del canvas (en móvil no llega al borde de la ventana).
   vec2 e = min(gl_FragCoord.xy, u_tam - gl_FragCoord.xy);
@@ -294,7 +309,7 @@ export class Lienzo {
 
   /** I7: el contexto volvió después de perderse; lo dibujado se sube de nuevo (PilaVisual). */
   alRestaurar?: () => void
-  private valores = { colores: COLORES_PILA, destello: 1, efecto: 0, fondo: 'noche', fondoPila: null as Uint8Array | null, defecto: 0 }
+  private valores = { colores: COLORES_PILA, destello: 1, efecto: 0, fondo: 'noche', fondoPila: null as Uint8Array | null, defecto: 0, escarcha: 0 }
 
   constructor(readonly canvas: HTMLCanvasElement | OffscreenCanvas) {
     this.gl = canvas.getContext('webgl2', { alpha: false, antialias: false }) as WebGL2RenderingContext | null
@@ -328,7 +343,7 @@ export class Lienzo {
       return prog
     }
     this.progCeldas = programa(FRAG_CELDAS, ['u_alturas', 'u_derrumbe', 'u_ahora', 'u_destello', 'u_brillo', 'u_color', 'u_efecto'], this.uniC)
-    this.progPantalla = programa(FRAG_PANTALLA, ['u_celdas', 'u_luz', 'u_tam', 'u_escala', 'u_ahora', 'u_destello', 'u_dpr', 'u_brillo', 'u_ss', 'u_viejo', 'u_fundido', 'u_foco', 'u_fondo', 'u_fondoPila', 'u_colorP', 'u_defecto'], this.uniP)
+    this.progPantalla = programa(FRAG_PANTALLA, ['u_celdas', 'u_luz', 'u_tam', 'u_escala', 'u_ahora', 'u_destello', 'u_dpr', 'u_brillo', 'u_ss', 'u_viejo', 'u_fundido', 'u_foco', 'u_fondo', 'u_fondoPila', 'u_colorP', 'u_defecto', 'u_escarcha'], this.uniP)
     gl.bindVertexArray(gl.createVertexArray())
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1) // 513 no es múltiplo de 4
     const textura = (unidad: number, interno: number, niveles = 1) => {
@@ -372,6 +387,7 @@ export class Lienzo {
     this.efecto = this.valores.efecto
     this.fondo = this.valores.fondo
     this.defecto = this.valores.defecto
+    this.escarcha = this.valores.escarcha
     if (this.valores.fondoPila) this.fondoPila(this.valores.fondoPila)
   }
 
@@ -423,6 +439,15 @@ export class Lienzo {
     if (!gl) return
     gl.useProgram(this.progPantalla)
     gl.uniform1i(this.uniP.u_defecto, n)
+  }
+
+  /** SPEC_CAPA1 §9: espesor visual de la escarcha del borde, 0..1. */
+  set escarcha(x: number) {
+    this.valores.escarcha = x
+    const { gl } = this
+    if (!gl) return
+    gl.useProgram(this.progPantalla)
+    gl.uniform1f(this.uniP.u_escarcha, x)
   }
 
   /** Índice en EFECTOS (paletas.ts). */

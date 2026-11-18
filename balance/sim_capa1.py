@@ -135,8 +135,8 @@ class Player:
     def broken(s): return s.red['ruptura'] >= 1
     def esc_params(s):
         E = L1['escarcha']; up = s.escup; M = E['mejoras']
-        g = E['g_log10_por_s'] * (1 + E.get('g_por_presion', 0.01) * s.last_pres) * M['crecimiento']['x'] ** up['crecimiento'] * s.v('germen', 'escarcha_g_x', 1) * (2 if 'fatiga' in s.done else 1) * (1 + s.v('eco2', 'escarcha_eco') * max(0.0, s.Ctot))
-        H = E['H'] * M['aguante']['x_H'] ** up['aguante'] * s.v('frio', 'escarcha_H_x', 1) * (1.5 if 'inclusion' in s.done else 1)
+        g = E['g_log10_por_s'] * (1 + E.get('g_por_presion', 0.01) * s.last_pres) * M['crecimiento']['x'] ** up['crecimiento'] * s.v('germen', 'escarcha_g_x', 1) * (DFX['fatiga']['recompensa_escarcha_g_x'] if 'fatiga' in s.done else 1) * (1 + s.v('eco2', 'escarcha_eco') * max(0.0, s.Ctot))
+        H = E['H'] * M['aguante']['x_H'] ** up['aguante'] * s.v('frio', 'escarcha_H_x', 1) * (DFX['inclusion']['recompensa_escarcha_H_x'] if 'inclusion' in s.done else 1)
         m = E['m'] + M['brillo']['suma_m'] * up['brillo']
         return g, H, m
 
@@ -348,9 +348,9 @@ def esq_items(P):
     if not P.esc_on: return []
     M = L1['escarcha']['mejoras']; out = [('esc', k, precio(M[k]['c0'] + M[k]['paso'] * P.escup[k])) for k in M]  # costo en log10 de Esquirlas
     px = P.v('engarces2', 'pulido_x', 1.0)
-    for t in P.relic:
-        if t in {e[0] for e in P.equipped}:
-            out.append(('pul', t, precio(L1['escarcha']['pulido']['c0'] + L1['escarcha']['pulido']['paso'] * P.polish[t] * px + l10(max(1, P.relic[t])))))
+    PU = L1['escarcha']['pulido']
+    for i, (u, n) in enumerate(P.equipped):  # Pulido: sube un color una pieza engarzada (nivel n -> n+1), sin fusionar
+        out.append(('pul', i, precio(PU['c0'] + PU['paso'] * n * px)))
     return out
 def do_shop(P, t, log, stats):
     bought = 0
@@ -376,7 +376,8 @@ def do_shop(P, t, log, stats):
         kind, k, c = min(items, key=lambda x: x[2])
         P.esq = sublog(P.esq, c); bought += 1
         if kind == 'esc': P.escup[k] += 1; log(t, f'Escarcha {k} nv{P.escup[k]}', False)
-        else: P.polish[k] += 1; log(t, f'Pulido {k}', False)
+        else:  # en el conteo en base 3, pasar una pieza de nivel n a n+1 es sumar 2 x 3^n
+            u, n = P.equipped[k]; P.polish[u] += 2 * 3 ** n; P.equipped[k] = (u, n + 1); log(t, f'Pulido {u} nv{n + 1}', False)
     return bought
 
 def pick_relic(P, A):

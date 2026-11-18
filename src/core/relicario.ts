@@ -1,6 +1,7 @@
 // SPEC_CAPA1 §5 y CORRECCIONES_CAPA1 bloque 8: el Relicario como inventario de piezas. Tipos y números de config_capa1.json.
 // Cada Infinito el jugador elige el tipo; la pieza nueva es Ámbar (nivel 0). 3 del mismo tipo y nivel se fusionan en una
 // del nivel siguiente. Solo las piezas en los Engarces dan efecto, y dos del mismo tipo se suman (igual que sim_capa1.py).
+import { precioLog10 } from './config'
 import { CFG1 } from './config1'
 import { efectoRed } from './red'
 import type { Pieza, Regla, State } from './state'
@@ -54,6 +55,25 @@ export function fusionar(s: State, ids: number[]): State {
 export function fusionarTodo(s: State): State {
   for (let g = fusionables(s); g.length; g = fusionables(s)) s = fusionar(s, g.sort((a, b) => pieza(s, a[0])!.nivel - pieza(s, b[0])!.nivel)[0])
   return s
+}
+
+// ---------- Pulido (SPEC_CAPA1 §5, 1.2): Esquirlas por un color, sin fusionar ----------
+
+/** log10 del costo de pulir una pieza de nivel n: `c0 + paso × n × pulido_x` (Engarces II lo abarata), entero como todo precio. */
+export const costoPulidoLog10 = (s: State, nivel: number) =>
+  precioLog10(CFG1.escarcha.pulido.c0 + CFG1.escarcha.pulido.paso * nivel * efectoRed(s, 'engarces2', 'pulido_x', 1))
+export const costoPulido = (s: State, nivel: number) => 10 ** costoPulidoLog10(s, nivel)
+export const puedePulir = (s: State, id: number) => {
+  const p = pieza(s, id)
+  return !!p && s.escarcha.abierta && s.escarcha.esquirlas >= costoPulido(s, p.nivel)
+}
+/** Sube la pieza un nivel (conserva su lugar y su pila). Si completa tres iguales y la fusión es automática, fusiona. */
+export function pulir(s: State, id: number): State {
+  if (!puedePulir(s, id)) return s
+  const p = pieza(s, id)!
+  let n = conRel(s, { piezas: s.relicario.piezas.map((x) => (x.id === id ? { ...x, nivel: x.nivel + 1 } : x)) })
+  n = { ...n, escarcha: { ...n.escarcha, esquirlas: n.escarcha.esquirlas - costoPulido(s, p.nivel) } }
+  return s.relicario.regla.fusionar && fusionAutomatica(n) ? fusionarTodo(n) : n
 }
 
 // ---------- engarces ----------

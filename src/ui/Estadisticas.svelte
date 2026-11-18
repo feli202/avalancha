@@ -36,7 +36,7 @@
   // ---------- Valor (C8) ----------
   const COLOR_V: Record<string, string> = {
     colores: 'var(--ambar)', anillos: '#e8e9f3', cascada: '#3cc8e8', mutaciones: '#ff7ad9', presion: 'var(--hielo)',
-    eco: '#b9a7ff', reliquias: 'var(--jade)', defectos: 'var(--coral)',
+    eco: '#b9a7ff', escarcha: '#eaf8ff', reliquias: 'var(--jade)', defectos: 'var(--coral)',
   }
   const fuentes = $derived(desgloseV(s))
   const logV = $derived(fuentes.reduce((a, f) => a + f.log, 0))

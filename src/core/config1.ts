@@ -26,9 +26,23 @@ export interface Config1 {
     dislocacion: Defecto & { cascada_x: number; presion_x: number; recompensa_anillo_mult: number }
     macla: Defecto & { sin_mutaciones: boolean; densidad_x: number; recompensa_color_s_x: number }
     impureza: Defecto & { derrumbes_tope_log10: number; colores_x: number; recompensa_cascada_c: number }
+    fatiga: Defecto & { recompensa_escarcha_g_x: number }
+    inclusion: Defecto & { recompensa_escarcha_H_x: number }
     reintento_cristales_totales_log10: number
     abandono_min: number; abandono_revisar_min: number; abandono_ventana_min: number; abandono_meta_max_min: number
     requisitos: Record<string, { red: (string | number)[]; estratos_abiertos?: number; cristales_totales_log10?: number }>
+  }
+  /** SPEC_CAPA1 §9: la Escarcha. */
+  escarcha: {
+    g_log10_por_s: number; g_por_presion: number; m: number; H: number; esquirlas_por_ruptura_div: number
+    ruptura_bot_min: number; conserva_al_romper: number
+    mejoras: {
+      crecimiento: { c0: number; paso: number; x: number }
+      brillo: { c0: number; paso: number; suma_m: number }
+      aguante: { c0: number; paso: number; x_H: number }
+    }
+    /** §5: Pulido de una pieza de nivel n, en log10 de Esquirlas. */
+    pulido: { c0: number; paso: number }
   }
   /** SPEC_CAPA1 §12: lo que rinde el tiempo con el juego cerrado. */
   fuera_de_linea_eficiencia: number
