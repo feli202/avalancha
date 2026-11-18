@@ -1845,3 +1845,14 @@ Lo que queda de diferencia (dentro del ±10 %) está en los Defectos: el Infinit
 **Verificación**: 282 tests en verde (`npm test`, uno nuevo en `relicario.test.ts`), 13/13 en `npm run test:lento`, `tsc` y `svelte-check` 0 errores. En el navegador con 24 piezas: 1366×768 y 390×844 sin scroll de página (el aviso en una línea con la cuenta; la primera versión, en un renglón aparte, empujaba la elección 27 px fuera de la ventana). En el celular el `n/24` no se ve (el encabezado del inventario se oculta en móvil), pero sí los avisos.
 
 **Pendiente de la auditoría**: el aviso "+X Cristales" en cada Infinito automático (uno cada pocos segundos, va contra "Reducir destellos"); fps con el Relicario lleno; el build dentro de un iframe; terminar la pasada de accesibilidad.
+
+## Auditoría de la 1.1: avisos del Infinito automático y sección "Avisos" en Ajustes (2026-11-18)
+
+**Problema**: cada Infinito automático (uno cada pocos segundos) sacaba dos avisos: el de abajo ("+X Cristales") y el texto que flota sobre la pila. Va contra "Reducir destellos".
+
+- El texto sobre la pila y el sonido quedan solo para el Infinito **a mano**.
+- Los Cristales del Infinito automático van juntos: el primero sale, y después uno cada 30 s de juego con la suma ("+X Cristales en N Infinitos"). `avisoAutomatico` en `juego.svelte.ts`, con test en `tests/juego.test.ts`.
+- **Decisión (del usuario)**: Ajustes → Juego → **Avisos**, una sección desplegable con un interruptor por tipo: Algo nuevo, Infinito a mano, Infinito automático, Reliquia elegida sola, Defectos, Logros. Todos prendidos por defecto; se guardan con los ajustes (`aviso_*` en `ajustes.svelte.ts`). Todos los avisos de abajo pasan por `avisar(tipo, texto)`; el de logros, por `ajustes.aviso_logros` en `Logros.svelte`.
+- En el celular, las casillas de Ajustes quedan siempre a la derecha (antes bajaban a la izquierda según el largo del texto).
+
+**Verificación**: 283 tests en verde, `tsc` y `svelte-check` 0 errores. En el navegador: la sección abre, el contador marca 5/6 al apagar uno y queda guardado en el almacenamiento local; sin scroll de página en 1366×768 ni en 390×844 (solo scrollea la lista de Ajustes).

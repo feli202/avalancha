@@ -184,8 +184,9 @@
       // SPEC_CAPA1 §11: el primer Infinito es la cinemática (CSS de abajo); los siguientes, los Cristales sobre la pila.
       if (juego.cinematica && !cineAntes) sonido.infinito(1.8, 0.6)
       cineAntes = juego.cinematica
-      if (s.infinitos > infAntes && infAntes > 0) {
-        if (aMano) sonido.hito('milestone')
+      // Solo el Infinito a mano: el automático llega cada pocos segundos y su aviso va juntado (avisoAutomatico).
+      if (s.infinitos > infAntes && infAntes > 0 && aMano && ajustes.aviso_infinito) {
+        sonido.hito('milestone')
         efecto({ texto: txt.cristal.ganados(formato(s.cristales.sub(cristalesAntes))) })
       }
       cristalesAntes = s.cristales

@@ -2,8 +2,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CFG, INFINITO, estadoInicial, infinito } from '../src/core'
 // formato lee los ajustes, que tocan el DOM al cargar.
-vi.mock('../src/ui/ajustes.svelte', () => ({ ajustes: { notacion: 'cientifica' } }))
-const { guardarYa, guiaEnSuLugar, juego, partidaActual, reemplazarPartida, revelar, tomarCandado, yaVisto } = await import('../src/ui/juego.svelte')
+vi.mock('../src/ui/ajustes.svelte', () => ({ ajustes: { notacion: 'cientifica' }, avisoActivo: () => true }))
+const { avisoAutomatico, guardarYa, guiaEnSuLugar, juego, partidaActual, reemplazarPartida, revelar, tomarCandado, yaVisto } = await import('../src/ui/juego.svelte')
 
 afterEach(() => vi.useRealTimers())
 
@@ -121,5 +121,20 @@ describe('guías: una sola vez en la vida de la partida (CORRECCIONES 4)', () =>
     juego.capa = 'cristalizacion'; juego.pantalla = 'relicario'
     expect([guiaEnSuLugar('c1_estratos'), guiaEnSuLugar('c1_relicario'), guiaEnSuLugar('c1_cristales'), guiaEnSuLugar('tienda')]).toEqual([false, true, true, false])
     juego.capa = 'arena'
+  })
+})
+
+describe('aviso del Infinito automático (auditoría 1.1)', () => {
+  it('el primero sale; los de los 30 s siguientes se juntan en uno con la suma y la cantidad', () => {
+    const en = (t: number, inf: number, cr: number) => ({ ...estadoInicial(), tiempoTotal: t, infinitos: inf, cristalesTotales: estadoInicial().cristalesTotales.add(cr) })
+    juego.aviso = null as typeof juego.aviso
+    avisoAutomatico(en(0, 1, 0), en(1000, 2, 5))
+    expect(juego.aviso?.texto).toBe('+5 Cristales')
+    const primero = juego.aviso
+    avisoAutomatico(en(1000, 2, 5), en(1010, 3, 12))
+    avisoAutomatico(en(1010, 3, 12), en(1020, 4, 20))
+    expect(juego.aviso).toBe(primero) // dentro de los 30 s, nada
+    avisoAutomatico(en(1020, 4, 20), en(1030, 5, 30))
+    expect(juego.aviso?.texto).toBe('+25 Cristales en 3 Infinitos')
   })
 })

@@ -28,7 +28,7 @@
 
 
   // Notificación: las tarjetas en miniatura de lo último conseguido (hasta 3), se van solas.
-  const avisar = $derived(juego.logro && juego.panel !== 'logros' && !juego.guardadoRoto ? juego.logro : null)
+  const avisar = $derived(ajustes.aviso_logros && juego.logro && juego.panel !== 'logros' && !juego.guardadoRoto ? juego.logro : null)
 </script>
 
 {#snippet recompensa(k: string)}

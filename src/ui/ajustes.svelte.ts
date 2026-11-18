@@ -25,8 +25,18 @@ const base = {
   efecto: 'normal',
   marco: 'ninguno',
   fondo: 'noche',
+  /** Avisos de abajo, uno por uno (Ajustes, Juego, Avisos). Claves en AVISOS. */
+  aviso_revelado: true,
+  aviso_infinito: true,
+  aviso_auto: true,
+  aviso_reliquia: true,
+  aviso_defectos: true,
+  aviso_logros: true,
 }
 
+export const AVISOS = ['revelado', 'infinito', 'auto', 'reliquia', 'defectos', 'logros'] as const
+export type Aviso = (typeof AVISOS)[number]
+export const avisoActivo = (k: Aviso) => ajustes[`aviso_${k}`]
 
 /** Lo guardado, campo por campo: lo que falta o tiene otro tipo queda como en `base`. */
 function leer() {

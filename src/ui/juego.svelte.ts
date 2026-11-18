@@ -7,6 +7,7 @@ import { instantanea } from '../render/instantanea'
 import type { Toma } from '../render/marcos'
 import { PX_MAX, type Medidas } from '../render/pilaVisual'
 import { txt } from '../strings'
+import { avisoActivo, type Aviso } from './ajustes.svelte'
 import { formato } from './formato'
 import { nuevosLogros, primerDerrumbe } from './logros'
 import { Vigia, contadoresVacios, transicion, volviste } from './secretos'
@@ -190,6 +191,21 @@ export function yaVisto(s: State, vistos: Record<string, boolean>): Record<strin
 
 let avisos = 0
 const AVISOS_JUNTOS = 2
+/** Un aviso de abajo, si el jugador no apagó ese tipo en Ajustes. */
+const avisar = (k: Aviso, texto: string) => { if (avisoActivo(k)) juego.aviso = { id: avisos++, texto } }
+
+// Auditoría 1.1: el Infinito automático llega cada pocos segundos; sus Cristales van juntos en un aviso cada 30 s de juego.
+const AVISO_AUTO_S = 30
+const auto = { n: 0, base: estadoInicial().cristalesTotales, desde: -Infinity }
+export function avisoAutomatico(antes: State, s: State) {
+  if (!auto.n) auto.base = antes.cristalesTotales
+  auto.n += s.infinitos - antes.infinitos
+  if (s.tiempoTotal - auto.desde < AVISO_AUTO_S) return
+  const x = formato(s.cristalesTotales.sub(auto.base))
+  avisar('auto', auto.n > 1 ? txt.cristal.ganadosVarios(x, auto.n) : txt.cristal.ganados(x))
+  auto.n = 0
+  auto.desde = s.tiempoTotal
+}
 /** Lo que aparece por primera vez: se anota en `juego.vistos` (va al guardado) y se muestra su frase y su guía.
  * CORRECCIONES 4: una sola vez en la vida de la partida, aunque la corrida se reinicie. Exportada para el test. */
 export function revelar(s: State) {
@@ -205,7 +221,7 @@ export function revelar(s: State) {
   if (autos.length) frases.push(txt.autocompradores(autos))
   const guias = nuevos.filter((k) => k in txt.guia.indicador || k === primerAuto)
   if (guias.length) juego.guias = [...juego.guias, ...guias].slice(-AVISOS_JUNTOS)
-  if (frases.length) juego.aviso = { id: avisos++, texto: frases.slice(-AVISOS_JUNTOS).join(' ') }
+  if (frases.length) avisar('revelado', frases.slice(-AVISOS_JUNTOS).join(' '))
 }
 
 let logrosAvisados = 0
@@ -260,7 +276,7 @@ export function infinitoYa() {
   juego.aMano++
   registrar(historial, antes, s)
   previo = s
-  juego.aviso = { id: avisos++, texto: txt.cristal.ganados(formato(cristalesAlInfinito(antes))) }
+  avisar('infinito', txt.cristal.ganados(formato(cristalesAlInfinito(antes))))
   guardarYa()
 }
 
@@ -270,7 +286,7 @@ export function entrarDefectoYa(id: DefectoId) {
   if (s === juego.s) return
   previo = juego.s = s
   juego.capa = 'arena'
-  juego.aviso = { id: avisos++, texto: txt.cristal.defectos.entrado(txt.cristal.defectos.nombres[id]) }
+  avisar('defectos', txt.cristal.defectos.entrado(txt.cristal.defectos.nombres[id]))
   guardarYa()
 }
 export function abandonarDefectoYa() {
@@ -278,7 +294,7 @@ export function abandonarDefectoYa() {
   const s = abandonarDefecto(juego.s)
   if (s === juego.s) return
   previo = juego.s = s
-  juego.aviso = { id: avisos++, texto: txt.cristal.defectos.abandonado(txt.cristal.defectos.nombres[id]) }
+  avisar('defectos', txt.cristal.defectos.abandonado(txt.cristal.defectos.nombres[id]))
   guardarYa()
 }
 
@@ -465,12 +481,12 @@ export function arrancar() {
     if (!s.relicario.pendiente) juego.ofertaS = 0
     else if (juego.vistos.cristales && !hayCartel() && (juego.ofertaS += Math.min(real, 1)) >= CFG1.relicario.espera_eleccion_s) {
       s = elegirSola(s)
-      juego.aviso = { id: avisos++, texto: txt.cristal.relicario.sola(txt.cristal.relicario.tipos[s.relicario.ultimo][0]) }
+      avisar('reliquia', txt.cristal.relicario.sola(txt.cristal.relicario.tipos[s.relicario.ultimo][0]))
     }
     // Defecto superado (§8): su aviso; si no, el Infinito automático (Memoria nv4) tiene el mismo aviso que el botón.
     const nuevoDef = s.defectos.completos.length > previo.defectos.completos.length ? s.defectos.completos.at(-1)! : ''
-    if (nuevoDef) juego.aviso = { id: avisos++, texto: txt.cristal.defectos.ganado(txt.cristal.defectos.nombres[nuevoDef], txt.cristal.ganados(formato(s.cristalesTotales.sub(previo.cristalesTotales)))) }
-    else if (s.infinitos > previo.infinitos) juego.aviso = { id: avisos++, texto: txt.cristal.ganados(formato(s.cristalesTotales.sub(previo.cristalesTotales))) }
+    if (nuevoDef) avisar('defectos', txt.cristal.defectos.ganado(txt.cristal.defectos.nombres[nuevoDef], txt.cristal.ganados(formato(s.cristalesTotales.sub(previo.cristalesTotales)))))
+    else if (s.infinitos > previo.infinitos) avisoAutomatico(previo, s)
     previo = s
     if (Math.floor(s.tiempoTotal) !== Math.floor(juego.s.tiempoTotal)) juego.verHistorial++
     juego.s = s

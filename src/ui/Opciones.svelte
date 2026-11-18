@@ -6,7 +6,7 @@
   import { ALTO, ANCHO, RADIO_ENTERA, imagen, miniPila } from '../render/miniPilas'
   import { COLORES_DALTONISMO, EFECTOS, FONDOS, MARCOS, PALETAS, css } from '../render/paletas'
   import { txt } from '../strings'
-  import { ajustes } from './ajustes.svelte'
+  import { AVISOS, ajustes, avisoActivo } from './ajustes.svelte'
   import { borrarPartida, guardarYa, juego, partidaActual, reemplazarPartida, tocarLogo } from './juego.svelte'
   import { SECRETOS, desbloqueados, elegido, logroDe, nombreLogro, type Cosmetico } from './logros'
   import Pantalla from './Pantalla.svelte'
@@ -186,6 +186,18 @@
             <span class="texto">{txt.opciones.daltonismo}<small>{txt.opciones.daltonismoDesc}</small></span>
             <input type="checkbox" bind:checked={ajustes.daltonismo} />
           </label>
+          <details class="avisos">
+            <summary class="fila">
+              <span class="texto">{txt.opciones.avisos}<small>{txt.opciones.avisosDesc}</small></span>
+              <span class="num cuenta">{AVISOS.filter(avisoActivo).length}/{AVISOS.length}</span>
+            </summary>
+            {#each AVISOS as k (k)}
+              <label class="fila sub">
+                <span class="texto">{txt.opciones.tiposAviso[k][0]}<small>{txt.opciones.tiposAviso[k][1]}</small></span>
+                <input type="checkbox" bind:checked={ajustes[`aviso_${k}`]} />
+              </label>
+            {/each}
+          </details>
         </section>
 
       {:else if PESTANAS[activa] === 'partida'}
@@ -335,6 +347,10 @@
   .fila input[type='checkbox'] { flex: none; width: 1.25rem; height: 1.25rem; margin: 0; accent-color: var(--ambar); cursor: pointer; }
   .fila input[type='range'] { flex: none; width: 12rem; height: 2.75rem; margin: 0; accent-color: var(--ambar); cursor: pointer; }
   .fila.sub { padding-left: 1.25rem; }
+  .avisos summary { list-style: none; }
+  .avisos summary::-webkit-details-marker { display: none; }
+  .avisos summary .cuenta::after { content: ' ▾'; color: var(--tenue); }
+  .avisos[open] summary .cuenta::after { content: ' ▴'; }
   /* Opciones como los modos de la tienda: texto; la elegida, con una línea de 1 px debajo. */
   .segmentos { display: flex; gap: 1.25rem; flex: none; }
   .segmentos button {
@@ -381,6 +397,7 @@
     .contenido { padding: 0.25rem 1rem 2rem; }
     .tarjetas { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.625rem; }
     .fila { flex-wrap: wrap; gap: 0.75rem; }
+    .fila:has(> input[type='checkbox']) { flex-wrap: nowrap; } /* la casilla siempre a la derecha, no abajo según el largo */
     .fila input[type='range'] { width: 100%; }
   }
 </style>

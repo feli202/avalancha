@@ -128,6 +128,7 @@ export const es = {
     pantallas: { red: 'Red', estratos: 'Estratos', defectos: 'Defectos', escarcha: 'Escarcha', relicario: 'Relicario' } as Record<string, string>,
     vacia: 'Todavía no hay nada acá.',
     ganados: (x: string) => (x === '1' ? '+1 Cristal' : `+${x} Cristales`),
+    ganadosVarios: (x: string, n: number) => `+${x} Cristales en ${n} Infinitos`,
     // C6: con el Infinito roto, en la Arena; brilla en el momento óptimo (§4).
     alInfinito: (x: string, y: string) => `Cristales al hacer Infinito: ${x} (${y}/min)`,
     intro: [
@@ -539,6 +540,16 @@ export const es = {
     reducirDesc: 'Apaga los destellos de derrumbe de la pila, la mica y el zoom de cámara.',
     movimiento: 'Reducir movimiento',
     calmaDesc: 'Las compras automáticas no encienden su fila y los números se actualizan más despacio. La pila no cambia.',
+    avisos: 'Avisos',
+    avisosDesc: 'Los mensajes de abajo de la pantalla. Apagá los que no quieras ver.',
+    tiposAviso: {
+      revelado: ['Algo nuevo', 'Cuando aparece un sistema o una compra nueva.'],
+      infinito: ['Infinito a mano', 'Los Cristales que te da un Infinito que hacés vos.'],
+      auto: ['Infinito automático', 'Los Cristales del Infinito automático, juntos cada 30 s.'],
+      reliquia: ['Reliquia elegida sola', 'Cuando no elegís a tiempo y la elige la regla.'],
+      defectos: ['Defectos', 'Al entrar, abandonar o superar un Defecto.'],
+      logros: ['Logros', 'Cuando conseguís un logro.'],
+    } as Record<string, [string, string]>,
     ahorro: 'Ahorrar batería',
     ahorroDesc: 'Con la pila llena, la arena se mueve más despacio en pantalla. La economía no cambia.',
     daltonismoDesc: 'Colores Okabe-Ito, distinguibles con cualquier tipo de daltonismo.',
