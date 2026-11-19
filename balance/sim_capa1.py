@@ -50,7 +50,7 @@ BYPOS = {v: k for k, v in POS.items()}
 def ring(k): x, y = POS[k]; return abs(x) + abs(y)
 def red_cost(k, lvl):
     r = ring(k); base = RED[k].get('costo_base_log10', L1['red']['costo_anillo_log10'][r])
-    return precio(base + L1['red']['paso_nivel_log10'][r] * lvl)
+    return precio(base + RED[k].get('paso_log10', L1['red']['paso_nivel_log10'][r]) * lvl)
 DFX = L1['defectos']
 DEFS = [k for k, v in DFX.items() if isinstance(v, dict) and 'meta_log10' in v]
 DEF_REQ = {'vacancia': ('defectos', 1), 'dislocacion': ('defectos', 2), 'macla': ('defectos', 3), 'impureza': ('defectos', 4),
@@ -79,7 +79,8 @@ class Player:
             if any(s.red[n] < lv for n, lv in RED[k].get('requiere', {}).items()): continue  # Estratos: solo con Ruptura nv1
             x, y = POS[k]
             nb = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
-            if any(BYPOS.get(p) and s.red[BYPOS[p]] >= 4 and ring(BYPOS[p]) < ring(k) for p in nb): out.append(k)
+            abre = L1['red'].get('abre_con_nivel', 4)  # un vecino mas cercano al centro en este nivel abre el nodo
+            if any(BYPOS.get(p) and s.red[BYPOS[p]] >= abre and ring(BYPOS[p]) < ring(k) for p in nb): out.append(k)
         return out
     def relic_level(s, t):
         c = s.relic[t] + s.polish[t]
@@ -399,6 +400,7 @@ def simulate(check=15.0, tmax=24 * 3600, verbose=False, horizon_end=True):
     stats = dict(rupturas_escarcha=0, infinitos=0, eventos={}, compras=[], huecos=[], partes11=None, partes12=None)
     def log(tt, msg, major):
         stats['compras'].append(tt)
+        stats.setdefault('por_inf', {}).setdefault(P.ninf, []).append(msg)
         if msg not in stats['eventos']: stats['eventos'][msg] = tt
         if verbose and major: print(f'{tt / 3600:6.2f} h  {msg}')
     def mark(tt, msg):
@@ -435,6 +437,7 @@ def simulate(check=15.0, tmax=24 * 3600, verbose=False, horizon_end=True):
         lc = NEG if abandono else infinity_reward(P, A, defect, ok)  # abandonar no cobra, aunque haya pasado 1e308
         if lc > NEG:
             P.C = addlog(P.C, lc); P.Ctot = addlog(P.Ctot, lc)
+        stats.setdefault('ganado', {})[P.ninf] = (round(t / 3600, 2), round(dur / 60, 1), lc, defect)
         if not abandono: pick_relic(P, A)
         P.last_logG = max(10.0, A.lG)
         do_shop(P, t, log, stats)
@@ -466,7 +469,18 @@ def report(st):
             parts, D, _ = st[name]; tot = sum(parts.values())
             print(f'  {name}: D={D:.2f} ' + ' '.join(f'{k} {100 * v / tot:.0f}%' for k, v in parts.items()))
 
+def primeros(st, n=8):
+    """Que compra el bot con lo que dejo cada uno de los primeros n Infinitos (el 1 es el primer Infinito de la Capa 0)."""
+    g = st.get('ganado', {}); pi = st.get('por_inf', {})
+    for i in range(1, n + 1):
+        h, d, lc, df = g.get(i, (0, 0, 0.0, None))
+        c = round(10 ** lc) if lc < 6 else f'1e{lc:.1f}'
+        compras = [x for x in pi.get(i, []) if x.startswith('Red') or x.startswith('Abrir')]
+        print(f'  Inf {i:2d}  {h:5.2f} h  corrida {d:5.1f} min  +{c} Cristales{"  (" + df + ")" if df else ""}:  ' + (', '.join(compras) or '-'))
+
 if __name__ == '__main__':
+    if '--primeros' in sys.argv:
+        st = simulate(); report(st); primeros(st, int(sys.argv[sys.argv.index('--primeros') + 1])); sys.exit()
     if '--robustez' in sys.argv:
         for ce in (15, 60, 300):
             st = simulate(check=ce); print(f'== revisa cada {ce} s'); report(st)
