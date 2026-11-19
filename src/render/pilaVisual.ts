@@ -209,7 +209,9 @@ export class PilaVisual {
 
   /** Radio en px CSS del borde de la pila tal como se dibuja (con zoom, sin recortar al foco): el marco va pegado acá. */
   get bordeCss() {
-    return ((this.radio + 0.5) * this.px * this.canvas.clientWidth) / (this.canvas.width || 1)
+    // radio es la celda derrumbada más lejana; sus vecinas tienen granos: +1 celda, y +0,5 hasta el borde de la celda.
+    const c = (LADO >> 1) * LADO + (LADO >> 1), nada = !this.radio && !(this.tDerrumbe[c] >= 0) // un grano suelto en el centro
+    return (((nada ? 0 : this.radio + 1) + 0.5) * this.px * this.canvas.clientWidth) / (this.canvas.width || 1)
   }
 
   /** Radio en px CSS del círculo fijo de la pila en pantalla (el del desenfoque del zoom): no cambia con el zoom ni al crecer. */

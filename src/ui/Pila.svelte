@@ -21,14 +21,14 @@
   const IMPLOSION_MS = 900 // lo que dura la animación implotar del CSS
 
   const MARCO_LADO = 1.6 // en radios: el marco más grande (Polaroid) llega a 1,54
-  const MARCO_MIN = 32 // px CSS: con la pila recién vacía el marco no se achica a un punto
+  const MARCO_MIN = 12 // px CSS: con la pila recién vacía el marco no se achica a un punto
 
   let canvas: HTMLCanvasElement
   let lienzoMarco: HTMLCanvasElement
   let cajaAncho = $state(0), cajaAlto = $state(0)
   const paleta = $derived(ajustes.daltonismo ? COLORES_DALTONISMO : PALETAS[elegido('paleta', Object.keys(PALETAS), ajustes.paleta, juego.logros)])
   const marcoId = $derived(elegido('marco', MARCOS, ajustes.marco, juego.logros))
-  /** El marco es parte de la pila: va pegado a su borde (PilaVisual.bordeCss) y escala con el zoom. Se redibuja en el
+  /** El marco es parte de la pila: va pegado a su borde (PilaVisual.bordeCss); con zoom se abre con él sin agrandarse. Se redibuja en el
    *  canvas del tamaño de la región (no del marco: con zoom máximo sería enorme) solo cuando cambia algo. */
   let marcoDibujado = -1
   let foco = $state(0) // radio del círculo nítido (PilaVisual.focoCss): afuera el marco se apaga como la pila desenfocada
@@ -45,7 +45,8 @@
     g.setTransform(1, 0, 0, 1, 0, 0)
     g.clearRect(0, 0, lienzoMarco.width, lienzoMarco.height)
     g.setTransform(dpr, 0, 0, dpr, dpr * (w / 2 - L), dpr * (h / 2 - L)) // marco() centra en (L, L)
-    marco(g, marcoId, L, r, css(paleta[1]))
+    // El marco sigue el borde (r) pero no se agranda con el zoom: los adornos quedan del tamaño de la pila encuadrada.
+    marco(g, marcoId, L, r, css(paleta[1]), Math.min(r, foco || r))
     marcoDibujado = r
   }
   /** Logro secreto Arena: granos de un solo color de la paleta en uso, elegido al azar en cada lluvia. */
@@ -251,8 +252,8 @@
         const objetivo = Math.max(pila.bordeCss, MARCO_MIN)
         const k = radioMarco ? 1 - Math.exp(-Math.min(0.1, (ahora - marcoAntes) / 1000) * 10) : 1
         radioMarco = Math.abs(objetivo - radioMarco) < 0.3 ? objetivo : radioMarco + (objetivo - radioMarco) * k
-        if (Math.abs(radioMarco - marcoDibujado) > 0.25) dibujarMarco(radioMarco)
         foco = Math.round(pila.focoCss)
+        if (Math.abs(radioMarco - marcoDibujado) > 0.25) dibujarMarco(radioMarco)
       }
       marcoAntes = ahora
       // SPEC 5: el color nuevo recorre la pila, del centro al borde.
