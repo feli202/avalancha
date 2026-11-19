@@ -201,7 +201,8 @@
   header { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; background: linear-gradient(90deg, transparent, rgb(159 227 245 / 0.3), transparent) bottom / 100% 1px no-repeat; padding-bottom: 0.3rem; }
   h2 { margin: 0; font-size: 1.5rem; font-weight: 300; }
   .esq { color: var(--escarcha); font-weight: 600; }
-  dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; margin: 0; }
+  /* La Suma lleva la cifra más larga (×2,32e135): su columna es la más ancha. */
+  dl { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 0.75fr); gap: 0.6rem; margin: 0; }
   dt { font-size: 0.75rem; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   dd { margin: 0.125rem 0 0; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   dd.hielo { color: var(--hielo); }
@@ -241,6 +242,7 @@
     .ficha { gap: 0.45rem; padding: 0.5rem 0.8rem 0.75rem; }
     h2 { font-size: 1.125rem; }
     dd { font-size: 1rem; }
+    dl small { font-size: 0.6875rem; }
     .formula { display: none; }
     .romper { min-height: 2.75rem; padding-block: 0.35rem; }
     .mejora { padding-block: 0.4rem; row-gap: 0.1rem; }

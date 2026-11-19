@@ -100,6 +100,48 @@ export function marco(g: Ctx, id: string, c: number, r: number, color: string) {
       g.fillStyle = '#07080f'; g.fillRect(c - r * 0.13, c + r * 1.06 - r * 0.08, r * 0.26, r * 0.16)
       g.fillStyle = color; g.fillText('eˣ', c, c + r * 1.06)
       break
+    // Capa 1 (C13).
+    case 'anilloHelado': // anillo fino de hielo con agujas de escarcha hacia afuera, largas y cortas alternadas
+      g.strokeStyle = '#bfeaf7'
+      circulo(g, c, r * 1.05)
+      g.lineWidth = 1.5
+      for (let j = 0; j < 36; j++) {
+        const a = (j / 36) * Math.PI * 2, l = j % 3 ? 1.1 : 1.17
+        g.beginPath(); g.moveTo(c + Math.cos(a) * r * 1.05, c + Math.sin(a) * r * 1.05)
+        g.lineTo(c + Math.cos(a) * r * l, c + Math.sin(a) * r * l); g.stroke()
+        if (j % 3 === 0) { // dos ramitas a 60° en cada aguja larga
+          const m = r * 1.12
+          for (const s of [-1, 1]) {
+            const b = a + s * 0.5
+            g.beginPath(); g.moveTo(c + Math.cos(a) * m, c + Math.sin(a) * m)
+            g.lineTo(c + Math.cos(a) * m + Math.cos(b) * r * 0.03, c + Math.sin(a) * m + Math.sin(b) * r * 0.03); g.stroke()
+          }
+        }
+      }
+      break
+    case 'bordesGrano': { // un borde de granos: una línea quebrada irregular, con las juntas marcadas hacia afuera
+      const n = 28, rr = (j: number) => r * (1.07 + 0.025 * Math.sin(j * 2.3) + 0.015 * Math.sin(j * 5.1))
+      g.beginPath()
+      for (let j = 0; j <= n; j++) { const a = (j / n) * Math.PI * 2; g.lineTo(c + Math.cos(a) * rr(j), c + Math.sin(a) * rr(j)) }
+      g.stroke()
+      g.lineWidth = 1
+      for (let j = 0; j < n; j++) {
+        const a = (j / n) * Math.PI * 2, b = a + 0.12 * Math.sin(j * 3.7)
+        g.beginPath(); g.moveTo(c + Math.cos(a) * rr(j), c + Math.sin(a) * rr(j))
+        g.lineTo(c + Math.cos(b) * r * 1.16, c + Math.sin(b) * r * 1.16); g.stroke()
+      }
+      break
+    }
+    case 'terco': // cuatro arcos: tres rotos por una grieta y el cuarto entero, más grueso
+      for (let j = 0; j < 4; j++) {
+        const a0 = (j / 4) * Math.PI * 2 - Math.PI / 2 + 0.06, a1 = a0 + Math.PI / 2 - 0.12
+        g.lineWidth = j === 3 ? 4 : 2
+        if (j === 3) { g.beginPath(); g.arc(c, c, r * 1.07, a0, a1); g.stroke(); continue }
+        const m = (a0 + a1) / 2 + 0.15 * (j - 1)
+        g.beginPath(); g.arc(c, c, r * 1.07, a0, m - 0.03); g.stroke()
+        g.beginPath(); g.arc(c, c, r * 1.07, m + 0.03, a1); g.stroke()
+      }
+      break
   }
 
   g.globalAlpha = 1

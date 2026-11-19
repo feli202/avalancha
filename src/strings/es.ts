@@ -63,6 +63,8 @@ export const es = {
     seg < 60 ? `${Math.ceil(seg)} s` : seg < 3600 ? `${Math.ceil(seg / 60)} min` : `${Math.floor(seg / 3600)} h ${Math.floor((seg % 3600) / 60)} min`,
   densidadNueva: (d: string) => `Densidad ^${d}`,
   haciaInfinito: 'Infinito',
+  /** La barra fina de la izquierda: log10(Energía) sobre el del Infinito. */
+  caminoInfinito: (p: string) => `Camino al Infinito: ${p}`,
 
   // Autocompradores (SPEC 4.8)
   auto: 'auto',
@@ -91,7 +93,7 @@ export const es = {
   infinito: '∞',
 
   // Capa 1: Cristalización (SPEC_CAPA1 §11)
-  capas: { barra: 'Capas', arena: 'Arena', cristalizacion: 'Crista­lización', automatizacion: 'Automati­zación' }, // guion blando: en la barra angosta del móvil corta ahí
+  capas: { barra: 'Capas', arena: 'Arena', cristalizacion: 'Crista­lización', automatizacion: 'Automati­zación', capa2: 'Capa 2', proximamente: 'Próximamente', finCapa1: 'Juntaste 1e308 Cristales. Debajo del hielo, algo arde.' }, // guion blando: en la barra angosta del móvil corta ahí
   // Correcciones Capa 1, bloque 10: el panel de Automatización
   automat: {
     titulo: 'Automatización',
@@ -134,7 +136,7 @@ export const es = {
       total: (x: string, v: string, fr: string) => `Espesor ${x} → cada derrumbe vale ×${v} · la producción frena ÷${fr}`,
       escena: 'La placa de Escarcha sobre la pila: engorda sola y se rompe en hexágonos.',
       espesor: 'Espesor',
-      porMinuto: (x: string) => `+${x} por minuto`,
+      porMinuto: (x: string) => `+${x} por min`,
       aporte: 'Suma',
       aporteQue: 'La Escarcha suma m × espesor a log₁₀ V. Como V va elevada a la Densidad, cada derrumbe vale este número más.',
       aporteCuenta: (m: string, x: string, d: string, v: string) => `10^(${m} × ${x} × Densidad ${d}) = ×${v}`,
@@ -231,7 +233,7 @@ export const es = {
         impureza: (x: number) => `Los derrumbes por grano tienen tope 1e${x} y los colores valen a la mitad (^0,5).`,
         fatiga: (x: number) => `La producción se divide por 10 cada ${f(x / 60)} min de corrida. Comprimir reinicia el reloj.`,
         frontera: (_x: number) => 'La Densidad vale 1.',
-        inclusion: (_x: number) => 'La Presión de los Estratos no funciona. Te llevan la Escarcha y el Eco.',
+        inclusion: (_x: number) => 'La Presión de los Estratos no cuenta. Para avanzar quedan la Escarcha y el Eco.',
         vidrio: (_x: number) => 'Sin Relicario, sin Eco, sin Escarcha, los estratos quietos y sin bonos de Cristales. Solo queda la Red.',
       } as Record<string, (x: number) => string>,
       recompensa: {
@@ -520,6 +522,15 @@ export const es = {
       densidadAlta: [(n) => `Densidad ^${n}`, (n) => `Llegar a Densidad ^${n}.`],
       /** Capa 1 (todavía no existe): lo nombra el fondo Hielo. */
       cristal: ['Primer Cristal', () => 'Conseguir el primer Cristal.'],
+      // 1.2 (C13)
+      escarcha: ['Primera helada', () => 'Abrir la Escarcha.'],
+      romper: ['Quebrar el hielo', () => 'Romper la Escarcha y juntar la primera Esquirla.'],
+      anillo3: ['Anillo de hielo', () => 'Los 12 nodos del anillo 3 de la Red al máximo.'],
+      fatiga: ['Sin aliento', () => 'Superar el Defecto Fatiga.'],
+      frontera: ['Grano por grano', () => 'Superar el Defecto Frontera.'],
+      inclusion: ['Burbuja', () => 'Superar el Defecto Inclusión.'],
+      vidrio: ['Amorfo', () => 'Superar el Defecto Vidrio.'],
+      finCapa: ['Cristalización total', () => 'Juntar 1e308 Cristales totales.'],
     } as Record<string, [string | ((n: string) => string), (n: string) => string]>,
     /** Logros secretos (CFG.secretos): nombre, descripción y la pista que se ve mientras están ocultos. */
     secretos: 'Secretos',
@@ -540,6 +551,8 @@ export const es = {
       konami: ['Arriba arriba abajo abajo', 'El código Konami.', 'Quien conoce el camino lo recorre de memoria.'],
       arena: ['Arena', 'Escribir «arena» (se repite cada vez).', 'En boca cerrada no entra arena.'],
       firma: ['e', 'Tocar el logo de Exponent en Créditos.', 'Detrás de todo número hay una firma.'],
+      tempano: ['Témpano', 'Dejar crecer la Escarcha 3 horas de juego sin romperla.', 'Agua que no has de romper, dejala crecer.'],
+      terco: ['Terco', 'Superar un Defecto después de haberlo abandonado tres veces.', 'A la tercera no fue la vencida.'],
     } as Record<string, [string, string, string]>,
     /** Lo que dice un cosmético bloqueado por un logro secreto todavía oculto. */
     secretoOculto: 'secreto',
@@ -550,20 +563,24 @@ export const es = {
       arena: 'Arena', brasa: 'Brasa', aurora: 'Aurora', glaciar: 'Glaciar', ceniza: 'Ceniza', musgo: 'Musgo',
       tinta: 'Tinta', negativo: 'Negativo', oroViejo: 'Oro viejo',
       papelViejo: 'Papel viejo', todoAmbar: 'Todo Ámbar', simetria: 'Simetría',
+      escarcha: 'Escarcha', vidrio: 'Vidrio',
     },
     efecto: {
       normal: 'Del color de la celda', blanco: 'Destello blanco', estela: 'Estela larga', chispas: 'Chispas',
       cascada: 'Onda doble', relampago: 'Relámpago', mutante: 'Mutante', arcoiris: 'Arcoíris', oro: 'Oro',
       rayo: 'Rayo', lupa: 'Lupa', arcoirisVivo: 'Arcoíris vivo', espejo: 'Estela espejo', horizonte: 'Estela horizonte',
+      hexagonos: 'Hielo en pedazos', latido: 'Latido', burbujas: 'Burbujas',
     },
     marco: {
       ninguno: 'Sin marco', fino: 'Fino', doble: 'Doble', anillos: 'Anillos', orbitas: 'Órbitas', muescas: 'Muescas',
       denso: 'Denso', rosa: 'Rosa de los vientos', infinito: 'Infinito',
       galleta: 'Galleta', polaroid: 'Polaroid', arenaDorada: 'Arena dorada', exponent: 'Exponent',
+      anilloHelado: 'Anillo helado', bordesGrano: 'Bordes de grano', terco: 'Terco',
     },
     fondo: {
       noche: 'Noche', arenaSeca: 'Arena seca', milimetrado: 'Papel milimetrado', desierto: 'Desierto de noche',
       fractal: 'Fractal', hielo: 'Hielo', aurora: 'Aurora', vacio: 'Vacío',
+      grietas: 'Grietas', tempano: 'Témpano',
     },
     especial: { lluvia: 'Lluvia de granos al escribir «arena»' },
   } as Record<string, Record<string, string>>,
@@ -576,7 +593,7 @@ export const es = {
     enUso: 'En uso',
     paletaDesc: 'Los colores de la arena, de la celda más común a la más rara.',
     efectoDesc: 'Cómo destellan las celdas que se derrumban. Pasá el mouse para verlo.',
-    marcoDesc: 'El marco de la foto del mandala, que se descarga como imagen.',
+    marcoDesc: 'El marco alrededor de la pila, en pantalla y en la foto del mandala.',
     fondo: 'Fondo',
     fondoDesc: 'Lo que se ve detrás de la pila.',
     /** Créditos: el logo del estudio (logro secreto «e»). */
@@ -587,7 +604,7 @@ export const es = {
     notacionDesc: 'Cómo se escriben los números grandes.',
     /** El mismo número, 1,23 × 10^46, en cada notación. */
     ejemplo: { cientifica: '1,23e46', ingenieria: '12,30e45' } as Record<string, string>,
-    reducirDesc: 'Apaga los destellos de derrumbe de la pila, la mica y el zoom de cámara.',
+    reducirDesc: 'Baja las animaciones y los destellos de la pila y de la interfaz: sin destellos de derrumbe, mica ni zoom de cámara, y nada que se mueva solo.',
     movimiento: 'Reducir movimiento',
     calmaDesc: 'Las compras automáticas no encienden su fila y los números se actualizan más despacio. La pila no cambia.',
     avisos: 'Avisos',
@@ -602,6 +619,9 @@ export const es = {
     } as Record<string, [string, string]>,
     ahorro: 'Ahorrar batería',
     ahorroDesc: 'Con la pila llena, la arena se mueve más despacio en pantalla. La economía no cambia.',
+    fps: 'Tasa de refresco',
+    fpsDesc: 'Cuadros por segundo de la pila. Menos ahorra batería. La economía no cambia.',
+    sinLimite: 'Sin límite',
     daltonismoDesc: 'Colores Okabe-Ito, distinguibles con cualquier tipo de daltonismo.',
     tuPartida: 'Tu partida',
     guardadoAuto: 'Se guarda sola cada 10 segundos y al cerrar la pestaña.',
@@ -612,7 +632,7 @@ export const es = {
     aspecto: 'Aspecto de la pila',
     paleta: 'Paleta',
     efecto: 'Efecto de avalancha',
-    marco: 'Marco de la foto',
+    marco: 'Marco de la pila',
     foto: 'Sacar foto del mandala',
     archivoFoto: 'avalancha-mandala.png',
     masConLogros: 'Los logros desbloquean más paletas, efectos y marcos.',
@@ -706,8 +726,11 @@ export const es = {
       c1_romper: 'Rompiste el Infinito: la Energía sigue de largo y cuanto más pasa de 1e308, más Cristales. Brilla cuando conviene hacer Infinito. Arriba de 1e308 las mejoras se encarecen (∞), y en la Red ya podés abrir los Estratos.',
       c1_automat: 'Acá elegís todo lo que se hace solo: cada cuánto compra cada autocomprador, cuándo comprimir y cuándo hacer Infinito.',
       c1_defectos: 'Un Defecto es un Infinito con una regla rota. Llegá a la meta y la recompensa queda para siempre. Se hacen en orden y podés abandonar cuando quieras.',
-      // Preparada (cerrada hasta C10).
-      c1_escarcha: 'La Escarcha crece sola con el tiempo y multiplica todo. Rompela para ganar Esquirlas.',
+      // La 1.2 (C14): la Escarcha y lo que suma a pantallas que ya conocías.
+      c1_escarcha: 'La Escarcha engorda sola, aunque cierres el juego. Hace valer más cada derrumbe, pero gruesa frena la producción: rompela cada tanto, conserva la mitad y te da Esquirlas.',
+      c1_anillo3: 'Se derritió el anillo 3: doce nodos nuevos. Varios hacen crecer la Escarcha, Deshielo la rompe sola y Defectos II abre cuatro Defectos más.',
+      c1_pulido: 'Con Esquirlas podés pulir: tocá una reliquia y subila un color sin fusionar. Si está engarzada, sigue en su lugar.',
+      c1_defectos2: 'Defectos II: cuatro Defectos nuevos, más duros. Se abren de a uno con el nodo Defectos II del anillo 3.',
     } as Record<string, string>,
     auto: 'Este interruptor prende y apaga el autocomprador.',
     cerrar: 'Cerrar',
@@ -876,8 +899,11 @@ export const es = {
         'El Infinito automático no te saca de un Defecto: solo termina en la meta o si lo abandonás. Abandonar no tiene castigo.',
         'Se hacen en orden y cada uno pide más nivel del nodo Defectos y más estratos abiertos. Si no llegás, volvé con unas 30 veces más Cristales totales.',
       ]],
-      // Preparada (cerrada hasta C10)
-      c1_escarcha: ['Escarcha', ['La Escarcha crece sola con el tiempo y multiplica todo. Rompela cada tanto para ganar Esquirlas.']],
+      c1_escarcha: ['Escarcha', [
+        'La Escarcha es una placa de hielo sobre la pila que engorda sola, también con el juego cerrado. Su espesor suma a log₁₀ V, así que cada derrumbe vale más.',
+        'Cuanto más gruesa, más frena la producción. Romperla conserva la mitad del espesor y te da Esquirlas; después hay que esperar 30 min para volver a romperla.',
+        'Las Esquirlas compran Crecimiento, Brillo y Aguante, y pulen reliquias en el Relicario. Con el nodo Deshielo se rompe sola.',
+      ]],
     } as Record<string, [string, string[]]>,
     colorTexto: (nombre: string, altura: string, mult: string, cada: number, hito: number) => [
       `${nombre} hace valer más los derrumbes en las ${altura}. Cada nivel multiplica por ${mult}, y cada ${cada} niveles hay un ×${hito} extra.`,
@@ -909,6 +935,7 @@ export const es = {
     darCristales: 'Cristales ×10 (+10)',
     listaDefectos: 'Lista para los Defectos (mitad de la 1.1)',
     listaDefectos2: 'Lista para Defectos II (1.2)',
+    finCapa: 'Fin de la Capa 1',
     infinitoYa: 'Infinito ya',
     saltar: 'Saltar a la Compresión',
     ir: 'Ir',

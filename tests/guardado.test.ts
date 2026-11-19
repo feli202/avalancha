@@ -105,7 +105,8 @@ describe('guardado', () => {
     expect(e.mutaciones).toEqual(estadoInicial().mutaciones)
     // Lo que no es de la Arena queda como estaba.
     expect([e.tiempoTotal, e.granosTotales, e.mejorCorrida]).toEqual([viejo.estado.tiempoTotal, viejo.estado.granosTotales, viejo.estado.mejorCorrida])
-    expect([p.record, p.logros, p.vistos, p.secretos]).toEqual([viejo.record, viejo.logros, viejo.vistos, viejo.secretos])
+    expect([p.record, p.logros, p.vistos]).toEqual([viejo.record, viejo.logros, viejo.vistos])
+    expect(p.secretos).toEqual(viejo.secretos && { abandonos: {}, ...viejo.secretos }) // los de antes no tenían abandonos (Terco)
     // Ya migrado, guardar y cargar no vuelve a cobrar el Infinito, y la Arena anda.
     expect(deserializar(serializar(p))).toEqual(p)
     expect(tick(e, 1).granos).toBeGreaterThan(0)
@@ -276,9 +277,10 @@ describe('zoom de la pila', () => {
 describe('contadores de los logros secretos', () => {
   const p = { estado: estadoInicial(), guardadoEn: 1e12, vistos: {}, record: 0, logros: {} }
   it('se guardan; un guardado de antes no los tiene y uno editado mal se corrige', () => {
-    expect(deserializar(serializar({ ...p, secretos: { capturas: 37, horas: 0b1011 } })).secretos).toEqual({ capturas: 37, horas: 0b1011 })
+    const c = { capturas: 37, horas: 0b1011, abandonos: { fatiga: 3 } }
+    expect(deserializar(serializar({ ...p, secretos: c })).secretos).toEqual(c)
     expect(deserializar(serializar(p)).secretos).toBeUndefined()
-    const raro = deserializar(JSON.stringify({ ...JSON.parse(serializar(p)), secretos: { capturas: -2, horas: 2 ** 30 } }))
-    expect(raro.secretos).toEqual({ capturas: 0, horas: 0 })
+    const raro = deserializar(JSON.stringify({ ...JSON.parse(serializar(p)), secretos: { capturas: -2, horas: 2 ** 30, abandonos: { vidrio: -1, macla: 'x' } } }))
+    expect(raro.secretos).toEqual({ capturas: 0, horas: 0, abandonos: {} })
   })
 })

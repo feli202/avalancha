@@ -195,7 +195,9 @@ function leerRelicario(r: any, infinitos: number, espacios: number): State['reli
 function contadores(x: any): Contadores | undefined {
   if (typeof x !== 'object' || x === null) return undefined
   const ent = (v: unknown, max: number) => (Number.isInteger(v) && (v as number) >= 0 && (v as number) <= max ? (v as number) : 0)
-  return { capturas: ent(x.capturas, Number.MAX_SAFE_INTEGER), horas: ent(x.horas, 2 ** 24 - 1) }
+  const ab = typeof x.abandonos === 'object' && x.abandonos !== null ? x.abandonos : {}
+  const abandonos = Object.fromEntries(Object.entries(ab).map(([k, v]) => [k, ent(v, Number.MAX_SAFE_INTEGER)]).filter(([, v]) => v))
+  return { capturas: ent(x.capturas, Number.MAX_SAFE_INTEGER), horas: ent(x.horas, 2 ** 24 - 1), abandonos }
 }
 
 /** Opcionales (guardados de antes, o editados a mano): un número finito mayor que 0, o nada. */

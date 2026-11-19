@@ -6,9 +6,10 @@ const S = CFG.secretos
 const num = (k: string, campo: string) => S[k][campo] as number
 const MIN = 60_000
 
-/** Lo que tiene que sobrevivir a una recarga (va en el guardado). horas: el bit h prendido = se jugó a la hora local h. */
-export interface Contadores { capturas: number; horas: number }
-export const contadoresVacios = (): Contadores => ({ capturas: 0, horas: 0 })
+/** Lo que tiene que sobrevivir a una recarga (va en el guardado). horas: el bit h prendido = se jugó a la hora local h.
+ * abandonos: cuántas veces se abandonó cada Defecto (Terco). */
+export interface Contadores { capturas: number; horas: number; abandonos: Record<string, number> }
+export const contadoresVacios = (): Contadores => ({ capturas: 0, horas: 0, abandonos: {} })
 const TODAS_LAS_HORAS = 2 ** 24 - 1
 
 /** Capicúa: Caudal, Ámbar, Coral, Jade y Violeta, en ese orden, se leen igual al revés, con al menos N niveles distintos de cero. */
@@ -86,7 +87,13 @@ export class Vigia {
     else if (this.alBorde === null) this.alBorde = ms
 
     else if (ms - this.alBorde >= num('borde', 'minutos') * MIN) this.ganar('borde')
+    // Témpano: el reloj de la Escarcha corre desde la última ruptura (solo con ella activa).
+    if (s.escarcha.reloj >= num('tempano', 'horas') * 3600) this.ganar('tempano')
   }
+
+  /** Terco: se abandonó un Defecto (a mano: es la única forma) y, más tarde, se lo superó. */
+  abandono(id: string) { this.c.abandonos[id] = (this.c.abandonos[id] ?? 0) + 1 }
+  defectoGanado(id: string) { if ((this.c.abandonos[id] ?? 0) >= num('terco', 'abandonos')) this.ganar('terco') }
 
   /** Una avalancha de un grano solo (la misma muestra que el récord). */
   avalancha(n: number) {

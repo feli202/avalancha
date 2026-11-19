@@ -1,5 +1,5 @@
 // SPEC 7: los 24 logros de la Capa 0, en el orden de la pantalla. Se miran en cada cuadro; una vez conseguido, queda en el guardado.
-import { CFG, MUTACIONES, anillos, autoActivo, densidad, type State } from '../core'
+import { ANILLO3, CFG, MUTACIONES, NIVEL_MAX_RED, anillos, autoActivo, completo, densidad, finCapa1, nivelRed, type State } from '../core'
 import FOTOS from '../assets/pilas.json'
 import { txt } from '../strings'
 
@@ -35,9 +35,24 @@ export const LOGROS: Record<string, (s: State, record: number) => boolean> = {
   infinitoRapido: (s) => s.infinitos > 0 && s.tiempoTotal < L.infinito_rapido_horas * 3600,
 }
 
+/** Capa 1 (C13): el Primer Cristal (ya nombrado por el fondo Hielo) y los 8 de la 1.2. */
+export const LOGROS_C1: Record<string, (s: State) => boolean> = {
+  cristal: (s) => s.infinitos > 0,
+  escarcha: (s) => s.escarcha.abierta,
+  // Romper la Escarcha da Esquirlas; se gastan en mejoras (que quedan) o en el Pulido (pero el logro ya se miró antes).
+  romper: (s) => s.escarcha.esquirlas > 0 || Object.values(s.escarcha.mejoras).some((n) => n > 0),
+  anillo3: (s) => [...ANILLO3].every((id) => nivelRed(s, id) >= NIVEL_MAX_RED),
+  fatiga: (s) => completo(s, 'fatiga'),
+  frontera: (s) => completo(s, 'frontera'),
+  inclusion: (s) => completo(s, 'inclusion'),
+  vidrio: (s) => completo(s, 'vidrio'),
+  finCapa: (s) => finCapa1(s),
+}
+const TODOS: Record<string, (s: State, record: number) => boolean> = { ...LOGROS, ...LOGROS_C1 }
+
 /** Los que se cumplen ahora y todavía no están en `tiene`. */
 export const nuevosLogros = (s: State, record: number, tiene: Record<string, boolean>) =>
-  Object.keys(LOGROS).filter((k) => !tiene[k] && LOGROS[k](s, record))
+  Object.keys(TODOS).filter((k) => !tiene[k] && TODOS[k](s, record))
 
 /** El número de cada logro que va en su nombre o descripción (los textos están en txt.logros). */
 export const UMBRAL: Record<string, number> = {
@@ -59,6 +74,8 @@ export const SISTEMA: Record<string, string> = {
   compresion: 'compresion', sinAmbar: 'compresion', diez: 'compresion', relampago: 'compresion', densidad: 'compresion',
   densidadAlta: 'compresion', infinito: 'compresion', infinitoRapido: 'compresion', piloto: 'auto_caudal', cascada: 'cascada',
   mutacion: 'mutaciones', mutaciones: 'mutaciones',
+  // Los de la 1.2, con la Escarcha vista (llega junto con el anillo 3 y Defectos II).
+  ...Object.fromEntries(Object.keys(LOGROS_C1).filter((k) => k !== 'cristal').map((k) => [k, 'c1_escarcha'])),
 }
 export const secreto = (k: string, logros: Record<string, boolean>, vistos: Record<string, boolean>) =>
   !logros[k] && !!SISTEMA[k] && !vistos[SISTEMA[k]]
@@ -72,6 +89,10 @@ export const RECOMPENSA: Record<string, [Cosmetico, string]> = {
   cascada: ['efecto', 'cascada'], diez: ['marco', 'muescas'], relampago: ['efecto', 'relampago'], piloto: ['paleta', 'tinta'],
   mutacion: ['efecto', 'mutante'], densidad: ['marco', 'denso'], anilloGrande: ['marco', 'rosa'], record: ['efecto', 'arcoiris'],
   mutaciones: ['paleta', 'negativo'], densidadAlta: ['efecto', 'oro'], infinito: ['marco', 'infinito'], infinitoRapido: ['paleta', 'oroViejo'],
+  // Capa 1
+  cristal: ['fondo', 'hielo'], escarcha: ['paleta', 'escarcha'], romper: ['efecto', 'hexagonos'], anillo3: ['marco', 'anilloHelado'],
+  fatiga: ['efecto', 'latido'], frontera: ['marco', 'bordesGrano'], inclusion: ['efecto', 'burbujas'], vidrio: ['paleta', 'vidrio'],
+  finCapa: ['fondo', 'grietas'],
 }
 
 /** Logros secretos, en el orden de la pantalla (las condiciones, en secretos.ts). */
@@ -98,11 +119,8 @@ export const logroDe = (tipo: Cosmetico, id: string) => PREMIOS.find(([, t, r]) 
 export const elegido = (tipo: Cosmetico, todos: string[], id: string, tiene: Record<string, boolean>) =>
   desbloqueados(tipo, todos, tiene).includes(id) ? id : todos[0]
 
-/**
- * Capas de la pantalla de logros. Solo la 0 tiene logros; las siguientes aparecen bloqueadas hasta su condición.
- * shortcut: la Capa 1 todavía no existe; cuando exista, sumar sus logros acá y su condición real.
- */
+/** Capas de la pantalla de logros; la de Cristalización aparece bloqueada hasta el primer Infinito. */
 export const CAPAS: { id: string; logros: string[]; abierta: (s: State) => boolean }[] = [
   { id: 'pila', logros: Object.keys(LOGROS), abierta: () => true },
-  { id: 'cristalizacion', logros: [], abierta: () => false },
+  { id: 'cristalizacion', logros: Object.keys(LOGROS_C1), abierta: (s) => s.infinitos > 0 },
 ]

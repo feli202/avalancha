@@ -17,15 +17,15 @@ function vigia() {
 }
 
 describe('datos de los secretos', () => {
-  it('son 16, con nombre, descripción y pista en los dos idiomas, y nombre para Steam', () => {
-    expect(SECRETOS).toHaveLength(16)
+  it('son 18, con nombre, descripción y pista en los dos idiomas, y nombre para Steam', () => {
+    expect(SECRETOS).toHaveLength(18)
     for (const k of SECRETOS) {
       expect(es.logros.secretosLista[k], k).toHaveLength(3)
       expect(en.logros.secretosLista[k], k).toHaveLength(3)
       expect(CFG.secretos[k].api, k).toMatch(/^[A-Z0-9_]+$/)
       expect(LOGROS[k], `${k} no pisa un logro`).toBeUndefined()
     }
-    expect(new Set(SECRETOS.map((k) => CFG.secretos[k].api)).size).toBe(16)
+    expect(new Set(SECRETOS.map((k) => CFG.secretos[k].api)).size).toBe(18)
   })
 
   it('cada recompensa existe, tiene nombre y no la da otro logro', () => {
@@ -48,7 +48,8 @@ describe('datos de los secretos', () => {
     for (const id of FONDOS) expect(es.cosmeticos.fondo[id], id).toBeDefined()
     expect(logroDe('fondo', 'milimetrado')).toBe('anillo')
     expect(logroDe('fondo', 'fractal')).toBe('infinito')
-    expect(logroDe('fondo', 'hielo')).toBe('cristal') // Capa 1: todavía no se puede conseguir
+    expect(logroDe('fondo', 'hielo')).toBe('cristal')
+    expect(logroDe('fondo', 'grietas')).toBe('finCapa')
     expect(es.logros.lista.cristal).toBeDefined()
     expect(logroDe('marco', 'galleta')).toBe('galleta')
   })
@@ -223,6 +224,28 @@ describe('condiciones', () => {
     const b = vigia()
     ;[...K.slice(0, 4), 'ArrowRight', ...K.slice(4)].forEach((k) => b.v.tecla(k, ''))
     expect(b.ganados).toEqual([])
+  })
+
+  it('Témpano: 3 h con la Escarcha sin romper (su reloj)', () => {
+    const { v, ganados } = vigia()
+    const s = estadoInicial()
+    v.cuadro(0, { ...s, escarcha: { ...s.escarcha, abierta: true, reloj: 3 * 3600 - 1 } }, true, 12)
+    expect(ganados).toEqual([])
+    v.cuadro(500, { ...s, escarcha: { ...s.escarcha, abierta: true, reloj: 3 * 3600 } }, true, 12)
+    expect(ganados).toEqual(['tempano'])
+  })
+
+  it('Terco: superar un Defecto después de abandonarlo tres veces (ese mismo)', () => {
+    const { v, ganados } = vigia()
+    v.abandono('fatiga'); v.abandono('fatiga'); v.abandono('vidrio')
+    v.defectoGanado('fatiga')
+    expect(ganados).toEqual([])
+    v.abandono('fatiga')
+    v.defectoGanado('vidrio')
+    expect(ganados).toEqual([])
+    v.defectoGanado('fatiga')
+    expect(ganados).toEqual(['terco'])
+    expect(v.c.abandonos).toEqual({ fatiga: 3, vidrio: 1 }) // va al guardado
   })
 
   it('Arena: «arena» o «sand», y la lluvia vuelve cada vez', () => {

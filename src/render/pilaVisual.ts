@@ -128,6 +128,11 @@ export class PilaVisual {
       const dp = e.devicePixelContentBoxSize?.[0]
       canvas.width = dp ? dp.inlineSize : Math.round(e.contentRect.width * devicePixelRatio)
       canvas.height = dp ? dp.blockSize : Math.round(e.contentRect.height * devicePixelRatio)
+      // En el celular el canvas pasa la región de la pila (el fondo sigue arriba y abajo, Pila.svelte): la pila se encuadra y se
+      // centra en la región, no en el canvas.
+      const caja = canvas.parentElement, k = canvas.width / (canvas.clientWidth || 1)
+      this.altoRegion = caja ? caja.clientHeight * k : canvas.height
+      this.lz.centroY = caja ? (canvas.offsetTop + canvas.offsetHeight / 2 - caja.clientHeight / 2) * k : 0
     })
     try {
       this.obs.observe(canvas, { box: 'device-pixel-content-box' })
@@ -199,6 +204,13 @@ export class PilaVisual {
 
   /** Hay una pantalla opaca encima: la pila sigue recibiendo granos pero no se dibuja (lo pendiente se sube al destaparla). */
   tapada = false
+  /** Alto en px reales de la región de la pila (el canvas puede ser más alto). */
+  private altoRegion = 0
+
+  /** Radio en px CSS del círculo fijo de la pila en pantalla (el del desenfoque del zoom): no cambia con el zoom ni al crecer. */
+  get focoCss() {
+    return (this.foco * this.canvas.clientWidth) / (this.canvas.width || 1)
+  }
 
   /**
    * Un cuadro: reparte los granos que tocan y dibuja.
@@ -380,7 +392,7 @@ export class PilaVisual {
   private encuadre(dt: number) {
     const { canvas } = this
     // Encuadre: la pila entera en el 80 % del lado corto, con celdas de un número entero de píxeles (cuadradas y nítidas).
-    const diametro = Math.min(0.8 * Math.min(canvas.width, canvas.height), (2 * this.radioMax * canvas.width) / (canvas.clientWidth || 1))
+    const diametro = Math.min(0.8 * Math.min(canvas.width, this.altoRegion || canvas.height), (2 * this.radioMax * canvas.width) / (canvas.clientWidth || 1))
     const entra = diametro / (2 * Math.min(this.radio + 2, LADO / 2) + 1)
     // Celdas de menos de ENTERO_DESDE px: tamaño fraccionario (la pila en el 80 % aunque no entren 2 px por celda).
     const max = Math.round(PX_MAX * devicePixelRatio)

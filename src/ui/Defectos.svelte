@@ -79,7 +79,7 @@
     <div class="lado">
     {#if conGrupo2}
       <div class="grupos" role="group">
-        {#each t.grupos as g, i}<button aria-pressed={grupo(foco) === i} onclick={() => verGrupo(i)}>{g}</button>{/each}
+        {#each t.grupos as g, i}<button data-guia={i ? 'c1_defectos2' : undefined} aria-pressed={grupo(foco) === i} onclick={() => verGrupo(i)}>{g}</button>{/each}
       </div>
     {/if}
     <ol class="cadena" aria-label={t.lista}>
@@ -195,7 +195,7 @@
   .sello { padding: 0.2rem 0.6rem; font-size: 0.75rem; color: var(--hielo); background: rgb(159 227 245 / 0.08); clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%); white-space: nowrap; }
   .sello.hecho { color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
   dl { display: grid; align-content: start; gap: 0.6rem; margin: 0; min-height: 0; overflow-y: auto; } /* si no entra (celular), scrollea solo la ficha */
-  dt { font-size: 0.75rem; color: var(--tenue); letter-spacing: 0.04em; text-transform: uppercase; }
+  dt { font-size: 0.75rem; color: var(--tenue); }
   dd { margin: 0.1rem 0 0; font-size: 0.9375rem; color: var(--tinta); text-wrap: pretty; }
   .premio { color: var(--hielo); }
   .pie { display: grid; align-content: end; gap: 0.6rem; min-height: 0; }

@@ -67,12 +67,15 @@
     "borde":       { "api": "SECRET_ON_THE_EDGE", "energia_log10": 307, "minutos": 10, "recompensa": ["efecto", "horizonte"] },
     "konami":      { "api": "SECRET_KONAMI", "teclas": ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "KeyB", "KeyA"], "recompensa": ["efecto", "arcoirisVivo"] },
     "arena":       { "api": "SECRET_SAND", "palabras": ["arena", "sand"], "lluvia_s": 10, "recompensa": ["especial", "lluvia"] },
-    "firma":       { "api": "SECRET_SIGNATURE", "recompensa": ["marco", "exponent"] }
+    "firma":       { "api": "SECRET_SIGNATURE", "recompensa": ["marco", "exponent"] },
+    "tempano":     { "api": "SECRET_ICEBERG", "horas": 3, "recompensa": ["fondo", "tempano"] },
+    "terco":       { "api": "SECRET_STUBBORN", "abandonos": 3, "recompensa": ["marco", "terco"] }
   },
 
   "_fondos": "Fondos de la pila (Ajustes > Aspecto), en orden: id -> logro que lo da (null = de inicio). 'cristal' es de la Capa 1: queda bloqueado.",
   "fondos": { "noche": null, "arenaSeca": "compresion", "milimetrado": "anillo", "desierto": "paciencia", "fractal": "infinito",
-              "hielo": "cristal", "aurora": "insomnio", "vacio": "minimalista" },
+              "hielo": "cristal", "aurora": "insomnio", "vacio": "minimalista",
+              "grietas": "finCapa", "tempano": "tempano" },
 
   "_precios": "SPEC 4.11: todo precio es 1eN (exponente redondeado al entero más cercano). Mejoras de la Arena: el primer nivel cuyo exponente normal pasa de softcap_desde_log10 es n_1e308; cada nivel por encima suma 1 al exponente (x10).",
   "softcap_desde_log10": 308,

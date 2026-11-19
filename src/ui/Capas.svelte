@@ -13,6 +13,7 @@
   import Red from './Red.svelte'
   import Relicario from './Relicario.svelte'
   import Automatizacion from './Automatizacion.svelte'
+  import { GRIETAS } from './grietas'
 
   const PANTALLAS = ['relicario', 'red', 'estratos', 'defectos', 'escarcha']
   // Un ícono por sistema, dibujado con la geometría del juego: la Red un rombo de celdas, los Estratos losas apiladas,
@@ -78,6 +79,22 @@
           </section>
         {/if}
       </main>
+    {:else if juego.capa === 'capa2'}
+      <!-- C13: la Capa 2 todavía no existe. Solo se sabe que es de fuego: calor que sube por las grietas del hielo. -->
+      <main class="proxima">
+        <svg class="grietas" viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          {#each GRIETAS as d}<path {d} />{/each}
+        </svg>
+        <div class="chispas" aria-hidden="true">
+          {#each { length: 16 } as _, i}<i style:left="{8 + ((i * 53) % 84)}%" style:--d="{-((i * 1.37) % 11)}s" style:--v="{9 + ((i * 0.83) % 5)}s" style:--x="{((i * 29) % 40) - 20}px"></i>{/each}
+        </div>
+        <!-- C14: el cierre de la Capa 1 en una placa de su mismo hielo, con la brasa asomando desde abajo. -->
+        <div class="placa cierre">
+          <h1>{txt.capas.capa2}</h1>
+          <p class="lema">{txt.capas.finCapa1}</p>
+          <p>{txt.capas.proximamente}</p>
+        </div>
+      </main>
     {:else if juego.capa === 'automatizacion'}
       <main class="automat">
         <Automatizacion />
@@ -101,6 +118,16 @@
         <span>{txt.capas.cristalizacion}</span>
         {#if hayOferta}<i class="punto" title={txt.cristal.relicario.hay}></i>{/if}
       </button>
+      {#if juego.vistos.capa2}
+        <!-- C13: la Capa 2 como silueta oscura, con un brillo de brasa en sus grietas que late lento. -->
+        <button class="capa2" aria-current={juego.capa === 'capa2' ? 'page' : undefined} onclick={() => (juego.capa = 'capa2')}>
+          <svg viewBox="-12 -12 24 24" aria-hidden="true">
+            <path d="M-2-11 5-9.5 10-3 9.5 5 3 10.5-5 10-10 4-9.5-4.5Z" fill="#141016" stroke="#2a2329" stroke-width="0.8" stroke-linejoin="round" />
+            <path class="brasa" d="M-1.5-3.5 1 0-2 3.5M1 0 5.5 1.5M-2 3.5 0.5 8M-1.5-3.5-5.5-5" fill="none" stroke="#ff7a2e" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>{txt.capas.capa2}</span>
+        </button>
+      {/if}
       <!-- Bloque 10: no es una capa sino de todas; va abajo, separada por una línea. Ícono: dos engranajes de cristal. -->
       <button class="auto" data-guia="c1_automat" aria-current={juego.capa === 'automatizacion' ? 'page' : undefined} onclick={() => (juego.capa = 'automatizacion')}>
         <svg viewBox="-12 -12 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round">
@@ -117,12 +144,14 @@
 <style>
   /* Estética helada (SPEC_CAPA1 §11): azul noche casi negro, blancos fríos, cian tenue; facetas de 60° con aristas finas.
      El hielo es textura (líneas de grieta), no desenfoque. */
-  /* Barra de capas: es de todo el juego (va a tener todas las capas), así que es neutra, con la sobriedad de la Arena:
-     fondo de la página y líneas de 1 px. La personalidad está en cada ícono: el de cada capa con su estética y su color;
-     la activa se enciende con ese color y una marca a la izquierda. */
+  /* Barra de capas: es de todo el juego (va a tener todas las capas), así que es neutra y no es una caja: queda sobre el
+     mismo fondo de la pantalla, con apenas una sombra que sale del borde y se desvanece arriba, abajo y a la derecha.
+     La personalidad está en cada ícono: el de cada capa con su estética y su color; la activa se enciende con ese color,
+     un resplandor y una marca corta a la izquierda. */
   .capas {
-    position: fixed; left: 0; top: 50%; translate: 0 -50%; z-index: 5; display: grid; gap: 0.25rem; padding: 0.5rem 0;
-    border: 1px solid var(--borde); border-left: 0; background: rgb(7 8 15 / 0.92);
+    position: fixed; left: 0; top: 50%; translate: 0 -50%; z-index: 5; display: grid; gap: 0.25rem; padding: 1.5rem 0;
+    background: linear-gradient(to right, rgb(4 5 10 / 0.6), transparent);
+    mask: linear-gradient(transparent, #000 1.5rem, #000 calc(100% - 1.5rem), transparent);
   }
   .capas button {
     --c: var(--ambar);
@@ -132,7 +161,14 @@
   }
   .capas .cristal { --c: var(--hielo); }
   .capas .auto { --c: var(--tinta); }
-  .capas .auto { border-top: 1px solid var(--borde); margin-top: 0.25rem; padding-top: 0.75rem; }
+  .capas .capa2 { --c: #ff8a3d; }
+  /* La silueta no se desatura como las otras: ya es oscura; lo que se ve es la brasa. */
+  .capas .capa2 svg { filter: none; opacity: 1; }
+  .capas .brasa { filter: drop-shadow(0 0 1.5px #ff5a1f); animation: brasa 4.5s ease-in-out infinite alternate; }
+  @keyframes brasa { from { opacity: 0.35; } to { opacity: 0.95; } }
+  .quieto .capas .brasa { animation: none; opacity: 0.7; }
+  .capas .auto { margin-top: 0.5rem; }
+  .capas .auto::before { content: ''; position: absolute; top: -0.375rem; left: 50%; width: 1.5rem; height: 1px; translate: -50%; background: var(--borde); }
   /* Automatización: de todo el juego, neutra como esta barra (fondo de la página, líneas de 1 px); sin escarcha. */
   .automat { position: fixed; inset: 0; z-index: 4; display: grid; padding: 2rem 2rem 2rem 7rem; overflow: hidden; color: var(--tinta); background: var(--fondo); animation: entrar 0.3s ease-out; }
   .capas svg { width: 2.25rem; height: 2.25rem; overflow: visible; filter: saturate(0.55) brightness(0.8); opacity: 0.75; transition: filter 0.3s, opacity 0.3s, scale 0.3s; }
@@ -140,9 +176,11 @@
   .capas button:hover, .capas button:focus-visible { color: var(--tenue); }
   .capas [aria-current] {
     color: var(--c); font-weight: 600;
-    background:
-      linear-gradient(var(--c), var(--c)) left / 2px 100% no-repeat,
-      radial-gradient(80% 70% at 30% 45%, color-mix(in srgb, var(--c) 22%, transparent), transparent 75%);
+    background: radial-gradient(60% 55% at 50% 38%, color-mix(in srgb, var(--c) 18%, transparent), transparent 75%);
+  }
+  .capas [aria-current]::after {
+    content: ''; position: absolute; left: 0; top: 50%; width: 2px; height: 1.75rem; translate: 0 -50%; border-radius: 0 2px 2px 0;
+    background: var(--c); box-shadow: 0 0 0.5rem var(--c);
   }
   .capas [aria-current] svg { filter: drop-shadow(0 0 0.45rem color-mix(in srgb, var(--c) 70%, transparent)); opacity: 1; scale: 1.08; }
   .capas .grano { animation: grano 3.2s ease-in infinite; }
@@ -154,6 +192,43 @@
   /* Reducir movimiento: nada se mueve. Reducir destellos: el destello del cristal queda fijo (no titila). */
   .quieto .capas .grano { animation: none; }
   :is(.quieto, .calma) .capas [aria-current] .destello { animation: none; opacity: 0.6; }
+  /* C13, Capa 2 próximamente: el azul helado de Cristalización con un resplandor tenue de brasas desde abajo, grietas
+     apenas encendidas y chispas que suben despacio (solo transform y opacidad). */
+  .proxima {
+    position: fixed; inset: 0; z-index: 4; display: grid; place-content: center; justify-items: center; gap: 0.75rem;
+    padding: 2rem 2rem 2rem 7rem; overflow: hidden; color: var(--escarcha); text-align: center; animation: entrar 1.2s ease-out;
+    background:
+      radial-gradient(70% 45% at 50% 105%, rgb(255 96 32 / 0.22), transparent 70%),
+      radial-gradient(40% 30% at 30% 100%, rgb(255 60 30 / 0.12), transparent 70%),
+      radial-gradient(45% 35% at 72% 100%, rgb(255 150 60 / 0.1), transparent 70%),
+      var(--tex-escarcha),
+      radial-gradient(120% 80% at 50% 0%, #0f1d33, var(--noche) 70%);
+  }
+  .cierre {
+    --f: 1.25rem; --grieta: var(--tex-grietas); --luz: radial-gradient(90% 60% at 50% 115%, rgb(255 110 40 / 0.2), transparent 70%);
+    display: grid; justify-items: center; gap: 0.5rem; width: min(100%, 30rem); padding: 2.25rem 2rem 2rem;
+  }
+  .proxima h1 { margin: 0; font-size: clamp(2.5rem, 7vw, 4.5rem); line-height: 1; color: var(--escarcha); text-shadow: 0 0.2em 1.2em rgb(255 110 40 / 0.25); }
+  .proxima p { margin: 0; font-size: 1.125rem; color: #e8b48f; }
+  .proxima .lema { font-size: 1rem; color: var(--tenue); text-wrap: balance; }
+  .grietas { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: #ff7a2e; stroke-width: 0.25; opacity: 0.12; filter: drop-shadow(0 0 2px #ff5a1f); }
+  .chispas { position: absolute; inset: 0; pointer-events: none; }
+  .chispas i {
+    position: absolute; bottom: -1rem; width: 3px; height: 3px; border-radius: 50%; background: #ffb067; box-shadow: 0 0 4px #ff6a2a;
+    opacity: 0; animation: chispa var(--v) var(--d) linear infinite; will-change: transform, opacity;
+  }
+  @keyframes chispa {
+    0% { transform: translate(0, 0); opacity: 0; }
+    15% { opacity: 0.7; }
+    70% { opacity: 0.35; }
+    100% { transform: translate(var(--x), -70vh); opacity: 0; }
+  }
+  /* Reducir destellos: menos chispas y más lentas (el brillo cambia en segundos, no en fracciones). Reducir movimiento: ninguna. */
+  .calma .chispas i:nth-child(2n) { display: none; }
+  .calma .chispas i { animation-duration: calc(var(--v) * 1.5); }
+  .quieto .chispas { display: none; }
+  .quieto .proxima { animation: none; }
+
   .pantalla svg { fill: none; stroke: currentColor; stroke-width: 1.25; stroke-linejoin: round; }
   /* Hay una reliquia para elegir. */
   .punto { display: inline-block; width: 0.4rem; height: 0.4rem; margin-left: 0.35rem; vertical-align: super; background: var(--ambar); rotate: 45deg; }
@@ -200,10 +275,11 @@
 
   /* Vertical (móvil, tablet): la barra de capas va a la esquina de arriba de la región de la pila, que la pila redonda deja libre. */
   @media (orientation: portrait) and (max-width: 1100px) {
-    .capas { top: 7rem; translate: none; }
-    .capas button { width: 4rem; min-height: 4rem; font-size: 0.625rem; hyphens: manual; }
+    /* Debajo de la Energía y sus líneas (Cristales, Densidad), que en el celular llegan a unos 8 rem. */
+    .capas { top: 8rem; translate: none; padding: 0.75rem 0; }
+    .capas button { width: 4rem; min-height: 3.5rem; font-size: 0.625rem; hyphens: manual; }
     .capas svg { width: 1.875rem; height: 1.875rem; }
-    .cristalizacion, .automat { padding: 3.75rem 1rem 1rem 5rem; } /* arriba, la fila de íconos de App.svelte */
+    .cristalizacion, .automat, .proxima { padding: 3.75rem 1rem 1rem 5rem; } /* arriba, la fila de íconos de App.svelte */
     .emblema { width: 2.5rem; height: 2.5rem; }
     .contadores { gap: 0.5rem 1.5rem; }
   }

@@ -29,15 +29,18 @@ export const PALETAS: Record<string, number[]> = {
   papelViejo: [0xc9a46c, 0xf6ead0, 0x8f6c42, 0x3d2c1a],
   todoAmbar: [0xffb347, 0xffe0a0, 0xc97a22, 0x5c3610],
   simetria: [0x5fd3e6, 0xfaf4ff, 0xe65f9e, 0x26213d],
+  // Capa 1 (C13).
+  escarcha: [0x9fe3f5, 0xf4fbff, 0x4f8fb8, 0x16324a],
+  vidrio: [0xa9c4cf, 0xe9f2f5, 0x6f8792, 0x26333b],
 }
 
 /** Efectos de avalancha: el índice es el u_efecto del shader (lienzo.ts). */
 export const EFECTOS = ['normal', 'blanco', 'estela', 'chispas', 'cascada', 'relampago', 'mutante', 'arcoiris', 'oro',
-  'rayo', 'lupa', 'arcoirisVivo', 'espejo', 'horizonte']
+  'rayo', 'lupa', 'arcoirisVivo', 'espejo', 'horizonte', 'hexagonos', 'latido', 'burbujas']
 
 /** Marcos para la foto del mandala (marco.ts los dibuja). */
 export const MARCOS = ['ninguno', 'fino', 'doble', 'anillos', 'orbitas', 'muescas', 'denso', 'rosa', 'infinito',
-  'galleta', 'polaroid', 'arenaDorada', 'exponent']
+  'galleta', 'polaroid', 'arenaDorada', 'exponent', 'anilloHelado', 'bordesGrano', 'terco']
 
 /** Fondos detrás de la pila, en el orden de CFG.fondos (el primero, de inicio). lienzo.ts los dibuja en el shader. */
 export const FONDOS = Object.keys(CFG.fondos)

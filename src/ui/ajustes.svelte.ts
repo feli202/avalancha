@@ -20,6 +20,8 @@ const base = {
   daltonismo: false,
   /** I11: con la pila llena, la simulación visual trabaja menos (batería y ventilador). */
   ahorro: false,
+  /** Tasa de refresco de la pila (Ajustes, Juego): 15, 30 o 60 cuadros por segundo; 0 = sin límite. Solo visual. */
+  fps: 0,
   /** Cosméticos de los logros (paletas.ts); si el elegido no está desbloqueado, se usa el primero (logros.ts, elegido). */
   paleta: 'arena',
   efecto: 'normal',
@@ -59,5 +61,6 @@ $effect.root(() => {
   })
   $effect(() => void [ajustes.volumen, ajustes.volEfectos, ajustes.volMusica, aplicarVolumen()])
   $effect(() => void document.documentElement.classList.toggle('daltonismo', ajustes.daltonismo))
+  $effect(() => void document.documentElement.classList.toggle('reducir-movimiento', ajustes.reducirDestellos))
   $effect(() => void (document.documentElement.lang = ajustes.idioma))
 })

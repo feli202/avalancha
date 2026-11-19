@@ -125,7 +125,7 @@
 
 <section class="relicario" aria-label={txt.cristal.pantallas.relicario}>
   <div class="izq">
-    <div class="engarces" role="group" aria-label={r.engarces}>
+    <div class="engarces" role="group" aria-label={r.engarces} data-guia="c1_pulido">
       <h2>{r.engarces}</h2>
       <div class="huecos">
         {#each { length: espacios(s) } as _, i}

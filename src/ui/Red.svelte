@@ -250,7 +250,7 @@
         {#each vistas as v (v.id)}
           <g
               class="nodo {v.modo}" class:elegido={v.id === elegido} class:visto={v.id === hover}
-              class:cae={derrumbe?.id === v.id} transform="translate({v.x} {v.y})"
+              class:cae={derrumbe?.id === v.id} transform="translate({v.x} {v.y})" data-guia={v.id === orden3[0] ? 'c1_anillo3' : undefined}
               role="button" tabindex="0" aria-pressed={v.id === elegido} aria-label="{titulo(v.id)}, {r.nivel(v.n)}"
               onclick={() => (elegido = v.id)} onkeydown={(e) => tecla(e, v.id)}
               onpointerenter={() => (hover = v.id)} onpointerleave={() => (hover = null)}

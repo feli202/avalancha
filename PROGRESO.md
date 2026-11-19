@@ -1,6 +1,6 @@
 # Progreso
 
-Estado: **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). **Hito 6** (pulido técnico): sonido, móvil y tablet, accesibilidad (Lighthouse 100) y rendimiento (60 fps en GPU integrada). **Primeros 10 segundos**: pantalla de título, logo y primera avalancha con el primer toque. **Guardar imagen**: PNG de 2048×2048 de la pila (botón de cámara, tecla P, "Guardá tu mandala" en el Infinito). **Sonido sintetizado**: todo el audio generado por código con Web Audio (sin archivos), con música generativa. **Guías**: indicadores de sistema nuevo, tooltips y la pantalla "Cómo funciona". La Capa 0 está completa. **Clips verticales** para redes en `marketing/clips/` (modo grabación del panel de debug).
+Estado (2026-11-18): **Capa 1 hasta C14 (pulido de la 1.2 hecho; falta la auditoría y publicar)**. **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). **Hito 6** (pulido técnico): sonido, móvil y tablet, accesibilidad (Lighthouse 100) y rendimiento (60 fps en GPU integrada). **Primeros 10 segundos**: pantalla de título, logo y primera avalancha con el primer toque. **Guardar imagen**: PNG de 2048×2048 de la pila (botón de cámara, tecla P, "Guardá tu mandala" en el Infinito). **Sonido sintetizado**: todo el audio generado por código con Web Audio (sin archivos), con música generativa. **Guías**: indicadores de sistema nuevo, tooltips y la pantalla "Cómo funciona". La Capa 0 está completa. **Clips verticales** para redes en `marketing/clips/` (modo grabación del panel de debug).
 
 ## Qué se hizo
 
@@ -833,7 +833,7 @@ Todos: texto grande desde el primer cuadro, dentro de la zona segura (arriba, ce
 
 Spec: `SPEC_CAPA1.md`. Constantes: `balance/config_capa1.json`. Simulador: `balance/sim_capa1.py`.
 
-**Hito actual: C8 terminado el 2026-11-17 (test de balance de la 1.1 en verde con el núcleo real; ver C8 al final). Sigue C9. C7 terminado el 2026-11-16 (ver abajo; falta medir fps con los Defectos). C5: falta probarlo en un celular de verdad.**
+**Hito actual: C13 terminado el 2026-11-18 (fin de la capa, test completo y logros de la 1.2). Sigue C14. Antes: C8 terminado el 2026-11-17 (test de balance de la 1.1 en verde con el núcleo real; ver C8 al final). Sigue C9. C7 terminado el 2026-11-16 (ver abajo; falta medir fps con los Defectos). C5: falta probarlo en un celular de verdad.**
 
 ## Correcciones de la Capa 1 (9 sesiones)
 
@@ -1109,15 +1109,15 @@ Solo interfaz: no se tocó `src/core/`, `balance/` ni las escenas WebGL.
 - [x] C5 — Estratos: escena three.js descendente + optimización
 - [x] C6 — Romper el Infinito + fórmula de Cristales + Infinito automático óptimo
 - [x] C7 — Defectos 1–4 + visuales
-- [ ] C8 — Test de balance de la 1.1 + offline + estadísticas
+- [x] C8 — Test de balance de la 1.1 + offline + estadísticas
 - [ ] C9 — Pulido y auditoría 1.1 → publicar
 
 **Actualización 1.2**
 
 - [x] C10 — Escarcha (lógica + visual)
 - [x] C11 — Anillo 3 de la Red, Pulido, Deshielo
-- [ ] C12 — Defectos 5–8
-- [ ] C13 — Fin de la Capa 1 (hito + pantalla) + test de balance completo
+- [x] C12 — Defectos 5–8
+- [x] C13 — Fin de la Capa 1 (hito + pantalla) + test de balance completo + logros de la 1.2
 - [ ] C14 — Pulido y auditoría 1.2 → publicar
 
 ## C5 — Estratos: escena three.js descendente (2026-11-15)
@@ -1961,3 +1961,127 @@ Hecho:
 **Verificación**: 311 tests en verde, `npm run test:lento` en verde (13), `tsc` y `svelte-check` 0 errores. En el navegador (1366×768 y 390×844, sin scroll de página): pestañas, ficha de cada uno, entrar a Fatiga (cuenta regresiva en la Arena), y la pila con Frontera, Inclusión y Vidrio.
 
 **No medido**: fps con los shaders de Frontera e Inclusión (9 muestras de Voronoi por píxel, solo dentro de esos Defectos). Fatiga y Vidrio tienen la curva casi plana (§8): son un muro a propósito (decisión del usuario), te obligan a avanzar en la Capa 1 antes de ganarlos.
+
+## C13: fin de la Capa 1 y test de balance completo (2026-11-18)
+
+**Hito actual: C13 terminado** (los logros de la 1.2, con el OK del usuario, al final de esta sección). Sigue C14.
+
+**Fin de la capa** (1e308 Cristales totales = `infinito_log10`, igual que el sim):
+- Núcleo: `finCapa1(s)` en `src/core/infinito.ts`.
+- `juego.svelte.ts`: `juego.cinematica` pasa de booleano a `'' | 'infinito' | 'fin'`. Al llegar, `finDeCapa()` lleva a la Arena y corre la cinemática (6,4 s, `FIN_CAPA_MS`); al terminar anota `vistos.capa2` (guardado: una vez por partida; si se cierra antes, se repite al volver) y abre la pantalla de la Capa 2. La economía sigue corriendo.
+- Cinemática (`Pila.svelte`): el hielo sube y cubre la pila entera y se queda (no se rompe como en el primer Infinito); a los 2,4 s se abren nueve grietas desde el centro (`src/ui/grietas.ts`, semilla fija) y a los 3,2 s se enciende en ellas un resplandor de brasas (tres trazos: halo naranja desenfocado, la grieta blanca y un núcleo ámbar) que queda latiendo lento. Suena el crescendo del Infinito, más largo. Reducir movimiento: todo aparece sin abrirse ni latir.
+- Pantalla "Capa 2 / Próximamente" (`Capas.svelte`, `juego.capa = 'capa2'`): el azul helado de Cristalización con un resplandor tenue rojo y naranja desde abajo, las mismas grietas apenas encendidas y 16 chispas que suben despacio (solo transform y opacidad). Reducir destellos: la mitad de las chispas y más lentas; Reducir movimiento: sin chispas. Sin más texto.
+- Barra de capas: con `vistos.capa2`, la Capa 2 como silueta oscura (una roca) con grietas de brasa que laten en 4,5 s (quietas con Reducir movimiento); lleva a la pantalla de arriba.
+- Debug: "Fin de la Capa 1" (estado de Defectos II + 1e309 Cristales totales y vuelve a mostrar la cinemática).
+- Textos: `capas.capa2` y `capas.proximamente` (es/en).
+
+**Test de balance completo** (`tests/balance_capa1.test.ts`, `npm run test:lento`, ~45 s, **20/20 en verde**). El bot ahora sigue hasta 1e308 Cristales totales con las mismas reglas que el sim: reliquias con la regla por defecto, abandono de C8, Memoria que hace saltar la corrida (en el núcleo), y además lo de la 1.2: rompe la Escarcha a mano cada 30 min (con Deshielo la rompe `tick`) y entre corridas gasta Esquirlas lo más barato primero entre Crecimiento, Brillo, Aguante y pulir una pieza engarzada (como `esq_items`); esas compras cuentan en el hueco. Defectos 5–8 los toma la misma regla de entrada.
+
+| Hito | Juego | Sim (§2) | |
+|---|---|---|---|
+| Segundo Infinito | 1,21 | 1,21 | 0 % |
+| Memoria completa | 1,81 | 1,81 | 0 % |
+| Romper = Estratos | 2,30 | 2,30 | 0 % |
+| Vacancia | 2,35 | 2,37 | −1 % |
+| Dislocación | 3,59 | 3,70 | −3 % |
+| Macla | 4,19 | 4,52 | −7 % |
+| Impureza | 5,36 | 5,29 | +1 % |
+| Fin 1.1 | 6,26 | 6,63 | −6 % |
+| Fatiga | 8,94 | 9,47 | −6 % |
+| Frontera | 11,89 | 11,95 | −1 % |
+| Inclusión | 12,54 | 12,57 | 0 % |
+| Vidrio | 13,05 | 13,49 | −3 % |
+| **Fin de la capa** | **14,45** | 14,49 | 0 % (rango 14–16) |
+| Hueco máximo (desde 1,5 h) | 36,9 min | 30,8 | < 40 |
+
+Pesos de log10 V en la corrida que llega a 1e308 (antes de su Infinito): Escarcha 58 %, Presión 32 %, Colores 4 %, Eco 4 %, Reliquias 1 % (máximo < 65 %). El sim da Escarcha 42 %, Presión 43 %. **No es una diferencia de balance sino de fase**: las mejoras de Escarcha llegan iguales (Crecimiento 9, Brillo 6, Aguante 8; g ≈ 10/s en los dos), pero el juego mide justo antes de una ruptura (espesor 18.286) y el sim justo después (9.474, la mitad: `conserva_al_romper` 0,5). Con g ≈ 10/s el espesor se duplica en cada ciclo de 30 min, así que el peso de la Escarcha al final oscila entre ~40 y ~60 % según dónde caiga el último Infinito. Queda debajo del 65 % en los dos extremos, pero está cerca: si se toca la Escarcha, mirar este número. No cambié ningún número.
+
+**Verificación**: 311 tests en verde (`npm test`), 20/20 en `npm run test:lento`, `tsc` y `svelte-check` 0 errores, `python balance/sim_capa1.py` da la tabla de §2 sin cambios. En el navegador (1366×768 y 390×844): la cinemática entera con una pila de 400.000 granos (hielo a los 2 s, grietas con brasas a los 4–5 s) y la pantalla de la Capa 2 con la silueta en la barra; sin scroll de página en 390×844; sin errores en consola. Reducir destellos (8 chispas, 13,5 s) y Reducir movimiento (sin chispas, brasa quieta) comprobados por los estilos computados.
+
+**No medido**: fps (el panel del navegador estaba oculto y lo frena a ~30; la pantalla nueva son 16 puntos con transform y un SVG quieto); celular real; la cinemática con Reducir movimiento solo por el CSS, no mirada.
+
+**Decisiones (revisar)**:
+- La silueta lleva el nombre "Capa 2" debajo, como los otros botones de la barra; la pantalla dice solo "Capa 2" y "Próximamente".
+- El fin de la capa no frena nada: se puede seguir jugando la Capa 1 (y la cinemática no vuelve).
+- Las grietas son las mismas en la cinemática y en el fondo de la pantalla de la Capa 2, para que se lea como "lo que quedó".
+
+### Logros de la 1.2 (C13, con el OK del usuario)
+
+Pestaña **Capa 1 · Cristalización** de Logros abierta desde el primer Infinito (antes estaba vacía y bloqueada), con 9 logros: el **Primer Cristal** (ya tenía texto y daba el fondo Hielo, pero no existía la condición: nadie podía conseguirlo) y los 8 de la 1.2. Cada uno con su mini pila y un cosmético nuevo.
+
+| Logro | Condición | Recompensa |
+|---|---|---|
+| Primer Cristal | el primer Infinito | fondo Hielo (ya existía) |
+| Primera helada | abrir la Escarcha | paleta Escarcha |
+| Quebrar el hielo | romperla y juntar la primera Esquirla | efecto Hielo en pedazos |
+| Anillo de hielo | los 12 nodos del anillo 3 al máximo | marco Anillo helado |
+| Sin aliento | superar Fatiga | efecto Latido |
+| Grano por grano | superar Frontera | marco Bordes de grano |
+| Burbuja | superar Inclusión | efecto Burbujas |
+| Amorfo | superar Vidrio | paleta Vidrio |
+| Cristalización total | 1e308 Cristales totales (`finCapa1`) | fondo Grietas |
+
+Secretos (18 ahora): **Témpano** («Agua que no has de romper, dejala crecer.»: el reloj de la Escarcha llega a 3 h sin romperla; fondo Témpano) y **Terco** («A la tercera no fue la vencida.»: superar un Defecto abandonado 3 veces antes; marco Terco).
+
+- `src/ui/logros.ts`: `LOGROS_C1` (puros, sobre el estado), recompensas, `SISTEMA` (los de la 1.2 salen como ??? hasta ver la Escarcha), `CAPAS`.
+- `src/ui/secretos.ts`: Témpano en `Vigia.cuadro`; Terco con `abandono(id)` / `defectoGanado(id)` y un contador nuevo `abandonos` en `Contadores` (va al guardado, saneado en `guardado.ts`; los guardados de antes arrancan en cero). `juego.svelte.ts` los llama al abandonar a mano y al detectar un Defecto superado.
+- Cosméticos: paletas Escarcha y Vidrio (`paletas.ts`); efectos 14–16 en el shader de celdas (`lienzo.ts`); fondos 8 (Grietas: Voronoi grande con calor de brasas desde abajo) y 9 (Témpano: capas de hielo horizontales); el Voronoi del fondo Hielo pasó a una función `grietaEn` que comparten los dos. Marcos en `marcos.ts`. Mini pilas en `miniPilas.ts` (los marcos se dibujan con el mismo `marco()` de la foto).
+- `balance/config.json`: los dos secretos (`horas`, `abandonos`, Steam `SECRET_ICEBERG` / `SECRET_STUBBORN`) y los dos fondos. Son cosméticos (sim.py no los lee), así que van junto a los otros secretos y no en `config_capa1.json`.
+- Textos en español e inglés.
+- Tests: `logros.test.ts` (los 9 con textos, escena y recompensa sin repetir; cada condición), `secretos.test.ts` (18 secretos; Témpano; Terco cuenta por Defecto), `guardado.test.ts` (los abandonos se guardan y se sanean).
+
+**Verificación**: 315 tests en verde, `svelte-check` 0 errores. En el navegador: la pestaña con las 9 mini pilas (desbloqueadas a mano un momento para verlas y después vueltas atrás), los dos secretos, y en Ajustes → Aspecto los 10 cosméticos nuevos con su vista previa (fondo Grietas probado detrás de la pila). Bajé el brillo de Burbujas y Hielo en pedazos después de verlos (quedaban casi blancos).
+
+**Decisiones (revisar)**:
+- Quebrar el hielo se mira por las Esquirlas o mejoras de Escarcha que hay (no hay contador de rupturas): una ruptura que da 0 Esquirlas no cuenta hasta la siguiente.
+- Témpano lee el reloj de la Escarcha: con Deshielo prendido no se puede (la rompe a los 30 min); hay que apagar su interruptor. El reloj no corre en Vidrio, así que tampoco suma ahí.
+- Terco cuenta los abandonos desde esta versión (antes no se guardaban).
+- Al cargar una partida que ya pasó el primer Infinito, el Primer Cristal se consigue enseguida (con su aviso).
+
+
+## C14: pulido final de la 1.2 (2026-11-18)
+
+**Hito actual: C14, pulido hecho.** Falta la auditoría (Fable) y publicar la 1.2.
+
+**Guías de la 1.2** (una sola vez por partida, cada una en su pantalla, anotadas en `vistos`):
+- `c1_escarcha` reescrita: antes decía "multiplica todo", que es falso; ahora dice que hace valer más cada derrumbe, que gruesa frena la producción y que romperla conserva la mitad y da Esquirlas. "Cómo funciona" → Escarcha pasó de una línea a tres párrafos (qué es, frena y romper, para qué sirven las Esquirlas y Deshielo).
+- Nuevas: `c1_anillo3` (Red, señala un nodo del anillo 3: qué trae), `c1_pulido` (Relicario, señala los engarces: cómo se pule) y `c1_defectos2` (Defectos, señala la pestaña Defectos II). Salen la primera vez que mirás esas pantallas con la Escarcha abierta. `PANTALLA_GUIA` en `juego.svelte.ts` dice en qué pantalla va cada una. Los guardados que ya pasaron la Escarcha las ven una vez al entrar a esas pantallas.
+- Test nuevo en `tests/juego.test.ts`: las cuatro salen en orden, una vez cada una, y no vuelven en una segunda vuelta por las pantallas.
+
+**Estética de cristal:**
+- Fin de la capa (`Capas.svelte`, pantalla Capa 2): el título va ahora en una `.placa` de hielo de la Capa 1 (facetada, con grietas en la esquina) con la brasa asomando desde abajo, y el fondo lleva la textura de escarcha. Una línea nueva cierra la capa: «Juntaste 1e308 Cristales. Debajo del hielo, algo arde.» (`capas.finCapa1`).
+- Escarcha: en la ficha, la Suma (×2,32e135) y "+0,279 por minuto" salían cortadas con "…". La columna de la Suma es más ancha, "por minuto" pasó a "por min" y en el celular la línea chica se achica un poco.
+- Defectos: las etiquetas de la ficha (Regla, Meta…) ya no van en mayúsculas espaciadas; quedan como en la ficha de la Escarcha.
+- El anillo 3 de la Red ya tenía el mismo lenguaje que los otros anillos (deshielo de C11); no lo toqué.
+
+**Textos**: la regla de Inclusión decía "Te llevan la Escarcha y el Eco" (se leía como que te las sacaban): ahora "La Presión de los Estratos no cuenta. Para avanzar quedan la Escarcha y el Eco." Todo en español e inglés.
+
+**Verificación**: 316 tests en verde (`npm test`), 20/20 en `npm run test:lento`, `svelte-check` y `tsc` 0 errores. En el navegador, a 1366×768 y 390×844, sin scroll de página: las cuatro guías en su lugar, la ficha de la Escarcha sin cortes, la pantalla de fin de capa. Capturas en `capturas/c14/` (la de la Escarcha a 1366 es de antes del arreglo de la ficha).
+
+**No medido**: fps (el panel del navegador iba a 1 cuadro por segundo; las capturas a veces quedaban viejas, así que parte de lo de 390×844 está comprobado por el DOM y no a la vista); celular real.
+
+**Decisiones (revisar)**:
+- La guía del anillo 3 sale junto con el deshielo, no después.
+- La guía del Pulido señala los engarces y no el botón Pulir, porque el botón aparece recién al tocar una reliquia.
+
+
+## Mejoras visuales: marcos de la pila, refresco, arena seca, camino al Infinito, barra de capas, borde del fondo (2026-11-18)
+
+Sin tocar el balance (ni `config.json` ni los simuladores).
+
+- **Marcos de la pila** (`Pila.svelte`): el marco elegido en Ajustes → Aspecto ("Marco de la pila", antes "Marco de la foto") se ve en la pantalla principal, dibujado con el mismo `marco()` de la foto en un canvas 2D aparte. Va pegado al círculo fijo de la pila en pantalla (`PilaVisual.focoCss`, el mismo del desenfoque del zoom), no a la pila: no cambia con el zoom, al crecer, al comprimir (las reglas de la implosión son solo del canvas de la pila), ni en pantalla completa; se redibuja solo si cambia el radio, el marco o la paleta. Está debajo del anillo de Compresión (Galleta y Polaroid no lo tapan) y recortado a la región de la pila (en el celular no tapa la Energía ni el sismógrafo). La foto sigue con su marco.
+- **Tasa de refresco** (Ajustes → Juego): 15 / 30 / 60 / Sin límite (`ajustes.fps`, por defecto sin límite). Saltea cuadros del bucle de `Pila.svelte`; la economía corre en su propio reloj.
+- **Reducir movimiento**: ya existía para la pila (y por defecto sigue `prefers-reduced-motion`); ahora además pone `reducir-movimiento` en `<html>` y una regla en `index.html` deja en la interfaz los bucles en una sola vuelta y las transiciones instantáneas (la pila no entra: tiene su versión quieta).
+- **Arena seca** (`lienzo.ts`): grano de 3 px CSS más contrastado, con granos sueltos de 7 px más claros.
+- **Camino al Infinito** (`App.svelte`, `caminoInfinito` en `juego.svelte.ts`): línea de 2 px en el margen izquierdo, log10(Energía) / `infinito_log10`, con una marca en cada umbral de Compresión (se encienden al pasarlas), la punta brillante y un ∞ arriba. Aparece con la Compresión y se va al romper el Infinito (`infinitoRoto`).
+- **Barra de capas** (`Capas.svelte`): sin caja ni borde; una sombra desde el borde izquierdo que se desvanece arriba y abajo, la capa activa con su color, un resplandor y una marca corta; Automatización separada por una rayita. En el celular baja a 8 rem para no pisar las líneas de la Energía.
+- **Borde del fondo**: el fondo va solo en la pantalla de la pila (como antes). En el celular el canvas de la pila ahora sigue hasta arriba de todo y hasta la tienda (`--fondo-abajo`), con la pila centrada en su región (`u_centroY`, `altoRegion`), y el fondo se difumina en los 3 rem de arriba y de abajo en vez de cortarse de golpe. En escritorio no cambia nada.
+
+**Verificación**: 316 tests en verde, `svelte-check` y `tsc` 0 errores. `scripts/capturas-visual.mjs` (Edge headless) en 1366×768, 1000×640 y 390×844: el marco mide lo mismo con los 16 marcos, en los zooms 0/6/14/28, comprimiendo y al volver de Cristalización; centrado en la pila; el anillo de Compresión visible; sin scroll de página; 60 fps en la Arena; sin errores. Capturas en `capturas/visual/antes` y `capturas/visual/despues`.
+
+**No medido**: celular real; el panel del navegador de la app estaba oculto (sus capturas salían recortadas), por eso las capturas son de Edge headless.
+
+**Decisiones (revisar)**:
+- Polaroid en escritorio es grande (1,54 radios hacia abajo) y pasa por encima del sismógrafo; en el celular queda recortado por la región de la pila.
+- En el celular, tocar el fondo detrás de la Energía ahora también suelta un Puñado (el canvas llega hasta ahí).
+- El camino usa `infinito_log10` del config (308,25) y no 308 a mano.

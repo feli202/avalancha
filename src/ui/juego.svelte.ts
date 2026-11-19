@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, CFG1, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, hayEstratos, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
+import { CFG, CFG1, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
 import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
@@ -77,11 +77,11 @@ class Juego {
   /** Logro secreto Arena: la lluvia de granos que se ve ahora (Pila.svelte), o null. */
   lluvia = $state.raw<{ id: number } | null>(null)
   /** SPEC_CAPA1 §11: la capa que se ve. Cristalización aparece con el primer Infinito (Capas.svelte). */
-  capa = $state<'arena' | 'cristalizacion' | 'automatizacion'>('arena')
+  capa = $state<'arena' | 'cristalizacion' | 'automatizacion' | 'capa2'>('arena')
   /** La pantalla de Cristalización que se ve (Capas.svelte; la flecha "↓ Estratos" de la Arena la cambia). */
   pantalla = $state('red')
-  /** La cinemática del primer Infinito está corriendo (Pila.svelte la dibuja). */
-  cinematica = $state(false)
+  /** La cinemática que corre (Pila.svelte la dibuja): la del primer Infinito o la del fin de la Capa 1. */
+  cinematica = $state<'' | 'infinito' | 'fin'>('')
   /** Segundos reales que lleva la oferta del Relicario sin elegir. */
   ofertaS = $state(0)
 }
@@ -122,6 +122,11 @@ export function progresoCompresion(s: State) {
   return { meta, final, p: Math.min(1, Math.max(0, (log10E(s) - desde) / (meta - desde))) }
 }
 
+/** La barra fina de la izquierda (escala log10): cuánto falta para el Infinito y dónde caen los umbrales de Compresión. */
+export function caminoInfinito(s: State) {
+  return { p: Math.min(1, log10E(s) / CFG.infinito_log10), marcas: CFG.compresion.umbrales_log10.map((u) => u / CFG.infinito_log10) }
+}
+
 // Tiempo estimado: ritmo de log10(Energía) en los últimos ~30 s de juego (crece exponencial, así que se mide en log).
 const VENTANA_ETA = 30
 const muestras: [number, number][] = [] // [tiempoTotal, log10 E], una por segundo de juego
@@ -136,6 +141,9 @@ function medirEta(s: State) {
   const ritmo = muestras.length >= 3 ? (log10E(s) - e0) / (s.tiempoTotal - t0) : 0
   juego.eta = ritmo > 0 ? Math.max(0, (progresoCompresion(s).meta - log10E(s)) / ritmo) : null
 }
+
+/** Guías de la Capa 1 que no se llaman como su pantalla. */
+const PANTALLA_GUIA: Record<string, string> = { c1_anillo3: 'red', c1_pulido: 'relicario', c1_defectos2: 'defectos' }
 
 /** SPEC 5: cuándo aparece cada parte. */
 function condiciones(s: State): Record<string, boolean> {
@@ -163,6 +171,8 @@ function condiciones(s: State): Record<string, boolean> {
   // C7: la de Defectos, una sola vez al desbloquearlos (Defectos nv1); espera en cola a que se mire su pantalla.
   c.c1_defectos = s.infinitos > 0 && (s.red.defectos ?? 0) >= 1
   c.c1_escarcha = cris && juego.pantalla === 'escarcha' && s.escarcha.abierta
+  // C14: lo que la 1.2 suma a pantallas que ya conocías, la primera vez que las mirás con la Escarcha abierta.
+  for (const [k, p] of Object.entries(PANTALLA_GUIA)) c[k] = cris && juego.pantalla === p && s.escarcha.abierta
   return c
 }
 
@@ -173,7 +183,7 @@ export function guiaEnSuLugar(k: string): boolean {
   if (!esGuiaCapa1(k)) return juego.capa === 'arena'
   if (k === 'c1_automat') return juego.capa === 'automatizacion'
   if (k === 'c1_romper') return juego.capa === 'arena'
-  return juego.capa === 'cristalizacion' && (k === 'c1_cristales' || juego.pantalla === k.slice(3))
+  return juego.capa === 'cristalizacion' && (k === 'c1_cristales' || juego.pantalla === (PANTALLA_GUIA[k] ?? k.slice(3)))
 }
 
 /** Nombre de lo que compra cada autocomprador (claves de AUTOS). */
@@ -293,6 +303,7 @@ export function abandonarDefectoYa() {
   const id = juego.s.defectos.actual
   const s = abandonarDefecto(juego.s)
   if (s === juego.s) return
+  vigia.abandono(id)
   previo = juego.s = s
   avisar('defectos', txt.cristal.defectos.abandonado(txt.cristal.defectos.nombres[id]))
   guardarYa()
@@ -302,12 +313,26 @@ export function abandonarDefectoYa() {
  * Si se cierra la página antes, el estado sigue esperando el Infinito y la cinemática se repite al volver. */
 export const CINEMATICA_MS = 3200
 function primerInfinito() {
-  juego.cinematica = true
+  juego.cinematica = 'infinito'
   setTimeout(() => {
     infinitoYa()
     juego.capa = 'cristalizacion'
-    juego.cinematica = false
+    juego.cinematica = ''
   }, CINEMATICA_MS)
+}
+
+/** SPEC_CAPA1 §1, C13: con 1e308 Cristales totales la pila se cristaliza entera y se agrieta (Pila.svelte); después, la
+ * pantalla "Capa 2 próximamente". Se anota en `vistos.capa2` (guardado): una vez por partida; si se cierra antes, se repite. */
+export const FIN_CAPA_MS = 6400
+function finDeCapa() {
+  juego.capa = 'arena'
+  juego.cinematica = 'fin'
+  setTimeout(() => {
+    juego.vistos = { ...juego.vistos, capa2: true }
+    juego.capa = 'capa2'
+    juego.cinematica = ''
+    guardarYa()
+  }, FIN_CAPA_MS)
 }
 
 /** La pista "Tocá la pila": hasta el primer Puñado (las partidas de antes no lo anotaban: con la tienda ya visible, tampoco). */
@@ -410,7 +435,7 @@ export function arrancar() {
     juego.logros = p.logros
     juego.zoom = p.zoom ?? 0
     juego.zoomMaxS = p.zoomMaxS ?? 0
-    vigia.c = p.secretos ?? contadoresVacios()
+    vigia.c = { ...contadoresVacios(), ...p.secretos }
     if (volviste(Date.now(), p.guardadoEn)) ganarSecreto('volviste')
     historial = p.historial ?? historialVacio(p.guardadoEn - p.estado.tiempoTotal * 1000)
     // Recién migrado de la Capa 0 (o se cerró antes de leer la presentación): entra por Cristalización.
@@ -485,6 +510,7 @@ export function arrancar() {
     }
     // Defecto superado (§8): su aviso; si no, el Infinito automático (Memoria nv4) tiene el mismo aviso que el botón.
     const nuevoDef = s.defectos.completos.length > previo.defectos.completos.length ? s.defectos.completos.at(-1)! : ''
+    if (nuevoDef) vigia.defectoGanado(nuevoDef)
     if (nuevoDef) avisar('defectos', txt.cristal.defectos.ganado(txt.cristal.defectos.nombres[nuevoDef], txt.cristal.ganados(formato(s.cristalesTotales.sub(previo.cristalesTotales)))))
     else if (s.infinitos > previo.infinitos) avisoAutomatico(previo, s)
     previo = s
@@ -496,6 +522,7 @@ export function arrancar() {
     vigia.cuadro(ahora, s, !hayPanel(), new Date(ahora).getHours())
     medirEta(s)
     if (s.infinitos === 0 && enInfinito(s) && !juego.cinematica && !hayPanel()) primerInfinito()
+    if (finCapa1(s) && !juego.vistos.capa2 && !juego.cinematica && !hayCartel()) finDeCapa()
     requestAnimationFrame(cuadro)
   }
   requestAnimationFrame(cuadro)

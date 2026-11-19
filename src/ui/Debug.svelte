@@ -55,6 +55,13 @@
     }
   }
 
+  // C13: el fin de la capa (1e308 Cristales totales); vuelve a mostrar la cinemática aunque ya se haya visto.
+  function finCapa() {
+    listaDefectos2()
+    juego.s = { ...juego.s, cristalesTotales: Decimal.pow10(309) }
+    juego.vistos = { ...juego.vistos, capa2: false }
+  }
+
   function saltar() {
     const c = Math.max(0, Math.min(umbrales.length, Math.floor(n)))
     const alcanzada = c > 0 ? Decimal.pow10(umbrales[c - 1]) : new Decimal(0)
@@ -91,6 +98,7 @@
   <button onclick={() => { juego.s = { ...juego.s, energia: INFINITO }; infinitoYa() }}>{txt.debug.infinitoYa}</button>
   <button onclick={listaDefectos}>{txt.debug.listaDefectos}</button>
   <button onclick={listaDefectos2}>{txt.debug.listaDefectos2}</button>
+  <button onclick={finCapa}>{txt.debug.finCapa}</button>
   <button onclick={() => (juego.s = { ...juego.s, cristales: juego.s.cristales.mul(10).add(10), cristalesTotales: juego.s.cristalesTotales.add(juego.s.cristales.mul(9).add(10)) })}>{txt.debug.darCristales}</button>
   <label>
     {txt.debug.saltar}

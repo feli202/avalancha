@@ -1,13 +1,15 @@
-// SPEC_CAPA1 §17: el bot de balance/sim_capa1.py jugando la 1.1 con el núcleo real, hasta el Estrato 8 lleno.
+// SPEC_CAPA1 §17: el bot de balance/sim_capa1.py jugando la Capa 1 entera con el núcleo real, hasta 1e308 Cristales totales.
 // Lento (unos segundos acá, pero recorre horas de juego): no corre con `npm test`; correrlo con `npm run test:lento` al cerrar cada hito.
 import { beforeAll, describe, expect, it } from 'vitest'
 import {
-  CFG1, DEFECTOS, INFINITO, NODOS, abandonarDefecto, abrirEstrato, colorSinEfecto, comprarConMargen, comprarRed, comprarTodo,
+  CFG1, DEFECTOS, finCapa1, MEJORAS_ESCARCHA, costoMejoraEscarchaLog10, costoPulidoLog10, equipadas, mejorarEscarcha, puedeMejorarEscarcha,
+  puedePulir, puedeRomperEscarcha, pulir, romperEscarcha, INFINITO, NODOS, abandonarDefecto, abrirEstrato, colorSinEfecto, comprarConMargen, comprarRed, comprarTodo,
   comprimir, completo, costoAbrirLog10, costoMejoraLog10, costoRedLog10, disponibles, elegirSola, enDefecto, enInfinito,
   entrarDefecto, equiparMejores, estadoInicial, fueraDeLinea, fusionAutomatica, fusionarTodo, infinito, inventarioLleno, memoria, metaLog10,
   mejorarEstrato, puedeAbrir, puedeComprarRed, puedeComprimir, puedeEntrar, puedeMejorar, tick, MUTACIONES,
   type DefectoId, type ItemId, type MejoraEstrato, type State,
 } from '../src/core'
+import { desgloseV } from '../src/ui/desglose'
 
 const lento = import.meta.env.MODE !== 'lento'
 const H = 3600
@@ -29,12 +31,25 @@ function tienda(s: State, t: number, compras: number[]): State {
   }
 }
 
-export interface Partida1 { eventos: Record<string, number>; hueco: number; t: number; s: State }
+/** La segunda mitad de do_shop: con Esquirlas, lo más barato primero entre las mejoras de la Escarcha y pulir una pieza engarzada. */
+function esquirlas(s: State, t: number, compras: number[]): State {
+  for (;;) {
+    const op: { c: number; hacer: (s: State) => State }[] = []
+    for (const k of MEJORAS_ESCARCHA)
+      if (puedeMejorarEscarcha(s, k)) op.push({ c: costoMejoraEscarchaLog10(k, s.escarcha.mejoras[k]), hacer: (x) => mejorarEscarcha(x, k) })
+    for (const p of equipadas(s)) if (puedePulir(s, p.id)) op.push({ c: costoPulidoLog10(s, p.nivel), hacer: (x) => pulir(x, p.id) })
+    if (!op.length) return s
+    s = op.reduce((a, b) => (b.c < a.c ? b : a)).hacer(s)
+    compras.push(t)
+  }
+}
 
-/** Port de simulate() hasta el fin de la 1.1. Tiempos en segundos desde el primer Infinito. El humano revisa cada `revisa` s;
+export interface Partida1 { eventos: Record<string, number>; hueco: number; t: number; s: State; final: State | null }
+
+/** Port de simulate() hasta `hasta` (el fin de la 1.1 o el de la capa). Tiempos en segundos desde el primer Infinito. El humano revisa cada `revisa` s;
  * los autocompradores, la Compresión y el Infinito automáticos (en el óptimo) los hace tick(). Las reliquias las elige la regla
  * del panel de Automatización (Completar fusiones); el bot fusiona y engarza las mejores como haría una persona. */
-export function jugar1(revisa = 15, tmax = 9 * H): Partida1 {
+export function jugar1(revisa = 15, tmax = 17 * H, hasta: 'fin11' | 'fin' = 'fin'): Partida1 {
   let s: State = { ...estadoInicial(), energia: INFINITO }
   s = elegirSola(infinito(s)) // el primer Infinito
   s = {
@@ -48,18 +63,21 @@ export function jugar1(revisa = 15, tmax = 9 * H): Partida1 {
   let t = 0, proxima = 0
   let hist: [number, number][] = []
   let ganados = 0
+  let antes = s, final: State | null = null // la corrida que llevó a 1e308 Cristales, antes de su Infinito (partes12 del sim)
 
   const entre = (x: State): State => { // lo que hace el bot entre dos corridas
     if (inventarioLleno(x)) marca('lleno', t) // fusionando siempre, el inventario no debería llenarse nunca
     if (x.relicario.pendiente) x = elegirSola(x)
     if (!fusionAutomatica(x)) x = equiparMejores(fusionarTodo(x))
     x = tienda(x, t, compras)
+    x = esquirlas(x, t, compras)
     if (memoria(x) >= 4) marca('memoria', t)
     if (x.red.ruptura >= 1) marca('romper', t)
     if (x.estratos.abiertos >= 1) marca('estratos', t)
     for (const d of x.defectos.completos) marca(d, t)
     if (x.defectos.completos.length > ganados) { ganados = x.defectos.completos.length; compras.push(t) } // ganar un Defecto cuenta como progreso (C12)
     if (x.estratos.s[7] >= CFG1.estratos.meta_1_1_estrato8_log10 && completo(x, 'impureza')) marca('fin11', t)
+    if (finCapa1(x) && !('fin' in eventos)) { marca('fin', t); final = antes }
     const ctot = Math.max(0, x.cristalesTotales.log10())
     const d = DEFECTOS.find((d) => puedeEntrar(x, d) && !((x.defectos.reintento[d] ?? -Infinity) > ctot))
     if (d) x = entrarDefecto(x, d)
@@ -71,9 +89,10 @@ export function jugar1(revisa = 15, tmax = 9 * H): Partida1 {
   const basicos = (x: State) => disponibles(x).filter((id) => (id === 'caudal' || id.startsWith('color')) && !colorSinEfecto(x, Number(id.slice(5))))
   const muts = MUTACIONES.map((m): ItemId => `mut_${m}`)
 
-  while (t < tmax && !('fin11' in eventos)) {
+  while (t < tmax && !(hasta in eventos)) {
     const dt = s.tiempoCorrida < 30 ? 0.5 : s.tiempoCorrida < 300 ? 1 : 2
     const inf0 = s.infinitos
+    antes = s
     s = tick(s, dt)
     t += dt
     if (s.infinitos !== inf0) {
@@ -87,7 +106,9 @@ export function jugar1(revisa = 15, tmax = 9 * H): Partida1 {
       s = comprarConMargen(s, ['cascada'], Infinity)
       s = comprarConMargen(s, muts, Infinity)
       if (puedeComprimir(s)) s = comprimir(s)
+      if (puedeRomperEscarcha(s)) s = romperEscarcha(s) // sin Deshielo, a mano cada 30 min (con Deshielo ya la rompió tick)
       if (enInfinito(s) && !enDefecto(s) && memoria(s) < 4) {
+        antes = s
         s = infinito(s)
         if (s.infinitos === 2) marca('segundo', t)
         s = entre(s)
@@ -107,25 +128,39 @@ export function jugar1(revisa = 15, tmax = 9 * H): Partida1 {
   }
   const ts = compras.filter((x) => x > 1.5 * H)
   const hueco = ts.slice(1).reduce((m, x, i) => Math.max(m, x - ts[i]), 0)
-  return { eventos, hueco, t, s }
+  return { eventos, hueco, t, s, final }
 }
 
 // SPEC_CAPA1 §2 (revisa cada 15 s), en horas.
 const TABLA: [string, number][] = [
   ['segundo', 1.21], ['memoria', 1.81], ['romper', 2.30], ['estratos', 2.30], ['vacancia', 2.37],
   ['dislocacion', 3.70], ['macla', 4.52], ['impureza', 5.29], ['fin11', 6.63],
+  ['fatiga', 9.47], ['frontera', 11.95], ['inclusion', 12.57], ['vidrio', 13.49], ['fin', 14.49],
 ]
 
-describe.skipIf(lento)('balance de la 1.1: núcleo real, revisa cada 15 s (lento)', () => {
+/** Peso de cada fuente de log10 V (las que suman), como la pestaña Valor de Estadísticas. */
+function pesos(s: State): Record<string, number> {
+  const f = desgloseV(s).filter((x) => x.log > 0), tot = f.reduce((a, x) => a + x.log, 0)
+  return Object.fromEntries(f.map((x) => [x.id, x.log / tot]))
+}
+
+describe.skipIf(lento)('balance de la Capa 1: núcleo real, revisa cada 15 s (lento)', () => {
   let p: Partida1
   beforeAll(() => {
     p = jugar1(15)
     console.log(TABLA.map(([k, h]) => `${k} ${((p.eventos[k] ?? NaN) / H).toFixed(2)} h (sim ${h})`).join(' | ') +
-      ` | hueco máximo ${(p.hueco / 60).toFixed(1)} min`)
+      ` | hueco máximo ${(p.hueco / 60).toFixed(1)} min` +
+      (p.final ? ' | log V: ' + Object.entries(pesos(p.final)).map(([k, x]) => `${k} ${(100 * x).toFixed(0)} %`).join(' ') : ''))
   }, 30 * 60_000)
 
   for (const [k, h] of TABLA)
     it(`${k} a ±10 % de ${h} h`, () => expect(Math.abs(p.eventos[k] / H / h - 1)).toBeLessThanOrEqual(0.1))
+  it('fin de la capa (1e308 Cristales totales) entre 14 y 16 h', () => {
+    expect(p.eventos.fin / H).toBeGreaterThanOrEqual(14)
+    expect(p.eventos.fin / H).toBeLessThanOrEqual(16)
+  })
+  it('al final de la 1.2 ninguna fuente de log V pasa del 65 %', () =>
+    expect(Math.max(...Object.values(pesos(p.final!)))).toBeLessThanOrEqual(0.65))
   it('jugando y fusionando, el inventario nunca se llena', () => expect(p.eventos.lleno).toBeUndefined())
   it('Estratos nunca antes que Romper', () => expect(p.eventos.estratos).toBeGreaterThanOrEqual(p.eventos.romper))
   it('hueco máximo entre compras de la Capa 1 (desde 1,5 h) < 40 min', () => expect(p.hueco).toBeLessThan(40 * 60))
@@ -133,7 +168,7 @@ describe.skipIf(lento)('balance de la 1.1: núcleo real, revisa cada 15 s (lento
 
 describe.skipIf(lento)('fuera de línea (lento): 12 h ausente rinden menos que 12 h jugando', () => {
   it('Cristales totales y estratos', () => {
-    let base = jugar1(15, 4 * H).s // con el Infinito roto y el Infinito automático en el óptimo
+    let base = jugar1(15, 4 * H, 'fin11').s // con el Infinito roto y el Infinito automático en el óptimo
     if (enDefecto(base)) base = abandonarDefecto(base)
     let activo = base
     for (let i = 0; i < 12 * H; i++) activo = tick(activo, 1)

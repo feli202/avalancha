@@ -5,7 +5,7 @@ import { COLORES_PILA } from './paletas'
 
 const DESTELLO_S = 0.3
 /** El número de cada fondo en el shader (fondoEn). Un fondo que no está acá se dibuja como Noche. */
-const FONDO: Record<string, number> = { noche: 0, arenaSeca: 1, milimetrado: 2, desierto: 3, fractal: 4, hielo: 5, aurora: 6, vacio: 7 }
+const FONDO: Record<string, number> = { noche: 0, arenaSeca: 1, milimetrado: 2, desierto: 3, fractal: 4, hielo: 5, aurora: 6, vacio: 7, grietas: 8, tempano: 9 }
 
 const NIVELES = Math.floor(Math.log2(LADO)) + 1 // mipmaps de la grilla (el bloom)
 
@@ -49,7 +49,7 @@ void main() {
   if (h == 1) em += u_color[1] * (0.12 + 0.3 * b) * (0.8 + 0.2 * sin(u_ahora * 1.3 + r * 6.283));
   // Destello de derrumbe (SPEC 6.2): aditivo, intenso y del color de la celda. u_efecto cambia su forma (paletas.ts, EFECTOS).
   // Estelas largas: Estela (2), Espejo (12) y Horizonte (13); Lupa (10), un poco más larga.
-  float dur = ${DESTELLO_S} * (u_efecto == 2 || u_efecto >= 12 ? 3.0 : u_efecto == 10 ? 2.0 : u_efecto == 5 ? 0.6 : 1.0);
+  float dur = ${DESTELLO_S} * (u_efecto == 2 || u_efecto == 12 || u_efecto == 13 ? 3.0 : u_efecto == 10 ? 2.0 : u_efecto == 5 ? 0.6 : 1.0);
   float f = clamp(1.0 - (u_ahora - t) / dur, 0.0, 1.0);
   vec3 fc = u_color[h] * 1.4 + 0.04;
   if (u_efecto == 1) fc = vec3(1.3);
@@ -66,6 +66,11 @@ void main() {
   else if (u_efecto == 11) fc = 1.4 * clamp(abs(fract(u_ahora * 0.25 + atan(float(c.y - ${LADO >> 1}), float(c.x - ${LADO >> 1})) / 6.2832 + vec3(0.0, 0.667, 0.333)) * 6.0 - 3.0) - 1.0, 0.0, 1.0);
   else if (u_efecto == 12) fc = u_color[3 - h] * 1.6 + 0.04;
   else if (u_efecto == 13) fc = mix(vec3(1.9, 0.75, 0.2), vec3(0.55, 0.3, 1.5), float(c.y) / ${LADO}.0);
+  // Capa 1. Hielo en pedazos: azul frío en esquirlas de 6 celdas de distinta luz; Latido: late a ~2,5 por segundo mientras
+  // se apaga; Burbujas: solo el borde de burbujas de 8 celdas se enciende.
+  else if (u_efecto == 14) { fc = vec3(0.75, 1.3, 1.9); f *= 0.3 + 0.9 * hash(floor(vec2(c) / 6.0)); }
+  else if (u_efecto == 15) f *= 0.55 + 0.45 * cos((u_ahora - t) * 16.0);
+  else if (u_efecto == 16) { float b = length(fract(vec2(c) / 8.0) - 0.5); fc = vec3(1.2, 1.5, 1.7); f *= 0.15 + 1.1 * smoothstep(0.3, 0.38, b) * (1.0 - smoothstep(0.42, 0.48, b)); }
   em += u_destello * f * f * fc;
   o = vec4(sqrt(col * vida * 0.25), (float(h) + 1.0) * 0.25);
   luz = vec4(sqrt(em * 0.25), 1.0);
@@ -77,6 +82,7 @@ out vec4 o;
 uniform sampler2D u_celdas;
 uniform sampler2D u_luz;
 uniform vec2 u_tam;      // tamaño del canvas en px
+uniform float u_centroY; // px (hacia arriba) del centro de la pila respecto del centro del canvas: en el celular el canvas pasa la región de la pila
 uniform float u_escala;  // px por celda
 uniform float u_dpr;
 uniform vec4 u_brillo;
@@ -235,6 +241,19 @@ vec3 escarchaEn(vec3 col, vec4 a, vec2 q) {
   return col + hielo * 0.16 * u_escarcha * smoothstep(0.05, 0.5, afuera) * (0.5 + brillo);
 }
 
+// Bordes de Voronoi (celdas de 1 en q): 1 sobre la grieta, 0 lejos. ancho: medio ancho en unidades de q.
+float grietaEn(vec2 q, float ancho) {
+  vec2 i = floor(q), f = fract(q);
+  float d1 = 8.0, d2 = 8.0;
+  for (int y = -1; y <= 1; y++)
+    for (int x = -1; x <= 1; x++) {
+      vec2 o = vec2(x, y), pt = o + vec2(hash(i + o), hash(i + o + 17.0)) - f;
+      float d = dot(pt, pt);
+      if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d;
+    }
+  return 1.0 - smoothstep(0.0, ancho, sqrt(d2) - sqrt(d1));
+}
+
 // Los fondos (Ajustes > Aspecto): oscuros y quietos o casi, para no competir con la pila. p: px desde el centro.
 vec3 fondoEn(vec2 p) {
   if (u_fondo == 7) return vec3(0.0); // Vacío
@@ -242,8 +261,11 @@ vec3 fondoEn(vec2 p) {
   float vin = 1.0 - 0.55 * smoothstep(0.6, 1.25, r);
   vec2 css = p / u_dpr;
   vec2 uv = gl_FragCoord.xy / u_tam.y; // y desde abajo, en altos de pantalla
-  if (u_fondo == 1) // Arena seca: marrón muy oscuro con grano fino de 1 px CSS
-    return vec3(0.0105, 0.0064, 0.0034) * (0.7 + 0.6 * hash(floor(gl_FragCoord.xy / max(1.0, floor(u_dpr))))) * vin;
+  if (u_fondo == 1) { // Arena seca: marrón muy oscuro y granulado, granos de 3 px CSS con algunos más grandes y claros
+    vec2 g3 = floor(css / 3.0), g7 = floor(css / 7.0 + 0.37);
+    float n = 0.45 + 0.9 * hash(g3) + 0.35 * step(0.82, hash(g7 + 17.0)) * hash(g7);
+    return vec3(0.0105, 0.0064, 0.0034) * n * vin;
+  }
   if (u_fondo == 3) { // Desierto de noche: dos dunas en silueta y estrellas tenues
     vec3 c = mix(vec3(0.010, 0.010, 0.028), vec3(0.002, 0.002, 0.006), clamp(uv.y, 0.0, 1.0));
     c += 0.025 * step(0.9985, hash(floor(gl_FragCoord.xy / (2.0 * u_dpr))));
@@ -253,17 +275,16 @@ vec3 fondoEn(vec2 p) {
     c = mix(c, vec3(0.0040, 0.0028, 0.0020), smoothstep(d1 + aa, d1 - aa, uv.y));
     return mix(c, vec3(0.0013, 0.0010, 0.0008), smoothstep(d2 + aa, d2 - aa, uv.y));
   }
-  if (u_fondo == 5) { // Hielo: azul helado con grietas finas (bordes de Voronoi de unos 90 px CSS)
-    vec2 q = css / 90.0, i = floor(q), f = fract(q);
-    float d1 = 8.0, d2 = 8.0;
-    for (int y = -1; y <= 1; y++)
-      for (int x = -1; x <= 1; x++) {
-        vec2 o = vec2(x, y), pt = o + vec2(hash(i + o), hash(i + o + 17.0)) - f;
-        float d = dot(pt, pt);
-        if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d;
-      }
-    float grieta = 1.0 - smoothstep(0.0, 0.015, sqrt(d2) - sqrt(d1));
-    return (mix(vec3(0.010, 0.022, 0.045), vec3(0.002, 0.005, 0.012), smoothstep(0.0, 0.8, r)) + vec3(0.018, 0.035, 0.06) * grieta) * vin;
+  if (u_fondo == 5) // Hielo: azul helado con grietas finas (bordes de Voronoi de unos 90 px CSS)
+    return (mix(vec3(0.010, 0.022, 0.045), vec3(0.002, 0.005, 0.012), smoothstep(0.0, 0.8, r)) + vec3(0.018, 0.035, 0.06) * grietaEn(css / 90.0, 0.015)) * vin;
+  if (u_fondo == 8) { // Grietas (fin de la Capa 1): hielo oscuro con grietas grandes por las que sale un calor de brasas, más fuerte abajo
+    float g = grietaEn(css / 160.0, 0.03), calor = 0.5 + 0.5 * smoothstep(0.9, 0.0, uv.y);
+    return (mix(vec3(0.008, 0.016, 0.034), vec3(0.002, 0.004, 0.010), smoothstep(0.0, 0.8, r)) + vec3(0.07, 0.022, 0.004) * g * calor) * vin
+      + vec3(0.02, 0.005, 0.0) * smoothstep(0.5, 0.0, uv.y);
+  }
+  if (u_fondo == 9) { // Témpano: azul hondo con capas de hielo horizontales, más claro arriba
+    float capas = smoothstep(0.92, 1.0, fract(uv.y * 14.0 + 0.04 * sin(uv.x * 5.0 + floor(uv.y * 14.0))));
+    return (mix(vec3(0.004, 0.010, 0.022), vec3(0.016, 0.034, 0.062), clamp(uv.y, 0.0, 1.0)) + vec3(0.01, 0.022, 0.036) * capas) * vin;
   }
   // Noche: azul noche (#07080F), un poco más claro e índigo en el centro, esquinas casi negras. Base de los demás.
   vec3 col = mix(vec3(0.0110, 0.0125, 0.0330), vec3(0.0021, 0.0024, 0.0048), smoothstep(0.0, 0.75, r)) * vin;
@@ -285,8 +306,11 @@ vec3 fondoEn(vec2 p) {
 }
 
 void main() {
-  vec2 p = gl_FragCoord.xy - 0.5 * u_tam;
-  vec3 col = fondoEn(p);
+  vec2 p = gl_FragCoord.xy - 0.5 * u_tam - vec2(0.0, u_centroY);
+  // El fondo (no la pila) se difumina hacia el de la página (#07080F) en los 3 rem de arriba y de abajo del canvas: en el
+  // celular la región de la pila es una franja, y sin esto el fondo elegido se cortaba de golpe contra la Energía y la tienda.
+  float bc = min(gl_FragCoord.y, u_tam.y - gl_FragCoord.y);
+  vec3 col = mix(vec3(0.0021, 0.0024, 0.0048), fondoEn(p), smoothstep(0.0, 48.0 * u_dpr, bc));
 
   // Con la pila alejada (menos de ~2,5 px por celda) varias celdas caen en un píxel: se promedian u_ss × u_ss
   // muestras para que el centro no titile como ruido. Con celdas grandes, una sola: nítida.
@@ -371,7 +395,7 @@ export class Lienzo {
       return prog
     }
     this.progCeldas = programa(FRAG_CELDAS, ['u_alturas', 'u_derrumbe', 'u_ahora', 'u_destello', 'u_brillo', 'u_color', 'u_efecto'], this.uniC)
-    this.progPantalla = programa(FRAG_PANTALLA, ['u_celdas', 'u_luz', 'u_tam', 'u_escala', 'u_ahora', 'u_destello', 'u_dpr', 'u_brillo', 'u_ss', 'u_viejo', 'u_fundido', 'u_foco', 'u_fondo', 'u_fondoPila', 'u_colorP', 'u_defecto', 'u_escarcha'], this.uniP)
+    this.progPantalla = programa(FRAG_PANTALLA, ['u_celdas', 'u_luz', 'u_tam', 'u_escala', 'u_ahora', 'u_destello', 'u_dpr', 'u_brillo', 'u_ss', 'u_viejo', 'u_fundido', 'u_foco', 'u_fondo', 'u_fondoPila', 'u_colorP', 'u_defecto', 'u_escarcha', 'u_centroY'], this.uniP)
     gl.bindVertexArray(gl.createVertexArray())
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1) // 513 no es múltiplo de 4
     const textura = (unidad: number, interno: number, niveles = 1) => {
@@ -507,6 +531,9 @@ export class Lienzo {
     gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGB, 0, 0, canvas.width, canvas.height, 0)
   }
 
+  /** Centro de la pila respecto del centro del canvas, en px reales hacia arriba (PilaVisual: el canvas puede pasar la región de la pila). */
+  centroY = 0
+
   /** px: px reales por celda; fundido: 1 → 0 sobre u_viejo; ahora: segundos (los de tDerrumbe); dpr: px reales por px CSS;
    * foco: radio en px reales del círculo nítido (zoom), 0 = todo nítido. */
   pintar(px: number, brillos: number[], fundido: number, ahora: number, dpr: number, foco = 0) {
@@ -534,6 +561,7 @@ export class Lienzo {
     gl.uniform1f(uniP.u_escala, px)
     gl.uniform1f(uniP.u_fundido, fundido)
     gl.uniform1f(uniP.u_foco, foco)
+    gl.uniform1f(uniP.u_centroY, this.centroY)
     gl.uniform1i(uniP.u_ss, px < 1 ? 3 : px < 2.5 ? 2 : 1)
     gl.uniform1f(uniP.u_ahora, ahora)
     gl.uniform1f(uniP.u_dpr, dpr)

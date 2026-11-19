@@ -3,12 +3,14 @@ import Decimal from 'break_infinity.js'
 import { CFG } from './config'
 import { CFG1 } from './config1'
 import { compresionesConservadas, conservaCascada, cristalesRedLog10, efectoRed } from './red'
-import { enInfinito, infinitoRoto, produccion } from './formulas'
+import { INFINITO, enInfinito, infinitoRoto, produccion } from './formulas'
 import { conReintento, enDefecto, metaAlcanzada, puedeEntrar, type DefectoId } from './defectos'
 import { elegirSola } from './relicario'
 import { estadoInicial, type State } from './state'
 
 const C = CFG1.cristales
+/** SPEC_CAPA1 §1: el fin de la Capa 1, 1e308 Cristales totales (`infinito_log10`, como el simulador). */
+export const finCapa1 = (s: State) => s.cristalesTotales.gte(INFINITO)
 /** Q: órdenes de Energía más allá de 1e308 por cada ×10 de Cristales; Ruptura II lo baja. */
 export const ordenesQ = (s: State) => C.Q_ordenes_por_x10 - efectoRed(s, 'ruptura2', 'Q_resta')
 /** log10 de los Cristales antes del blando: mult + base + (E − INF)/Q (lo que pasa de 1e308 solo cuenta con Romper). */

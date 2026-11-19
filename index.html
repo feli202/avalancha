@@ -33,6 +33,10 @@
       #app { animation: entrar 0.5s ease-out; }
       @keyframes entrar { from { opacity: 0; } }
       :focus-visible { outline: 2px solid var(--ambar); outline-offset: 2px; }
+      /* Reducir movimiento (Ajustes, ajustes.svelte.ts): en la interfaz los bucles corren una sola vez y las transiciones son
+         instantáneas. La pila no entra: tiene su versión quieta propia (.quieto en Pila.svelte). */
+      :root.reducir-movimiento body :not(.pila, .pila *), :root.reducir-movimiento body :not(.pila, .pila *)::before,
+      :root.reducir-movimiento body :not(.pila, .pila *)::after { animation-iteration-count: 1 !important; transition-duration: 0s !important; }
     </style>
   </head>
   <body>

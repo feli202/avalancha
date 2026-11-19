@@ -19,7 +19,7 @@
   import Titulo from './Titulo.svelte'
   import { formato, formatoMult, hablado } from './formato'
   import { fade } from 'svelte/transition'
-  import { abandonarDefectoYa, comprimirYa, hayCartel, hayPanel, infinitoYa, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
+  import { abandonarDefectoYa, caminoInfinito, comprimirYa, hayCartel, hayPanel, infinitoYa, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
   import { PX_MAX } from '../render/pilaVisual'
   import { foto, guardarImagen } from './foto.svelte'
 
@@ -101,6 +101,14 @@
 <!-- inert con un panel encima: el foco y los clics quedan en el panel. -->
 <div class="juego" class:con-capas={s.infinitos > 0} class:en-titulo={juego.titulo} class:entrando class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel !== null} inert={hayPanel()}>
   <Pila />
+  {#if v.compresion && !infinitoRoto(s)}
+    <!-- Camino al Infinito: log10(Energía) / log10(Infinito), con una marca en cada umbral de Compresión. Se va al romperlo. -->
+    {@const c = caminoInfinito(s)}
+    <div class="camino aparece" role="meter" aria-valuemin={0} aria-valuemax={1} aria-valuenow={c.p} aria-label={txt.caminoInfinito(`${formato(s.energia)} / 1e308`)} style:--p={c.p}>
+      {#each c.marcas as m}<i class:pasada={c.p >= m} style:--m={m}></i>{/each}
+      <span aria-hidden="true">∞</span>
+    </div>
+  {/if}
 
   <header class="izq">
     <span class="etiqueta">{txt.energia}</span>
@@ -253,7 +261,7 @@
   @media (orientation: landscape) and (max-width: 900px) { .juego { --col: 12.5rem; --margen: 1rem; font-size: 0.875rem; } }
 
   /* I5: en el título solo está la pila; al entrar, la interfaz aparece en orden mientras la cámara se acerca (Pila.svelte). */
-  .en-titulo :is(.izq, .ajustes, .sismo, .der, .pista, .aviso, .zoom) { visibility: hidden; }
+  .en-titulo :is(.izq, .ajustes, .sismo, .der, .pista, .aviso, .zoom, .camino) { visibility: hidden; }
   .entrando .izq { animation: aparecer 0.8s 0.9s ease-out backwards; }
   .entrando .sismo { animation: aparecer 0.8s 1.3s ease-out backwards; }
   .entrando .pista { animation: aparecer 0.8s 1.5s ease-out backwards, latir 2.4s 2.3s ease-in-out infinite; }
@@ -276,6 +284,21 @@
     display: grid; justify-items: start; pointer-events: none;
   }
   .etiqueta { font-size: 0.875rem; color: var(--tenue); }
+  /* Camino al Infinito: una línea de 2 px en el margen izquierdo, como el anillo de Compresión (blanco tenue); se llena de
+     abajo hacia arriba y las marcas de los umbrales ya pasados se encienden. */
+  .camino {
+    position: fixed; left: calc(var(--barra, 0px) + 0.75rem); top: 22vh; bottom: 22vh; width: 2px; pointer-events: none;
+    background: linear-gradient(to top, rgb(232 233 243 / 0.6) calc(var(--p) * 100%), rgb(232 233 243 / 0.08) 0);
+    transition: background 0.3s linear;
+  }
+  .camino::after { /* la punta: un grano que brilla donde va la Energía */
+    content: ''; position: absolute; left: 50%; bottom: calc(var(--p) * 100%); width: 5px; height: 5px; translate: -50% 50%;
+    border-radius: 50%; background: var(--tinta); box-shadow: 0 0 6px rgb(232 233 243 / 0.8);
+  }
+  .camino i { position: absolute; left: -3px; bottom: calc(var(--m) * 100%); width: 8px; height: 1px; background: rgb(232 233 243 / 0.2); }
+  .camino i.pasada { background: rgb(232 233 243 / 0.65); }
+  .camino span { position: absolute; left: 50%; top: -1.4rem; translate: -50%; font-size: 0.8125rem; line-height: 1; color: var(--apagado); }
+  .fin .camino { animation: irse 0.8s 1.2s ease-in forwards; }
   .energia { font-size: clamp(2.5rem, 4vw, 3.75rem); font-weight: 600; line-height: 1; letter-spacing: -0.03em; margin: 0.125rem 0 0.5rem; }
   .linea { font-size: 1rem; color: var(--tenue); line-height: 1.6; }
   /* §8: el Defecto en curso, con la sobriedad de la Arena: texto coral, multiplicadores en línea y abandonar como enlace. */
@@ -390,8 +413,10 @@
   /* También tablet en vertical: con las columnas a los costados la pila quedaría debajo de la tienda. */
   @media (orientation: portrait) and (max-width: 1100px) {
     .juego.juego { --barra: 0px; }
-    .juego { --margen: 1rem; --col: auto; --pila-radio-max: 100vw; --pila-arriba: 7rem; --pila-abajo: calc(45dvh + 3.5rem); --hoja: 88dvh; }
+    .juego { --margen: 1rem; --col: auto; --pila-radio-max: 100vw; --pila-arriba: 7rem; --pila-abajo: calc(45dvh + 3.5rem); --fondo-abajo: 45dvh; --hoja: 88dvh; }
     .izq { right: var(--margen); }
+    .camino { top: calc(var(--pila-arriba) + 1.5rem); bottom: calc(var(--pila-abajo) + 1.5rem); }
+    .con-capas .camino { left: 4.6rem; }
     .energia { font-size: 2.25rem; margin-bottom: 0.25rem; }
     .linea { font-size: 0.875rem; line-height: 1.4; }
     .aviso { top: auto; bottom: calc(45dvh + 4rem); max-width: calc(100% - 2rem); font-size: 0.8125rem; }

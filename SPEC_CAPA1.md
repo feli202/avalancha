@@ -421,12 +421,12 @@ El simulador no modela el offline: lo prueba `tests/balance_capa1.test.ts` (12 h
 
 `tests/balance_capa1.test.ts` corre el núcleo real del juego con un bot igual al de `sim_capa1.py` (revisa cada 15 s) y verifica, con ±10 %:
 
-- La columna de 15 s de §2 hasta el fin de la 1.1 (segundo Infinito, Memoria completa, Romper, Estratos, Defectos 1–4, fin 1.1); Estratos nunca antes que Romper.
-- Fin de la capa en 14–16 h y ninguna fuente de log V > 65 % al final de la 1.2: con C13 (la Escarcha todavía no está en el núcleo).
+- La columna de 15 s de §2 entera (segundo Infinito, Memoria completa, Romper, Estratos, Defectos 1–8, fin 1.1, fin de la capa); Estratos nunca antes que Romper.
+- Fin de la capa (1e308 Cristales totales, `finCapa1`) en 14–16 h y ninguna fuente de log V > 65 % al final de la 1.2 (C13). El bot rompe la Escarcha cada 30 min (o Deshielo) y gasta Esquirlas como el sim: lo más barato primero entre Crecimiento, Brillo, Aguante y pulir una pieza engarzada.
 - Hueco máximo entre compras de la Capa 1 (desde la hora 1,5) < 40 min.
 - 12 h offline < 12 h activas.
 
-Es "lento": no corre con `npm test`; se corre con `npm run test:lento` al cerrar cada hito. Usa los pasos del simulador (0,5 / 1 / 2 s) y su bot (C8): la 1.1 entera tarda unos segundos.
+Es "lento": no corre con `npm test`; se corre con `npm run test:lento` al cerrar cada hito. Usa los pasos del simulador (0,5 / 1 / 2 s) y su bot (C8): la capa entera tarda ~45 s.
 
 ---
 

@@ -122,6 +122,23 @@ describe('guías: una sola vez en la vida de la partida (CORRECCIONES 4)', () =>
     expect([guiaEnSuLugar('c1_estratos'), guiaEnSuLugar('c1_relicario'), guiaEnSuLugar('c1_cristales'), guiaEnSuLugar('tienda')]).toEqual([false, true, true, false])
     juego.capa = 'arena'
   })
+
+  it('C14: con la Escarcha abierta, Escarcha, anillo 3, Pulido y Defectos II salen una vez, cada una en su pantalla', () => {
+    const e = estadoInicial()
+    const s = { ...e, infinitos: 1, red: { ...e.red, defectos: 1 }, escarcha: { ...e.escarcha, abierta: true } }
+    juego.capa = 'cristalizacion'; juego.pantalla = ''
+    juego.vistos = yaVisto(s, { guias: true, cristales: true, c1_relicario: true, c1_red: true, c1_estratos: true })
+    juego.guias = []
+    const vistas: string[] = []
+    for (let vuelta = 0; vuelta < 2; vuelta++) for (const p of ['escarcha', 'red', 'relicario', 'defectos']) {
+      juego.pantalla = p
+      revelar(s)
+      vistas.push(...juego.guias.filter((k) => guiaEnSuLugar(k)))
+      juego.guias = []
+    }
+    expect(vistas).toEqual(['c1_escarcha', 'c1_anillo3', 'c1_pulido', 'c1_defectos2'])
+    juego.capa = 'arena'
+  })
 })
 
 describe('aviso del Infinito automático (auditoría 1.1)', () => {

@@ -6,19 +6,38 @@
   import { txt } from '../strings'
   import { formato, formatoMult } from './formato'
   import { ajustes } from './ajustes.svelte'
-  import { COLORES_DALTONISMO, EFECTOS, FONDOS, PALETAS, css } from '../render/paletas'
+  import { COLORES_DALTONISMO, EFECTOS, FONDOS, MARCOS, PALETAS, css } from '../render/paletas'
+  import { marco } from '../render/marcos'
   import { contarAvalancha, muestraAvalancha } from '../guardado/historial'
   import { camara, enZoomMaximo, hayPanel, historial, invitaTocar, juego, ponerZoom, progresoCompresion, sismo, vigia, zoomActual } from './juego.svelte'
   import { elegido } from './logros'
   import * as sonido from './sonido'
   import { grabacion } from './grabacion'
+  import { GRIETAS } from './grietas'
 
   const ANILLO_SEP = 8 // px CSS entre la pila y el anillo de Compresión
   const LEJOS = 0.5 // cámara de la pantalla de título
   const ACERCAR_MS = 1400 // al entrar, la cámara se acerca; el primer grano del Caudal cae a 1 s
   const IMPLOSION_MS = 900 // lo que dura la animación implotar del CSS
 
+  const MARCO_LADO = 1.6 // medio lado del canvas del marco, en radios: el más grande (Polaroid) llega a 1,54
+
   let canvas: HTMLCanvasElement
+  let lienzoMarco: HTMLCanvasElement
+  const paleta = $derived(ajustes.daltonismo ? COLORES_DALTONISMO : PALETAS[elegido('paleta', Object.keys(PALETAS), ajustes.paleta, juego.logros)])
+  const marcoId = $derived(elegido('marco', MARCOS, ajustes.marco, juego.logros))
+  /** Radio del marco en px CSS: el círculo fijo de la pila en pantalla (PilaVisual.focoCss), no la pila. */
+  let radioMarco = $state(0)
+  // El marco de la pila (Ajustes > Aspecto): el mismo dibujo que la foto, pegado al círculo fijo; se redibuja solo si cambia.
+  $effect(() => {
+    const r = radioMarco, dpr = devicePixelRatio, L = Math.ceil(r * MARCO_LADO)
+    if (!lienzoMarco || !r) return
+    lienzoMarco.width = lienzoMarco.height = Math.round(2 * L * dpr)
+    lienzoMarco.style.width = lienzoMarco.style.height = `${2 * L}px`
+    const g = lienzoMarco.getContext('2d')!
+    g.setTransform(dpr, 0, 0, dpr, 0, 0)
+    marco(g, marcoId, L, r, css(paleta[1]))
+  })
   /** Logro secreto Arena: granos de un solo color de la paleta en uso, elegido al azar en cada lluvia. */
   const ESQUIRLAS = 18 // cristales de la cinemática del Infinito
   const GRANOS_LLUVIA = 80
@@ -122,9 +141,7 @@
     }
     $effect(() => void (pila.destellos = ajustes.reducirDestellos))
     $effect(() => void (pila.ahorro = ajustes.ahorro))
-    $effect(() => void (pila.paleta = ajustes.daltonismo
-      ? COLORES_DALTONISMO
-      : PALETAS[elegido('paleta', Object.keys(PALETAS), ajustes.paleta, juego.logros)]))
+    $effect(() => void (pila.paleta = paleta))
     $effect(() => void (pila.efecto = EFECTOS.indexOf(elegido('efecto', EFECTOS, ajustes.efecto, juego.logros))))
     $effect(() => void (pila.fondo = elegido('fondo', FONDOS, ajustes.fondo, juego.logros)))
     $effect(() => void (pila.defecto = DEFECTOS.indexOf(juego.s.defectos.actual as DefectoId) + 1))
@@ -153,9 +170,16 @@
     grabacion.pila = pila
     const TAPAR_MS = 1500 // más que la animación más larga de entrada de Capas.svelte (1,1 s)
     let tapadaDesde = 0
+    let proximo = 0 // ms del próximo cuadro con la tasa de refresco de Ajustes
     let raf = requestAnimationFrame(function cuadro(ahora) {
       // Modo grabación (debug): el guion maneja la pila; acá no pasa nada más.
       if (grabacion.cuadro) return void ((raf = requestAnimationFrame(cuadro)), grabacion.cuadro(ahora))
+      // Tasa de refresco (Ajustes): solo visual; la economía corre en su propio reloj (juego.svelte.ts).
+      if (ajustes.fps) {
+        const paso = 1000 / ajustes.fps
+        if (ahora < proximo - 1) return void (raf = requestAnimationFrame(cuadro))
+        proximo = Math.max(proximo + paso, ahora - paso)
+      }
       const s = juego.s
       // Microscopio: tiempo real con el zoom al máximo en esta Compresión (sin contar el título ni la pestaña oculta).
       if (s.compresiones !== compZoom) (compZoom = s.compresiones), (juego.zoomMaxS = 0)
@@ -185,8 +209,8 @@
       }
       compAntes = s.compresiones
       // SPEC_CAPA1 §11: el primer Infinito es la cinemática (CSS de abajo); los siguientes, los Cristales sobre la pila.
-      if (juego.cinematica && !cineAntes) sonido.infinito(1.8, 0.6)
-      cineAntes = juego.cinematica
+      if (juego.cinematica && !cineAntes) juego.cinematica === 'fin' ? sonido.infinito(2.4, 1) : sonido.infinito(1.8, 0.6)
+      cineAntes = !!juego.cinematica
       // Solo el Infinito a mano: el automático llega cada pocos segundos y su aviso va juntado (avisoAutomatico).
       if (s.infinitos > infAntes && infAntes > 0 && aMano && ajustes.aviso_infinito) {
         sonido.hito('milestone')
@@ -211,6 +235,8 @@
       if (zm !== juego.zoomMin) juego.zoomMin = zm
       const r = Math.round(pila.radioCss)
       if (r !== juego.radioPila) juego.radioPila = r
+      const rm = Math.round(pila.focoCss)
+      if (rm !== radioMarco && !pila.tapada) radioMarco = rm
       // SPEC 5: el color nuevo recorre la pila, del centro al borde.
       const c = coloresVistos()
       if (c > coloresAntes) sonido.hito('color')
@@ -236,7 +262,7 @@
 
 <svelte:window onkeydown={tecla} />
 
-<div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:cristaliza={juego.cinematica} class:quieto={ajustes.reducirDestellos}>
+<div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:cristaliza={juego.cinematica === 'infinito'} class:quieto={ajustes.reducirDestellos}>
   <canvas bind:this={canvas} onpointerdown={bajar} onpointermove={mover} onpointerup={levantar} onpointercancel={levantar} aria-label={txt.pila}></canvas>
   <div class="tope" bind:clientWidth={radioMax}></div>
   {#if sinWebGL}<p class="sin-webgl" role="alert">{txt.sinWebGL}</p>{/if}
@@ -251,6 +277,9 @@
     <!-- SPEC_CAPA1 §7.4: la flecha discreta a los Estratos, debajo de la pila. -->
     <button class="bajar" onclick={() => { juego.pantalla = 'estratos'; juego.capa = 'cristalizacion' }}>{txt.cristal.estratos.bajar}</button>
   {/if}
+  <!-- El marco, recortado a la región de la pila (en el celular no tapa la Energía ni el sismógrafo) y debajo del anillo de
+       Compresión: un marco con relleno (Galleta, Polaroid) no lo tapa. -->
+  <div class="caja-marco" class:oculto={juego.titulo || juego.cinematica === 'fin'} aria-hidden="true"><canvas class="marco" bind:this={lienzoMarco}></canvas></div>
   <div class="efectos" class:quieto={ajustes.reducirDestellos} aria-hidden="true">
     {#if juego.vistos.compresion && comp.meta !== undefined}
       <!-- Compresión: el anillo se cierra con el progreso (escala logarítmica); al 100 % brilla. -->
@@ -259,7 +288,19 @@
         <circle class="arco" r={ra} pathLength="1" stroke-dashoffset={1 - comp.p} />
       </svg>
     {/if}
-    {#if juego.cinematica}
+    {#if juego.cinematica === 'fin'}
+      <!-- C13, fin de la Capa 1: el hielo cubre la pila entera y se queda; se agrieta desde el centro y por las grietas
+           sale un resplandor de brasas, como si hubiera calor debajo. Sin texto. -->
+      <div class="cine final" style:--r="{Math.max(juego.radioPila, 48) + ANILLO_SEP}px">
+        <div class="helada"></div>
+        <svg viewBox="-100 -100 200 200">
+          <defs><filter id="brasa" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.2" /></filter></defs>
+          <g class="calor" filter="url(#brasa)">{#each GRIETAS as d, i}<path {d} pathLength="1" style:--i={i} />{/each}</g>
+          <g class="grieta">{#each GRIETAS as d, i}<path {d} pathLength="1" style:--i={i} />{/each}</g>
+          <g class="ascua">{#each GRIETAS as d, i}<path {d} pathLength="1" style:--i={i} />{/each}</g>
+        </svg>
+      </div>
+    {:else if juego.cinematica}
       <!-- SPEC_CAPA1 §11: el hielo sube desde abajo sobre la pila (que no se mueve), se rompe en cristales y sigue Cristalización. -->
       <div class="cine" style:--r="{Math.max(juego.radioPila, 48) + ANILLO_SEP}px">
         <div class="helada"></div>
@@ -295,13 +336,19 @@
   .pila { position: fixed; inset: var(--pila-arriba, 0) 0 var(--pila-abajo, 0) 0; transition: top 0.6s ease, bottom 0.6s ease; }
   .sin-webgl { position: absolute; left: 50%; top: 50%; translate: -50% -50%; max-width: 20rem; white-space: normal; text-align: center; color: var(--tenue); }
   .tope { position: absolute; width: var(--pila-radio-max, 100vw); height: 0; pointer-events: none; }
-  canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; } /* none: el pellizco es el zoom de la pila, no el de la página */
+  /* En el celular el canvas pasa la región de la pila hasta arriba de todo y hasta la tienda (--fondo-abajo, App.svelte): el fondo
+     sigue debajo de la Energía y del sismógrafo y se difumina en el borde (lienzo.ts); la pila queda centrada en su región. */
+  .pila { --ext-a: var(--pila-arriba, 0px); --ext-b: calc(var(--pila-abajo, 0px) - var(--fondo-abajo, var(--pila-abajo, 0px))); --cy: calc(50% + (var(--ext-a) - var(--ext-b)) / 2); }
+  .pila > canvas { position: absolute; top: calc(-1 * var(--ext-a)); left: 0; width: 100%; height: calc(100% + var(--ext-a) + var(--ext-b)); /* un canvas no se estira con top y bottom */ transform-origin: 50% var(--cy); touch-action: none; } /* none: el pellizco es el zoom de la pila, no el de la página */
   p { margin: 0; font-variant-numeric: tabular-nums; pointer-events: none; white-space: nowrap; }
   .bajar {
     position: absolute; left: 50%; top: min(calc(50% + var(--rp) + 1.25rem), calc(100% - 3.25rem)); translate: -50%; min-height: 2.75rem; padding: 0 0.75rem;
     border: 0; background: none; color: var(--apagado); font: inherit; font-size: 0.875rem; cursor: pointer; text-shadow: 0 0 0.5rem var(--fondo); transition: color 0.15s;
   }
   .bajar:hover, .bajar:focus-visible { color: var(--hielo); }
+  .caja-marco { position: absolute; inset: 0; overflow: hidden; pointer-events: none; transition: opacity 0.6s; }
+  .caja-marco.oculto { opacity: 0; }
+  .marco { position: absolute; left: 50%; top: 50%; translate: -50% -50%; }
   .efectos { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
   .compresion { position: absolute; translate: -50% -50%; overflow: visible; transition: width 0.6s, height 0.6s; }
   circle { fill: none; stroke-width: 1.5; }
@@ -367,8 +414,8 @@
   /* SPEC 6.5, Compresión (1,5 s): la pila implota hacia el centro (0,9 s) dentro de un remolino de los cuatro colores,
      destello blanco que tapa el vaciado, y la Densidad nueva sube. */
   /* Solo el disco de la pila gira y se achica: sin la máscara se vería el rectángulo del canvas con su fondo. */
-  .implota canvas { mask: radial-gradient(circle calc(var(--rp) + 16px) at 50% 50%, #000 80%, transparent); }
-  .implota canvas { animation: implotar 0.9s cubic-bezier(0.6, 0, 0.9, 0.4) forwards; }
+  .implota > canvas { mask: radial-gradient(circle calc(var(--rp) + 16px) at 50% var(--cy), #000 80%, transparent); }
+  .implota > canvas { animation: implotar 0.9s cubic-bezier(0.6, 0, 0.9, 0.4) forwards; }
   .estela {
     position: absolute; width: calc(2.4 * var(--r)); height: calc(2.4 * var(--r)); translate: -50% -50%; border-radius: 50%;
     mask: radial-gradient(circle, transparent 30%, #000 55%, transparent 71%); filter: blur(6px); mix-blend-mode: screen;
@@ -399,7 +446,7 @@
     100% { opacity: 0; transform: translateY(-2rem); }
   }
   /* Reducir destellos: sin giro ni zoom; la pila se apaga, un destello suave y la Densidad aparece y se va. */
-  .implota.quieto canvas { animation: apagar 0.9s ease-in forwards; }
+  .implota.quieto > canvas { animation: apagar 0.9s ease-in forwards; }
   .quieto .estela { display: none; }
   .quieto .destello { animation-name: destellarSuave; }
   .quieto .flota.densidad { animation-name: densidadQuieta; }
@@ -420,7 +467,7 @@
     animation: helar 1.8s cubic-bezier(0.3, 0, 0.5, 1) both, quebrar 0.35s 1.8s ease-in forwards;
   }
   .cristaliza .compresion { animation: apagar 0.6s forwards; }
-  .cristaliza canvas { animation: quebrar 0.35s 1.8s ease-in forwards; }
+  .cristaliza > canvas { animation: quebrar 0.35s 1.8s ease-in forwards; }
   .cine i {
     position: absolute; left: 50%; top: 50%; width: var(--t); height: calc(var(--t) * 1.732); margin: calc(var(--t) * -0.866) 0 0 calc(var(--t) * -0.5);
     clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); /* rombo de 60° */
@@ -437,6 +484,22 @@
   /* Reducir destellos: el hielo aparece y se va, sin subir ni esquirlas. */
   .quieto .helada { animation: aparecerHielo 1.8s both, apagar 0.35s 1.8s forwards; }
   .quieto .cine i { display: none; }
-  .cristaliza.quieto canvas { animation: apagar 0.35s 1.8s forwards; }
+  .cristaliza.quieto > canvas { animation: apagar 0.35s 1.8s forwards; }
   @keyframes aparecerHielo { from { opacity: 0; } }
+
+  /* C13, fin de la Capa 1 (6,4 s: FIN_CAPA_MS). 0–2,2 s el hielo sube y se queda; 2,4–3,6 s las grietas se abren desde el
+     centro; desde 3,2 s el calor se enciende en ellas y queda latiendo lento. La pila no se mueve ni se rompe. */
+  .final .helada { animation: helar 2.2s cubic-bezier(0.3, 0, 0.5, 1) both; }
+  .final svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; clip-path: circle(50%); }
+  .final path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .final .grieta path { stroke: #f4fbff; stroke-width: 0.9; animation: abrir 1.2s calc(2.4s + var(--i) * 0.04s) ease-out forwards; }
+  .final .ascua path { stroke: #ffc27a; stroke-width: 0.6; opacity: 0; animation: abrir 1.2s calc(2.4s + var(--i) * 0.04s) ease-out forwards, encender 1.4s 3.2s ease-in forwards; }
+  .final .calor path { stroke: #ff5a1f; stroke-width: 5; opacity: 0; animation: abrir 1.2s calc(2.4s + var(--i) * 0.04s) ease-out forwards, encender 1.6s 3.2s ease-in forwards, latir 3s 4.8s ease-in-out infinite alternate; }
+  @keyframes abrir { to { stroke-dashoffset: 0; } }
+  @keyframes encender { to { opacity: 0.85; } }
+  @keyframes latir { from { opacity: 0.85; } to { opacity: 0.55; } }
+  /* Reducir movimiento: el hielo y las grietas aparecen sin abrirse ni latir; el calor se enciende una vez. */
+  .quieto .final .helada { animation: aparecerHielo 1.8s both; }
+  .quieto .final path { stroke-dashoffset: 0; animation: aparecerHielo 0.8s 2.4s both; }
+  .quieto .final :is(.calor, .ascua) path { opacity: 0.75; animation: aparecerHielo 1.2s 3.2s both; }
 </style>

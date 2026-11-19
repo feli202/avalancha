@@ -6,6 +6,7 @@ import FOTOS from '../assets/pilas.json'
 import { leerFotos } from './fotos'
 import { desdeFoto } from './instantanea'
 import { Lienzo } from './lienzo'
+import { marco } from './marcos'
 import { COLORES_DALTONISMO, COLORES_PILA, EFECTOS, PALETAS } from './paletas'
 
 /** Tamaño de cada imagen en px reales (la tarjeta la muestra a la mitad en px CSS). */
@@ -74,7 +75,18 @@ const implosion = (anillosN: number): Trazos => (g, cx, cy, r) => {
   }
 }
 
-/** La escena de cada logro (claves de LOGROS). */
+/** Un marco de la foto (marcos.ts) alrededor de la mini pila; marco() centra en (c, c), así que se corre en x. */
+const conMarco = (id: string): Trazos => (g, cx, cy, r) => { g.save(); g.translate(cx - cy, 0); marco(g, id, cy, r, '#e8e9f3'); g.restore() }
+/** Calor de brasas desde abajo (fin de la Capa 1). */
+const calor: Trazos = (g, cx, cy, r) => {
+  const gr = g.createRadialGradient(cx, cy + r * 1.4, 0, cx, cy + r * 1.4, r * 2)
+  gr.addColorStop(0, 'rgb(255 110 40 / 0.35)')
+  gr.addColorStop(1, 'rgb(255 80 20 / 0)')
+  g.fillStyle = gr
+  g.fillRect(0, 0, ANCHO, ALTO)
+}
+
+/** La escena de cada logro (claves de LOGROS, LOGROS_C1 y algunos secretos). */
 export const ESCENAS: Record<string, Escena> = {
   derrumbe: { granos: 4, zoom: 0.5, onda: () => 0.05, t: 0.1, brillos: todo(0.5) },
   granos: { granos: 100, brillos: todo(0.2) },
@@ -100,6 +112,18 @@ export const ESCENAS: Record<string, Escena> = {
   densidadAlta: { granos: 100000, zoom: 0.6, brillos: todo(1), trazos: resplandor(0.5, 0.35) },
   infinito: { granos: 30000, trazos: resplandor(1, 1.1) },
   infinitoRapido: { granos: 30000, onda: espiral, t: 0.8, efecto: 'blanco', trazos: resplandor(0.9, 0.6) },
+  // Capa 1 (C13)
+  cristal: { granos: 30000, colores: () => PALETAS.glaciar, trazos: resplandor(0.6, 0.8) },
+  escarcha: { granos: -1, entera: true, brillos: todo(0.4), colores: () => PALETAS.escarcha },
+  romper: { granos: 10000, onda: expansiva(45), t: 0.45, efecto: 'hexagonos', colores: () => PALETAS.escarcha },
+  anillo3: { granos: 30000, entera: true, colores: () => PALETAS.escarcha, trazos: conMarco('anilloHelado') },
+  fatiga: { granos: 10000, onda: expansiva(45), t: 0.5, efecto: 'latido', brillos: todo(0.3) },
+  frontera: { granos: 30000, entera: true, brillos: todo(0.4), trazos: conMarco('bordesGrano') },
+  inclusion: { granos: 10000, onda: expansiva(45), t: 0.45, efecto: 'burbujas' },
+  vidrio: { granos: -1, entera: true, brillos: todo(0.4), colores: () => PALETAS.vidrio },
+  finCapa: { granos: 30000, zoom: 0.5, fondo: 'grietas', colores: () => PALETAS.escarcha, trazos: calor },
+  tempano: { granos: 3000, zoom: 0.35, fondo: 'tempano', colores: () => PALETAS.escarcha },
+  terco: { granos: 30000, entera: true, brillos: todo(0.4), trazos: conMarco('terco') },
 }
 
 /**

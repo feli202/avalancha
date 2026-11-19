@@ -178,6 +178,14 @@
             <span class="texto">{txt.opciones.movimiento}<small>{txt.opciones.reducirDesc}</small></span>
             <input type="checkbox" bind:checked={ajustes.reducirDestellos} />
           </label>
+          <div class="fila">
+            <span class="texto"><span id="fps-t">{txt.opciones.fps}</span><small>{txt.opciones.fpsDesc}</small></span>
+            <div class="segmentos" role="radiogroup" aria-labelledby="fps-t">
+              {#each [15, 30, 60, 0] as f}
+                <button role="radio" aria-checked={ajustes.fps === f} onclick={() => (ajustes.fps = f)}>{f || txt.opciones.sinLimite}</button>
+              {/each}
+            </div>
+          </div>
           <label class="fila">
             <span class="texto">{txt.opciones.ahorro}<small>{txt.opciones.ahorroDesc}</small></span>
             <input type="checkbox" bind:checked={ajustes.ahorro} />
