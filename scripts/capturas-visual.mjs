@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os'
 const [url, out] = process.argv.slice(2)
 mkdirSync(out, { recursive: true })
 const edge = spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', [
-  '--headless=new', '--remote-debugging-port=9336', `--user-data-dir=${resolve(tmpdir(), 'avalancha-visual')}`, '--window-size=1366,768',
+  '--headless=new', '--remote-debugging-port=9336', '--user-data-dir=D:/cache/edge-visual', '--window-size=1366,768',
   '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--use-angle=d3d11', 'about:blank',
 ])
 const espera = (ms) => new Promise((r) => setTimeout(r, ms))

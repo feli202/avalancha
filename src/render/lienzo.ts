@@ -95,6 +95,7 @@ uniform sampler2D u_fondoPila; // R8: la pila llena (altura + 1, 0 = afuera) par
 uniform vec3 u_colorP[4];  // los colores de la arena (lineales), para el fondo Fractal
 uniform int u_defecto;     // SPEC_CAPA1 §8: 0 ninguno, 1 grieta (Vacancia), 2 corrimiento (Dislocación), 3 espejo (Macla), 4 manchas (Impureza),
                            // 5 pulso que se apaga (Fatiga), 6 bordes duros (Frontera), 7 burbujas (Inclusión), 8 vidrio sin color (Vidrio)
+uniform int u_recorte;     // con un marco puesto, el zoom pasa adentro: la pila se corta en el foco, sin nada desenfocado afuera
 uniform float u_escarcha;  // SPEC_CAPA1 §9: 0 sin Escarcha → 1 gruesa
 const float L = ${LADO}.0;
 const vec3 LUZ = vec3(-0.5, 0.55, 0.67); // arriba a la izquierda (sin normalizar)
@@ -316,7 +317,7 @@ void main() {
   // muestras para que el centro no titile como ruido. Con celdas grandes, una sola: nítida.
   vec2 q = p / u_escala + L * 0.5;
   // Zoom: 0 dentro del foco, 1 afuera, con un borde suave.
-  float m = u_foco > 0.0 ? smoothstep(u_foco, u_foco * 1.3, length(p)) : 0.0;
+  float m = u_foco > 0.0 ? (u_recorte > 0 ? smoothstep(u_foco - 1.5 * u_dpr, u_foco, length(p)) : smoothstep(u_foco, u_foco * 1.3, length(p))) : 0.0;
   vec3 fondo = col;
   // Rendimiento: fuera del círculo inscrito de la grilla no hay arena (borde circular, pila.ts) y no se muestrea.
   // En pantallas anchas las esquinas son más de la mitad de los píxeles. El margen cubre el corrimiento de las muestras.
@@ -338,8 +339,8 @@ void main() {
   col += h;
   if (m > 0.0) {
     // Zoom, fuera del foco: desenfocada y más oscura.
-    vec4 b = lejos(q);
-    col = mix(col, fondo * (1.0 - b.a) + (b.rgb * borde + h) * 0.3, m);
+    vec4 b = u_recorte > 0 ? vec4(0.0) : lejos(q);
+    col = mix(col, u_recorte > 0 ? fondo : fondo * (1.0 - b.a) + (b.rgb * borde + h) * 0.3, m);
   }
   col = hombro(col);
   // A sRGB, con un poco de ruido para que el degradado del fondo no haga escalones.
@@ -361,7 +362,7 @@ export class Lienzo {
 
   /** I7: el contexto volvió después de perderse; lo dibujado se sube de nuevo (PilaVisual). */
   alRestaurar?: () => void
-  private valores = { colores: COLORES_PILA, destello: 1, efecto: 0, fondo: 'noche', fondoPila: null as Uint8Array | null, defecto: 0, escarcha: 0 }
+  private valores = { colores: COLORES_PILA, destello: 1, efecto: 0, fondo: 'noche', fondoPila: null as Uint8Array | null, defecto: 0, escarcha: 0, recorte: false }
 
   constructor(readonly canvas: HTMLCanvasElement | OffscreenCanvas) {
     this.gl = canvas.getContext('webgl2', { alpha: false, antialias: false }) as WebGL2RenderingContext | null
@@ -395,7 +396,7 @@ export class Lienzo {
       return prog
     }
     this.progCeldas = programa(FRAG_CELDAS, ['u_alturas', 'u_derrumbe', 'u_ahora', 'u_destello', 'u_brillo', 'u_color', 'u_efecto'], this.uniC)
-    this.progPantalla = programa(FRAG_PANTALLA, ['u_celdas', 'u_luz', 'u_tam', 'u_escala', 'u_ahora', 'u_destello', 'u_dpr', 'u_brillo', 'u_ss', 'u_viejo', 'u_fundido', 'u_foco', 'u_fondo', 'u_fondoPila', 'u_colorP', 'u_defecto', 'u_escarcha', 'u_centroY'], this.uniP)
+    this.progPantalla = programa(FRAG_PANTALLA, ['u_celdas', 'u_luz', 'u_tam', 'u_escala', 'u_ahora', 'u_destello', 'u_dpr', 'u_brillo', 'u_ss', 'u_viejo', 'u_fundido', 'u_foco', 'u_fondo', 'u_fondoPila', 'u_colorP', 'u_defecto', 'u_escarcha', 'u_recorte', 'u_centroY'], this.uniP)
     gl.bindVertexArray(gl.createVertexArray())
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1) // 513 no es múltiplo de 4
     const textura = (unidad: number, interno: number, niveles = 1) => {
@@ -440,6 +441,7 @@ export class Lienzo {
     this.fondo = this.valores.fondo
     this.defecto = this.valores.defecto
     this.escarcha = this.valores.escarcha
+    this.recorte = this.valores.recorte
     if (this.valores.fondoPila) this.fondoPila(this.valores.fondoPila)
   }
 
@@ -494,6 +496,14 @@ export class Lienzo {
   }
 
   /** SPEC_CAPA1 §9: espesor visual de la escarcha del borde, 0..1. */
+  set recorte(si: boolean) {
+    this.valores.recorte = si
+    const { gl } = this
+    if (!gl) return
+    gl.useProgram(this.progPantalla)
+    gl.uniform1i(this.uniP.u_recorte, si ? 1 : 0)
+  }
+
   set escarcha(x: number) {
     this.valores.escarcha = x
     const { gl } = this

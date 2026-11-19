@@ -165,6 +165,11 @@ export class PilaVisual {
     this.lz.defecto = n
   }
 
+  /** Con un marco puesto, el zoom se ve solo adentro del marco (lienzo.ts, u_recorte). */
+  set recorte(si: boolean) {
+    this.lz.recorte = si
+  }
+
   /** SPEC_CAPA1 §9: la escarcha del borde, 0..1. */
   set escarcha(x: number) {
     this.lz.escarcha = x

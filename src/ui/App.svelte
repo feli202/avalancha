@@ -147,7 +147,8 @@
     </footer>
   {/if}
 
-  {#if v.tienda && !fin}
+  <!-- Con la hoja de la tienda subida (celular) el zoom se va: quedaba encima de la hoja y se tocaba sin querer. -->
+  {#if v.tienda && !fin && !alta}
     <!-- Zoom de la pila: de la pila entera (izquierda, encuadre automático) al tamaño del primer grano. -->
     <input
       class="zoom aparece" type="range" min="0" max="1" step="0.01" value={zoomT()} disabled={juego.zoomMin >= PX_MAX}

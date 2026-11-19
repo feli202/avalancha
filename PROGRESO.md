@@ -2117,3 +2117,8 @@ Sin tocar el balance. Todo en vertical hasta 1100 px (celular y tablet); el escr
 - El `index.html` de GitHub Pages quedaba viejo en la caché del navegador (los `.js`/`.css` ya llevan hash). Ahora cada build tiene un número (`__VERSION__`, `vite.config.ts`) y deja `version.json`; `src/version.ts` lo pide sin caché al abrir y al volver a la pestaña y, si es otro, recarga una vez (la partida se guarda en el `pagehide`). Una recarga por versión como mucho (`sessionStorage`), así no hay bucle si el servidor tarda. En itch.io no hay `version.json` y no hace nada. Además `<meta http-equiv="Cache-Control" content="no-cache">`.
 - Probado con `vite preview`: al cambiar `version.json` y volver a la pestaña se recarga una vez y después sigue.
 - Publicar: `npm run build`, copiar `dist/*` a la rama `main` (dejando `.nojekyll`), commit y push.
+
+### Zoom adentro del marco y slider con la tienda subida (2026-11-19)
+- Con un marco puesto (Ajustes → Aspecto), el zoom pasa adentro del marco: la pila se corta con borde limpio en el círculo del marco (`u_recorte` en `lienzo.ts`, `PilaVisual.recorte`, `Pila.svelte`) y afuera queda solo el fondo, sin la pila desenfocada. Sin marco sigue como antes (desenfocada afuera).
+- Celular: con la hoja de la tienda subida, el slider de zoom no se muestra (quedaba encima de la hoja y se tocaba sin querer).
+- Verificado: `capturas-visual.mjs` a 390×844 y 1366×768 (el marco mide lo mismo en todos los zooms) y en el navegador, subir y bajar la hoja saca y vuelve a poner el slider. 316 tests en verde, `svelte-check` y `tsc` 0 errores.

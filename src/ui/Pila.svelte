@@ -145,6 +145,8 @@
     $effect(() => void (pila.efecto = EFECTOS.indexOf(elegido('efecto', EFECTOS, ajustes.efecto, juego.logros))))
     $effect(() => void (pila.fondo = elegido('fondo', FONDOS, ajustes.fondo, juego.logros)))
     $effect(() => void (pila.defecto = DEFECTOS.indexOf(juego.s.defectos.actual as DefectoId) + 1))
+    // El marco es el borde: con zoom la pila crece adentro de él y no se derrama desenfocada por la pantalla.
+    $effect(() => void (pila.recorte = marcoId !== 'ninguno'))
     // SPEC_CAPA1 §9: la escarcha del borde engorda con logX y satura (visual, no balance).
     const ESCARCHA_MITAD = 50
     $effect(() => { const x = escarchaActiva(juego.s) ? juego.s.escarcha.logX : 0; pila.escarcha = Math.round((1000 * x) / (x + ESCARCHA_MITAD)) / 1000 })
