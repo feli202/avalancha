@@ -34,24 +34,25 @@ Tiempo de juego **desde el primer Infinito** (la Capa 0 completa dura ~3 h 30). 
 | Hito | revisa cada 15 s | cada 60 s | cada 5 min |
 |---|---|---|---|
 | Segundo Infinito | 1,21 h | 1,37 h | 2,33 h |
-| Memoria completa (Infinito automático) | 1,81 h | 1,97 h | 3,00 h |
-| Romper el Infinito (nodo) | 2,30 h | 2,46 h | 3,49 h |
-| Estratos (primer estrato abierto, en la misma tanda) | 2,30 h | 2,46 h | 3,49 h |
-| Defecto Vacancia | 2,37 h | 2,53 h | 3,56 h |
-| Defecto Dislocación | 3,70 h | 3,85 h | 4,88 h |
-| Defecto Macla | 4,52 h | 4,68 h | 5,71 h |
-| Defecto Impureza | 5,29 h | 5,45 h | 6,48 h |
-| **FIN 1.1**: Estrato 8 lleno → Escarcha | **6,63 h** | 6,78 h | 7,82 h |
-| Defecto Fatiga | 9,47 h | 9,62 h | 10,37 h |
-| Defecto Frontera | 11,95 h | 12,09 h | 13,16 h |
-| Defecto Inclusión | 12,57 h | 12,72 h | 13,78 h |
-| Defecto Vidrio | 13,49 h | 13,34 h | 14,46 h |
-| **FIN CAPA 1**: 1e308 Cristales | **14,49 h** | 14,35 h | 15,48 h |
+| Romper el Infinito (nodo) | 1,42 h | 1,67 h | 3,33 h |
+| Estratos (primer estrato abierto) | 1,73 h | 2,22 h | 5,00 h |
+| Memoria completa (Infinito automático) | 2,35 h | 3,38 h | 9,26 h |
+| Defecto Vacancia | 2,39 h | 3,41 h | 9,30 h |
+| Defecto Dislocación | 4,01 h | 5,03 h | 10,61 h |
+| Defecto Macla | 4,57 h | 5,53 h | 11,27 h |
+| Defecto Impureza | 5,45 h | 6,61 h | 12,10 h |
+| **FIN 1.1**: Estrato 8 lleno → Escarcha | **6,86 h** | 7,81 h | 13,47 h |
+| Defecto Fatiga | 9,71 h | 10,66 h | 16,34 h |
+| Defecto Frontera | 12,19 h | 13,14 h | 18,83 h |
+| Defecto Inclusión | 12,80 h | 13,77 h | 19,45 h |
+| Defecto Vidrio | 13,72 h | 14,39 h | 20,39 h |
+| **FIN CAPA 1**: 1e308 Cristales | **14,72 h** | 15,40 h | 21,39 h |
 
-- Hueco máximo entre compras de la Capa 1 (después de la hora 1,5): **31 min** (31 min cada 60 s; 40 min para el jugador de cada 5 min). Ganar un Defecto cuenta como compra: da una recompensa permanente (C12). Durante esos huecos siempre hay compras de Arena y la Escarcha creciendo; son las corridas largas del final, donde el jugador espera un Infinito grande.
+- **Red (2026-11-19)**: un nodo abre a sus vecinos con su primer nivel y cada nivel cuesta al menos ×10 el anterior (§6.2). En los primeros Infinitos se compran una o dos cosas por Infinito, entre varios nodos (Inf 2: Sedimentación y Eco; 3: Ruptura y Estratos; 4: Defectos y Compactación; 5: Engarces, Cristalografía y el estrato 1; 6–10: Memoria nv2, Presión, Cascada+, Mutación+, Inercia; `python3 balance/sim_capa1.py --primeros 12`). Romper el Infinito llega antes que Memoria completa. **El jugador de cada 5 min queda mucho más atrás** (fin de la capa 21,4 h, antes 15,5): hasta Memoria nv4 (1000 Cristales) cada Infinito espera a que mire, y con ~2–20 Cristales por Infinito eso tarda; con el paso de ×10 por nivel no hay Memoria más barata (decisión del usuario).
+- Hueco máximo entre compras de la Capa 1 (después de la hora 1,5): **31 min** (31 min cada 60 s; 60 min para el jugador de cada 5 min). Ganar un Defecto cuenta como compra: da una recompensa permanente (C12). Durante esos huecos siempre hay compras de Arena y la Escarcha creciendo; son las corridas largas del final, donde el jugador espera un Infinito grande.
 - **Abrir un estrato se nota enseguida** (se llena de golpe, §7.2). Lo que multiplica la producción en el momento de abrirlo, `10^(D × Presión que suma)`, medido en el simulador: E1 ×1e2,3 · E2 ×1e7,9 · E3 ×1e13,0 · E4 ×1e18,2 · E5 ×1e27,1 · E6 ×1e47,8 · E7 ×1e80,6 · E8 ×1e118,8. El mínimo pedido es ×100.
 - **El softcap casi no mueve la capa** (sin él: fin 1.1 a las 7,24 h y fin de la capa a las 14,78 h): con el Infinito roto la producción la llevan la Presión, el Eco y la Escarcha, no los niveles de color. Frena sobre todo las Mutaciones y los colores altos en los Defectos largos (~0,1 h cada uno). No hubo que recalibrar multiplicadores.
-- **Estratos después de Romper**: el bot compra Ruptura nv1 y en la misma tanda el nodo Estratos y el primer estrato (2,30 h). La Vacancia se juega antes (sin estratos ni Infinito roto); el bot la abandona y la gana al reintentar, justo después de Romper. Dislocación, Macla e Impureza piden 3, 5 y 7 estratos.
+- **Estratos después de Romper**: el bot compra Ruptura nv1 y el nodo Estratos con el tercer Infinito (1,42 h) y abre el primer estrato dos Infinitos después (1,73 h). La Vacancia la intenta temprano, la abandona y la gana al reintentar (2,39 h). Dislocación, Macla e Impureza piden 3, 5 y 7 estratos.
 - **Defectos (C7)**: dentro de un Defecto el Infinito (a mano o automático) no corre; solo termina en la meta o abandonando. Antes el bot salía por el "Infinito óptimo" a los ~12 s y las metas viejas se ganaban en menos de un minuto. Con las metas nuevas (§8) cada Defecto pide ~30 min con el estado de su hora; el bot (como una persona) abandona si al ritmo de los últimos 3 min la meta queda lejos (§8) y vuelve con ~×30 Cristales totales, y en ese reintento gana enseguida.
 - **C8, el bot igual al juego**: elige las reliquias con la regla por defecto del panel de Automatización (Completar fusiones; nunca un tipo que no puede engarzar) y engarza las mejores; abandonar un Defecto no da reliquia ni Cristales (antes el sim daba los dos, aunque la Energía hubiera pasado 1e308); y la Memoria o la Sedimentación compradas suben en el momento las compresiones de la corrida (§6.3). La tabla se movió ~0,1 h (fin 1.1 6,75 → 6,63 h) y quedó en rango sin recalibrar. `tests/balance_capa1.test.ts` (núcleo real) da la columna de 15 s con ±10 % hasta el fin de la 1.1.
 - La segunda corrida (~1 h) es intencional: es la Capa 0 de nuevo pero con la primera reliquia y la primera compra de la Red; enseña que "volver a empezar" ahora es rápido.
@@ -140,7 +141,7 @@ Un cuarto tipo de reliquia y builds guardadas quedan para la Capa 2 (ver §15).
 
 ### 6.1 Forma
 
-La Red es una pila de arena vista desde arriba: un rombo de nodos alrededor de **Memoria** (centro). Cada nodo tiene 4 niveles; cada nivel se pinta con un color de la Capa 0: **nv1 Ámbar, nv2 Coral, nv3 Jade, nv4 Violeta**. Un nodo se abre cuando un vecino ortogonal **más cercano al centro** está en nivel 4. Al maxear un nodo, la arena "se derrumba" hacia sus vecinos (animación de toppling de la Capa 0): eso es lo que los abre.
+La Red es una pila de arena vista desde arriba: un rombo de nodos alrededor de **Memoria** (centro). Cada nodo tiene 4 niveles; cada nivel se pinta con un color de la Capa 0: **nv1 Ámbar, nv2 Coral, nv3 Jade, nv4 Violeta**. Un nodo se abre cuando un vecino ortogonal **más cercano al centro** tiene su **primer nivel** (`red.abre_con_nivel` = 1), más los requisitos propios que ya existen (Estratos pide Ruptura nv1; el anillo 3, la Escarcha). Al comprar ese primer nivel, la arena "se derrumba" hacia sus vecinos (animación de toppling de la Capa 0): eso es lo que los abre.
 
 ```
  y\x   -3            -2            -1             0              1              2              3
@@ -159,16 +160,20 @@ Anillo = |x| + |y|. Anillos 0–2 en la 1.1 (13 nodos). Anillo 3 (12 nodos) en l
 
 ### 6.2 Costos (log10 de Cristales)
 
-Como todo precio del juego, el exponente se redondea al entero más cercano (`SPEC.md` §4.11): el anillo 1 cuesta 1 Cristal cada nivel (0,15 × L redondea a 0) y el anillo 2 cuesta 100, 100, 100 y 1000.
+Como todo precio del juego, el exponente es entero (`SPEC.md` §4.11), y **cada nivel cuesta al menos un orden de magnitud más que el anterior** (antes los pasos de 0,15 y 0,3 se redondeaban al mismo precio y se compraban dos o tres niveles juntos). Costo del nivel L (L = 0..3) = `base + paso × L`; cada nodo puede tener su `costo_base_log10` y su `paso_log10` en config, si no usa los de su anillo:
 
-| Anillo | Costo nivel L (L = 0..3) |
-|---|---|
-| 0 (Memoria) | 0 (1 Cristal cada nivel) |
-| 1 | 0 + 0,15 × L |
-| 2 | 1,6 + 0,3 × L |
-| 3 | `costo_base_log10` del nodo + 5 × L |
+| | base | paso | Niveles 1 / 2 / 3 / 4 |
+|---|---|---|---|
+| Anillo 0 (Memoria) | 0 | 1 | 1 / 10 / 100 / 1000 |
+| Anillo 1 (Eco, Sedimentación, Estratos, Defectos) | 0 | 2 | 1 / 1e2 / 1e4 / 1e6 |
+| Ruptura, Cristalografía | 0 | 2 | 1 / 1e2 / 1e4 / 1e6 |
+| Compactación, Engarces | 0 | 3 | 1 / 1e3 / 1e6 / 1e9 |
+| Resto del anillo 2 (Presión, Cascada+, Mutación+, Inercia) | 1 | 3 | 10 / 1e4 / 1e7 / 1e10 |
+| Anillo 3 | la del nodo | 5 | |
 
 Bases del anillo 3: Eco II 45, Defectos II 55, Germen 65, Compactación II 78, Frío 92, Sedimento II 108, Capilaridad 126, Cristalografía II 146, Abismo 168, Engarces II 192, Deshielo 220, Ruptura II 250.
+
+**Cómo se calibró**: antes de Romper, cada Infinito da `floor(10^(mult + 0,35))` = 2 Cristales (§4), así que los primeros niveles cuestan 1 y hay muchos para elegir; Cristalografía nv1 (×10^0,5 → 7 por Infinito) y Ruptura nv2 (×10) son los que suben el ingreso, y su paso de ×100 sigue a ese ×10. Lo que pide más (Compactación, Engarces, el resto del anillo 2) sube de a ×1000 para que no se complete todo en cuanto el Infinito roto y los estratos disparan los Cristales.
 
 ### 6.3 Nodos
 
@@ -177,7 +182,7 @@ Bases del anillo 3: Eco II 45, Defectos II 55, Germen 65, Compactación II 78, F
 | **Memoria** | Autocompradores y compresión automática desde el inicio de cada Infinito / + Cascada automática / + Mutaciones automáticas / + Infinito automático. Conserva 3/5/7/9 compresiones (comprada a mitad de una corrida que está más abajo, la corrida salta ahí en el momento; igual Sedimentación). |
 | **Eco** | `+p × log10(Cristales totales)` a log V; p = 0,5 / 1,5 / 3 / 5. ("Los cristales recuerdan la arena".) |
 | **Sedimentación** | Conserva 11/13/15/17 compresiones. nv4 además conserva los niveles de Cascada (ni la Compresión ni el Infinito los reinician). |
-| **Estratos** | **Pide Ruptura nv1** (`requiere` en config) además de Memoria en 4: es lo que te deja ir más allá del Infinito. Abre la pantalla de Estratos. Velocidad del flujo ×1 / ×1,5 / ×2 / ×3. Un guardado que ya lo tenía sin Ruptura lo conserva y lo sigue subiendo. |
+| **Estratos** | **Pide Ruptura nv1** (`requiere` en config) además de Memoria en nv1: es lo que te deja ir más allá del Infinito. Abre la pantalla de Estratos. Velocidad del flujo ×1 / ×1,5 / ×2 / ×3. Un guardado que ya lo tenía sin Ruptura lo conserva y lo sigue subiendo. |
 | **Defectos** | Abre Vacancia / Dislocación / Macla / Impureza. |
 | **Ruptura** | nv1 = **Romper el Infinito**. Cristales ×1 / ×10 / ×100 / ×1000 (log 0/1/2/3). |
 | **Compactación** | Densidad +0,08 / 0,16 / 0,24 / 0,32. |

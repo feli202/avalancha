@@ -315,7 +315,7 @@ export const es = {
     },
     // SPEC_CAPA1 §6
     red: {
-      que: 'Cada nodo tiene cuatro niveles: Ámbar, Coral, Jade y Violeta. Al completar uno, la arena se derrumba y abre a sus vecinos.',
+      que: 'Cada nodo tiene cuatro niveles: Ámbar, Coral, Jade y Violeta. Con el primer nivel, la arena se derrumba y abre a sus vecinos.',
       nivel: (n: number) => `Nivel ${n} de 4`,
       costo: (c: string) => (c === '1' ? 'Cuesta 1 Cristal' : `Cuesta ${c} Cristales`),
       sinComprar: 'Sin comprar',
@@ -331,7 +331,7 @@ export const es = {
       siguiente: (e: string) => `Siguiente nivel: ${e}`,
       verNivel: (n: number, color: string) => `Ver qué da el nivel ${n} (${color})`,
       enNivel: (n: number, color: string) => `Con el nivel ${n} · ${color}`,
-      cerrado: 'Se abre cuando un vecino más cerca de Memoria llega a Violeta.',
+      cerrado: 'Se abre cuando un vecino más cerca de Memoria tiene su primer nivel.',
       hielo: 'Bajo el hielo: se abre con la Escarcha.',
       requiere: 'Se abre con Romper el Infinito (Ruptura nv1): es lo que te deja ir más allá del Infinito.',
       nodos: {
@@ -726,7 +726,7 @@ export const es = {
       // Capa 1 (correcciones, bloque 12): salen la primera vez que mirás cada pantalla.
       c1_cristales: 'Tus Cristales: cada Infinito te da más. Se gastan en la Red y en los Estratos.',
       c1_relicario: 'Cada Infinito te deja una reliquia con la pila de esa corrida. Elegí qué hace: tres iguales se fusionan, y solo dan efecto las engarzadas.',
-      c1_red: 'Cada nodo tiene cuatro niveles. Al maxear uno, se derrumba y despierta a sus vecinos.',
+      c1_red: 'Cada nodo tiene cuatro niveles. Con el primero, se derrumba y despierta a sus vecinos.',
       c1_estratos: 'Más allá del Infinito: los estratos aprietan la pila desde abajo y cada derrumbe vale más. Cada estrato que abrís llega lleno y te destraba.',
       c1_romper: 'Rompiste el Infinito: la Energía sigue de largo y cuanto más pasa de 1e308, más Cristales. Brilla cuando conviene hacer Infinito. Arriba de 1e308 las mejoras se encarecen (∞), y en la Red ya podés abrir los Estratos.',
       c1_automat: 'Acá elegís todo lo que se hace solo: cada cuánto compra cada autocomprador, cuándo comprimir y cuándo hacer Infinito.',
@@ -799,7 +799,7 @@ export const es = {
     v: { nivel: 'nivel', mut: 'mutación', anillos: 'anillos', comp: 'compresiones', expansion: 'Expansión' },
     /** Capa 1: piezas de las fórmulas de "Cómo funciona". */
     c1: {
-      abre: 'un vecino más cerca de Memoria en nv 4',
+      abre: 'un vecino más cerca de Memoria en nv 1',
       multRed: 'mult = Ruptura + Cristalografía + Cristalografía II × Defectos completos',
       costoRed: '10^(base del anillo + paso del anillo × L)',
       cauce: (x: string) => `colores ^(1 + ${x} × (n + 1))`,
@@ -874,8 +874,8 @@ export const es = {
       ]],
       c1_red: ['Red', [
         'La Red es una pila vista desde arriba: un rombo de nodos alrededor de Memoria. Cada nodo tiene cuatro niveles, con los colores de la Arena: Ámbar, Coral, Jade y Violeta.',
-        'Maxear un nodo (llevarlo a Violeta) hace que se derrumbe y despierte a sus vecinos: así se abren los nodos más lejos del centro. Lo que da un nodo nuevo se descubre cuando se abre.',
-        'Cada anillo más afuera es más caro. Ningún nodo repite lo que hace otro.',
+        'Comprar el primer nivel de un nodo (Ámbar) hace que se derrumbe y despierte a sus vecinos: así se abren los nodos más lejos del centro. Lo que da un nodo nuevo se descubre cuando se abre.',
+        'Cada nivel cuesta al menos diez veces el anterior, y cada anillo más afuera es más caro. Ningún nodo repite lo que hace otro.',
       ]],
       c1_relicario: ['Relicario', [
         'Cada Infinito te deja una reliquia y vos elegís qué hace: Cauce (los colores valen más), Cascada (la Cascada empuja más) o Mutaciones (rinden más las de Caudal y Colores). Si no elegís en 30 s, se elige sola con la regla de Automatización.',

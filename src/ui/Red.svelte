@@ -3,7 +3,7 @@
   // de arena teñida con el color de su nivel; los completos se unen a sus vecinos con escarcha. La red llena su caja
   // (el viewBox se ajusta a los nodos) y la ficha del elegido va al costado (debajo en el celular).
   import {
-    ANILLO3, NIVEL_MAX_RED, NODOS, abierto, anillo, comprarRed, costoRed, escarchaAbierta, nivelRed, puedeComprarRed, requisitoRed, vecinos,
+    ABRE_RED, ANILLO3, NIVEL_MAX_RED, NODOS, abierto, anillo, comprarRed, costoRed, escarchaAbierta, nivelRed, puedeComprarRed, requisitoRed, vecinos,
   } from '../core'
   import { EMBLEMA, cara, rama, semilla } from '../render/redCaras'
   import { txt } from '../strings'
@@ -171,12 +171,12 @@
     if (arrastro) { e.stopPropagation(); arrastro = false }
   }
 
-  // Escarcha: de cada nodo completo a sus vecinos (una sola vez entre dos completos).
+  // Escarcha: de cada nodo que ya abre (ABRE_RED) a sus vecinos (una sola vez entre dos que abren).
   const ramas = $derived.by(() => {
     const out: [string, number][] = []
-    for (const a of vistas) if (a.n >= NIVEL_MAX_RED) for (const id of vecinos(a.id)) {
+    for (const a of vistas) if (a.n >= ABRE_RED) for (const id of vecinos(a.id)) {
       const b = por.get(id)!
-      if (b.n >= NIVEL_MAX_RED && anillo(b.id) < anillo(a.id)) continue
+      if (b.n >= ABRE_RED && anillo(b.id) < anillo(a.id)) continue
       const L = Math.hypot(b.x - a.x, b.y - a.y), ux = (b.x - a.x) / L, uy = (b.y - a.y) / L
       rama(a.x + ux * (a.r + 3), a.y + uy * (a.r + 3), b.x - ux * (b.r + 3), b.y - uy * (b.r + 3), semilla(a.id + b.id), 1.1, 1, out)
     }
@@ -198,7 +198,7 @@
 
   const colorDe = (v: Vista) => (v.modo === 'cristal' ? hex[v.n - 1] : null)
 
-  // El derrumbe al completar un nodo: un fragmento de cristal sale hacia cada vecino.
+  // El derrumbe al llegar al nivel que abre a los vecinos: un fragmento de cristal sale hacia cada uno.
   let derrumbe = $state<{ id: string; k: number } | null>(null)
   let k = 0
 
@@ -207,12 +207,12 @@
     const nuevo = comprarRed(antes, id)
     if (nuevo === antes) return
     sonido.compra('other')
+    if (nivelRed(nuevo, id) === ABRE_RED && !ajustes.reducirDestellos) {
+      const esta = { id, k: ++k }
+      derrumbe = esta
+      setTimeout(() => { if (derrumbe === esta) derrumbe = null }, 1400)
+    }
     if (nivelRed(nuevo, id) >= NIVEL_MAX_RED) {
-      if (!ajustes.reducirDestellos) {
-        const esta = { id, k: ++k }
-        derrumbe = esta
-        setTimeout(() => { if (derrumbe === esta) derrumbe = null }, 1400)
-      }
       sonido.derrumbe(3000)
       sonido.hito('ring')
     }

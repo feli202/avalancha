@@ -23,18 +23,21 @@
   "cauce_colores_pct_por_nivel": 0.015
  },
  "red": {
+  "abre_con_nivel": 1,
+  "_abre": "un nodo abre a sus vecinos mas lejos del centro cuando llega a este nivel (ademas de su requiere)",
   "costo_anillo_log10": [
    0,
-   0.0,
-   1.6,
+   0,
+   1,
    40.0
   ],
   "paso_nivel_log10": [
-   0.0,
-   0.15,
-   0.3,
+   1,
+   2,
+   3,
    5
   ],
+  "_paso": "cada nivel sube al menos un orden entero; un nodo puede tener su propio costo_base_log10 y paso_log10",
   "nodos": {
    "memoria": {
     "pos": [
@@ -123,7 +126,9 @@
      2,
      3
     ],
-    "_n1": "Romper el Infinito"
+    "_n1": "Romper el Infinito",
+    "costo_base_log10": 0,
+    "paso_log10": 2
    },
    "compactacion": {
     "pos": [
@@ -135,7 +140,8 @@
      0.16,
      0.24,
      0.32
-    ]
+    ],
+    "costo_base_log10": 0
    },
    "presion": {
     "pos": [
@@ -159,7 +165,8 @@
      2,
      3,
      3
-    ]
+    ],
+    "costo_base_log10": 0
    },
    "cascada_plus": {
     "pos": [
@@ -207,7 +214,9 @@
      1.0,
      1.5,
      2.0
-    ]
+    ],
+    "costo_base_log10": 0,
+    "paso_log10": 2
    }
   },
   "anillo3_1.2": {
@@ -429,32 +438,39 @@
  },
  "defectos": {
   "vacancia": {
-   "color_sin_efecto": 3, "recompensa_hito_mult": 6,
+   "color_sin_efecto": 3,
+   "recompensa_hito_mult": 6,
    "regla": "Violeta no multiplica",
    "meta_log10": 237,
    "recompensa": "hito de color x4 -> x6"
   },
   "dislocacion": {
-   "cascada_x": 0, "presion_x": 0.5, "recompensa_anillo_mult": 1.12,
+   "cascada_x": 0,
+   "presion_x": 0.5,
+   "recompensa_anillo_mult": 1.12,
    "regla": "la Cascada no funciona y la Presion vale la mitad",
    "meta_log10": 1347,
    "recompensa": "anillo x1,10 -> x1,12"
   },
   "macla": {
-   "sin_mutaciones": true, "densidad_x": 0.85, "recompensa_color_s_x": 0.9,
+   "sin_mutaciones": true,
+   "densidad_x": 0.85,
+   "recompensa_color_s_x": 0.9,
    "regla": "no hay Mutaciones y la Densidad vale x0,85",
    "meta_log10": 1816,
    "recompensa": "crecimiento cuadratico de colores x0,9"
   },
   "impureza": {
-   "derrumbes_tope_log10": 4, "colores_x": 0.5, "recompensa_cascada_c": 0.1,
+   "derrumbes_tope_log10": 4,
+   "colores_x": 0.5,
+   "recompensa_cascada_c": 0.1,
    "regla": "derrumbes por grano tope 1e4 y colores a la mitad",
    "meta_log10": 3471,
    "recompensa": "Cascada +0,1 de c"
   },
   "fatiga": {
    "regla": "produccion x10^(-t/600)",
-  "decada_s": 600,
+   "decada_s": 600,
    "meta_log10": 11464,
    "recompensa": "crecimiento de Escarcha x2",
    "recompensa_escarcha_g_x": 2
@@ -463,7 +479,7 @@
    "regla": "Densidad = 1",
    "meta_log10": 7067,
    "recompensa": "Densidad +0,2",
-  "recompensa_densidad": 0.2
+   "recompensa_densidad": 0.2
   },
   "inclusion": {
    "regla": "la Presion de los Estratos no funciona",

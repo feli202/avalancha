@@ -19,7 +19,7 @@ export interface Config1 {
     permeabilidad: { c0: number; por_profundidad: number; paso: number; cub: number; suma_gamma: number }
     presion: { c0: number; por_profundidad: number; paso: number; cub: number; suma_w: number }
   }
-  red: { costo_anillo_log10: number[]; paso_nivel_log10: number[]; nodos: Record<string, Nodo>; 'anillo3_1.2': Record<string, Nodo>; prioridad_bot: Record<string, number> }
+  red: { abre_con_nivel: number; costo_anillo_log10: number[]; paso_nivel_log10: number[]; nodos: Record<string, Nodo>; 'anillo3_1.2': Record<string, Nodo>; prioridad_bot: Record<string, number> }
   /** SPEC_CAPA1 §8: reglas, metas y recompensas de los Defectos. */
   defectos: {
     vacancia: Defecto & { color_sin_efecto: number; recompensa_hito_mult: number }

@@ -292,7 +292,7 @@ export const en: typeof es = {
       presQue: (k: string) => `Weight of this stratum in Pressure × (1 + ${k} × level).`,
     },
     red: {
-      que: 'Each node has four levels: Amber, Coral, Jade and Violet. Completing one topples its sand and opens its neighbors.',
+      que: 'Each node has four levels: Amber, Coral, Jade and Violet. Its first level topples the sand and opens its neighbors.',
       nivel: (n: number) => `Level ${n} of 4`,
       costo: (c: string) => (c === '1' ? 'Costs 1 Crystal' : `Costs ${c} Crystals`),
       sinComprar: 'Not bought',
@@ -308,7 +308,7 @@ export const en: typeof es = {
       siguiente: (e: string) => `Next level: ${e}`,
       verNivel: (n: number, color: string) => `See what level ${n} gives (${color})`,
       enNivel: (n: number, color: string) => `At level ${n} · ${color}`,
-      cerrado: 'Opens when a neighbor closer to Memory reaches Violet.',
+      cerrado: 'Opens when a neighbor closer to Memory has its first level.',
       hielo: 'Under the ice: opens with the Frost.',
       requiere: 'Opens with Break Infinity (Rupture lv1): it is what lets you go beyond Infinity.',
       nodos: {
@@ -675,7 +675,7 @@ export const en: typeof es = {
       auto_compresion_auto: 'Turn it on and the pile compresses itself at the goal.',
       c1_cristales: 'Your Crystals: every Infinity gives you more. Spend them on the Lattice and the Strata.',
       c1_relicario: 'Every Infinity leaves you a relic carrying that run\'s pile. Choose what it does: three alike fuse, and only socketed ones give an effect.',
-      c1_red: 'Each node has four levels. Max one out and it topples, waking up its neighbors.',
+      c1_red: 'Each node has four levels. Its first one topples it, waking up its neighbors.',
       c1_romper: 'You broke Infinity: Energy keeps going, and the further past 1e308, the more Crystals. It glows when Infinity pays off most. Past 1e308 upgrades get pricier (∞), and the Strata can now be opened in the Lattice.',
       c1_estratos: 'Beyond Infinity: the strata squeeze the pile from below and every topple is worth more. Each stratum you open arrives full and unblocks you.',
       c1_automat: 'Set up everything that runs on its own here: how often each autobuyer buys, when to compress and when to go Infinite.',
@@ -741,7 +741,7 @@ export const en: typeof es = {
     bloqueada: 'Keep playing to find out',
     v: { nivel: 'level', mut: 'mutation', anillos: 'rings', comp: 'compressions', expansion: 'Expansion' },
     c1: {
-      abre: 'a neighbor closer to Memory at lv 4',
+      abre: 'a neighbor closer to Memory at lv 1',
       multRed: 'mult = Rupture + Crystallography + Crystallography II × completed Defects',
       costoRed: '10^(ring base + ring step × L)',
       cauce: (x: string) => `colors ^(1 + ${x} × (n + 1))`,
@@ -815,8 +815,8 @@ export const en: typeof es = {
       ]],
       c1_red: ['Lattice', [
         'The Lattice is a pile seen from above: a diamond of nodes around Memory. Each node has four levels, in the colors of the Sand: Amber, Coral, Jade and Violet.',
-        'Maxing a node (taking it to Violet) makes it topple and wake up its neighbors: that is how nodes farther from the center open. What a new node does is revealed when it opens.',
-        'Each ring farther out costs more. No node repeats what another one does.',
+        'Buying the first level of a node (Amber) makes it topple and wake up its neighbors: that is how nodes farther from the center open. What a new node does is revealed when it opens.',
+        'Each level costs at least ten times the previous one, and each ring farther out costs more. No node repeats what another one does.',
       ]],
       c1_relicario: ['Reliquary', [
         'Every Infinity leaves you a relic and you choose what it does: Channel (colors are worth more), Cascade (the Cascade pushes harder) or Mutations (Flow and Colors Mutations yield more). If you do not choose within 30 s, it is chosen for you with the rule in Automation.',

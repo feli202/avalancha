@@ -107,7 +107,7 @@
     const sec = (id: string, f: Formula[]): Seccion => ({ id, abierta: !!v[id], color: 'var(--hielo)', titulo: g.secciones[id][0], texto: g.secciones[id][1], f })
     const mult = cristalesRedLog10(s), D = densidad(s), P = presion(s)
     const ids = Object.keys(NODOS), completos = ids.filter((id) => nivelRed(s, id) >= NIVEL_MAX_RED).length
-    const costoAnillo = (a: number) => (a === 0 ? '1' : `10^(${d(R.costo_anillo_log10[a])} + ${d(R.paso_nivel_log10[a])}·L)`)
+    const costoAnillo = (a: number) => `10^(${d(R.costo_anillo_log10[a])} + ${d(R.paso_nivel_log10[a])}·L)`
     const nMem = memoria(s), mem = txt.cristal.red.nodos.memoria
     const memX = Object.fromEntries(Object.entries(NODOS.memoria).flatMap(([k, x]) => (k !== 'pos' && Array.isArray(x) ? [[k, x[nMem - 1]]] : [])))
     const g1 = gammaEstrato(s, 0, Math.log10(Math.max(1, caudal(s))))

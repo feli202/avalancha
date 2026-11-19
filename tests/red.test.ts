@@ -19,46 +19,47 @@ describe('Red', () => {
     expect(Object.keys(CFG1.red['anillo3_1.2']).every((k) => anillo(k) === 3)).toBe(true)
   })
 
-  it('costos de §6.2 por anillo', () => {
-    expect([0, 1, 2, 3].map((n) => costoRedLog10('memoria', n))).toEqual([0, 0, 0, 0])
-    // Todo precio es 1eN: 0,15·L se redondea a 0 (1 Cristal); 1,6 + 0,3·L a 2, 2, 2, 3.
-    expect([0, 1, 2, 3].map((n) => costoRedLog10('eco', n))).toEqual([0, 0, 0, 0])
-    expect([0, 1, 2, 3].map((n) => costoRedLog10('ruptura', n))).toEqual([2, 2, 2, 3])
+  it('costos de §6.2: cada nivel sube al menos un orden entero', () => {
+    expect([0, 1, 2, 3].map((n) => costoRedLog10('memoria', n))).toEqual([0, 1, 2, 3])
+    expect([0, 1, 2, 3].map((n) => costoRedLog10('eco', n))).toEqual([0, 2, 4, 6])
+    expect([0, 1, 2, 3].map((n) => costoRedLog10('ruptura', n))).toEqual([0, 2, 4, 6]) // paso_log10 propio
+    expect([0, 1, 2, 3].map((n) => costoRedLog10('compactacion', n))).toEqual([0, 3, 6, 9]) // base propia, paso del anillo
+    expect([0, 1, 2, 3].map((n) => costoRedLog10('presion', n))).toEqual([1, 4, 7, 10])
     expect([0, 3].map((n) => costoRedLog10('eco2', n))).toEqual([45, 60])
     expect([0, 3].map((n) => costoRedLog10('ruptura2', n))).toEqual([250, 265])
-    expect([0, 1, 2, 3].map((n) => costoRed('eco', n).toNumber())).toEqual([1, 1, 1, 1])
-    expect(costoRed('ruptura', 0).toNumber()).toBe(100)
+    for (const id of Object.keys(NODOS)) for (let n = 0; n < 3; n++) expect(costoRedLog10(id, n + 1) - costoRedLog10(id, n)).toBeGreaterThanOrEqual(1)
+    expect([0, 1, 2, 3].map((n) => costoRed('memoria', n).toNumber())).toEqual([1, 10, 100, 1000])
   })
 
-  it('apertura: un nodo se abre cuando un vecino ortogonal más cercano al centro llega a nivel 4', () => {
+  it('apertura: un nodo se abre cuando un vecino ortogonal más cercano al centro llega a nivel 1', () => {
     expect(abierto(estadoInicial(), 'memoria')).toBe(true)
-    expect(abierto(conRed({ memoria: 3 }), 'eco')).toBe(false)
-    const m4 = conRed({ memoria: 4 })
-    expect(['eco', 'sedimentacion', 'defectos'].every((k) => abierto(m4, k))).toBe(true)
+    expect(abierto(estadoInicial(), 'eco')).toBe(false)
+    const m1 = conRed({ memoria: 1 })
+    expect(['eco', 'sedimentacion', 'defectos'].every((k) => abierto(m1, k))).toBe(true)
     // Estratos: además pide Romper el Infinito (Ruptura nv1); un guardado que ya lo tenía lo sigue subiendo.
-    expect(abierto(m4, 'estratos')).toBe(false)
-    expect(abierto(conRed({ memoria: 4, ruptura: 1 }), 'estratos')).toBe(true)
-    expect(abierto(conRed({ memoria: 4, estratos: 1 }), 'estratos')).toBe(true)
-    expect(abierto(m4, 'ruptura')).toBe(false) // anillo 2: hace falta Eco en 4
-    expect(abierto(m4, 'cascada_plus')).toBe(false) // diagonal de Memoria
-    const eco4 = conRed({ memoria: 4, eco: 4 })
-    expect(['ruptura', 'cristalografia', 'cascada_plus'].every((k) => abierto(eco4, k))).toBe(true)
-    // Un vecino más lejos del centro no abre: Ruptura en 4 no abre Eco.
+    expect(abierto(m1, 'estratos')).toBe(false)
+    expect(abierto(conRed({ memoria: 1, ruptura: 1 }), 'estratos')).toBe(true)
+    expect(abierto(conRed({ memoria: 1, estratos: 1 }), 'estratos')).toBe(true)
+    expect(abierto(m1, 'ruptura')).toBe(false) // anillo 2: hace falta Eco en 1
+    expect(abierto(m1, 'cascada_plus')).toBe(false) // diagonal de Memoria
+    const eco1 = conRed({ memoria: 1, eco: 1 })
+    expect(['ruptura', 'cristalografia', 'cascada_plus'].every((k) => abierto(eco1, k))).toBe(true)
+    // Un vecino más lejos del centro no abre: Ruptura no abre Eco.
     expect(abierto(conRed({ ruptura: 4 }), 'eco')).toBe(false)
     // El anillo 3 queda con el candado de hielo hasta la Escarcha.
     expect(abierto(conRed({ memoria: 4, eco: 4, ruptura: 4 }), 'germen')).toBe(false)
   })
 
   it('comprar cobra Cristales, sube el nivel y no pasa de 4 ni compra cerrados o sin plata', () => {
-    let s = conRed({}, { cristales: new Decimal(5) })
-    expect(comprarRed(s, 'eco')).toBe(s)
+    let s = conRed({}, { cristales: new Decimal(1112) })
+    expect(comprarRed(s, 'eco')).toBe(s) // cerrado
     for (let i = 0; i < 4; i++) s = comprarRed(s, 'memoria')
     expect(s.red.memoria).toBe(4)
     expect(s.cristales.toNumber()).toBe(1)
     expect(comprarRed(s, 'memoria')).toBe(s)
     s = comprarRed(s, 'eco')
     expect([s.red.eco, s.cristales.toNumber()]).toEqual([1, 0])
-    expect(comprarRed(s, 'eco')).toBe(s) // cuesta 2
+    expect(comprarRed(s, 'eco')).toBe(s) // cuesta 100
   })
 
   it('Memoria nv1: autocompradores y compresión automática desde el inicio', () => {

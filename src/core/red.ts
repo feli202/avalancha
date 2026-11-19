@@ -7,12 +7,14 @@ import { cristalesVidrioLog10, defectosCompletos, enVidrio } from './defectos'
 import type { State } from './state'
 
 /** Un nodo: posición en el rombo y, por cada efecto, un arreglo con el valor de cada nivel (1..4). */
-export type Nodo = { pos: number[]; costo_base_log10?: number } & Record<string, unknown>
+export type Nodo = { pos: number[]; costo_base_log10?: number; paso_log10?: number } & Record<string, unknown>
 
 export const NODOS: Record<string, Nodo> = { ...CFG1.red.nodos, ...CFG1.red['anillo3_1.2'] }
 /** Los de la 1.2: grises con candado de hielo hasta que se abra la Escarcha. */
 export const ANILLO3 = new Set(Object.keys(CFG1.red['anillo3_1.2']))
 export const NIVEL_MAX_RED = 4
+/** Un nodo abre a sus vecinos más lejos del centro al llegar a este nivel (§6.1). */
+export const ABRE_RED = CFG1.red.abre_con_nivel
 export const CENTRO = 'memoria'
 
 const POR_POS = new Map(Object.entries(NODOS).map(([id, n]) => [n.pos.join(','), id]))
@@ -34,16 +36,16 @@ export const requisitoRed = (s: State, id: string) =>
   nivelRed(s, id) > 0 ||
   Object.entries((NODOS[id].requiere ?? {}) as Record<string, number>).every(([n, lv]) => nivelRed(s, n) >= lv)
 
-/** Se puede comprar: Memoria siempre; el resto, con un vecino ortogonal más cercano al centro en nivel 4. */
+/** Se puede comprar: Memoria siempre; el resto, con un vecino ortogonal más cercano al centro en nivel ABRE_RED. */
 export const abierto = (s: State, id: string) =>
   id === CENTRO ||
   ((!ANILLO3.has(id) || escarchaAbierta(s)) && requisitoRed(s, id) &&
-    vecinos(id).some((v) => anillo(v) < anillo(id) && nivelRed(s, v) >= NIVEL_MAX_RED))
+    vecinos(id).some((v) => anillo(v) < anillo(id) && nivelRed(s, v) >= ABRE_RED))
 
 /** log10 del costo del nivel n → n+1 (§6.2). */
 export function costoRedLog10(id: string, n: number) {
   const r = anillo(id)
-  return precioLog10((NODOS[id].costo_base_log10 ?? CFG1.red.costo_anillo_log10[r]) + CFG1.red.paso_nivel_log10[r] * n)
+  return precioLog10((NODOS[id].costo_base_log10 ?? CFG1.red.costo_anillo_log10[r]) + (NODOS[id].paso_log10 ?? CFG1.red.paso_nivel_log10[r]) * n)
 }
 
 // Los Cristales son enteros: un costo chico se redondea para arriba (10^0,15 = 1,41 → 2), como los Cristales del Infinito (§4).
