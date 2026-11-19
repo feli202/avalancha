@@ -424,7 +424,8 @@
       right: var(--margen); bottom: calc(45dvh + 0.5rem);
       display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 1rem;
     }
-    .zoom { right: var(--margen); bottom: calc(45dvh + 3rem); }
+    /* En la fila de la manija de la hoja, a la derecha: fuera de la región de la pila, así ni la pila ni el marco la tocan con ningún zoom. */
+    .zoom { right: var(--margen); bottom: calc(45dvh - 2.75rem); z-index: 3; }
     .sismo :global(canvas) { height: 2rem; }
     .chico { flex-direction: column; align-items: end; margin: 0; font-size: 0.75rem; }
     .der {
