@@ -1906,7 +1906,7 @@ Hecho:
 
 ## C11: anillo 3 de la Red, Pulido y Deshielo (2026-11-18)
 
-**Hito actual: C11 terminado.** Sigue C12 (Defectos 5–8).
+**Hito actual: C11 terminado.** Siguió C12 (abajo).
 
 **Qué ya estaba** (de C10 y del rebalanceo del bloque 6), revisado contra `sim_capa1.py`: Capilaridad (separación), Sedimento II (`k^e`), Abismo (estratos llenos), Cristalografía II (facetas por Defecto), Compactación II (Densidad por anillo), Eco II, Germen y Frío (en g y H de la Escarcha), Ruptura II (Q), Deshielo (rompe sola desde `tick` con el interruptor `auto.escarcha`, Esquirlas ×), Engarces II (3 espacios y fusión automática en `elegir`). La apertura del anillo 3 con la Escarcha también.
 
@@ -1929,3 +1929,35 @@ Hecho:
 **Después (pedido del usuario): la placa de Escarcha crece de verdad.** En [Escarcha.svelte](src/ui/Escarcha.svelte) la placa nace como un solo hexágono y se agranda hacia afuera con el espesor (6 anillos, 127 hexágonos). Cada hexágono aparece chico y crece cuando el borde lo alcanza, y el ruido hace el borde irregular. El alcance es `0,6 + 6,5 × logX / (logX + H)`, con H la base de config (es solo visual). El borde que está creciendo titila apenas. Al romperla, la placa se sacude, se raja con 7 grietas blancas desde el centro y los hexágonos que había saltan en pedazos; debajo queda la placa con la mitad del espesor, ya más chica. Con Reducir destellos o con prefers-reduced-motion no hay sacudón ni vuelo, los pedazos solo se apagan. Probado en el navegador: espesor 0,5 → semilla, 15 → 7 hexágonos, 400 → casi entera; Romper con 120 → pedazos volando y placa de 60. Sin scroll en 390×844.
 
 **No medido**: fps (la animación del deshielo son 12 grupos SVG con CSS, unos segundos y una vez); no corrí `npm run test:lento`.
+
+## C12: Defectos 5–8 (2026-11-18)
+
+**Hito actual: C12 terminado.** Sigue C13 (fin de la Capa 1 y test de balance completo).
+
+**Balance (primero simulador, después spec, después código).** Las metas viejas (1200 / 700 / 1800 / 25000) se ganaban en 0 min: el jugador ya entraba muy por encima. Medidas con `probe.py` con el estado con que el bot entra a cada uno (las fotos salen del simulador con las metas nuevas):
+- Fatiga **11464** (30 min), Frontera **7067** (30 min), Inclusión **23500** (~25 min: se aplana entre 30 y 40 y con la de 30 el bot perdía y la tabla se corría 0,6 h), Vidrio **41518** (~20 min; su curva es casi plana: con 41520 el bot abandonaba).
+- **Ganar un Defecto cuenta como compra** en el hueco máximo (simulador y `balance_capa1.test.ts`): da una recompensa permanente. Sin eso Vidrio dejaba 49 min sin compras (19 de Defecto + un Infinito de 30).
+- Tabla nueva (15 s): Fatiga 9,47 h, Frontera 11,95 h, Inclusión 12,57 h, Vidrio 13,49 h, **fin de la capa 14,49 h** (era 14,16); 60 s: 14,35 h; 5 min: 15,48 h. Hueco máximo 30,8 min. La 1.1 no cambia.
+- Constantes que estaban fijas en el simulador, a config: `fatiga.decada_s` (600) y `frontera.recompensa_densidad` (0,2).
+- `SPEC_CAPA1.md` §2 (tabla) y §8 (metas, tabla de calibración, qué siente cada uno).
+
+**Núcleo** (`defectos.ts`; las fórmulas lo consultan): `DEFECTOS` tiene los 8 y `DEFECTOS_11` los 4 que abren la Escarcha; "en orden" es dentro de cada grupo de 4.
+- Fatiga: `fatigaLog10` = tiempoCorrida / 600, se resta fuera de la Densidad (como la penalidad de la Escarcha). La Compresión reinicia el reloj, igual que `rt` del sim.
+- Frontera: Densidad = 1 (`densidadFija`); recompensa +0,2 (`densidadExtra`).
+- Inclusión: `presionX` = 0.
+- Vidrio (`enVidrio`): sin efectos de reliquias, sin Eco, sin Escarcha, estratos quietos y `cristalesRedLog10` = 0 (como `crys_mult` del sim). Recompensa ×1000 Cristales dentro de `cristalesRedLog10`.
+- Fatiga ×2 a g e Inclusión ×1,5 a H ya estaban desde C10.
+
+**Interfaz**:
+- Pantalla de Defectos: con la Escarcha abierta, dos pestañas arriba de la cadena (Defectos / Defectos II), cuatro por vez (la pantalla sigue sin scroll). Redes cristalinas nuevas: Fatiga se apaga hacia la derecha, Frontera con un grano girado y su borde, Inclusión con una burbuja, Vidrio sin orden. Requisitos con el nodo y los Cristales totales que piden.
+- Lo que cambia ahora (ficha y Arena): Fatiga "Producción ×10^−x" y "÷10 en m:ss"; Frontera "Densidad ^1" con la de afuera tachada; Inclusión "Presión ×1" y lo que aporta la Escarcha; Vidrio Eco, Escarcha y Reliquias ×1.
+- Pila (shader, `lienzo.ts`): 5 latido que se apaga hacia el borde, 6 bordes de grano (Voronoi), 7 burbujas con borde de luz, 8 vidrio gris azulado con un reflejo.
+- La ficha scrollea por dentro si no entra (Vidrio en 390×844 se encimaba).
+- Debug: "Lista para Defectos II (1.2)".
+- Textos en español e inglés.
+
+**Tests**: `ref_defectos.py` genera los 8 Defectos adentro y completos (más Frontera completo dentro de Macla) con `tiempo_corrida` 900 para la Fatiga; el núcleo da lo mismo que el sim en los 19 casos. Test nuevo del orden en Defectos II.
+
+**Verificación**: 311 tests en verde, `npm run test:lento` en verde (13), `tsc` y `svelte-check` 0 errores. En el navegador (1366×768 y 390×844, sin scroll de página): pestañas, ficha de cada uno, entrar a Fatiga (cuenta regresiva en la Arena), y la pila con Frontera, Inclusión y Vidrio.
+
+**No medido**: fps con los shaders de Frontera e Inclusión (9 muestras de Voronoi por píxel, solo dentro de esos Defectos). Fatiga y Vidrio tienen la curva casi plana (§8): son un muro a propósito (decisión del usuario), te obligan a avanzar en la Capa 1 antes de ganarlos.

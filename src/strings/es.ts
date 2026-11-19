@@ -221,31 +221,40 @@ export const es = {
     // SPEC_CAPA1 §8
     defectos: {
       que: 'Un Defecto es un Infinito con una regla rota. Entrar te saca de la corrida sin Cristales. Si llegás a la meta te da los Cristales de ese Infinito, una reliquia y la recompensa para siempre. Podés abandonar cuando quieras, sin castigo.',
-      nombres: { vacancia: 'Vacancia', dislocacion: 'Dislocación', macla: 'Macla', impureza: 'Impureza' } as Record<string, string>,
+      nombres: { vacancia: 'Vacancia', dislocacion: 'Dislocación', macla: 'Macla', impureza: 'Impureza', fatiga: 'Fatiga', frontera: 'Frontera', inclusion: 'Inclusión', vidrio: 'Vidrio' } as Record<string, string>,
       /** Qué defecto de un cristal es cada uno (una línea, debajo del nombre). */
-      cristal: { vacancia: 'Falta un átomo en la red', dislocacion: 'Media red se corrió', macla: 'La red se refleja en un plano', impureza: 'Un átomo que no es de acá' } as Record<string, string>,
+      cristal: { vacancia: 'Falta un átomo en la red', dislocacion: 'Media red se corrió', macla: 'La red se refleja en un plano', impureza: 'Un átomo que no es de acá', fatiga: 'La red se cansa de tanto cargar', frontera: 'Dos granos que no encajan', inclusion: 'Una burbuja atrapada adentro', vidrio: 'Sin red: átomos sin orden' } as Record<string, string>,
       regla: {
         vacancia: (_x: number) => 'Violeta se compra, pero no multiplica.',
         dislocacion: (x: number) => `La Cascada no funciona y la Presión vale ×${f(x)}.`,
         macla: (x: number) => `No hay Mutaciones y la Densidad vale ×${f(x)}.`,
         impureza: (x: number) => `Los derrumbes por grano tienen tope 1e${x} y los colores valen a la mitad (^0,5).`,
+        fatiga: (x: number) => `La producción se divide por 10 cada ${f(x / 60)} min de corrida. Comprimir reinicia el reloj.`,
+        frontera: (_x: number) => 'La Densidad vale 1.',
+        inclusion: (_x: number) => 'La Presión de los Estratos no funciona. Te llevan la Escarcha y el Eco.',
+        vidrio: (_x: number) => 'Sin Relicario, sin Eco, sin Escarcha, los estratos quietos y sin bonos de Cristales. Solo queda la Red.',
       } as Record<string, (x: number) => string>,
       recompensa: {
         vacancia: (a: number, b: number) => `El hito de cada color ×${f(a)} → ×${f(b)}`,
         dislocacion: (a: number, b: number) => `Cada anillo ×${f(a)} → ×${f(b)}`,
         macla: (_a: number, b: number) => `Colores más baratos: su término cuadrático ×${f(b)}`,
         impureza: (_a: number, b: number) => `Cascada: +${f(b)} a c`,
+        fatiga: (_a: number, b: number) => `La Escarcha crece ×${f(b)}`,
+        frontera: (_a: number, b: number) => `Densidad +${f(b)}`,
+        inclusion: (_a: number, b: number) => `La Escarcha aguanta ×${f(b)} (frena menos)`,
+        vidrio: (_a: number, b: number) => `Cristales ×${f(10 ** b)}`,
       } as Record<string, (a: number, b: number) => string>,
       rotulos: { regla: 'Regla', meta: 'Meta', requisito: 'Requisito', recompensa: 'Recompensa', cambia: 'Lo que cambia ahora' },
       meta: (e: number) => `1e${e} de Energía`,
-      requisito: (nv: number, est: number) => (est ? `Defectos nv${nv} en la Red y ${est} estratos abiertos` : `Defectos nv${nv} en la Red`),
+      requisito: (g: number, nv: number, est: number, ctot: number) =>
+        `${g ? 'Defectos II' : 'Defectos'} nv${nv} en la Red` + (est ? ` y ${est} estratos abiertos` : '') + (ctot ? ` y 1e${ctot} Cristales totales` : ''),
       falta: {
         hecho: 'Superado: la recompensa ya es tuya.',
         otro: 'Hay otro Defecto en curso.',
         anterior: (n: string) => `Primero superá ${n}.`,
-        red: (nv: number) => `Pide el nodo Defectos en nv${nv}.`,
+        red: (g: number, nv: number) => `Pide el nodo ${g ? 'Defectos II' : 'Defectos'} en nv${nv}.`,
         estratos: (n: number, hay: number) => `Pide ${n} estratos abiertos (tenés ${hay}).`,
-        cristales: 'Pide más Cristales totales.',
+        cristales: (x: number, hay: string) => `Pide 1e${x} Cristales totales (tenés ${hay}).`,
       },
       entrar: 'Entrar',
       entrarQue: 'Sale de esta corrida sin Cristales.',
@@ -262,10 +271,11 @@ export const es = {
       abandonado: (n: string) => `Abandonaste ${n}`,
       ganado: (n: string, c: string) => `${n} superado · ${c}`,
       // lo que cambia: [nombre del multiplicador]
-      mult: { violeta: 'Violeta', cascada: 'Cascada', presion: 'Presión', densidad: 'Densidad', mutaciones: 'Mutaciones', derrumbes: 'Derrumbes por grano', colores: 'Colores' } as Record<string, string>,
+      mult: { violeta: 'Violeta', cascada: 'Cascada', presion: 'Presión', densidad: 'Densidad', mutaciones: 'Mutaciones', derrumbes: 'Derrumbes por grano', colores: 'Colores', fatiga: 'Producción', reloj: '÷10 en', escarcha: 'Escarcha', eco: 'Eco', reliquias: 'Reliquias' } as Record<string, string>,
       fuera: (x: string) => `fuera ${x}`,
       emblema: (n: string, estado: string) => `${n}: ${estado}`,
       lista: 'Los cuatro Defectos, en orden',
+      grupos: ['Defectos', 'Defectos II'],
     },
     // SPEC_CAPA1 §7 y correcciones, bloque 11 (el embudo en 2D)
     estratos: {
@@ -898,6 +908,7 @@ export const es = {
     casiInfinito: 'Energía a 1e307 (casi Infinito)',
     darCristales: 'Cristales ×10 (+10)',
     listaDefectos: 'Lista para los Defectos (mitad de la 1.1)',
+    listaDefectos2: 'Lista para Defectos II (1.2)',
     infinitoYa: 'Infinito ya',
     saltar: 'Saltar a la Compresión',
     ir: 'Ir',

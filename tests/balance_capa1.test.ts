@@ -47,6 +47,7 @@ export function jugar1(revisa = 15, tmax = 9 * H): Partida1 {
   const marca = (k: string, t: number) => { if (!(k in eventos)) eventos[k] = t }
   let t = 0, proxima = 0
   let hist: [number, number][] = []
+  let ganados = 0
 
   const entre = (x: State): State => { // lo que hace el bot entre dos corridas
     if (inventarioLleno(x)) marca('lleno', t) // fusionando siempre, el inventario no debería llenarse nunca
@@ -57,6 +58,7 @@ export function jugar1(revisa = 15, tmax = 9 * H): Partida1 {
     if (x.red.ruptura >= 1) marca('romper', t)
     if (x.estratos.abiertos >= 1) marca('estratos', t)
     for (const d of x.defectos.completos) marca(d, t)
+    if (x.defectos.completos.length > ganados) { ganados = x.defectos.completos.length; compras.push(t) } // ganar un Defecto cuenta como progreso (C12)
     if (x.estratos.s[7] >= CFG1.estratos.meta_1_1_estrato8_log10 && completo(x, 'impureza')) marca('fin11', t)
     const ctot = Math.max(0, x.cristalesTotales.log10())
     const d = DEFECTOS.find((d) => puedeEntrar(x, d) && !((x.defectos.reintento[d] ?? -Infinity) > ctot))

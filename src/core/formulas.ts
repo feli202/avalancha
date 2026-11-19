@@ -2,7 +2,8 @@
 import Decimal from 'break_infinity.js'
 import { CFG, precioLog10, type MutId } from './config'
 import {
-  baseAnillo, cascadaCExtra, cascadaX, colorSinEfecto, coloresX, densidadX, derrumbesTope, hitoColor, presionX, sinMutaciones,
+  baseAnillo, cascadaCExtra, cascadaX, colorSinEfecto, coloresX, densidadExtra, densidadFija, densidadX, derrumbesTope, fatigaLog10, hitoColor,
+  presionX, sinMutaciones,
 } from './defectos'
 import { aporteEscarcha, penalEscarcha } from './escarcha'
 import { presion } from './estratos'
@@ -50,8 +51,8 @@ export const infinitoRoto = (s: State) => nivelRed(s, 'ruptura') >= 1
 /** Sin Romper, en 1e308 la economía se congela hasta el Infinito (SPEC_CAPA1 §4). */
 export const congelada = (s: State) => enInfinito(s) && !infinitoRoto(s)
 
-export const densidad = (s: State) =>
-  (1 + CFG.compresion.densidad_por_nivel * s.compresiones + densidadRed(s) +
+export const densidad = (s: State) => densidadFija(s) ? 1 : // Frontera (§8)
+  (1 + CFG.compresion.densidad_por_nivel * s.compresiones + densidadRed(s) + densidadExtra(s) +
   efectoRed(s, 'compactacion2', 'densidad_por_anillo') * anillos(s.granos)) * densidadX(s) // Compactación II (§6.3); Macla (§8)
 
 /** Nivel máximo de Cascada y de cada Mutación (Cascada+ y Mutación+ de la Red lo suben). */
@@ -100,7 +101,7 @@ export const valor = (s: State) =>
 /** Energía que da un grano que cae ahora: (K × G) × V^D. */
 export const energiaPorGrano = (s: State) =>
   valor(s).pow(densidad(s)).mul(Math.min(CFG.K_derrumbes_por_grano * s.granos, derrumbesTope(s))) // Impureza: tope
-    .mul(Decimal.pow10(-penalEscarcha(s))) // SPEC_CAPA1 §10: la penalidad de la Escarcha, fuera de la Densidad
+    .mul(Decimal.pow10(-penalEscarcha(s) - fatigaLog10(s))) // SPEC_CAPA1 §10: la penalidad de la Escarcha y la Fatiga, fuera de la Densidad
 
 /** Energía/s = F × (K × G) × V^D. */
 export const produccion = (s: State) => energiaPorGrano(s).mul(caudal(s))

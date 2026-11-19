@@ -87,7 +87,8 @@ uniform float u_foco;      // zoom: radio en px del círculo que se ve nítido; 
 uniform int u_fondo;       // FONDO en lienzo.ts
 uniform sampler2D u_fondoPila; // R8: la pila llena (altura + 1, 0 = afuera) para el fondo Fractal
 uniform vec3 u_colorP[4];  // los colores de la arena (lineales), para el fondo Fractal
-uniform int u_defecto;     // SPEC_CAPA1 §8: 0 ninguno, 1 grieta (Vacancia), 2 corrimiento (Dislocación), 3 espejo (Macla), 4 manchas (Impureza)
+uniform int u_defecto;     // SPEC_CAPA1 §8: 0 ninguno, 1 grieta (Vacancia), 2 corrimiento (Dislocación), 3 espejo (Macla), 4 manchas (Impureza),
+                           // 5 pulso que se apaga (Fatiga), 6 bordes duros (Frontera), 7 burbujas (Inclusión), 8 vidrio sin color (Vidrio)
 uniform float u_escarcha;  // SPEC_CAPA1 §9: 0 sin Escarcha → 1 gruesa
 const float L = ${LADO}.0;
 const vec3 LUZ = vec3(-0.5, 0.55, 0.67); // arriba a la izquierda (sin normalizar)
@@ -168,6 +169,17 @@ float grieta(vec2 d) { return d.y - (0.32 * d.x + 5.0 * sin(d.x * 0.045) + 2.5 *
 float planoDesliz(vec2 d) { return d.y - 0.18 * d.x; }
 const vec2 MACLA_N = vec2(0.9397, -0.342); // normal del plano de macla (70°)
 float planoMacla(vec2 d) { return dot(d - vec2(L * 0.06, 0.0), MACLA_N); }
+// Frontera e Inclusión: distancias (F1, F2) a los puntos de una grilla de Voronoi de paso s celdas.
+vec2 voro(vec2 x, float s) {
+  vec2 i = floor(x / s), f = x / s - i, r = vec2(8.0);
+  for (int y = -1; y <= 1; y++)
+    for (int z = -1; z <= 1; z++) {
+      vec2 o = vec2(z, y), pt = o + vec2(hash(i + o), hash(i + o + 31.0)) - f;
+      float e = length(pt);
+      if (e < r.x) r = vec2(e, r.x); else if (e < r.y) r.y = e;
+    }
+  return r * s;
+}
 vec2 deforma(vec2 q) {
   vec2 d = q - L * 0.5;
   if (u_defecto == 1) return q + vec2(0.0, grieta(d) > 0.0 ? -1.5 : 1.5); // las dos mitades se separan
@@ -190,6 +202,22 @@ vec3 marcaDefecto(vec3 col, vec3 fondo, vec4 a, vec2 q) {
     float n = 0.65 * ruido(q * 0.035) + 0.35 * ruido(q * 0.11 + 7.0);
     float m = smoothstep(0.58, 0.68, n) * a.a;
     col = mix(col, dot(col, vec3(0.3, 0.55, 0.15)) * vec3(0.6, 0.48, 0.32), 0.8 * m) * (1.0 - 0.35 * m);
+  } else if (u_defecto == 5) { // un latido que sale del centro y se apaga hacia el borde
+    float r = length(d) / (L * 0.5);
+    float pulso = 0.5 + 0.5 * sin(u_ahora * 1.6 - r * 6.0);
+    col *= mix(1.0, 0.35 + 0.35 * pulso, smoothstep(0.1, 0.95, r) * a.a);
+  } else if (u_defecto == 6) { // granos de bordes duros: líneas oscuras entre granos de ~45 celdas
+    vec2 v = voro(q, 45.0);
+    col = mix(col, fondo * 0.25, (1.0 - smoothstep(w * 0.5, w * 1.3, v.y - v.x)) * a.a);
+  } else if (u_defecto == 7) { // burbujas atrapadas: huecos redondos con un borde de luz
+    vec2 v = voro(q + 13.0, 50.0);
+    float b = v.x - 8.0;
+    col = mix(col, fondo * 0.6, (1.0 - smoothstep(-w, 0.0, b)) * a.a);
+    col += vec3(0.55, 0.85, 1.0) * 0.45 * exp(-abs(b) / w) * a.a;
+  } else if (u_defecto == 8) { // vidrio: sin color, frío y con un reflejo en diagonal
+    float g = dot(col, vec3(0.3, 0.55, 0.15));
+    col = mix(col, g * vec3(0.8, 0.95, 1.1), 0.9 * a.a);
+    col += vec3(0.6, 0.8, 1.0) * 0.12 * smoothstep(0.85, 1.0, sin((d.x + d.y) * 0.02)) * a.a;
   }
   return col;
 }

@@ -42,13 +42,13 @@ Tiempo de juego **desde el primer Infinito** (la Capa 0 completa dura ~3 h 30). 
 | Defecto Macla | 4,52 h | 4,68 h | 5,71 h |
 | Defecto Impureza | 5,29 h | 5,45 h | 6,48 h |
 | **FIN 1.1**: Estrato 8 lleno → Escarcha | **6,63 h** | 6,78 h | 7,82 h |
-| Defecto Fatiga | 9,11 h | 9,26 h | 10,30 h |
-| Defecto Frontera | 11,61 h | 11,76 h | 12,80 h |
-| Defecto Inclusión | 12,16 h | 12,31 h | 13,38 h |
-| Defecto Vidrio | 13,16 h | 13,34 h | 14,40 h |
-| **FIN CAPA 1**: 1e308 Cristales | **14,16 h** | 14,35 h | 15,42 h |
+| Defecto Fatiga | 9,47 h | 9,62 h | 10,37 h |
+| Defecto Frontera | 11,95 h | 12,09 h | 13,16 h |
+| Defecto Inclusión | 12,57 h | 12,72 h | 13,78 h |
+| Defecto Vidrio | 13,49 h | 13,34 h | 14,46 h |
+| **FIN CAPA 1**: 1e308 Cristales | **14,49 h** | 14,35 h | 15,48 h |
 
-- Hueco máximo entre compras de la Capa 1 (después de la hora 1,5): **31 min** (31 min cada 60 s; 40 min para el jugador de cada 5 min). Durante esos huecos siempre hay compras de Arena y la Escarcha creciendo; son las corridas largas del final, donde el jugador espera un Infinito grande.
+- Hueco máximo entre compras de la Capa 1 (después de la hora 1,5): **31 min** (31 min cada 60 s; 40 min para el jugador de cada 5 min). Ganar un Defecto cuenta como compra: da una recompensa permanente (C12). Durante esos huecos siempre hay compras de Arena y la Escarcha creciendo; son las corridas largas del final, donde el jugador espera un Infinito grande.
 - **Abrir un estrato se nota enseguida** (se llena de golpe, §7.2). Lo que multiplica la producción en el momento de abrirlo, `10^(D × Presión que suma)`, medido en el simulador: E1 ×1e2,3 · E2 ×1e7,9 · E3 ×1e13,0 · E4 ×1e18,2 · E5 ×1e27,1 · E6 ×1e47,8 · E7 ×1e80,6 · E8 ×1e118,8. El mínimo pedido es ×100.
 - **El softcap casi no mueve la capa** (sin él: fin 1.1 a las 7,24 h y fin de la capa a las 14,78 h): con el Infinito roto la producción la llevan la Presión, el Eco y la Escarcha, no los niveles de color. Frena sobre todo las Mutaciones y los colores altos en los Defectos largos (~0,1 h cada uno). No hubo que recalibrar multiplicadores.
 - **Estratos después de Romper**: el bot compra Ruptura nv1 y en la misma tanda el nodo Estratos y el primer estrato (2,30 h). La Vacancia se juega antes (sin estratos ni Infinito roto); el bot la abandona y la gana al reintentar, justo después de Romper. Dislocación, Macla e Impureza piden 3, 5 y 7 estratos.
@@ -265,10 +265,10 @@ Un Defecto es un Infinito con una regla rota. Se entra desde su pantalla (sale d
 | 2 | **Dislocación** | La Cascada no funciona (c × 0) y la Presión vale ×0,5. | 1347 | Multiplicador por anillo ×1,10 → ×1,12 | Defectos nv2, 3 estratos |
 | 3 | **Macla** | No hay Mutaciones y la Densidad vale ×0,85. | 1816 | Crecimiento cuadrático de los colores ×0,9 (más baratos) | Defectos nv3, 5 estratos |
 | 4 | **Impureza** | Derrumbes por grano con tope 1e4 y colores a la mitad (^0,5, Cauce incluido). | 3471 | Cascada +0,1 de `c` | Defectos nv4, 7 estratos |
-| 5 | **Fatiga** | La producción se divide por 10 cada 10 min (`−t/600` en log). | 1200 | Escarcha crece ×2 | Defectos II nv1, 1e60 Cristales totales |
-| 6 | **Frontera** | Densidad = 1. | 700 | Densidad +0,2 | Defectos II nv2, 1e80 |
-| 7 | **Inclusión** | La Presión de los Estratos no funciona. | 1800 | Aguante de la Escarcha ×1,5 | Defectos II nv3, 1e105 |
-| 8 | **Vidrio** | Sin Relicario, sin Eco y sin Escarcha (la Red sí funciona). | 25000 | Cristales ×1000 | Defectos II nv4, 1e150 |
+| 5 | **Fatiga** | La producción se divide por 10 cada 10 min de corrida (`−t/600` en log; la Compresión reinicia el reloj). | 11464 | Escarcha crece ×2 | Defectos II nv1, 1e60 Cristales totales |
+| 6 | **Frontera** | Densidad = 1. | 7067 | Densidad +0,2 | Defectos II nv2, 1e80 |
+| 7 | **Inclusión** | La Presión de los Estratos no funciona. | 23500 | Aguante de la Escarcha ×1,5 | Defectos II nv3, 1e105 |
+| 8 | **Vidrio** | Sin Relicario, sin Eco, sin Escarcha, los estratos quietos y sin los bonos de Cristales de la Red (el resto de la Red sí funciona). | 41518 | Cristales ×1000 | Defectos II nv4, 1e150 |
 
 - Las metas 1–4 se calibraron con `balance/probe.py` (C7, con el softcap pasado 1e308): el jugador de la tabla de §2 en la hora de cada Defecto juega el Defecto sin meta ni abandono, y la meta es lo que alcanza a los **30 min** (rango pedido: 20–40 min). Medido (log10 E a 1 / 20 / 30 / 40 min):
 
@@ -279,7 +279,18 @@ Un Defecto es un Infinito con una regla rota. Se entra desde su pantalla (sale d
   | Macla | 4,46 h | 1810 | 1816 | **1816** | 1817 |
   | Impureza | 5,53 h | 3463 | 3470 | **3471** | 3472 |
 
-  **Ojo**: más allá de 1e308 la curva dentro de un Defecto es casi plana (E ≈ cte + log t: las mejoras cuestan ×10 cada nivel y la Presión no crece en 30 min). La ventana de 20–40 min es de 1–2 órdenes: un jugador un poco más fuerte gana en un minuto y uno un poco más débil no llega. El Defecto lo decide sobre todo el estado con que se entra (estratos, Cristales totales), no el tiempo adentro. La Vacancia (antes de Romper) sí tiene una curva real. Las metas 5–8 (C12) todavía son las viejas y no se volvieron a medir.
+  **Ojo**: más allá de 1e308 la curva dentro de un Defecto es casi plana (E ≈ cte + log t: las mejoras cuestan ×10 cada nivel y la Presión no crece en 30 min). La ventana de 20–40 min es de 1–2 órdenes: un jugador un poco más fuerte gana en un minuto y uno un poco más débil no llega. El Defecto lo decide sobre todo el estado con que se entra (estratos, Cristales totales), no el tiempo adentro. La Vacancia (antes de Romper) sí tiene una curva real.
+- Las metas 5–8 (C12) se midieron igual, con el estado con que el bot entra a cada uno (las fotos salen del simulador con las metas nuevas):
+
+  | Defecto | Estado de | 1 min | 10 min | 20 min | 30 min | 40 min | Meta |
+  |---|---|---|---|---|---|---|---|
+  | Fatiga | 9,10 h · Ctot 1e60 | 11410 | 11422 | 11422 | 11464 | 11490 | **11464** (30 min) |
+  | Frontera | 11,55 h · 1e80 | 6011 | 6318 | 6400 | 7067 | 7447 | **7067** (30 min) |
+  | Inclusión | 12,14 h · 1e108 | 11607 | 16077 | 21003 | 25844 | 25844 | **23500** (~25 min) |
+  | Vidrio | 13,16 h · 1e191 | 41483 | 41513 | 41520 | 41521 | 41528 | **41518** (~20 min) |
+
+  Inclusión se aplana entre 30 y 40 min: con la meta de 30 min el bot quedaba corto y la tabla se corría 0,6 h, por eso la de 25. Fatiga y Vidrio son casi planas (el problema de arriba). En el simulador Fatiga y Frontera se pierden la primera vez y se ganan al reintentar; Inclusión y Vidrio se ganan al primer intento, jugados enteros. Los requisitos de Cristales totales (1e60/1e80/1e105/1e150) quedan: al final cada Infinito largo sube 30–60 órdenes y moverlos no cambia con cuánto se entra.
+- **Cada uno se siente distinto**: Fatiga es una carrera (se decide en los primeros minutos; la Arena muestra la cuenta al próximo ÷10 y el multiplicador actual); Frontera sube a saltos de Compresión (Densidad 1 con la de afuera tachada); Inclusión es el largo jugado, donde se ve qué aportan la Escarcha y el Eco sin la Presión; Vidrio es la pared final: la Red es lo único que queda prendido y decide con cuánto se entra.
 - Los requisitos siguen teniendo sentido con los Estratos detrás de Romper: Vacancia no pide estratos y se juega antes de Romper; Dislocación pide 3 estratos (y por lo tanto el Infinito roto, que es lo que necesita una regla sobre la Presión); Macla y Impureza piden 5 y 7, y en el simulador Impureza entra justo al abrir el 7.º. El nivel del nodo Defectos (anillo 1, 1 Cristal por nivel) no frena: frenan el orden y los estratos.
 - En la Vacancia el color Violeta aparece "agrietado" y su número tachado: se ve que se compra pero no suma.
 - Si fallás (abandonás), el juego sugiere volver cuando tengas ~30 veces más Cristales totales (`reintento_cristales_totales_log10` = 1,5; el bot reintenta ahí). Los bots (simulador y test) abandonan así: desde los 10 min de Defecto, si al ritmo de los últimos 3 min la meta queda a más de 30 min (`abandono_revisar_min`, `abandono_ventana_min`, `abandono_meta_max_min`), o a los 45 min.

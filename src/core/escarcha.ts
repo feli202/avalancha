@@ -3,7 +3,7 @@
 // "escarcha (persiste)" de play_arena en balance/sim_capa1.py.
 import { precioLog10 } from './config'
 import { CFG1 } from './config1'
-import { DEFECTOS, completo } from './defectos'
+import { DEFECTOS_11, completo, enVidrio } from './defectos'
 import { ESTRATOS, presion } from './estratos'
 import { efectoRed } from './red'
 import type { MejoraEscarcha, State } from './state'
@@ -13,9 +13,9 @@ export const MEJORAS_ESCARCHA: MejoraEscarcha[] = ['crecimiento', 'brillo', 'agu
 
 /** El hito de la 1.1: el Estrato 8 lleno teniendo los 4 primeros Defectos. Abre la Escarcha (y el anillo 3 de la Red). */
 export const hitoEscarcha = (s: State) =>
-  s.estratos.abiertos >= ESTRATOS && s.estratos.s[ESTRATOS - 1] >= CFG1.estratos.meta_1_1_estrato8_log10 && DEFECTOS.every((d) => completo(s, d))
+  s.estratos.abiertos >= ESTRATOS && s.estratos.s[ESTRATOS - 1] >= CFG1.estratos.meta_1_1_estrato8_log10 && DEFECTOS_11.every((d) => completo(s, d))
 /** Corre (crece, suma y frena): abierta y fuera del Defecto Vidrio. */
-export const escarchaActiva = (s: State) => s.escarcha.abierta && s.defectos.actual !== 'vidrio'
+export const escarchaActiva = (s: State) => s.escarcha.abierta && !enVidrio(s)
 
 /** Los factores de g (log10 por segundo), para el desglose. Presión sin el ×0,5 de Dislocación (como last_pres del sim). */
 export const factoresCrecimiento = (s: State) => ({

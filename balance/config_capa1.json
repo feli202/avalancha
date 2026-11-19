@@ -455,24 +455,26 @@
   },
   "fatiga": {
    "regla": "produccion x10^(-t/600)",
-   "meta_log10": 1200,
+  "decada_s": 600,
+   "meta_log10": 11464,
    "recompensa": "crecimiento de Escarcha x2",
    "recompensa_escarcha_g_x": 2
   },
   "frontera": {
    "regla": "Densidad = 1",
-   "meta_log10": 700,
-   "recompensa": "Densidad +0,2"
+   "meta_log10": 7067,
+   "recompensa": "Densidad +0,2",
+  "recompensa_densidad": 0.2
   },
   "inclusion": {
    "regla": "la Presion de los Estratos no funciona",
-   "meta_log10": 1800,
+   "meta_log10": 23500,
    "recompensa": "la Escarcha aguanta x1,5 (H)",
    "recompensa_escarcha_H_x": 1.5
   },
   "vidrio": {
    "regla": "sin Relicario, sin Eco y sin Escarcha",
-   "meta_log10": 25000,
+   "meta_log10": 41518,
    "recompensa": "cristales x1e3",
    "cristales_log10": 3
   },
@@ -537,7 +539,7 @@
      4
     ],
     "cristales_totales_log10": 150,
-    "_nota": "meta calibrada con probe.py a las 12.4 h"
+    "_nota": "metas 5-8 calibradas con probe.py (C12) con el estado al entrar"
    }
   }
  },

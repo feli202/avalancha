@@ -16,7 +16,7 @@ const conDef = (s: State, actual: string, completos: string[] = []): State => ({
 function arena(): State {
   const s = estadoInicial(), a = SIM.arena
   return {
-    ...s, caudal: a.caudal, colores: [...a.colores], cascada: a.cascada, compresiones: a.compresiones, granos: 10 ** a.log_granos,
+    ...s, caudal: a.caudal, colores: [...a.colores], cascada: a.cascada, compresiones: a.compresiones, granos: 10 ** a.log_granos, tiempoCorrida: a.tiempo_corrida,
     mutaciones: { caudal: a.mut[0], colores: a.mut[1], expansion: a.mut[2], cascada: a.mut[3] },
     red: { ...s.red, ...SIM.red }, cristalesTotales: Decimal.pow10(SIM.ctot_log10),
     estratos: { ...s.estratos, abiertos: SIM.estratos.abiertos, s: [...SIM.estratos.s, 0, 0, 0, 0, 0], pres: [...SIM.estratos.pres, 0, 0, 0, 0, 0] },
@@ -111,7 +111,16 @@ describe('Defectos: entrar, abandonar y ganar', () => {
     expect(falta({ ...v, red: { ...v.red, defectos: 1 } }, 'dislocacion')).toBe('red')
     expect(falta(v, 'vacancia')).toBe('hecho')
     expect(falta(conDef(s, 'vacancia'), 'vacancia')).toBe('otro')
-    expect(DEFECTOS.map((d) => DF.requisitos[d].red)).toEqual([['defectos', 1], ['defectos', 2], ['defectos', 3], ['defectos', 4]])
+    expect(DEFECTOS.map((d) => DF.requisitos[d].red)).toEqual([
+      ['defectos', 1], ['defectos', 2], ['defectos', 3], ['defectos', 4], ['defectos2', 1], ['defectos2', 2], ['defectos2', 3], ['defectos2', 4],
+    ])
+  })
+  it('Defectos II: Fatiga abre el grupo (no pide Impureza) y pide Cristales totales; Frontera pide Fatiga', () => {
+    const s = lista({ defectos2: 2 })
+    expect(falta(s, 'fatiga')).toBe('cristales')
+    const r = { ...s, cristalesTotales: Decimal.pow10(DF.requisitos.fatiga.cristales_totales_log10!) }
+    expect(falta(r, 'fatiga')).toBe('')
+    expect(falta(r, 'frontera')).toBe('anterior')
   })
   it('entrar sale de la corrida sin Cristales ni reliquia; abandonar no castiga y sugiere ×30 Cristales totales', () => {
     const s = lista(), e = entrarDefecto(s, 'vacancia')

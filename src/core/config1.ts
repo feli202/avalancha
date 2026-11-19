@@ -26,8 +26,10 @@ export interface Config1 {
     dislocacion: Defecto & { cascada_x: number; presion_x: number; recompensa_anillo_mult: number }
     macla: Defecto & { sin_mutaciones: boolean; densidad_x: number; recompensa_color_s_x: number }
     impureza: Defecto & { derrumbes_tope_log10: number; colores_x: number; recompensa_cascada_c: number }
-    fatiga: Defecto & { recompensa_escarcha_g_x: number }
+    fatiga: Defecto & { decada_s: number; recompensa_escarcha_g_x: number }
+    frontera: Defecto & { recompensa_densidad: number }
     inclusion: Defecto & { recompensa_escarcha_H_x: number }
+    vidrio: Defecto & { cristales_log10: number }
     reintento_cristales_totales_log10: number
     abandono_min: number; abandono_revisar_min: number; abandono_ventana_min: number; abandono_meta_max_min: number
     requisitos: Record<string, { red: (string | number)[]; estratos_abiertos?: number; cristales_totales_log10?: number }>

@@ -7,9 +7,11 @@ import { CFG1 } from './config1'
 import type { State } from './state'
 
 const D = CFG1.defectos
-/** Los Defectos de la 1.1, en el orden en que se hacen. shortcut: Fatiga–Vidrio (grupo 2) llegan en C12 con sus reglas. */
-export const DEFECTOS = ['vacancia', 'dislocacion', 'macla', 'impureza'] as const
+/** Los Defectos en el orden en que se hacen: el grupo de la 1.1 (Defectos) y el de la 1.2 (Defectos II), de a 4. */
+export const DEFECTOS = ['vacancia', 'dislocacion', 'macla', 'impureza', 'fatiga', 'frontera', 'inclusion', 'vidrio'] as const
 export type DefectoId = (typeof DEFECTOS)[number]
+/** Los 4 de la 1.1: con ellos y el Estrato 8 lleno se abre la Escarcha. */
+export const DEFECTOS_11 = DEFECTOS.slice(0, 4)
 
 export const enDefecto = (s: State, id?: DefectoId) => (id ? s.defectos.actual === id : s.defectos.actual !== '')
 export const completo = (s: State, id: string) => s.defectos.completos.includes(id)
@@ -22,13 +24,21 @@ export const metaLog10 = (id: DefectoId) => D[id].meta_log10
 export const colorSinEfecto = (s: State, i: number) => enDefecto(s, 'vacancia') && i === D.vacancia.color_sin_efecto
 /** Dislocación: la Cascada no funciona (su c × 0) y la Presión vale la mitad. */
 export const cascadaX = (s: State) => (enDefecto(s, 'dislocacion') ? D.dislocacion.cascada_x : 1)
-export const presionX = (s: State) => (enDefecto(s, 'dislocacion') ? D.dislocacion.presion_x : 1)
+export const presionX = (s: State) => (enDefecto(s, 'dislocacion') ? D.dislocacion.presion_x : enDefecto(s, 'inclusion') ? 0 : 1)
 /** Macla: no hay Mutaciones y la Densidad vale ×0,85. */
 export const sinMutaciones = (s: State) => enDefecto(s, 'macla') && D.macla.sin_mutaciones
 export const densidadX = (s: State) => (enDefecto(s, 'macla') ? D.macla.densidad_x : 1)
 /** Impureza: derrumbes por grano con tope y colores a la mitad (su log10, Cauce incluido, × colores_x). */
 export const derrumbesTope = (s: State) => (enDefecto(s, 'impureza') ? 10 ** D.impureza.derrumbes_tope_log10 : Infinity)
 export const coloresX = (s: State) => (enDefecto(s, 'impureza') ? D.impureza.colores_x : 1)
+/** Fatiga: log10 de lo que se pierde, −t/600 con t la corrida desde la última Compresión (÷10 cada 10 min). */
+export const fatigaLog10 = (s: State) => (enDefecto(s, 'fatiga') ? s.tiempoCorrida / D.fatiga.decada_s : 0)
+/** Frontera: Densidad = 1. */
+export const densidadFija = (s: State) => enDefecto(s, 'frontera')
+/** Inclusión: la Presión de los Estratos no funciona. */
+export const sinPresion = (s: State) => enDefecto(s, 'inclusion')
+/** Vidrio: sin Relicario, sin Eco, sin Escarcha, los estratos quietos y sin los bonos de Cristales de la Red. */
+export const enVidrio = (s: State) => enDefecto(s, 'vidrio')
 
 // ---------- recompensas (permanentes) ----------
 /** Vacancia: el hito de color ×4 → ×6. */
@@ -39,6 +49,10 @@ export const baseAnillo = (s: State) => (completo(s, 'dislocacion') ? D.dislocac
 export const colorSX = (s: State) => (completo(s, 'macla') ? D.macla.recompensa_color_s_x : 1)
 /** Impureza: +0,1 a la c de la Cascada (si tiene al menos un nivel, como las otras sumas a c). */
 export const cascadaCExtra = (s: State) => (completo(s, 'impureza') ? D.impureza.recompensa_cascada_c : 0)
+/** Frontera: Densidad +0,2. */
+export const densidadExtra = (s: State) => (completo(s, 'frontera') ? D.frontera.recompensa_densidad : 0)
+/** Vidrio: Cristales ×1000 (log10). Fatiga e Inclusión ayudan a la Escarcha (escarcha.ts). */
+export const cristalesVidrioLog10 = (s: State) => (completo(s, 'vidrio') ? D.vidrio.cristales_log10 : 0)
 
 // ---------- entrar, abandonar, ganar ----------
 /** Lo que falta para poder entrar ('' = se puede). Dentro de cada grupo se hacen en orden. */
@@ -46,7 +60,7 @@ export function falta(s: State, id: DefectoId): '' | 'hecho' | 'otro' | 'anterio
   const rq = D.requisitos[id], i = DEFECTOS.indexOf(id)
   if (completo(s, id)) return 'hecho'
   if (enDefecto(s)) return 'otro'
-  if (i > 0 && !completo(s, DEFECTOS[i - 1])) return 'anterior'
+  if (i % 4 > 0 && !completo(s, DEFECTOS[i - 1])) return 'anterior' // dentro de cada grupo, en orden
   if ((s.red[rq.red[0]] ?? 0) < Number(rq.red[1])) return 'red'
   if (s.estratos.abiertos < (rq.estratos_abiertos ?? 0)) return 'estratos'
   if (s.cristalesTotales.log10() < (rq.cristales_totales_log10 ?? -Infinity)) return 'cristales'

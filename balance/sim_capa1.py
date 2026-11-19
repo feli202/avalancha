@@ -111,7 +111,7 @@ class Player:
         if 'dislocacion' in s.done: m['ringBase'] = DFX['dislocacion']['recompensa_anillo_mult']
         if 'macla' in s.done: m['colorS'] = DFX['macla']['recompensa_color_s_x']
         if 'impureza' in s.done: m['cBonus'] += DFX['impureza']['recompensa_cascada_c']
-        if 'frontera' in s.done: m['dAdd'] += 0.2
+        if 'frontera' in s.done: m['dAdd'] += DFX['frontera']['recompensa_densidad']
         if not noRed:
             m['dAdd'] += s.v('compactacion', 'densidad')
             m['cascMax'] = s.v('cascada_plus', 'nivel_max_extra'); m['mutMax'] = s.v('mutacion_plus', 'nivel_max_extra')
@@ -197,7 +197,7 @@ class Arena:
         if P.esc_on and s.defect != 'vidrio':
             g, H, m = P.esc_params(); pen = 1
             r -= pen * l10(1 + P.logX / H)
-        if s.defect == 'fatiga': r -= s.rt / 600
+        if s.defect == 'fatiga': r -= s.rt / DFX['fatiga']['decada_s']
         return r
     # ---- tienda de la Arena
     def color_cost(s, i):
@@ -430,7 +430,7 @@ def simulate(check=15.0, tmax=24 * 3600, verbose=False, horizon_end=True):
             {k: round(v, 1) for k, v in pp.items()}, round(A.D(), 2), P.perm[:P.est_open], P.pres[:P.est_open], [round(x) for x in P.s[:P.est_open]]))
         if P.ninf == 2: mark(t, 'segundo Infinito')
         if defect:
-            if ok: P.done.add(defect); mark(t, f'Defecto {defect}')
+            if ok: P.done.add(defect); mark(t, f'Defecto {defect}'); stats['compras'].append(t)  # ganar un Defecto cuenta como progreso (recompensa permanente)
             else: P.retry_at[defect] = P.Ctot + DFX['reintento_cristales_totales_log10']
         lc = NEG if abandono else infinity_reward(P, A, defect, ok)  # abandonar no cobra, aunque haya pasado 1e308
         if lc > NEG:

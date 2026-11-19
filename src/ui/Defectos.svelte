@@ -1,11 +1,11 @@
 <script lang="ts">
-  // SPEC_CAPA1 §8: la pantalla de los Defectos. A la izquierda los cuatro, en orden, cada uno con su red cristalina rota
+  // SPEC_CAPA1 §8: la pantalla de los Defectos. A la izquierda los cuatro del grupo (Defectos o, desde la Escarcha, Defectos II), en orden, cada uno con su red cristalina rota
   // (un átomo que falta, media red corrida, la red reflejada, un átomo ajeno) unidos por escarcha; a la derecha, la ficha del
   // elegido con regla, meta, requisito y recompensa, y el botón para entrar o abandonar.
   import Decimal from 'break_infinity.js'
   import { CFG1, DEFECTOS, completo, enDefecto, falta, metaLog10, puedeEntrar, volverCon, type DefectoId } from '../core'
   import { txt } from '../strings'
-  import { cambios, nombre, recompensa, regla, requisito } from './defectos'
+  import { cambios, grupo, nombre, recompensa, regla, requisito } from './defectos'
   import { formato } from './formato'
   import { abandonarDefectoYa, entrarDefectoYa, juego, progresoCompresion } from './juego.svelte'
   import * as sonido from './sonido'
@@ -13,20 +13,30 @@
   const t = txt.cristal.defectos
   const s = $derived(juego.s)
   /** El color de nivel de cada uno (el mismo que pinta su red cuando está superado). */
-  const COLOR: Record<DefectoId, string> = { vacancia: 'var(--violeta)', dislocacion: 'var(--coral)', macla: 'var(--jade)', impureza: 'var(--ambar)' }
+  const COLOR: Record<DefectoId, string> = {
+    vacancia: 'var(--violeta)', dislocacion: 'var(--coral)', macla: 'var(--jade)', impureza: 'var(--ambar)',
+    fatiga: 'var(--coral)', frontera: 'var(--ambar)', inclusion: 'var(--hielo)', vidrio: 'var(--tinta)',
+  }
   const primero = () => (juego.s.defectos.actual as DefectoId) || DEFECTOS.find((d) => !completo(juego.s, d)) || DEFECTOS[0]
   let foco = $state<DefectoId>(primero())
+  /** Defectos II se ve desde que se abre la Escarcha (la 1.2). */
+  const conGrupo2 = $derived(s.escarcha.abierta)
+  const visibles = $derived(DEFECTOS.slice(grupo(foco) * 4, grupo(foco) * 4 + 4))
+  const verGrupo = (g: number) => (foco = DEFECTOS.slice(g * 4, g * 4 + 4).find((d) => !completo(juego.s, d)) ?? DEFECTOS[g * 4])
 
   /** Red cristalina de 5×5 con el defecto de cada uno. x, y en una grilla de paso 10; `o`: el átomo distinto. */
   function red(id: DefectoId) {
-    const p: { x: number; y: number; o?: boolean }[] = []
+    const p: { x: number; y: number; o?: boolean; f: number }[] = [] // f: opacidad (Fatiga se apaga hacia la derecha)
     for (let j = -2; j <= 2; j++)
       for (let i = -2; i <= 2; i++) {
         let x = i * 10, y = j * 10
         if (id === 'vacancia' && i === 0 && j === 0) continue
         if (id === 'dislocacion' && j < 0) x += 5 // la mitad de arriba se corrió media celda
         if (id === 'macla') x += Math.abs(j) * 3.5 - 3.5 // la red se refleja en el plano del medio
-        p.push({ x, y, o: id === 'impureza' && i === 1 && j === -1 })
+        if (id === 'frontera' && i > 0) { x += 2; y += i * 3 - 1.5 } // el grano de la derecha está girado
+        if (id === 'inclusion' && Math.abs(i - 0.5) < 1 && Math.abs(j - 0.5) < 1) continue // la burbuja ocupa 2×2
+        if (id === 'vidrio') { x += Math.sin(i * 7.1 + j * 3.3) * 3.2; y += Math.cos(i * 2.7 - j * 5.9) * 3.2 } // sin orden
+        p.push({ x, y, o: id === 'impureza' && i === 1 && j === -1, f: id === 'fatiga' ? 1 - (i + 2) * 0.2 : 1 })
       }
     return p
   }
@@ -36,11 +46,11 @@
   function textoFalta(id: DefectoId) {
     const f = falta(s, id)
     if (f === 'anterior') return t.falta.anterior(nombre(DEFECTOS[DEFECTOS.indexOf(id) - 1]))
-    if (f === 'red') return t.falta.red(Number(cfgRq(id).red[1]))
+    if (f === 'red') return t.falta.red(grupo(id), Number(cfgRq(id).red[1]))
     if (f === 'estratos') return t.falta.estratos(cfgRq(id).estratos_abiertos ?? 0, s.estratos.abiertos)
     if (f === 'hecho') return t.falta.hecho
     if (f === 'otro') return t.falta.otro
-    if (f === 'cristales') return t.falta.cristales
+    if (f === 'cristales') return t.falta.cristales(cfgRq(id).cristales_totales_log10 ?? 0, formato(s.cristalesTotales))
     return t.entrarQue
   }
   const cfgRq = (id: DefectoId) => CFG1.defectos.requisitos[id]
@@ -58,14 +68,22 @@
     {#if id === 'dislocacion'}<path class="plano" d="M-28-5H28" />{/if}
     {#if id === 'macla'}<path class="plano" d="M-28 0H28" />{/if}
     {#if id === 'vacancia'}<circle class="hueco" r={r} />{/if}
-    {#each red(id) as a}<circle class="atomo" class:otro={a.o} cx={a.x} cy={a.y} r={a.o ? r * 1.45 : r} />{/each}
+    {#if id === 'frontera'}<path class="plano" d="M5-28V28" />{/if}
+    {#if id === 'inclusion'}<circle class="hueco" cx="5" cy="5" r={r * 2.6} />{/if}
+    {#each red(id) as a}<circle class="atomo" class:otro={a.o} cx={a.x} cy={a.y} r={a.o ? r * 1.45 : r} opacity={a.f} />{/each}
   </svg>
 {/snippet}
 
 <section class="defectos" aria-label={txt.cristal.pantallas.defectos}>
   <div class="vista">
+    <div class="lado">
+    {#if conGrupo2}
+      <div class="grupos" role="group">
+        {#each t.grupos as g, i}<button aria-pressed={grupo(foco) === i} onclick={() => verGrupo(i)}>{g}</button>{/each}
+      </div>
+    {/if}
     <ol class="cadena" aria-label={t.lista}>
-      {#each DEFECTOS as id (id)}
+      {#each visibles as id (id)}
         <li>
           <button class="emblema" class:hecho={completo(s, id)} class:actual={enDefecto(s, id)} class:abierto={puedeEntrar(s, id)}
             aria-pressed={foco === id} aria-label={t.emblema(nombre(id), estado(id) || t.entrar)} onclick={() => (foco = id)}>
@@ -76,6 +94,7 @@
         </li>
       {/each}
     </ol>
+    </div>
 
     <aside class="ficha placa grietas" aria-live="polite">
       <header style:--c={COLOR[foco]}>
@@ -123,6 +142,14 @@
   .defectos { display: grid; grid-template-rows: minmax(0, 1fr) auto; height: 100%; min-height: 0; justify-items: center; gap: 0.75rem; padding: 1.25rem 0 0; animation: entrar 0.3s ease-out; }
   @keyframes entrar { from { opacity: 0; } }
   .que { max-width: 44rem; margin: 0; color: var(--tenue); text-align: center; text-wrap: balance; font-size: 0.875rem; }
+  .lado { display: grid; gap: 0.75rem; }
+  .grupos { display: flex; gap: 0.25rem; }
+  .grupos button {
+    flex: 1; padding: 0.35rem 0.5rem; border: 0; background: rgb(159 227 245 / 0.06); color: var(--tenue); font: inherit; font-size: 0.8125rem; cursor: pointer;
+    clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
+  }
+  .grupos button[aria-pressed='true'] { color: var(--escarcha); background: rgb(159 227 245 / 0.16); }
+  .grupos button:focus-visible { outline: 2px solid var(--hielo); outline-offset: 2px; }
   .vista { display: grid; grid-template-columns: 15rem minmax(0, 27rem); gap: 2.5rem; align-items: center; justify-content: center; width: min(100%, 72rem); min-height: 0; }
 
   /* La cadena: cuatro cristales unidos por una línea de escarcha; el superado se enciende con su color. */
@@ -157,7 +184,7 @@
   @media (prefers-reduced-motion: reduce) { .actual .red { animation: none; } }
 
   /* La ficha: placa de hielo de tamaño fijo (no late al cambiar de Defecto). */
-  .ficha { --f: 1rem; display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 0.85rem; height: min(30rem, 100%); overflow: hidden; padding: 0.9rem 1.2rem 1.2rem; }
+  .ficha { --f: 1rem; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 0.85rem; height: min(30rem, 100%); overflow: hidden; padding: 0.9rem 1.2rem 1.2rem; }
   header {
     display: grid; grid-template-columns: 3.5rem minmax(0, 1fr) auto; align-items: center; gap: 0.8rem; padding-bottom: 0.6rem;
     background: linear-gradient(90deg, transparent, rgb(159 227 245 / 0.3), transparent) bottom / 100% 1px no-repeat;
@@ -167,7 +194,7 @@
   .sub { margin: 0.1rem 0 0; font-size: 0.8125rem; color: var(--tenue); }
   .sello { padding: 0.2rem 0.6rem; font-size: 0.75rem; color: var(--hielo); background: rgb(159 227 245 / 0.08); clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%); white-space: nowrap; }
   .sello.hecho { color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
-  dl { display: grid; gap: 0.6rem; margin: 0; }
+  dl { display: grid; align-content: start; gap: 0.6rem; margin: 0; min-height: 0; overflow-y: auto; } /* si no entra (celular), scrollea solo la ficha */
   dt { font-size: 0.75rem; color: var(--tenue); letter-spacing: 0.04em; text-transform: uppercase; }
   dd { margin: 0.1rem 0 0; font-size: 0.9375rem; color: var(--tinta); text-wrap: pretty; }
   .premio { color: var(--hielo); }
@@ -195,6 +222,7 @@
   @media (max-width: 760px) {
     .defectos { gap: 0.4rem; padding-top: 0.6rem; }
     .vista { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 0.6rem; align-items: stretch; }
+    .lado { gap: 0.4rem; }
     .cadena { grid-template-columns: repeat(4, 1fr); gap: 0.25rem; }
     .cadena::before { left: 12%; right: 12%; top: 1.75rem; bottom: auto; width: auto; height: 1px; }
     .emblema { grid-template-columns: 1fr; justify-items: center; min-height: 0; text-align: center; }

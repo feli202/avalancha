@@ -3,6 +3,7 @@
 import { precioLog10 } from './config'
 import { CFG1 } from './config1'
 import { cristalesDe, efectoRed } from './red'
+import { enVidrio } from './defectos'
 import type { State } from './state'
 
 const E = CFG1.estratos
@@ -31,7 +32,7 @@ export const gammaEstrato = (s: State, k: number, logCaudal: number, sk = s.estr
  * arriba menos la separación, ni baja. */
 export function crecerEstratos(s: State, dt: number, logCaudal: number): State['estratos'] {
   const e = s.estratos
-  if (!e.abiertos || !flujoEstratos(s)) return e
+  if (!e.abiertos || !flujoEstratos(s) || enVidrio(s)) return e // Vidrio: los estratos quedan quietos
   const n = [...e.s], sep = separacion(s)
   for (let k = 0; k < e.abiertos; k++) {
     let x = n[k] + gammaEstrato(s, k, logCaudal, n) * dt

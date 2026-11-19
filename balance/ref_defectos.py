@@ -11,7 +11,7 @@ import json, os
 import sim_capa1 as S
 
 # Arena de mitad de la 1.1: los 4 colores (Violeta con hitos), Cascada, Mutaciones, anillos, 3 estratos y Eco.
-ARENA = dict(caudal=40, colores=[60, 55, 50, 30], cascada=12, mut=[3, 4, 2, 2], compresiones=17, log_granos=14.37)
+ARENA = dict(caudal=40, colores=[60, 55, 50, 30], cascada=12, mut=[3, 4, 2, 2], compresiones=17, log_granos=14.37, tiempo_corrida=900.0)
 RED = {'memoria': 4, 'eco': 2, 'estratos': 2, 'compactacion': 1}
 EST = dict(abiertos=3, s=[40.0, 38.0, 30.0], pres=[1, 0, 2])
 CTOT = 12.5
@@ -22,14 +22,14 @@ def caso(nombre, defecto, hechos):
     P.est_open = EST['abiertos']; P.s[:3] = EST['s']; P.pres[:3] = EST['pres']
     A = S.Arena(P, defecto)
     A.tier = ARENA['compresiones']; A.Lf = ARENA['caudal']; A.Lc = list(ARENA['colores']); A.Lk = ARENA['cascada']
-    A.mut = list(ARENA['mut']); A.lG = ARENA['log_granos']
+    A.mut = list(ARENA['mut']); A.lG = ARENA['log_granos']; A.rt = ARENA['tiempo_corrida']  # Fatiga
     color3 = S.costo_arena(lambda n: S.quad(S.COLS[3]['c0'], S.COLS[3]['g'], S.COLS[3]['s'] * A.m['colorS'], n), A.Lc[3])
     return dict(nombre=nombre, defecto=defecto or '', hechos=sorted(hechos), D=A.D(), logV=sum(A.logV_parts().values()),
                 lograte=A.lograte(), costo_violeta_log10=color3)
 
-TODOS = ['vacancia', 'dislocacion', 'macla', 'impureza']
+TODOS = ['vacancia', 'dislocacion', 'macla', 'impureza', 'fatiga', 'frontera', 'inclusion', 'vidrio']
 CASOS = [caso('sin Defecto', None, [])] + [caso(f'en {d}', d, []) for d in TODOS] + \
-        [caso(f'con {d} completo', None, [d]) for d in TODOS] + [caso('tres completos, en impureza', 'impureza', TODOS[:3])]
+        [caso(f'con {d} completo', None, [d]) for d in TODOS] + [caso('tres completos, en impureza', 'impureza', TODOS[:3]), caso('con frontera completo, en macla', 'macla', ['frontera'])]
 
 if __name__ == '__main__':
     out = os.path.join(S.HERE, '..', 'tests', 'fixtures', 'defectos_sim.json')

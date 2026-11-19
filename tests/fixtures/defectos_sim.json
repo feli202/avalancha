@@ -15,7 +15,8 @@
    2
   ],
   "compresiones": 17,
-  "log_granos": 14.37
+  "log_granos": 14.37,
+  "tiempo_corrida": 900.0
  },
  "red": {
   "memoria": 4,
@@ -84,6 +85,42 @@
    "costo_violeta_log10": 159
   },
   {
+   "nombre": "en fatiga",
+   "defecto": "fatiga",
+   "hechos": [],
+   "D": 3.12,
+   "logV": 85.68762554876237,
+   "lograte": 292.2319597564889,
+   "costo_violeta_log10": 159
+  },
+  {
+   "nombre": "en frontera",
+   "defecto": "frontera",
+   "hechos": [],
+   "D": 1.0,
+   "logV": 85.68762554876237,
+   "lograte": 112.07419359311265,
+   "costo_violeta_log10": 159
+  },
+  {
+   "nombre": "en inclusion",
+   "defecto": "inclusion",
+   "hechos": [],
+   "D": 3.12,
+   "logV": 77.85762554876237,
+   "lograte": 269.3023597564889,
+   "costo_violeta_log10": 159
+  },
+  {
+   "nombre": "en vidrio",
+   "defecto": "vidrio",
+   "hechos": [],
+   "D": 3.12,
+   "logV": 66.93762554876237,
+   "lograte": 235.23195975648886,
+   "costo_violeta_log10": 159
+  },
+  {
    "nombre": "con vacancia completo",
    "defecto": "",
    "hechos": [
@@ -128,6 +165,50 @@
    "costo_violeta_log10": 159
   },
   {
+   "nombre": "con fatiga completo",
+   "defecto": "",
+   "hechos": [
+    "fatiga"
+   ],
+   "D": 3.12,
+   "logV": 85.68762554876237,
+   "lograte": 293.7319597564889,
+   "costo_violeta_log10": 159
+  },
+  {
+   "nombre": "con frontera completo",
+   "defecto": "",
+   "hechos": [
+    "frontera"
+   ],
+   "D": 3.3200000000000003,
+   "logV": 85.68762554876237,
+   "lograte": 310.86948486624135,
+   "costo_violeta_log10": 159
+  },
+  {
+   "nombre": "con inclusion completo",
+   "defecto": "",
+   "hechos": [
+    "inclusion"
+   ],
+   "D": 3.12,
+   "logV": 85.68762554876237,
+   "lograte": 293.7319597564889,
+   "costo_violeta_log10": 159
+  },
+  {
+   "nombre": "con vidrio completo",
+   "defecto": "",
+   "hechos": [
+    "vidrio"
+   ],
+   "D": 3.12,
+   "logV": 85.68762554876237,
+   "lograte": 293.7319597564889,
+   "costo_violeta_log10": 159
+  },
+  {
    "nombre": "tres completos, en impureza",
    "defecto": "impureza",
    "hechos": [
@@ -139,6 +220,17 @@
    "logV": 62.081588050540724,
    "lograte": 211.16705471768705,
    "costo_violeta_log10": 147
+  },
+  {
+   "nombre": "con frontera completo, en macla",
+   "defecto": "macla",
+   "hechos": [
+    "frontera"
+   ],
+   "D": 2.822,
+   "logV": 81.68762554876237,
+   "lograte": 256.9090473429577,
+   "costo_violeta_log10": 159
   }
  ]
 }
