@@ -125,6 +125,9 @@ export function progresoCompresion(s: State) {
 }
 
 /** La barra fina de la izquierda (escala log10): cuánto falta para el Infinito y dónde caen los umbrales de Compresión. */
+/** Con el Infinito roto: log10(Cristales totales) sobre el fin de la Capa 1 (1e308, finCapa1). */
+export const caminoCapa2 = (s: State) => Math.min(1, Math.max(0, s.cristalesTotales.log10()) / CFG.infinito_log10)
+
 export function caminoInfinito(s: State) {
   return { p: Math.min(1, log10E(s) / CFG.infinito_log10), marcas: CFG.compresion.umbrales_log10.map((u) => u / CFG.infinito_log10) }
 }

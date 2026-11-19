@@ -19,7 +19,7 @@
   import Titulo from './Titulo.svelte'
   import { formato, formatoMult, hablado } from './formato'
   import { fade } from 'svelte/transition'
-  import { abandonarDefectoYa, caminoInfinito, comprimirYa, hayCartel, hayPanel, infinitoYa, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
+  import { abandonarDefectoYa, caminoCapa2, caminoInfinito, comprimirYa, hayCartel, hayPanel, infinitoYa, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
   import { PX_MAX } from '../render/pilaVisual'
   import { foto, guardarImagen } from './foto.svelte'
 
@@ -108,6 +108,15 @@
     <div class="camino aparece" role="meter" aria-valuemin={0} aria-valuemax={1} aria-valuenow={c.p} aria-label={txt.caminoInfinito(`${formato(s.energia)} / 1e308`)} style:--p={c.p}>
       {#each c.marcas as m}<i class:pasada={c.p >= m} style:--m={m}></i>{/each}
       <span aria-hidden="true">∞</span>
+    </div>
+  {:else if v.compresion}
+    <!-- Hacia la Capa 2: en el lugar del camino, un carámbano que crece hacia abajo con log10(Cristales totales) / 308.
+         En el último décimo la punta toma un resplandor de brasa (lo que hay debajo del hielo). -->
+    {@const p = caminoCapa2(s)}
+    {@const valor = txt.carambano.valor(formato(s.cristalesTotales))}
+    <div class="carambano aparece tocable" role="meter" aria-valuemin={0} aria-valuemax={1} aria-valuenow={p} aria-label={valor}
+      use:ayuda={() => ayudaSimple(txt.carambano.nombre, valor)} style:--p={p} style:--brasa={Math.max(0, (p - 0.9) / 0.1)}>
+      <i></i>
     </div>
   {/if}
 
@@ -264,7 +273,7 @@
   @media (orientation: landscape) and (max-width: 900px) { .juego { --col: 12.5rem; --margen: 1rem; font-size: 0.875rem; } }
 
   /* I5: en el título solo está la pila; al entrar, la interfaz aparece en orden mientras la cámara se acerca (Pila.svelte). */
-  .en-titulo :is(.izq, .ajustes, .sismo, .der, .pista, .aviso, .zoom, .camino) { visibility: hidden; }
+  .en-titulo :is(.izq, .ajustes, .sismo, .der, .pista, .aviso, .zoom, .camino, .carambano) { visibility: hidden; }
   .entrando .izq { animation: aparecer 0.8s 0.9s ease-out backwards; }
   .entrando .sismo { animation: aparecer 0.8s 1.3s ease-out backwards; }
   .entrando .pista { animation: aparecer 0.8s 1.5s ease-out backwards, latir 2.4s 2.3s ease-in-out infinite; }
@@ -301,6 +310,27 @@
   .camino i { position: absolute; left: -3px; bottom: calc(var(--m) * 100%); width: 8px; height: 1px; background: rgb(232 233 243 / 0.2); }
   .camino i.pasada { background: rgb(232 233 243 / 0.65); }
   .camino span { position: absolute; left: 50%; top: -1.4rem; translate: -50%; font-size: 0.8125rem; line-height: 1; color: var(--apagado); }
+  /* El carámbano: hielo translúcido de la Capa 1 con brillo frío en el borde; la caja es más ancha que el hielo para tocarlo. */
+  .carambano {
+    position: fixed; left: calc(var(--barra, 0px) + 0.75rem - 11px); width: 24px; outline-offset: 2px;
+    top: max(22vh, calc(var(--margen) + var(--izq-alto) + 1rem)); bottom: 22vh;
+    background: linear-gradient(rgb(191 233 247 / 0.07), rgb(191 233 247 / 0.07)) center / 1px 100% no-repeat; /* la vía, apenas */
+    filter: drop-shadow(0 0 2px rgb(191 233 247 / 0.55));
+  }
+  .carambano i {
+    position: absolute; left: 50%; top: 0; width: 9px; height: max(6px, calc(var(--p) * 100%)); translate: -50%;
+    clip-path: polygon(0 0, 100% 0, 78% 22%, 64% 58%, 50% 100%, 38% 62%, 20% 26%);
+    background: linear-gradient(90deg, rgb(234 246 255 / 0.75), rgb(159 227 245 / 0.28) 45%, rgb(127 207 232 / 0.18) 60%, rgb(234 246 255 / 0.6));
+    transition: height 0.6s ease-out;
+  }
+  .carambano::after { /* la brasa en la punta: solo en el último décimo, muy suave */
+    content: ''; position: absolute; left: 50%; top: max(6px, calc(var(--p) * 100%)); width: 14px; height: 14px; translate: -50% -60%; border-radius: 50%;
+    background: radial-gradient(circle, rgb(255 194 122 / 0.9), rgb(255 90 31 / 0.35) 45%, transparent 70%);
+    opacity: calc(var(--brasa) * 0.8); animation: brasa 3.2s ease-in-out infinite alternate; pointer-events: none;
+  }
+  .quieto .carambano::after { animation: none; }
+  @keyframes brasa { to { opacity: calc(var(--brasa) * 0.45); } }
+  .fin .carambano { animation: irse 0.8s 1.2s ease-in forwards; }
   .fin .camino { animation: irse 0.8s 1.2s ease-in forwards; }
   .energia { font-size: clamp(2.5rem, 4vw, 3.75rem); font-weight: 600; line-height: 1; letter-spacing: -0.03em; margin: 0.125rem 0 0.5rem; }
   .linea { font-size: 1rem; color: var(--tenue); line-height: 1.6; }
@@ -421,6 +451,7 @@
     .izq { right: var(--margen); }
     /* Debajo del bloque de números (Energía, por segundo, Densidad, Cristales, Defecto), con lugar para el ∞ y margen. */
     .camino { top: max(calc(var(--pila-arriba) + 1.5rem), calc(var(--margen) + var(--izq-alto) + 2.5rem)); bottom: calc(var(--pila-abajo) + 1.5rem); }
+    .carambano { top: max(calc(var(--pila-arriba) + 1.5rem), calc(var(--margen) + var(--izq-alto) + 1rem)); bottom: calc(var(--pila-abajo) + 1.5rem); }
     .energia { font-size: 2.25rem; margin-bottom: 0.25rem; }
     .linea { font-size: 0.875rem; line-height: 1.4; }
     .aviso { top: auto; bottom: calc(45dvh + 4rem); max-width: calc(100% - 2rem); font-size: 0.8125rem; }

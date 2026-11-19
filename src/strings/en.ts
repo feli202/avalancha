@@ -58,6 +58,7 @@ export const en: typeof es = {
   densidadNueva: (d: string) => `Density ^${d}`,
   haciaInfinito: 'Infinity',
   caminoInfinito: (p: string) => `Road to Infinity: ${p}`,
+  carambano: { nombre: 'Toward Layer 2', valor: (n: string) => `Total Crystals ${n} / 1e308` },
 
   auto: 'auto',
   manual: 'manual',

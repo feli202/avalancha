@@ -65,6 +65,8 @@ export const es = {
   haciaInfinito: 'Infinito',
   /** La barra fina de la izquierda: log10(Energía) sobre el del Infinito. */
   caminoInfinito: (p: string) => `Camino al Infinito: ${p}`,
+  /** Con el Infinito roto, el carámbano de la izquierda: log10(Cristales totales) sobre el fin de la Capa 1. */
+  carambano: { nombre: 'Hacia la Capa 2', valor: (n: string) => `Cristales totales ${n} / 1e308` },
 
   // Autocompradores (SPEC 4.8)
   auto: 'auto',
