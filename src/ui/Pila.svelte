@@ -266,7 +266,8 @@
       if (n > anillosAntes) {
         sonido.hito('ring')
         const mult = multAnillos(s).pow(1 / n).toNumber()
-        efecto({ texto: txt.anillo(n, mult), anillo: { r: pila.radioCss, color: pila.colorDominante() } })
+        juego.anilloNuevo = { id: n, texto: txt.anillo(n, mult) } // el texto va junto al contador de abajo: sobre el mandala no se lee
+        efecto({ anillo: { r: pila.radioCss, color: pila.colorDominante() } })
       }
       anillosAntes = n
       raf = requestAnimationFrame(cuadro)
@@ -346,8 +347,8 @@
       {:else if e.ola}
         <div class="ola" style:--r="{e.ola.r}px" style:--c={e.ola.color} onanimationend={() => quitar(e.id)}></div>
       {:else}
-        {#if e.anillo}<div class="anillo" style:--r="{e.anillo.r}px" style:--c={e.anillo.color}></div>{/if}
-        <p class={e.anillo ? 'flota abajo' : 'flota'} onanimationend={() => quitar(e.id)}>{e.texto}</p>
+        {#if e.anillo}<div class="anillo" style:--r="{e.anillo.r}px" style:--c={e.anillo.color} onanimationend={() => quitar(e.id)}></div>
+        {:else}<p class="flota" onanimationend={() => quitar(e.id)}>{e.texto}</p>{/if}
       {/if}
     {/each}
   </div>
@@ -395,7 +396,6 @@
     position: absolute; translate: -50% -50%; font-size: 1.5rem; font-weight: 600; text-shadow: 0 0 0.6rem #07080f;
     animation: subir 1.6s ease-out forwards; will-change: transform, opacity;
   }
-  .flota.abajo { top: 3rem; font-size: 1.1rem; }
   .anillo {
     position: absolute; width: calc(2 * var(--r)); height: calc(2 * var(--r)); translate: -50% -50%;
     border: 1.5px solid var(--c); border-radius: 50%; box-shadow: 0 0 0.5rem var(--c);

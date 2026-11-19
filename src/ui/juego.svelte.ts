@@ -76,6 +76,8 @@ class Juego {
   saltos = 0
   /** Logro secreto Arena: la lluvia de granos que se ve ahora (Pila.svelte), o null. */
   lluvia = $state.raw<{ id: number } | null>(null)
+  /** El último anillo ganado: su aviso va junto al contador de anillos (App.svelte), no sobre la pila. */
+  anilloNuevo = $state.raw<{ id: number; texto: string } | null>(null)
   /** SPEC_CAPA1 §11: la capa que se ve. Cristalización aparece con el primer Infinito (Capas.svelte). */
   capa = $state<'arena' | 'cristalizacion' | 'automatizacion' | 'capa2'>('arena')
   /** La pantalla de Cristalización que se ve (Capas.svelte; la flecha "↓ Estratos" de la Arena la cambia). */

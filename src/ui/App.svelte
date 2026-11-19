@@ -143,6 +143,7 @@
       <div class="tocable" use:ayuda={() => ayudaSimple(txt.sismografo, txt.guia.que.sismografo)}><Sismografo /></div>
       <p class="chico num">
         {#if v.anillos}<span class="aparece tocable" data-guia="anillos" use:ayuda={() => ayudaAnillos(juego.s)}>{txt.anillos(anillos(s.granos))} <b>{txt.mult(formatoMult(multAnillos(s)))}</b></span>{/if}
+        {#if juego.anilloNuevo}{#key juego.anilloNuevo.id}<b class="anillo-nuevo" role="status" onanimationend={() => (juego.anilloNuevo = null)}>{juego.anilloNuevo.texto}</b>{/key}{/if}
         {#if juego.escalaK > 0}{#key juego.escalaK}<span class="aparece tocable" use:ayuda={() => ayudaSimple(txt.escala(juego.escalaK), txt.guia.que.escala)}>{txt.escala(juego.escalaK)}</span>{/key}{/if}
       </p>
     </footer>
@@ -333,6 +334,9 @@
   }
   .zoom:hover, .zoom:focus-visible { opacity: 1; }
   .zoom:disabled { opacity: 0.2; cursor: default; }
+  /* El anillo recién ganado, junto al contador: aparece, se queda un momento y se va (1,6 s). */
+  .anillo-nuevo { color: var(--tinta); white-space: nowrap; animation: anilloNuevo 1.6s ease-out forwards; }
+  @keyframes anilloNuevo { 0% { opacity: 0; } 12%, 70% { opacity: 1; } 100% { opacity: 0; } }
   .chico { display: flex; flex-wrap: wrap; gap: 0 1rem; margin: 0.5rem 0 0; font-size: 0.8125rem; color: var(--tenue); }
 
   /* La tienda arranca debajo de la fila de íconos (.ajustes): con cuatro no entran al lado de los modos. */
