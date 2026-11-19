@@ -2112,3 +2112,8 @@ Sin tocar el balance. Todo en vertical hasta 1100 px (celular y tablet); el escr
 - En escritorio siguen marcados botones de menos de 44 px (cuadros de la Red de 24 px, campos de Automatización de 32 px, índice de "Cómo funciona"): con mouse no hacen falta; no los toqué.
 - En 360×640 los rótulos de los estratos cerrados (Estrato 6 · 1,00e16) se pisan un poco con su número.
 - Escarcha y Defectos en 360×640: la ficha scrollea sola (entra la mitad).
+
+### Caché del juego publicado (2026-11-19)
+- El `index.html` de GitHub Pages quedaba viejo en la caché del navegador (los `.js`/`.css` ya llevan hash). Ahora cada build tiene un número (`__VERSION__`, `vite.config.ts`) y deja `version.json`; `src/version.ts` lo pide sin caché al abrir y al volver a la pestaña y, si es otro, recarga una vez (la partida se guarda en el `pagehide`). Una recarga por versión como mucho (`sessionStorage`), así no hay bucle si el servidor tarda. En itch.io no hay `version.json` y no hace nada. Además `<meta http-equiv="Cache-Control" content="no-cache">`.
+- Probado con `vite preview`: al cambiar `version.json` y volver a la pestaña se recarga una vez y después sigue.
+- Publicar: `npm run build`, copiar `dist/*` a la rama `main` (dejando `.nojekyll`), commit y push.
