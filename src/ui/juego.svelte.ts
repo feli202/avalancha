@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, CFG1, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, elegirSola, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
+import { CFG, CFG1, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
 import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
@@ -84,8 +84,10 @@ class Juego {
   pantalla = $state('red')
   /** La cinemática que corre (Pila.svelte la dibuja): la del primer Infinito o la del fin de la Capa 1. */
   cinematica = $state<'' | 'infinito' | 'fin'>('')
-  /** Segundos reales que lleva la oferta del Relicario sin elegir. */
-  ofertaS = $state(0)
+  /** El Infinito automático eligió una reliquia por primera vez con la regla por defecto: la nota con "Configurar" (App.svelte). */
+  notaReliquia = $state.raw<{ tipo: string } | null>(null)
+  /** "Configurar" de esa nota: Automatización abre en la regla de las reliquias. */
+  irReliquia = $state(false)
 }
 export const juego = new Juego()
 if (import.meta.env.DEV) Object.assign(globalThis, { juego }) // para probar desde la consola
@@ -209,18 +211,44 @@ const AVISOS_JUNTOS = 2
 /** Un aviso de abajo, si el jugador no apagó ese tipo en Ajustes. */
 const avisar = (k: Aviso, texto: string) => { if (avisoActivo(k)) juego.aviso = { id: avisos++, texto } }
 
-// Auditoría 1.1: el Infinito automático llega cada pocos segundos; sus Cristales van juntos en un aviso cada 30 s de juego.
+// Auditoría 1.1: el Infinito automático llega cada pocos segundos; sus Cristales (y sus reliquias) van juntos en un aviso
+// cada 30 s de juego. Cristales y reliquias se apagan por separado en Ajustes.
 const AVISO_AUTO_S = 30
-const auto = { n: 0, base: estadoInicial().cristalesTotales, desde: -Infinity }
+const auto = { n: 0, base: estadoInicial().cristalesTotales, desde: -Infinity, reliquias: {} as Record<string, number> }
 export function avisoAutomatico(antes: State, s: State) {
   if (!auto.n) auto.base = antes.cristalesTotales
   auto.n += s.infinitos - antes.infinitos
   if (s.tiempoTotal - auto.desde < AVISO_AUTO_S) return
   const x = formato(s.cristalesTotales.sub(auto.base))
-  avisar('auto', auto.n > 1 ? txt.cristal.ganadosVarios(x, auto.n) : txt.cristal.ganados(x))
+  const r = txt.cristal.relicario
+  const partes = [
+    avisoActivo('auto') ? (auto.n > 1 ? txt.cristal.ganadosVarios(x, auto.n) : txt.cristal.ganados(x)) : '',
+    avisoActivo('reliquia') && Object.keys(auto.reliquias).length
+      ? r.ganadas(Object.entries(auto.reliquias).map(([t, n]) => (n > 1 ? `${r.tipos[t][0]} ×${n}` : r.tipos[t][0])).join(', ')) : '',
+  ].filter(Boolean)
+  if (partes.length) juego.aviso = { id: avisos++, texto: partes.join(' · ') }
   auto.n = 0
+  auto.reliquias = {}
   auto.desde = s.tiempoTotal
 }
+/** La regla de reliquias tal como viene (state.ts): mientras siga así, la primera elección automática se explica. */
+const reglaPorDefecto = (s: State) => JSON.stringify(s.relicario.regla) === JSON.stringify(estadoInicial().relicario.regla)
+/** El Infinito automático eligió la reliquia con la regla de Automatización (sin pop-up). La primera vez, con la regla por
+ * defecto, una nota que lo explica y lleva al panel; después va en el aviso juntado de avisoAutomatico. */
+function reliquiaAutomatica(s: State) {
+  // shortcut: toma el tipo de `ultimo`; con el inventario lleno la reliquia se pierde y `ultimo` queda el de antes.
+  const t = s.relicario.ultimo
+  if (!t) return
+  if (!juego.vistos.reliquia_auto && reglaPorDefecto(s)) {
+    juego.vistos = { ...juego.vistos, reliquia_auto: true }
+    juego.notaReliquia = { tipo: t }
+    return
+  }
+  auto.reliquias[t] = (auto.reliquias[t] ?? 0) + 1
+}
+/** El pop-up de la reliquia (Paneles.svelte): un Infinito a mano dejó una esperando su tipo. La primera, la del primer
+ * Infinito, se elige en el Relicario con su guía. */
+export const hayEleccion = (): boolean => juego.s.relicario.pendiente > 1 && !juego.cinematica && !juego.titulo
 /** Lo que aparece por primera vez: se anota en `juego.vistos` (va al guardado) y se muestra su frase y su guía.
  * CORRECCIONES 4: una sola vez en la vida de la partida, aunque la corrida se reinicie. Exportada para el test. */
 export function revelar(s: State) {
@@ -344,7 +372,7 @@ function finDeCapa() {
 export const invitaTocar = () => !juego.vistos.punado && !juego.vistos.tienda
 
 /** Hay un cartel o panel encima de todo (también de la barra de capas). */
-export const hayCartel = (): boolean => juego.titulo || juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto || juego.otraPestana
+export const hayCartel = (): boolean => juego.titulo || juego.panel !== null || juego.ausencia !== null || juego.guardadoRoto || juego.otraPestana || hayEleccion()
 /** La Arena no está al frente: las teclas del juego (Espacio, M, C) no hacen nada. */
 export const hayPanel = (): boolean => hayCartel() || juego.capa !== 'arena'
 
@@ -505,19 +533,14 @@ export function arrancar() {
     cerrado = false
     // Contra el último estado que vio el bucle, no juego.s: comprimir a mano (botón, tecla C) lo reemplaza entre cuadros.
     registrar(historial, previo, s)
-    // SPEC_CAPA1 §5: una oferta sin elegir se elige sola a los 30 s reales (no corre con un cartel ni durante la presentación;
-    // un cuadro largo cuenta 1 s, así al volver o recargar la oferta sigue ahí).
+    // SPEC_CAPA1 §5: el Infinito a mano deja la reliquia esperando su tipo (el pop-up de Paneles.svelte, sin tiempo límite).
     s = conFoto(s, fotoActual)
-    if (!s.relicario.pendiente) juego.ofertaS = 0
-    else if (juego.vistos.cristales && !hayCartel() && (juego.ofertaS += Math.min(real, 1)) >= CFG1.relicario.espera_eleccion_s) {
-      s = elegirSola(s)
-      avisar('reliquia', txt.cristal.relicario.sola(txt.cristal.relicario.tipos[s.relicario.ultimo][0]))
-    }
     // Defecto superado (§8): su aviso; si no, el Infinito automático (Memoria nv4) tiene el mismo aviso que el botón.
     const nuevoDef = s.defectos.completos.length > previo.defectos.completos.length ? s.defectos.completos.at(-1)! : ''
     if (nuevoDef) vigia.defectoGanado(nuevoDef)
     if (nuevoDef) avisar('defectos', txt.cristal.defectos.ganado(txt.cristal.defectos.nombres[nuevoDef], txt.cristal.ganados(formato(s.cristalesTotales.sub(previo.cristalesTotales)))))
     else if (s.infinitos > previo.infinitos) avisoAutomatico(previo, s)
+    if (s.infinitos > previo.infinitos && !s.relicario.pendiente) reliquiaAutomatica(s)
     previo = s
     if (Math.floor(s.tiempoTotal) !== Math.floor(juego.s.tiempoTotal)) juego.verHistorial++
     juego.s = s

@@ -2,17 +2,20 @@
   // Lo que flota sobre la pila: "Mientras no estabas" y el guardado dañado. Y Escape y el foco de todas las pantallas.
   // Un solo lenguaje: velo oscuro translúcido, sin cajas, jerarquía por tamaño, números con cifras tabulares.
   import { untrack } from 'svelte'
-  import { CFG, CFG1, infinitoRoto } from '../core'
+  import { CFG, CFG1, TIPOS, efectoNivel, elegir, fusionables, fusionarTodo, infinitoRoto, inventarioLleno } from '../core'
+  import { caraReliquia } from '../render/miniPilas'
+  import IconoTipo from './IconoTipo.svelte'
+  import * as sonido from './sonido'
   import { almacenLocal } from '../guardado/almacen'
   import { RESPALDO } from '../guardado/guardado'
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
   import { formato } from './formato'
-  import { juego, tomarCandado } from './juego.svelte'
+  import { hayEleccion, juego, tomarCandado } from './juego.svelte'
 
 
   // Al cerrar cualquier panel, el foco vuelve a donde estaba (el ícono, casi siempre).
-  const abierto = $derived(juego.panel !== null || juego.ausencia !== null || juego.calculo !== null || juego.guardadoRoto || juego.otraPestana)
+  const abierto = $derived(juego.panel !== null || juego.ausencia !== null || juego.calculo !== null || juego.guardadoRoto || juego.otraPestana || hayEleccion())
   let previo: HTMLElement | null = null
   // Se anota antes de que el panel tome el foco, y se devuelve después de que el juego deja de estar inert.
   $effect.pre(() => void (abierto && untrack(() => (previo ??= document.activeElement as HTMLElement | null))))
@@ -28,6 +31,15 @@
     const texto = almacenLocal.leer(RESPALDO) ?? ''
     danado = { texto, copiado: false }
     try { await navigator.clipboard.writeText(texto); danado = { texto, copiado: true } } catch { /* queda el texto para copiar a mano */ }
+  }
+
+  // SPEC_CAPA1 §5: el Infinito a mano deja una reliquia esperando su tipo. El pop-up queda hasta que elijas (la corrida
+  // nueva ya corre detrás); no se cierra con Escape ni tocando afuera.
+  const r = txt.cristal.relicario
+  const ambar = (t: string) => juego.s.relicario.piezas.filter((p) => p.tipo === t && p.nivel === 0).length % 3
+  function tomar(t: string) {
+    juego.s = elegir(juego.s, t)
+    sonido.compra('other')
   }
 
   function cerrar() {
@@ -118,6 +130,27 @@
       <button class="accion" use:enfocar onclick={cerrar}>{txt.ausencia.seguir}</button>
     </div>
   </div>
+{:else if hayEleccion() && juego.panel === null}
+  {@const rel = juego.s.relicario}
+  {@const lleno = inventarioLleno(juego.s)}
+  <div class="velo" class:quieto={ajustes.reducirDestellos}>
+    <div class="centro hielo placa eleccion" role="dialog" aria-modal="true" aria-labelledby="reliquia-t" aria-describedby="reliquia-d">
+      <canvas class="cara" use:caraReliquia={{ foto: rel.foto, nivel: 0 }} aria-hidden="true"></canvas>
+      <h2 id="reliquia-t" class="titulo">{r.elegir}</h2>
+      <p id="reliquia-d" class="texto">{lleno ? r.llenoPop : r.elegirQue}</p>
+      {#if lleno && fusionables(juego.s).length}<button class="gema fusionar" onclick={() => (juego.s = fusionarTodo(juego.s))}>{r.fusionarTodo}</button>{/if}
+      <div class="tipos">
+        {#each TIPOS as t, i (t)}
+          <button class="gema" style:--c="var(--ambar)" use:enfocar={i === 0} onclick={() => tomar(t)}>
+            <span class="sello"><IconoTipo tipo={t} /></span>
+            <b>{r.tipos[t][0]}</b>
+            <span class="efecto">{r.tipos[t][1](efectoNivel(t, 0))}</span>
+            <small class="num">{r.faltan(3 - ambar(t))}</small>
+          </button>
+        {/each}
+      </div>
+    </div>
+  </div>
 {:else if juego.ausencia}
   {@const a = juego.ausencia}
   <div class="velo" class:quieto={ajustes.reducirDestellos} role="presentation" onclick={afuera}>
@@ -204,6 +237,20 @@
   .pista { width: 100%; height: 0.375rem; background: rgb(232 233 243 / 0.08); overflow: hidden; }
   .lleno { display: block; height: 100%; background: var(--ambar); transition: width 0.15s linear; }
   .hielo .lleno { background: linear-gradient(90deg, color-mix(in srgb, var(--hielo) 55%, transparent), var(--hielo)); box-shadow: 0 0 0.75rem color-mix(in srgb, var(--hielo) 50%, transparent); }
+
+  /* La elección de reliquia: la pila de este Infinito arriba y las tres gemas, una por tipo. */
+  .eleccion { gap: 0; }
+  .eleccion .cara { width: 4.5rem; height: 4.5rem; margin-bottom: 0.75rem; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: var(--hielo-hondo); }
+  .eleccion .texto { margin-bottom: 1.25rem; font-size: 0.9375rem; }
+  .eleccion .fusionar { margin: -0.5rem 0 1rem; padding: 0.5rem 1.5rem; }
+  .tipos { display: grid; gap: 0.5rem; width: 100%; }
+  .tipos .gema { display: grid; grid-template-columns: 2rem 1fr; gap: 0.1rem 0.85rem; align-items: center; min-height: 3.5rem; padding: 0.55rem 1.5rem; text-align: left; font: inherit; }
+  .tipos .sello { grid-row: span 3; width: 2rem; height: 2rem; color: var(--ambar); }
+  .tipos b { font-size: 1.0625rem; }
+  .tipos .efecto { font-size: 0.8125rem; color: var(--tenue); }
+  .tipos small { font-size: 0.75rem; color: var(--hielo); }
+  .eleccion .tipos { animation: subir 0.5s 0.15s ease-out backwards; }
+  .quieto .eleccion .tipos { animation-name: fundido; }
 
   @media (max-width: 767px) {
     .velo { background: rgb(7 8 15 / 0.88); } /* la tienda en hoja queda detrás del texto: más oscuro */

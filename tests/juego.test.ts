@@ -155,3 +155,20 @@ describe('aviso del Infinito automático (auditoría 1.1)', () => {
     expect(juego.aviso?.texto).toBe('+25 Cristales en 3 Infinitos')
   })
 })
+
+describe('elección de reliquia (SPEC_CAPA1 §5)', () => {
+  it('el pop-up sale con una reliquia esperando (salvo la del primer Infinito) y frena las teclas de la Arena', async () => {
+    const { hayEleccion, hayCartel } = await import('../src/ui/juego.svelte')
+    const s = estadoInicial()
+    juego.titulo = false
+    juego.s = { ...s, relicario: { ...s.relicario, pendiente: 1 } }
+    expect(hayEleccion()).toBe(false) // el primero se elige en el Relicario, con su guía
+    juego.s = { ...s, relicario: { ...s.relicario, pendiente: 4 } }
+    expect(hayEleccion()).toBe(true)
+    expect(hayCartel()).toBe(true)
+    juego.cinematica = 'infinito'
+    expect(hayEleccion()).toBe(false)
+    juego.cinematica = ''
+    juego.s = s
+  })
+})

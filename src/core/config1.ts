@@ -9,7 +9,7 @@ export interface Config1 {
     blando_desde_log10: number; blando_factor: number
   }
   relicario: {
-    tipos: string[]; casilleros: number; espera_eleccion_s: number
+    tipos: string[]; casilleros: number
     cauce_colores_pct_por_nivel: number; cascada_c_por_nivel: number; mutaciones_efecto_por_nivel: number
   }
   estratos: {

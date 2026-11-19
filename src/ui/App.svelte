@@ -143,6 +143,18 @@
     {#key juego.aviso.id}<p class="aviso" role="status">{juego.aviso.texto}</p>{/key}
   {/if}
 
+  {#if juego.notaReliquia}
+    <!-- SPEC_CAPA1 §5: la primera reliquia que elige el Infinito automático, con la regla por defecto. -->
+    {@const rr = txt.cristal.relicario}
+    <div class="nota-reliquia placa" role="status">
+      <p>{rr.notaAuto(rr.tipos[juego.notaReliquia.tipo][0], rr.regla.modos[s.relicario.regla.modo])}</p>
+      <div class="botones">
+        <button class="gema" onclick={() => { juego.notaReliquia = null; juego.irReliquia = true; juego.capa = 'automatizacion' }}>{rr.configurar}</button>
+        <button class="cerrar-nota" onclick={() => (juego.notaReliquia = null)}>{rr.entendido}</button>
+      </div>
+    </div>
+  {/if}
+
   {#if juego.sinGuardar}<p class="sin-guardar" role="alert">{txt.sinGuardar}</p>{/if}
 
   {#if invitaTocar()}<p class="pista" out:fade={{ duration: 300 }}>{txt.pista}</p>{/if}
@@ -347,6 +359,15 @@
     max-width: min(28rem, calc(100% - 2 * var(--col) - 4 * var(--margen)));
     margin: 0; font-size: 0.9375rem; text-align: center; text-wrap: balance; pointer-events: none; animation: aviso 6s ease-out forwards;
   }
+  .nota-reliquia {
+    position: fixed; left: 50%; bottom: var(--margen); translate: -50% 0; z-index: 3; box-sizing: border-box;
+    width: min(26rem, calc(100% - 2 * var(--col) - 4 * var(--margen))); padding: 0.9rem 1.1rem; animation: fundido 0.5s ease-out;
+  }
+  .nota-reliquia p { margin: 0 0 0.6rem; font-size: 0.9375rem; line-height: 1.4; text-wrap: pretty; }
+  .nota-reliquia .botones { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+  .nota-reliquia .gema { min-height: 2.75rem; padding: 0 1.5rem; font: inherit; font-weight: 600; }
+  .cerrar-nota { min-height: 2.75rem; padding: 0 0.5rem; border: 0; background: none; color: var(--tenue); font: inherit; cursor: pointer; }
+  .cerrar-nota:hover, .cerrar-nota:focus-visible { color: var(--tinta); }
   .sin-guardar {
     position: fixed; left: 50%; bottom: var(--margen); translate: -50% 0; z-index: 3; width: max-content;
     max-width: min(28rem, calc(100% - 2 * var(--col) - 4 * var(--margen))); margin: 0; font-size: 0.9375rem; color: var(--coral); text-align: center;
@@ -456,6 +477,7 @@
     .linea { font-size: 0.875rem; line-height: 1.4; }
     .aviso { top: auto; bottom: calc(45dvh + 4rem); max-width: calc(100% - 2rem); font-size: 0.8125rem; }
     .pista { top: calc(50% - 2rem); }
+    .nota-reliquia { width: calc(100% - 2rem); bottom: calc(45dvh + 0.5rem); }
     .sin-guardar { bottom: auto; top: calc(var(--margen) + 5.5rem); max-width: calc(100% - 2rem); font-size: 0.8125rem; }
     .sismo {
       right: var(--margen); bottom: calc(45dvh + 0.5rem);

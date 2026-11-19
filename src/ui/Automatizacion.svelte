@@ -41,7 +41,13 @@
   const num = (e: Event, min: number) => Math.min(MAX_S, Math.max(min, Math.floor(Number((e.currentTarget as HTMLInputElement).value)) || min))
   const nombreTipo = (t: string) => rr.tipos[t]?.[0] ?? t
   // Celular: una lista a la vez, con pestañas (en escritorio van las dos columnas y esto no se usa).
-  let vista = $state<'compras' | 'reinicios'>('compras')
+  let vista = $state<'compras' | 'reinicios'>(juego.irReliquia ? 'reinicios' : 'compras')
+  // "Configurar" de la nota de la primera reliquia automática: abre en su regla.
+  $effect(() => {
+    if (!juego.irReliquia) return
+    juego.irReliquia = false
+    document.getElementById('regla-reliquia')?.scrollIntoView({ block: 'center' })
+  })
 </script>
 
 {#snippet interruptor(k: string)}
@@ -143,7 +149,7 @@
               {/if}
               <small class="nota">{#if !infinitoRoto(s)}{a.apenas} {/if}{a.daria(txt.cristal.ganados(formato(cristalesAlInfinito(s))).replace('+', ''))}.{#if !infinitoRoto(s)} {a.mejora}{:else if inf.modo === 'optimo'}{' '}{a.optimo}{/if}</small>
 
-              <h3>{a.reliquia}</h3>
+              <h3 id="regla-reliquia">{a.reliquia}</h3>
               <div class="modos" role="radiogroup" aria-label={rr.regla.titulo}>
                 {#each MODOS as m (m)}
                   <label><input type="radio" name="regla" checked={s.relicario.regla.modo === m} onchange={() => regla({ modo: m })} />{rr.regla.modos[m]}</label>

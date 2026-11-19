@@ -24,7 +24,6 @@
   const grado = (nivel: number) => r.grado(txt.colores[escalon(nivel).color], escalon(nivel).vuelta)
   const color = (nivel: number) => COLORES[escalon(nivel).color]
   const efecto = (t: string, nivel: number) => r.tipos[t]?.[1](efectoNivel(t, nivel)) ?? ''
-  const cuenta = $derived(Math.max(0, Math.ceil(CFG1.relicario.espera_eleccion_s - juego.ofertaS)))
   const ambar = (t: string) => rel.piezas.filter((p) => p.tipo === t && p.nivel === 0).length % 3
 
   // La grilla: las mejores arriba, las iguales juntas (así se ve qué falta para fusionar).
@@ -174,7 +173,7 @@
         <div class="nueva">{@render cara({ foto: rel.foto, nivel: 0 })}</div>
         <div class="texto">
           <h2>{r.elegir}</h2>
-          {#if sinLugar}<small class="num aviso">{r.llenoElegir(cuenta)}</small>{:else}<small class="num">{r.cuenta(cuenta)}</small>{/if}
+          {#if sinLugar}<small class="aviso">{r.llenoPop}</small>{:else}<small>{r.elegirQue}</small>{/if}
         </div>
         <div class="tipos">
           {#each TIPOS as t (t)}
