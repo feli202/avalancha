@@ -20,24 +20,34 @@
   const ACERCAR_MS = 1400 // al entrar, la cámara se acerca; el primer grano del Caudal cae a 1 s
   const IMPLOSION_MS = 900 // lo que dura la animación implotar del CSS
 
-  const MARCO_LADO = 1.6 // medio lado del canvas del marco, en radios: el más grande (Polaroid) llega a 1,54
+  const MARCO_LADO = 1.6 // en radios: el marco más grande (Polaroid) llega a 1,54
+  const MARCO_MIN = 32 // px CSS: con la pila recién vacía el marco no se achica a un punto
 
   let canvas: HTMLCanvasElement
   let lienzoMarco: HTMLCanvasElement
+  let cajaAncho = $state(0), cajaAlto = $state(0)
   const paleta = $derived(ajustes.daltonismo ? COLORES_DALTONISMO : PALETAS[elegido('paleta', Object.keys(PALETAS), ajustes.paleta, juego.logros)])
   const marcoId = $derived(elegido('marco', MARCOS, ajustes.marco, juego.logros))
-  /** Radio del marco en px CSS: el círculo fijo de la pila en pantalla (PilaVisual.focoCss), no la pila. */
+  /** El marco es parte de la pila: va pegado a su borde (PilaVisual.bordeCss) y escala con el zoom. Se redibuja en el
+   *  canvas del tamaño de la región (no del marco: con zoom máximo sería enorme) solo cuando cambia algo. */
+  let marcoDibujado = -1
+  let foco = $state(0) // radio del círculo nítido (PilaVisual.focoCss): afuera el marco se apaga como la pila desenfocada
   let radioMarco = $state(0)
-  // El marco de la pila (Ajustes > Aspecto): el mismo dibujo que la foto, pegado al círculo fijo; se redibuja solo si cambia.
-  $effect(() => {
-    const r = radioMarco, dpr = devicePixelRatio, L = Math.ceil(r * MARCO_LADO)
-    if (!lienzoMarco || !r) return
-    lienzoMarco.width = lienzoMarco.height = Math.round(2 * L * dpr)
-    lienzoMarco.style.width = lienzoMarco.style.height = `${2 * L}px`
+  $effect(() => { void [marcoId, paleta, cajaAncho, cajaAlto]; marcoDibujado = -1 })
+  function dibujarMarco(r: number) {
+    const dpr = devicePixelRatio, w = cajaAncho, h = cajaAlto, L = r * MARCO_LADO
+    if (!lienzoMarco || !w || !h) return
+    if (lienzoMarco.width !== Math.round(w * dpr) || lienzoMarco.height !== Math.round(h * dpr)) {
+      lienzoMarco.width = Math.round(w * dpr)
+      lienzoMarco.height = Math.round(h * dpr)
+    }
     const g = lienzoMarco.getContext('2d')!
-    g.setTransform(dpr, 0, 0, dpr, 0, 0)
+    g.setTransform(1, 0, 0, 1, 0, 0)
+    g.clearRect(0, 0, lienzoMarco.width, lienzoMarco.height)
+    g.setTransform(dpr, 0, 0, dpr, dpr * (w / 2 - L), dpr * (h / 2 - L)) // marco() centra en (L, L)
     marco(g, marcoId, L, r, css(paleta[1]))
-  })
+    marcoDibujado = r
+  }
   /** Logro secreto Arena: granos de un solo color de la paleta en uso, elegido al azar en cada lluvia. */
   const ESQUIRLAS = 18 // cristales de la cinemática del Infinito
   const GRANOS_LLUVIA = 80
@@ -145,8 +155,6 @@
     $effect(() => void (pila.efecto = EFECTOS.indexOf(elegido('efecto', EFECTOS, ajustes.efecto, juego.logros))))
     $effect(() => void (pila.fondo = elegido('fondo', FONDOS, ajustes.fondo, juego.logros)))
     $effect(() => void (pila.defecto = DEFECTOS.indexOf(juego.s.defectos.actual as DefectoId) + 1))
-    // El marco es el borde: con zoom la pila crece adentro de él y no se derrama desenfocada por la pantalla.
-    $effect(() => void (pila.recorte = marcoId !== 'ninguno'))
     // SPEC_CAPA1 §9: la escarcha del borde engorda con logX y satura (visual, no balance).
     const ESCARCHA_MITAD = 50
     $effect(() => { const x = escarchaActiva(juego.s) ? juego.s.escarcha.logX : 0; pila.escarcha = Math.round((1000 * x) / (x + ESCARCHA_MITAD)) / 1000 })
@@ -172,6 +180,7 @@
     grabacion.pila = pila
     const TAPAR_MS = 1500 // más que la animación más larga de entrada de Capas.svelte (1,1 s)
     let tapadaDesde = 0
+    let marcoAntes = 0
     let proximo = 0 // ms del próximo cuadro con la tasa de refresco de Ajustes
     let raf = requestAnimationFrame(function cuadro(ahora) {
       // Modo grabación (debug): el guion maneja la pila; acá no pasa nada más.
@@ -237,8 +246,15 @@
       if (zm !== juego.zoomMin) juego.zoomMin = zm
       const r = Math.round(pila.radioCss)
       if (r !== juego.radioPila) juego.radioPila = r
-      const rm = Math.round(pila.focoCss)
-      if (rm !== radioMarco && !pila.tapada) radioMarco = rm
+      // El marco sigue al borde de la pila, suave (al crecer el radio salta de a una celda).
+      if (!pila.tapada && marcoId !== 'ninguno') {
+        const objetivo = Math.max(pila.bordeCss, MARCO_MIN)
+        const k = radioMarco ? 1 - Math.exp(-Math.min(0.1, (ahora - marcoAntes) / 1000) * 10) : 1
+        radioMarco = Math.abs(objetivo - radioMarco) < 0.3 ? objetivo : radioMarco + (objetivo - radioMarco) * k
+        if (Math.abs(radioMarco - marcoDibujado) > 0.25) dibujarMarco(radioMarco)
+        foco = Math.round(pila.focoCss)
+      }
+      marcoAntes = ahora
       // SPEC 5: el color nuevo recorre la pila, del centro al borde.
       const c = coloresVistos()
       if (c > coloresAntes) sonido.hito('color')
@@ -281,7 +297,12 @@
   {/if}
   <!-- El marco, recortado a la región de la pila (en el celular no tapa la Energía ni el sismógrafo) y debajo del anillo de
        Compresión: un marco con relleno (Galleta, Polaroid) no lo tapa. -->
-  <div class="caja-marco" class:oculto={juego.titulo || juego.cinematica === 'fin'} aria-hidden="true"><canvas class="marco" bind:this={lienzoMarco}></canvas></div>
+  <!-- Con zoom el borde pasa el círculo nítido: afuera el marco se apaga como la pila desenfocada (lienzo.ts, u_foco).
+       La rampa empieza recién cuando el marco ya se salió del foco, así encuadrado no se apaga nada. -->
+  <div class="caja-marco" class:oculto={juego.titulo || juego.cinematica === 'fin' || marcoId === 'ninguno'} aria-hidden="true" bind:clientWidth={cajaAncho} bind:clientHeight={cajaAlto}
+    style:--foco="{foco * (1 + Math.max(0, 2.6 - (1.6 * radioMarco) / (foco || 1)))}px">
+    <canvas class="marco" bind:this={lienzoMarco}></canvas>
+  </div>
   <div class="efectos" class:quieto={ajustes.reducirDestellos} aria-hidden="true">
     {#if juego.vistos.compresion && comp.meta !== undefined}
       <!-- Compresión: el anillo se cierra con el progreso (escala logarítmica); al 100 % brilla. -->
@@ -350,7 +371,13 @@
   .bajar:hover, .bajar:focus-visible { color: var(--hielo); }
   .caja-marco { position: absolute; inset: 0; overflow: hidden; pointer-events: none; transition: opacity 0.6s; }
   .caja-marco.oculto { opacity: 0; }
-  .marco { position: absolute; left: 50%; top: 50%; translate: -50% -50%; }
+  .marco {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    mask: radial-gradient(circle, #000 var(--foco), rgb(0 0 0 / 0.3) calc(var(--foco) * 1.3));
+  }
+  /* El marco es parte de la pila: implota con ella. */
+  .implota .marco { animation: implotar 0.9s cubic-bezier(0.6, 0, 0.9, 0.4) forwards; }
+  .implota.quieto .marco { animation: apagar 0.9s ease-in forwards; }
   .efectos { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
   .compresion { position: absolute; translate: -50% -50%; overflow: visible; transition: width 0.6s, height 0.6s; }
   circle { fill: none; stroke-width: 1.5; }

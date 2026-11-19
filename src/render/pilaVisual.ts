@@ -165,11 +165,6 @@ export class PilaVisual {
     this.lz.defecto = n
   }
 
-  /** Con un marco puesto, el zoom se ve solo adentro del marco (lienzo.ts, u_recorte). */
-  set recorte(si: boolean) {
-    this.lz.recorte = si
-  }
-
   /** SPEC_CAPA1 §9: la escarcha del borde, 0..1. */
   set escarcha(x: number) {
     this.lz.escarcha = x
@@ -211,6 +206,11 @@ export class PilaVisual {
   tapada = false
   /** Alto en px reales de la región de la pila (el canvas puede ser más alto). */
   private altoRegion = 0
+
+  /** Radio en px CSS del borde de la pila tal como se dibuja (con zoom, sin recortar al foco): el marco va pegado acá. */
+  get bordeCss() {
+    return ((this.radio + 0.5) * this.px * this.canvas.clientWidth) / (this.canvas.width || 1)
+  }
 
   /** Radio en px CSS del círculo fijo de la pila en pantalla (el del desenfoque del zoom): no cambia con el zoom ni al crecer. */
   get focoCss() {
