@@ -3,3 +3,7 @@ dist
 __pycache__
 avalancha-demo.zip
 marketing/clips/
+
+# Perfiles de Edge de los scripts de capturas (cookies, sesiones): nunca al repo.
+perfil-edge/
+.impeccable/hook.cache.json

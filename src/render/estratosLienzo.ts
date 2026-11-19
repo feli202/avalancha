@@ -104,11 +104,13 @@ export class EstratosLienzo {
     this.W = r.width; this.H = r.height
     this.canvas.width = Math.round(r.width * dpr); this.canvas.height = Math.round(r.height * dpr)
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    const arriba = Math.max(28, this.H * MARGEN_ARRIBA), lados = this.W < 500 ? 40 : 64
+    // Lugar para los rótulos: a la izquierda el número; a la derecha el aporte (×1,82e14), más largo. En el celular el bloque
+    // se corre a la izquierda para que el aporte entre entero.
+    const arriba = Math.max(28, this.H * MARGEN_ARRIBA), izq = this.W < 500 ? 22 : 32, der = this.W < 500 ? 74 : 32
     // Celdas de px físicos enteros (pixel art nítido también con densidad 2 o 3), salvo que no entre ni a 1 px.
-    const c = Math.min((this.W - lados) / ANCHO, (this.H - arriba - 4) / ALTO)
+    const c = Math.min((this.W - izq - der) / ANCHO, (this.H - arriba - 4) / ALTO)
     this.cel = c * dpr >= 1 ? Math.floor(c * dpr) / dpr : Math.max(0.5, c)
-    this.ox = Math.round((this.W - ANCHO * this.cel) / 2)
+    this.ox = Math.round(izq + (this.W - izq - der - ANCHO * this.cel) / 2)
     // El casquete de la pila arriba (hasta un tercio de su radio) y el embudo debajo; el bloque, centrado en el alto.
     const casquete = ANCHO * this.cel * 0.5 * 0.34, alto = ALTO * this.cel
     const oy = Math.max(arriba, Math.min(casquete, this.H - 4 - alto))

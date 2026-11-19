@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bocetos de la Red</title>
+<style>
+  :root { --noche: #04060d; --hielo: #9fe3f5; --escarcha: #eaf6ff; --tenue: #8a9bb0; }
+  body { margin: 0; background: var(--noche); color: var(--escarcha); font: 15px/1.5 "Space Grotesk", system-ui, sans-serif; }
+  main { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr)); gap: 32px; padding: 24px; }
+  figure { margin: 0; }
+  figcaption { margin-top: 8px; color: var(--tenue); }
+  figcaption b { color: var(--escarcha); font-weight: 600; margin-right: 6px; }
+  svg { display: block; width: 100%; aspect-ratio: 1; }
+  body.una main { display: block; padding: 0; }
+  body.una figcaption { display: none; }
+  body.una svg { width: 100vmin; height: 100vmin; margin: auto; }
+  .lat { animation: latido 3.2s ease-in-out infinite; }
+  @keyframes latido { 50% { opacity: 0.55; } }
+  @media (prefers-reduced-motion: reduce) { .lat { animation: none; } }
+</style>
+</head>
+<body>
+<main id="m"></main>
+<script>
+// Los 25 nodos de la Red (posición de config_capa1.json) y un estado de partida a mitad de camino.
+const NODOS = [
+  ['memoria', 'Memoria', 0, 0], ['eco', 'Eco', 0, 1], ['sedimentacion', 'Sedimentación', 1, 0], ['estratos', 'Estratos', 0, -1],
+  ['defectos', 'Defectos', -1, 0], ['ruptura', 'Ruptura', 0, 2], ['compactacion', 'Compactación', 2, 0], ['presion', 'Presión', 0, -2],
+  ['engarces', 'Engarces', -2, 0], ['cascada_plus', 'Cascada+', 1, 1], ['mutacion_plus', 'Mutación+', 1, -1], ['inercia', 'Inercia', -1, -1],
+  ['cristalografia', 'Cristalografía', -1, 1], ['eco2', 'Eco II', 0, 3], ['germen', 'Germen', 1, 2], ['frio', 'Frío', 2, 1],
+  ['compactacion2', 'Compactación II', 3, 0], ['sedimento2', 'Sedimento II', 2, -1], ['capilaridad', 'Capilaridad', 1, -2], ['abismo', 'Abismo', 0, -3],
+  ['defectos2', 'Defectos II', -1, -2], ['engarces2', 'Engarces II', -2, -1], ['cristalografia2', 'Cristalografía II', -3, 0],
+  ['deshielo', 'Deshielo', -2, 1], ['ruptura2', 'Ruptura II', -1, 2],
+].map(([id, nombre, x, y]) => ({ id, nombre, x, y, anillo: Math.abs(x) + Math.abs(y) }))
+const NIVEL = { memoria: 4, eco: 4, sedimentacion: 4, estratos: 3, defectos: 2, ruptura: 1, cristalografia: 2 }
+const LV = ['#ffb547', '#ff6b6b', '#2dd4a7', '#9b7bff']
+const POR = new Map(NODOS.map((n) => [n.x + ',' + n.y, n]))
+const vecinos = (n) => [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => POR.get(n.x + dx + ',' + (n.y + dy))).filter(Boolean)
+for (const n of NODOS) n.n = NIVEL[n.id] ?? 0
+for (const n of NODOS) {
+  const abierto = n.id === 'memoria' || vecinos(n).some((v) => v.anillo < n.anillo && v.n >= 4)
+  n.modo = n.anillo === 3 ? 'hielo' : n.n > 0 ? 'cristal' : abierto ? 'vacio' : 'cerrado'
+}
+const h = (i, k = 1) => { const s = Math.sin(i * 127.1 + k * 311.7) * 43758.5; return s - Math.floor(s) } // hash fijo
+
+const NS = 'http://www.w3.org/2000/svg'
+function el(tag, at, padre) {
+  const e = document.createElementNS(NS, tag)
+  for (const k in at) e.setAttribute(k, at[k])
+  padre?.appendChild(e)
+  return e
+}
+function lienzo(n, titulo, texto) {
+  const f = document.createElement('figure')
+  f.id = 'b' + n
+  const s = el('svg', { viewBox: '-300 -300 600 600', role: 'img', 'aria-label': titulo })
+  f.append(s)
+  const c = document.createElement('figcaption')
+  c.innerHTML = `<b>${n}. ${titulo}</b>${texto}`
+  f.append(c)
+  document.getElementById('m').append(f)
+  return s
+}
+function defsComunes(s) {
+  const d = el('defs', {}, s)
+  d.innerHTML = `
+    <filter id="brillo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="brillo2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2"/></filter>
+    <filter id="esmeril"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 0.75  0 0 0 0 0.86  0 0 0 0 0.95  0 0 0 0.1 0"/><feComposite in2="SourceGraphic" operator="in"/></filter>
+    <filter id="niebla"><feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="4" seed="8"/><feColorMatrix values="0 0 0 0 0.8  0 0 0 0 0.9  0 0 0 0 1  0 0 0 0.22 0"/></filter>
+    <filter id="papel"><feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" seed="2"/><feColorMatrix values="0 0 0 0 0.6  0 0 0 0 0.7  0 0 0 0 0.8  0 0 0 0.06 0"/></filter>
+    <filter id="desenfoque" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="16"/></filter>`
+  return d
+}
+function rotulo(g, x, y, t, o = {}) {
+  const e = el('text', { x, y, 'text-anchor': 'middle', 'dominant-baseline': 'middle', fill: o.fill ?? '#eaf6ff', 'font-size': o.size ?? 11,
+    'font-weight': o.peso ?? 600, 'font-family': o.familia ?? 'Space Grotesk, system-ui, sans-serif', 'font-style': o.estilo ?? 'normal',
+    'paint-order': 'stroke', stroke: o.borde ?? '#04060d', 'stroke-width': o.bordeAncho ?? 3, opacity: o.op ?? 1 }, g)
+  e.textContent = t
+  return e
+}
+
+// ---------------- 1. Rosetón de hielo ----------------
+{
+  const s = lienzo(1, 'Rosetón de hielo', 'Cada nodo es un vidrio del rosetón; las cuatro franjas de adentro son sus niveles. La luz corre por el emplomado desde los completos.')
+  defsComunes(s)
+  el('rect', { x: -300, y: -300, width: 600, height: 600, fill: '#04060d' }, s)
+  el('circle', { r: 292, fill: '#0b1320' }, s)
+  const R = [[0, 46], [54, 120], [128, 200], [208, 274]]
+  const ang = (n) => Math.atan2(-n.y, n.x)
+  const r3 = NODOS.filter((n) => n.anillo === 3).sort((a, b) => ((ang(a) + 7) % 6.2832) - ((ang(b) + 7) % 6.2832))
+  const centro = (n) => (n.anillo === 3 ? -r3.indexOf(n) * (Math.PI / 6) : ang(n))
+  const ancho = (n) => (2 * Math.PI) / (4 * n.anillo)
+  const pt = (r, a) => `${(r * Math.cos(a)).toFixed(2)} ${(r * Math.sin(a)).toFixed(2)}`
+  function sector(r0, r1, a0, a1, gap = 3) {
+    const g0 = gap / Math.max(r0, 1), g1 = gap / r1
+    const big = a1 - a0 > Math.PI ? 1 : 0
+    return `M${pt(r0, a0 + g0)}L${pt(r1, a0 + g1)}A${r1} ${r1} 0 ${big} 1 ${pt(r1, a1 - g1)}L${pt(r0, a1 - g0)}A${r0} ${r0} 0 ${big} 0 ${pt(r0, a0 + g0)}Z`
+  }
+  const luz = el('g', { filter: 'url(#brillo)', opacity: 0.8 }, s)
+  const vidrio = el('g', {}, s)
+  const plomo = el('g', { fill: 'none' }, s)
+  const textos = el('g', {}, s)
+  for (const n of NODOS) {
+    const [r0, r1] = R[n.anillo]
+    if (n.anillo === 0) {
+      for (let i = 0; i < 4; i++) {
+        const ra = 8 + i * 9.5, c = i < n.n ? LV[i] : '#0d1824'
+        el('circle', { r: ra + 4, fill: 'none', stroke: c, 'stroke-width': 8.5 }, vidrio)
+        if (i < n.n) el('circle', { r: ra + 4, fill: 'none', stroke: c, 'stroke-width': 9 }, luz)
+      }
+      el('circle', { r: 46, stroke: '#aebdca', 'stroke-width': 3 }, plomo)
+      el('circle', { r: 46, stroke: '#9fe3f5', 'stroke-width': 2, class: 'lat', filter: 'url(#brillo2)' }, plomo)
+      rotulo(textos, 0, 0, n.nombre, { size: 12 })
+      continue
+    }
+    const a = centro(n), w = ancho(n), a0 = a - w / 2, a1 = a + w / 2
+    const d = sector(r0, r1, a0, a1)
+    if (n.modo === 'cristal' || n.modo === 'vacio') {
+      for (let i = 0; i < 4; i++) {
+        const q0 = r0 + ((r1 - r0) * i) / 4, q1 = r0 + ((r1 - r0) * (i + 1)) / 4
+        const c = i < n.n ? LV[i] : '#0d1824'
+        el('path', { d: sector(q0, q1, a0, a1, 4), fill: c, opacity: i < n.n ? 0.92 : 1 }, vidrio)
+        if (i < n.n) el('path', { d: sector(q0, q1, a0, a1, 4), fill: c }, luz)
+      }
+      if (n.modo === 'vacio') el('path', { d, fill: '#9fe3f5', opacity: 0.07 }, vidrio)
+    } else {
+      el('path', { d, fill: n.modo === 'hielo' ? '#0f1823' : '#0d1620' }, vidrio)
+      el('path', { d, fill: '#000', filter: 'url(#esmeril)' }, vidrio)
+      if (n.modo === 'hielo') el('path', { d, fill: '#dff4ff', opacity: 0.06 }, vidrio)
+    }
+    // Emplomado: oscuro abajo, plata arriba; el de los completos y sus vecinos abiertos, encendido.
+    el('path', { d, stroke: '#04060d', 'stroke-width': 7 }, plomo)
+    const vivo = n.n >= 4 || (n.modo === 'vacio')
+    el('path', { d, stroke: vivo ? '#cfefff' : '#6f8293', 'stroke-width': 2.5 }, plomo)
+    if (vivo) el('path', { d, stroke: '#9fe3f5', 'stroke-width': 3, class: 'lat', filter: 'url(#brillo2)' }, plomo)
+    const rm = (r0 + r1) / 2, tx = rm * Math.cos(a), ty = rm * Math.sin(a)
+    if (n.modo !== 'hielo') rotulo(textos, tx, ty, n.nombre, { size: n.anillo === 1 ? 11 : 10, op: n.modo === 'cerrado' ? 0.45 : 1 })
+  }
+  // Marco: corona de rosetas.
+  for (let i = 0; i < 36; i++) {
+    const a = (i / 36) * Math.PI * 2
+    el('circle', { cx: 284 * Math.cos(a), cy: 284 * Math.sin(a), r: 6.5, fill: i % 3 ? '#0d1824' : '#1b3446', stroke: '#6f8293', 'stroke-width': 1.5 }, s)
+  }
+  el('circle', { r: 276, fill: 'none', stroke: '#aebdca', 'stroke-width': 2.5 }, s)
+  el('circle', { r: 292, fill: 'none', stroke: '#6f8293', 'stroke-width': 2 }, s)
+}
+
+// ---------------- 2. Escarcha en el vidrio ----------------
+{
+  const s = lienzo(2, 'Escarcha en el vidrio', 'Ramas de escarcha que crecen desde Memoria sobre un vidrio empañado; detrás, la pila de la Arena. Al completar un nodo, la escarcha avanza hasta sus vecinos.')
+  defsComunes(s)
+  el('rect', { x: -300, y: -300, width: 600, height: 600, fill: '#050a12' }, s)
+  // La pila de la Arena, desenfocada detrás del vidrio.
+  const pila = el('g', { filter: 'url(#desenfoque)', opacity: 0.55, transform: 'translate(0 210)' }, s)
+  for (let i = -6; i <= 6; i++) for (let j = -6; j <= 6; j++) {
+    if (Math.abs(i) + Math.abs(j) > 6) continue
+    el('rect', { x: i * 22 - 11, y: j * 14 - 7, width: 22, height: 14, fill: LV[(Math.abs(i * 3 + j * 5)) % 4] }, pila)
+  }
+  el('rect', { x: -300, y: -300, width: 600, height: 600, filter: 'url(#niebla)' }, s)
+  const S = 82, P = (n) => [n.x * S, -n.y * S]
+  const ramas = el('g', { stroke: '#d8f3ff', fill: 'none', 'stroke-linecap': 'round' }, s)
+  const halo = el('g', { stroke: '#9fe3f5', fill: 'none', filter: 'url(#brillo)', opacity: 0.6 }, s)
+  let semilla = 1
+  function rama(x0, y0, x1, y1, ancho, prof) {
+    const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L
+    const pasos = Math.max(3, Math.round(L / 10))
+    let d = `M${x0} ${y0}`
+    for (let i = 1; i <= pasos; i++) {
+      const t = i / pasos, w = (h(semilla++) - 0.5) * 3 * (i < pasos ? 1 : 0)
+      d += `L${(x0 + dx * t - uy * w).toFixed(1)} ${(y0 + dy * t + ux * w).toFixed(1)}`
+      if (prof > 0 && i < pasos && h(semilla++) > 0.35) {
+        const lado = i % 2 ? 1 : -1, la = L * (0.18 + 0.14 * h(semilla++)) * (1 - t * 0.5)
+        const ca = Math.cos(lado * 1.047), sa = Math.sin(lado * 1.047)
+        const bx = ux * ca - uy * sa, by = ux * sa + uy * ca, px = x0 + dx * t, py = y0 + dy * t
+        rama(px, py, px + bx * la, py + by * la, ancho * 0.55, prof - 1)
+      }
+    }
+    el('path', { d, 'stroke-width': ancho }, ramas)
+    if (ancho > 1) el('path', { d, 'stroke-width': ancho * 2 }, halo)
+  }
+  for (const n of NODOS) if (n.n >= 4) for (const v of vecinos(n)) { const [a, b] = P(n), [c, d] = P(v); rama(a, b, a + (c - a) * 0.92, b + (d - b) * 0.92, 2, 2) }
+  // Brotes cortos en los que tienen niveles sin completar.
+  for (const n of NODOS) if (n.n > 0 && n.n < 4) for (let k = 0; k < 6; k++) {
+    const a = (k / 6) * Math.PI * 2 + 0.3, [x, y] = P(n), L = 10 + n.n * 7
+    rama(x, y, x + Math.cos(a) * L, y + Math.sin(a) * L, 1, 1)
+  }
+  const nodos = el('g', {}, s)
+  const estrella = (r) => Array.from({ length: 12 }, (_, i) => { const a = (i / 12) * Math.PI * 2 - Math.PI / 2, q = i % 2 ? r * 0.38 : r; return `${(q * Math.cos(a)).toFixed(1)},${(q * Math.sin(a)).toFixed(1)}` }).join(' ')
+  const hex = (r) => Array.from({ length: 6 }, (_, i) => { const a = (i / 6) * Math.PI * 2 - Math.PI / 2; return `${(r * Math.cos(a)).toFixed(1)},${(r * Math.sin(a)).toFixed(1)}` }).join(' ')
+  for (const n of NODOS) {
+    const [x, y] = P(n), g = el('g', { transform: `translate(${x} ${y})` }, nodos)
+    if (n.modo === 'cristal') {
+      const r = 12 + n.n * 4
+      el('polygon', { points: estrella(r + 4), fill: LV[n.n - 1], filter: 'url(#brillo)', opacity: 0.8, class: n.n >= 4 ? 'lat' : '' }, g)
+      el('polygon', { points: estrella(r), fill: LV[n.n - 1], stroke: '#ffffff', 'stroke-width': 1 }, g)
+      el('polygon', { points: hex(r * 0.32), fill: '#ffffff', opacity: 0.7 }, g)
+    } else if (n.modo === 'vacio') {
+      el('polygon', { points: hex(10), fill: '#9fe3f5', 'fill-opacity': 0.08, stroke: '#cfefff', 'stroke-width': 1.5 }, g)
+    } else if (n.modo === 'hielo') {
+      el('circle', { r: 30, fill: '#dff4ff', opacity: 0.1, filter: 'url(#brillo)' }, g)
+      el('polygon', { points: hex(7), fill: 'none', stroke: '#9fb3c4', 'stroke-width': 1, opacity: 0.35 }, g)
+    } else {
+      el('circle', { r: 9, fill: '#9fb3c4', opacity: 0.18, filter: 'url(#brillo2)' }, g)
+    }
+    if (n.modo !== 'hielo') rotulo(nodos, x, y + (n.modo === 'cristal' ? 34 : 22), n.nombre, { size: 10.5, op: n.modo === 'cerrado' ? 0.4 : 1 })
+  }
+}
+
+// ---------------- 3. Lámina al microscopio polarizado ----------------
+{
+  const s = lienzo(3, 'Lámina al microscopio', 'Un corte fino de roca con luz polarizada: cada nodo es un grano mineral. El nivel le da su color de interferencia; completo, se le forman maclas (las rayas).')
+  const d = defsComunes(s)
+  d.innerHTML += `<clipPath id="campo"><circle r="262"/></clipPath>
+    <pattern id="macla" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(32)"><rect width="4" height="9" fill="#fff" opacity="0.22"/></pattern>
+    <pattern id="clivaje" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-20)"><rect width="1" height="7" fill="#000" opacity="0.35"/></pattern>`
+  el('rect', { x: -300, y: -300, width: 600, height: 600, fill: '#020305' }, s)
+  const S = 80
+  const semillas = NODOS.map((n, i) => [n.x * S + (h(i, 2) - 0.5) * 30, -n.y * S + (h(i, 3) - 0.5) * 30])
+  // Voronoi a fuerza bruta: a cada celda la recorta el semiplano de cada otra semilla.
+  function recortar(poli, a, b) {
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, nx = b[0] - a[0], ny = b[1] - a[1]
+    const f = (p) => (p[0] - mx) * nx + (p[1] - my) * ny, out = []
+    for (let i = 0; i < poli.length; i++) {
+      const p = poli[i], q = poli[(i + 1) % poli.length], fp = f(p), fq = f(q)
+      if (fp <= 0) out.push(p)
+      if (fp * fq < 0) { const t = fp / (fp - fq); out.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]) }
+    }
+    return out
+  }
+  const g = el('g', { 'clip-path': 'url(#campo)' }, s)
+  el('rect', { x: -300, y: -300, width: 600, height: 600, fill: '#0a0d12' }, g)
+  const INTERF = { '#ffb547': '#fff0a8', '#ff6b6b': '#ff9fd8', '#2dd4a7': '#8ef4ff', '#9b7bff': '#4f63ff' }
+  const textos = el('g', {}, s)
+  NODOS.forEach((n, i) => {
+    let poli = [[-320, -320], [320, -320], [320, 320], [-320, 320]]
+    semillas.forEach((b, j) => { if (j !== i) poli = recortar(poli, semillas[i], b) })
+    const dpath = 'M' + poli.map((p) => p.map((v) => v.toFixed(1)).join(' ')).join('L') + 'Z'
+    const id = 'gr' + i, ang = Math.round(h(i, 5) * 180)
+    let a, b
+    if (n.modo === 'cristal') { a = LV[n.n - 1]; b = INTERF[a] }
+    else if (n.modo === 'vacio') { a = '#46586a'; b = '#a9bccb' }
+    else if (n.modo === 'cerrado') { a = '#161c23'; b = '#323d49' }
+    else { a = '#06080b'; b = '#141a21' }
+    d.innerHTML += `<linearGradient id="${id}" gradientTransform="rotate(${ang} .5 .5)"><stop offset="0" stop-color="${a}"/><stop offset=".55" stop-color="${b}"/><stop offset="1" stop-color="${a}"/></linearGradient>`
+    el('path', { d: dpath, fill: `url(#${id})` }, g)
+    if (n.n >= 4) el('path', { d: dpath, fill: 'url(#macla)' }, g)
+    if (n.modo === 'cerrado' || n.modo === 'hielo') el('path', { d: dpath, fill: 'url(#clivaje)' }, g)
+    el('path', { d: dpath, fill: 'none', stroke: '#030406', 'stroke-width': 3 }, g)
+    el('path', { d: dpath, fill: 'none', stroke: '#ffffff', 'stroke-width': 0.6, opacity: 0.25 }, g)
+    if (n.modo !== 'hielo') rotulo(textos, semillas[i][0], semillas[i][1], n.nombre, { size: 10.5, op: n.modo === 'cerrado' ? 0.45 : 1 })
+  })
+  // Retícula del ocular y el borde metálico del campo.
+  const ret = el('g', { stroke: '#9fe3f5', opacity: 0.35, 'stroke-width': 0.8 }, s)
+  el('line', { x1: -262, y1: 0, x2: 262, y2: 0 }, ret)
+  el('line', { x1: 0, y1: -262, x2: 0, y2: 262 }, ret)
+  for (let i = -10; i <= 10; i++) el('line', { x1: i * 22, y1: -4, x2: i * 22, y2: 4 }, ret)
+  el('circle', { r: 262, fill: 'none', stroke: '#2a3340', 'stroke-width': 10 }, s)
+  el('circle', { r: 268, fill: 'none', stroke: '#5c6b7c', 'stroke-width': 2 }, s)
+  rotulo(s, 210, 270, 'PPL ⟂ 45°', { size: 10, fill: '#8a9bb0', peso: 400 })
+}
+
+// ---------------- 4. Lámina de cristalografía ----------------
+{
+  const s = lienzo(4, 'Lámina de cristalografía', 'Como un grabado de un tratado del siglo XIX: cada nodo es un cristal en perspectiva, coloreado a mano por nivel. Los completos marcan planos de clivaje hacia sus vecinos.')
+  const d = defsComunes(s)
+  d.innerHTML += `<pattern id="trama" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#c9d6e2" stroke-width="0.6"/></pattern>
+    <pattern id="cruzada" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 0L6 6M6 0L0 6" stroke="#9fb3c4" stroke-width="0.5"/></pattern>`
+  el('rect', { x: -300, y: -300, width: 600, height: 600, fill: '#0b1220' }, s)
+  el('rect', { x: -300, y: -300, width: 600, height: 600, filter: 'url(#papel)' }, s)
+  el('rect', { x: -284, y: -284, width: 568, height: 568, fill: 'none', stroke: '#c9d6e2', 'stroke-width': 1.5 }, s)
+  el('rect', { x: -278, y: -278, width: 556, height: 556, fill: 'none', stroke: '#c9d6e2', 'stroke-width': 0.6 }, s)
+  const serif = 'Georgia, "Times New Roman", serif'
+  rotulo(s, 0, -258, 'Lám. I — De la red cristalina', { size: 14, familia: serif, estilo: 'italic', peso: 400, borde: 'none', bordeAncho: 0 })
+  const P = (n) => [(n.x - n.y) * 58, -(n.x + n.y) * 50 + 30]
+  // La red: líneas finas entre vecinos; punteadas si alguno está cerrado.
+  const red = el('g', { stroke: '#c9d6e2', 'stroke-width': 0.6, fill: 'none' }, s)
+  for (const n of NODOS) for (const v of vecinos(n)) if (n.x + n.y * 10 < v.x + v.y * 10) {
+    const [a, b] = P(n), [c, e] = P(v), abierta = n.modo !== 'cerrado' && n.modo !== 'hielo' && v.modo !== 'cerrado' && v.modo !== 'hielo'
+    el('line', { x1: a, y1: b, x2: c, y2: e, 'stroke-dasharray': abierta ? '' : '2 4', opacity: abierta ? 0.8 : 0.4 }, red)
+  }
+  // Clivaje: desde los completos, flechas finas a cada vecino.
+  for (const n of NODOS) if (n.n >= 4) for (const v of vecinos(n)) {
+    const [a, b] = P(n), [c, e] = P(v)
+    el('line', { x1: a, y1: b - 18, x2: c, y2: e - 18, stroke: '#9fe3f5', 'stroke-width': 0.9, 'stroke-dasharray': '6 3', opacity: 0.9 }, s)
+  }
+  const ROM = ['', 'I', 'II', 'III', 'IV']
+  const k = 0.866
+  for (const n of [...NODOS].sort((a, b) => P(a)[1] - P(b)[1])) {
+    const [x, y] = P(n), z = 18, g = el('g', { transform: `translate(${x} ${y})` }, s)
+    const top = `0,${-2 * z} ${z * k},${-1.5 * z} 0,${-z} ${-z * k},${-1.5 * z}`
+    const izq = `${-z * k},${-1.5 * z} 0,${-z} 0,0 ${-z * k},${-0.5 * z}`
+    const der = `${z * k},${-1.5 * z} 0,${-z} 0,0 ${z * k},${-0.5 * z}`
+    const linea = { stroke: '#e8eef5', 'stroke-width': 1, 'stroke-linejoin': 'round' }
+    if (n.modo === 'cristal') {
+      const c = LV[n.n - 1]
+      el('polygon', { points: top, fill: c, opacity: 0.95, ...linea }, g)
+      el('polygon', { points: izq, fill: c, opacity: 0.55, ...linea }, g)
+      el('polygon', { points: der, fill: c, opacity: 0.75, ...linea }, g)
+      el('polygon', { points: izq, fill: 'url(#trama)', opacity: 0.6 }, g)
+    } else if (n.modo === 'vacio') {
+      for (const p of [top, izq, der]) el('polygon', { points: p, fill: 'none', ...linea }, g)
+    } else if (n.modo === 'hielo') {
+      for (const p of [top, izq, der]) el('polygon', { points: p, fill: 'url(#cruzada)', stroke: '#9fb3c4', 'stroke-width': 0.6, opacity: 0.45 }, g)
+    } else {
+      for (const p of [top, izq, der]) el('polygon', { points: p, fill: 'none', stroke: '#9fb3c4', 'stroke-width': 0.8, 'stroke-dasharray': '1.5 2.5', opacity: 0.7 }, g)
+    }
+    if (n.modo !== 'hielo') {
+      if (n.modo !== 'cerrado') rotulo(g, 0, 11, n.nombre + (n.n ? ' · ' + ROM[n.n] : ''), { size: 10.5, familia: serif, estilo: 'italic', peso: 400, borde: '#0b1220' })
+    }
+  }
+  // Ejes, como en las láminas: a, b y c.
+  const ej = el('g', { stroke: '#c9d6e2', 'stroke-width': 0.9, fill: 'none' }, s)
+  el('path', { d: 'M-250 240h44M-250 240l-15 -26M-250 240v-40' }, ej)
+  rotulo(s, -198, 240, 'a', { size: 12, familia: serif, estilo: 'italic', peso: 400, borde: 'none', bordeAncho: 0 })
+  rotulo(s, -270, 208, 'b', { size: 12, familia: serif, estilo: 'italic', peso: 400, borde: 'none', bordeAncho: 0 })
+  rotulo(s, -250, 192, 'c', { size: 12, familia: serif, estilo: 'italic', peso: 400, borde: 'none', bordeAncho: 0 })
+  rotulo(s, 230, 258, 'fig. 1', { size: 11, familia: serif, estilo: 'italic', peso: 400, borde: 'none', bordeAncho: 0, fill: '#8a9bb0' })
+}
+
+// ---------------- 5. Pila de pilas ----------------
+{
+  const s = lienzo(5, 'Pila de pilas', 'Cada nodo es una celda grande de la pila y su nivel son los granos que tiene adentro. Con el cuarto grano se derrumba y le tira un grano a cada vecino.')
+  const d = defsComunes(s)
+  d.innerHTML += `<filter id="arena"><feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="5"/><feColorMatrix values="0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0 0.3  0 0 0 0.07 0"/><feComposite in2="SourceGraphic" operator="in"/></filter>`
+  el('rect', { x: -300, y: -300, width: 600, height: 600, fill: '#04060d' }, s)
+  const S = 80, L = 70, P = (n) => [n.x * S, -n.y * S]
+  const luz = el('g', { filter: 'url(#brillo)', opacity: 0.75 }, s)
+  const celdas = el('g', {}, s)
+  const textos = el('g', {}, s)
+  for (const n of NODOS) {
+    const [x, y] = P(n), g = el('g', { transform: `translate(${x} ${y})` }, celdas)
+    el('rect', { x: -L / 2, y: -L / 2, width: L, height: L, fill: n.modo === 'hielo' ? '#0f1a24' : '#0c0f16', stroke: '#1d2633', 'stroke-width': 1.5 }, g)
+    if (n.modo === 'cerrado' || n.modo === 'hielo') {
+      el('rect', { x: -L / 2, y: -L / 2, width: L, height: L, fill: '#000', filter: 'url(#arena)', opacity: 0.5 }, g)
+      if (n.modo === 'hielo') el('rect', { x: -L / 2 + 6, y: -L / 2 + 6, width: L - 12, height: L - 12, fill: 'none', stroke: '#9fb3c4', opacity: 0.25 }, g)
+    } else {
+      // Cuatro lugares para granos, en el orden en que llegan.
+      const lugar = [[-1, 1], [1, 1], [-1, -1], [1, -1]]
+      lugar.forEach(([i, j], k) => {
+        const lleno = k < n.n, c = LV[k], gx = i * 11 - 9, gy = 6 - j * 11 - 9
+        el('rect', { x: gx, y: gy, width: 18, height: 18, rx: 2, fill: lleno ? c : '#151b25' }, g)
+        if (lleno) el('rect', { x: x + gx, y: y + gy, width: 18, height: 18, fill: c }, luz)
+      })
+      if (n.modo === 'vacio') el('rect', { x: -L / 2, y: -L / 2, width: L, height: L, fill: 'none', stroke: '#9fe3f5', 'stroke-width': 1.5, opacity: 0.6 }, g)
+      if (n.n >= 4) el('rect', { x: -L / 2 - 3, y: -L / 2 - 3, width: L + 6, height: L + 6, fill: 'none', stroke: '#9b7bff', 'stroke-width': 2, class: 'lat' }, g)
+    }
+    if (n.modo !== 'hielo') rotulo(textos, x, y - L / 2 + 10, n.nombre, { size: n.nombre.length > 11 ? 8.5 : 9.5, op: n.modo === 'cerrado' ? 0.4 : 1 })
+  }
+  // El derrumbe congelado a mitad: un grano violeta en camino a cada vecino de Eco.
+  const eco = NODOS.find((n) => n.id === 'eco'), [ex, ey] = P(eco)
+  for (const v of vecinos(eco)) {
+    const [vx, vy] = P(v), mx = ex + (vx - ex) * 0.5, my = ey + (vy - ey) * 0.5 + (vy === ey ? 8 : 0)
+    el('line', { x1: ex, y1: ey + 8, x2: mx, y2: my, stroke: '#9b7bff', 'stroke-width': 3, opacity: 0.35, 'stroke-linecap': 'round' }, s)
+    el('rect', { x: mx - 6, y: my - 6, width: 12, height: 12, fill: '#9b7bff' }, s)
+    el('rect', { x: mx - 8, y: my - 8, width: 16, height: 16, fill: '#9b7bff', filter: 'url(#brillo)' }, s)
+  }
+}
+
+// ?b=N muestra un solo boceto a pantalla completa (para las capturas).
+const b = new URLSearchParams(location.search).get('b')
+if (b) { document.body.classList.add('una'); document.querySelectorAll('figure').forEach((f) => f.id !== 'b' + b && f.remove()) }
+</script>
+</body>
+</html>

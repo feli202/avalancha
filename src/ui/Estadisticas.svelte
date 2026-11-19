@@ -259,7 +259,7 @@
   }
   .ayuda { margin: 0.5rem 0 0; font-size: 0.8125rem; color: var(--apagado); }
   .desglose { display: grid; grid-template-columns: 3rem 1fr; gap: 2rem; align-items: stretch; }
-  .barra { display: flex; flex-direction: column; gap: 2px; min-height: 26rem; position: sticky; top: 6rem; max-height: calc(100dvh - 8rem); }
+  .barra { display: flex; flex-direction: column; gap: 2px; min-height: 26rem; position: sticky; top: 1rem; max-height: calc(100dvh - 8rem); }
   .segmento { flex-basis: 0; min-height: 2px; border-radius: 2px; transition: flex-grow 0.6s ease-out, opacity 0.2s; cursor: default; }
   .segmento.apagado { opacity: 0.25; }
   .factores, .partes { list-style: none; margin: 0; padding: 0; }

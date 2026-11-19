@@ -146,7 +146,6 @@ export const en: typeof es = {
       que: 'It grows on its own, even with the game closed. Each order of thickness makes topples worth more, but the thicker it gets the more it slows: breaking it keeps half and gives Shards.',
     },
     totales: 'Total Crystals',
-      roto: 'Crystals with Infinity broken (log₁₀)', blando: 'Soft cap', softcap: 'Upgrades past 1e308',
     sistemas: 'Crystallization systems',
     pantallas: { red: 'Lattice', estratos: 'Strata', defectos: 'Defects', escarcha: 'Frost', relicario: 'Reliquary' },
     vacia: 'Nothing here yet.',
@@ -759,6 +758,7 @@ export const en: typeof es = {
       romperEsc: (min: number, c: string, d: number) => `every ${min} min: keeps ×${c} of logX, gives ⌊logX × ${c} / ${d}⌋ × Thaw`,
     },
     rotulo: {
+      roto: 'Crystals with Infinity broken (log₁₀)', blando: 'Soft cap', softcap: 'Upgrades past 1e308',
       caudal: 'Grains per second', costo: 'Cost of the next level', produccion: 'Energy per second',
       mult: 'Multiplier', anillos: 'Rings', multAnillos: 'Ring multiplier', proximoAnillo: 'Next ring',
       densidad: 'Density', meta: 'Next goal', c: 'Cascade strength', derrumbes: 'Topples per grain',

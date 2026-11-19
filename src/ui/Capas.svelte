@@ -274,13 +274,42 @@
   .intro button { margin-top: 1.25rem; min-width: 10rem; min-height: 2.75rem; font-size: 1.0625rem; font-weight: 600; }
 
   /* Vertical (móvil, tablet): la barra de capas va a la esquina de arriba de la región de la pila, que la pila redonda deja libre. */
+  /* Vertical (celular, tablet): la barra de capas pasa abajo, de lado a lado, como la navegación de un juego de celular.
+     --nav (index.html) es su alto: la hoja de la tienda y las pantallas de la Capa 1 terminan arriba de ella. */
   @media (orientation: portrait) and (max-width: 1100px) {
-    /* Debajo de la Energía y sus líneas (Cristales, Densidad), que en el celular llegan a unos 8 rem. */
-    .capas { top: 8rem; translate: none; padding: 0.75rem 0; }
-    .capas button { width: 4rem; min-height: 3.5rem; font-size: 0.625rem; hyphens: manual; }
-    .capas svg { width: 1.875rem; height: 1.875rem; }
-    .cristalizacion, .automat, .proxima { padding: 3.75rem 1rem 1rem 5rem; } /* arriba, la fila de íconos de App.svelte */
-    .emblema { width: 2.5rem; height: 2.5rem; }
-    .contadores { gap: 0.5rem 1.5rem; }
+    .capas {
+      top: auto; bottom: 0; left: 0; right: 0; translate: none; display: flex; gap: 0; padding: 0 0.5rem env(safe-area-inset-bottom);
+      height: var(--nav); box-sizing: border-box; border-top: 1px solid var(--borde); mask: none;
+      background: linear-gradient(rgb(6 8 16 / 0.97), rgb(3 4 9 / 0.99));
+    }
+    .capas button { flex: 1; width: auto; min-height: 0; gap: 0.2rem; padding: 0.4rem 0.25rem; font-size: 0.6875rem; }
+    .capas svg { width: 1.625rem; height: 1.625rem; }
+    /* La activa: la marca pasa al borde de arriba. */
+    .capas [aria-current]::after { left: 50%; top: -1px; width: 1.75rem; height: 2px; translate: -50% 0; border-radius: 0 0 2px 2px; }
+    .capas [aria-current] { background: radial-gradient(55% 70% at 50% 0%, color-mix(in srgb, var(--c) 16%, transparent), transparent 80%); }
+    .capas .auto { margin: 0; }
+    .capas .auto::before { top: 50%; left: 0; width: 1px; height: 1.5rem; translate: 0 -50%; }
+    .capas .punto { right: calc(50% - 1.4rem); top: 0.45rem; }
+    /* Los contadores en dos columnas: los Cristales grandes a la izquierda, el resto en renglones chicos a la derecha. */
+    .contadores { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0 1rem; }
+    .contadores > div:not(.principal) { grid-column: 2; display: flex; justify-content: end; align-items: baseline; gap: 0.4rem; white-space: nowrap; }
+    .principal { grid-row: 1 / span 3; gap: 0.5rem; }
+    .contadores > div:not(.principal) dt { font-size: 0.75rem; }
+    .contadores > div:not(.principal) dd { font-size: 0.9375rem; }
+    .emblema { width: 2.25rem; height: 2.25rem; }
+    .cristales { font-size: 2.125rem; }
+    .sistemas { margin-top: 0.75rem; }
+    /* Arriba, la fila de íconos de App.svelte; abajo, la barra. */
+    .cristalizacion, .automat, .proxima { padding: 3.5rem 1rem calc(var(--nav) + 0.75rem); }
+  }
+  /* Celulares bajos (360×640): la cabecera más chica, para que cada pantalla tenga lugar. */
+  @media (orientation: portrait) and (max-width: 1100px) and (max-height: 720px) {
+    .cristalizacion, .automat, .proxima { padding-top: 3.1rem; }
+    .cristales { font-size: 1.625rem; }
+    .emblema { width: 1.75rem; height: 1.75rem; }
+    .contadores > div:not(.principal) dt { font-size: 0.6875rem; }
+    .contadores > div:not(.principal) dd { font-size: 0.8125rem; }
+    .contadores dt { font-size: 0.75rem; }
+    .sistemas { margin-top: 0.4rem; }
   }
 </style>

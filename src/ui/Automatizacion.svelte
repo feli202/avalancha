@@ -40,6 +40,8 @@
   /** Un número de un campo: entero entre min y MAX_S; vacío o inválido, el mínimo. */
   const num = (e: Event, min: number) => Math.min(MAX_S, Math.max(min, Math.floor(Number((e.currentTarget as HTMLInputElement).value)) || min))
   const nombreTipo = (t: string) => rr.tipos[t]?.[0] ?? t
+  // Celular: una lista a la vez, con pestañas (en escritorio van las dos columnas y esto no se usa).
+  let vista = $state<'compras' | 'reinicios'>('compras')
 </script>
 
 {#snippet interruptor(k: string)}
@@ -64,8 +66,14 @@
     </div>
   </header>
 
+  <div class="vistas" role="tablist" aria-label={a.titulo}>
+    {#each ['compras', 'reinicios'] as const as v (v)}
+      <button role="tab" aria-selected={vista === v} onclick={() => (vista = v)}>{a[v]}</button>
+    {/each}
+  </div>
+
   <div class="columnas">
-    <section class="lista" aria-label={a.compras}>
+    <section class="lista" class:oculta={vista !== 'compras'} aria-label={a.compras}>
       <h2>{a.compras}</h2>
       <ul>
         {#each compras as k (k)}
@@ -92,7 +100,7 @@
       </ul>
     </section>
 
-    <section class="lista" aria-label={a.reinicios}>
+    <section class="lista" class:oculta={vista !== 'reinicios'} aria-label={a.reinicios}>
       <h2>{a.reinicios}</h2>
       <ul>
         {#each reinicios as k (k)}
@@ -231,12 +239,28 @@
   .hielo { background: linear-gradient(170deg, rgb(159 227 245 / 0.07), transparent 40%); }
   .hielo h3 { border-color: rgb(159 227 245 / 0.2); color: var(--hielo); }
 
-  /* Celular: una columna; las dos listas se reparten el alto y cada una scrollea sola. */
+  .vistas { display: none; }
+  /* Celular: una lista a la vez (pestañas Compras / Reinicios), que llena el alto y scrollea sola. Controles de 44 px. */
   @media (max-width: 760px) {
-    .automat { gap: 0.75rem; }
-    .cabeza { padding-right: 0; }
-    .todos button { padding: 0 0.9rem; font-size: 0.8125rem; }
-    .columnas { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); gap: 0.9rem; }
+    .automat { grid-template-rows: auto auto minmax(0, 1fr); gap: 0.6rem; }
+    .cabeza { padding-right: 0; gap: 0.5rem; }
+    h1 { font-size: 1.5rem; }
+    .todos { gap: 0.4rem; }
+    .todos button { padding: 0 0.7rem; font-size: 0.8125rem; white-space: nowrap; }
+    .vistas { display: flex; border-bottom: 1px solid var(--borde); }
+    .vistas button {
+      flex: 1; min-height: 2.75rem; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none;
+      color: var(--apagado); font: inherit; font-size: 0.9375rem; font-weight: 600; cursor: pointer;
+    }
+    .vistas [aria-selected='true'] { color: var(--tinta); border-bottom-color: var(--tinta); }
+    .columnas { grid-template-columns: 1fr; }
+    .oculta { display: none; }
+    .lista h2 { display: none; }
+    .lista { grid-template-rows: minmax(0, 1fr); }
+    input[type='number'], input[type='text'], .cantidad button, .orden button { min-height: 2.75rem; }
+    .cantidad button { min-width: 2.75rem; }
+    .orden button { min-width: 2.75rem; }
+    .reinicio label { min-height: 2.75rem; }
     .fila { grid-template-columns: minmax(0, 1fr) auto; padding: 0.4rem 0.7rem; gap: 0.3rem 0.6rem; }
     .fila .interruptor { grid-column: 2; grid-row: 1; min-width: 0; }
     .fila .cantidad { justify-self: end; }

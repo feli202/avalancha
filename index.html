@@ -16,6 +16,8 @@
         color-scheme: dark;
       }
       /* SPEC 6.8: paleta para daltonismo (Okabe-Ito), la misma familia que la de la pila (pilaVisual.ts). */
+      /* Alto de la barra de capas cuando va abajo (vertical; Capas.svelte, App.svelte). */
+      @media (orientation: portrait) and (max-width: 1100px) { :root { --nav: calc(3.75rem + env(safe-area-inset-bottom)); } }
       :root.daltonismo { --ambar: #56b4e9; --coral: #e8743b; --jade: #f0e442; --violeta: #e7a3cf; }
       *, ::before, ::after { box-sizing: border-box; }
       body {

@@ -2085,3 +2085,30 @@ Sin tocar el balance (ni `config.json` ni los simuladores).
 - Polaroid en escritorio es grande (1,54 radios hacia abajo) y pasa por encima del sismógrafo; en el celular queda recortado por la región de la pila.
 - En el celular, tocar el fondo detrás de la Energía ahora también suelta un Puñado (el canvas llega hasta ahí).
 - El camino usa `infinito_log10` del config (308,25) y no 308 a mano.
+
+
+## Diseño para celular (2026-11-19)
+
+Sin tocar el balance. Todo en vertical hasta 1100 px (celular y tablet); el escritorio no cambia.
+
+- **Barra de capas abajo** (`Capas.svelte`): Arena / Cristalización / Automatización (y Capa 2) pasan a una barra de navegación de lado a lado, abajo, con la marca de la activa en el borde de arriba. Su alto es `--nav` (`index.html`, con `safe-area-inset-bottom`). La hoja de la tienda se apoya sobre ella (`App.svelte`, solo con la barra) y las pantallas de la Capa 1 terminan arriba. Ya no tapa la Energía ni corre el cartel del Defecto ni el camino al Infinito.
+- **Cabecera de Cristalización compacta**: los Cristales grandes a la izquierda y Totales / Energía / Esquirlas en renglones chicos a la derecha. En celulares bajos (≤720 px de alto) se achica más.
+- **Pestañas de sistemas** (`hielo.css`): ícono con el nombre chico debajo (antes solo íconos, no se sabía cuál era cuál).
+- **Automatización**: pestañas Compras / Reinicios (una lista a la vez, que llena el alto) y controles de 44 px.
+- **Estratos**: el bloque se corre a la izquierda en pantallas angostas para que el aporte (×1,82e14) entre entero; la ficha toma lo que necesita y scrollea sola si no entra; en celulares bajos se esconde la línea de Presión total para darle lugar a la escena.
+- **Paneles** (Logros, Estadísticas, Ajustes, Ayuda; `Pantalla.svelte`): la barra queda fija y scrollea solo el cuerpo.
+- Botones táctiles de 44 px: cuadros de nivel de la Red (en el celular), Fusionar todo, flechas de Estratos, Defectos / Defectos II, pestañas de los paneles.
+- Arreglo: en "Cómo funciona" tres rótulos (Cristales con el Infinito roto, Blando, Mejoras más allá de 1e308) estaban fuera de `rotulo` en `es.ts`/`en.ts` y salían vacíos (además daba un error de Svelte por claves repetidas).
+
+**Herramienta**: `scripts/capturas-celular.mjs` (Edge headless, perfil en D:) saca todas las pantallas de la Capa 1, los paneles y "Mientras no estabas" en los tamaños que se le pasen, y anota por cada una si la página scrollea, qué cajas scrollean, qué queda afuera y qué botón mide menos de 44 px.
+`node scripts/capturas-celular.mjs http://localhost:5173 <salida> 390x844,360x640,768x1024,1366x768`
+
+**Verificación**: 316 tests en verde, `svelte-check` y `tsc` 0 errores. Con el script: 390×844 y 360×640 sin nada marcado en las 13 pantallas. Capturas en `capturas/celular/antes` (390×844) y `capturas/celular/despues` (390×844, 360×640, 768×1024).
+
+**No medido**: celular real; fps en celular.
+
+**Quedó así (revisar)**:
+- En 768×1024 y 1366×768 el script marca "la página scrollea" con un panel abierto: es la Arena de atrás, que se achica con `transform` y hace que sus canvas fijos cuenten para el documento. `body` tiene `overflow: hidden`, así que no se puede scrollear; viene de antes.
+- En escritorio siguen marcados botones de menos de 44 px (cuadros de la Red de 24 px, campos de Automatización de 32 px, índice de "Cómo funciona"): con mouse no hacen falta; no los toqué.
+- En 360×640 los rótulos de los estratos cerrados (Estrato 6 · 1,00e16) se pisan un poco con su número.
+- Escarcha y Defectos en 360×640: la ficha scrollea sola (entra la mitad).

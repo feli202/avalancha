@@ -232,7 +232,7 @@
     display: grid; grid-template-columns: 12rem minmax(0, 44rem); justify-content: center; gap: 3rem;
     width: 100%; padding: 0.5rem 2rem 4rem;
   }
-  .indice { position: sticky; top: 6rem; align-self: start; display: grid; }
+  .indice { position: sticky; top: 1rem; align-self: start; display: grid; }
   .indice button {
     display: flex; align-items: center; gap: 0.625rem; min-height: 2.25rem; padding: 0; border: 0; background: none;
     color: var(--tenue); font: inherit; font-size: 0.9375rem; text-align: left; cursor: pointer; transition: color 0.15s;

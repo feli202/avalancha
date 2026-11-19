@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escarcha v2</title>
+<link rel="stylesheet" href="../../node_modules/@fontsource/space-grotesk/index.css">
+<link rel="stylesheet" href="../../node_modules/@fontsource/space-grotesk/600.css">
+<link rel="stylesheet" href="../../src/ui/hielo.css">
+<style>
+  :root {
+    --fondo: #07080f; --tinta: #e8e9f3; --tenue: rgb(232 233 243 / 0.6); --apagado: rgb(232 233 243 / 0.5);
+    --ambar: #ffb547; --coral: #ff6b6b; --jade: #2dd4a7; --violeta: #9b7bff; --hielo: #9fe3f5; --escarcha: #eaf6ff; --noche: #04060d;
+    color-scheme: dark;
+  }
+  *, ::before, ::after { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; overflow: hidden; background: #04060d; color: var(--tinta); font-family: 'Space Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .pantalla { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: 1.5rem; height: 100vh; padding: 1.25rem 2rem 1.25rem 1rem; }
+  svg { width: 100%; height: 100%; display: block; }
+  #red { -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 58%, transparent 99%); mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 58%, transparent 99%); }
+  .ficha { --f: 1rem; align-self: center; display: grid; gap: 0.7rem; padding: 1.25rem 1.3rem 1.4rem; }
+  .ficha header { display: flex; align-items: center; gap: 0.9rem; }
+  .ficha header svg { width: 3.4rem; height: 3.4rem; flex: none; }
+  h2 { margin: 0; font-size: 1.6rem; font-weight: 300; letter-spacing: 0.01em; }
+  .nivel { margin: 0.1rem 0 0; color: var(--tenue); font-size: 0.875rem; }
+  .nivel b { color: var(--jade); font-weight: 600; }
+  p { margin: 0; }
+  .hace { color: var(--escarcha); line-height: 1.45; }
+  .sig { color: var(--tenue); font-size: 0.875rem; line-height: 1.45; }
+  .sig b { color: var(--violeta); font-weight: 600; }
+  .compra { --c: var(--violeta); --b: 1.1rem; display: grid; gap: 0.1rem; min-height: 3.2rem; padding-block: 0.7rem; font: inherit; font-size: 1rem; text-align: center; }
+  .compra small { color: var(--hielo); font-size: 0.8125rem; }
+  .que { color: var(--tenue); font-size: 0.8125rem; text-align: center; margin-top: 0.3rem; }
+</style>
+</head>
+<body>
+<div class="pantalla">
+  <svg id="red" viewBox="-430 -360 860 720" preserveAspectRatio="xMidYMid slice" role="img" aria-label="La Red como escarcha creciendo sobre un vidrio"></svg>
+  <aside class="ficha placa grietas">
+    <header>
+      <svg id="ficha-icono" viewBox="-40 -40 80 80" aria-hidden="true"></svg>
+      <div><h2>Estratos</h2><p class="nivel"><b>Jade</b> · nivel 3 de 4</p></div>
+    </header>
+    <p class="hace">Los estratos se llenan ×3 más rápido.</p>
+    <p class="sig">Con <b>Violeta</b>: ×5, y la escarcha crece hacia Presión e Inercia.</p>
+    <button class="compra gema"><span>Llevar a Violeta</span><small>12 Cristales</small></button>
+    <p class="que">Completar un nodo hace crecer la escarcha hacia sus vecinos.</p>
+  </aside>
+</div>
+<script>
+const NODOS = [
+  ['memoria', 'Memoria', 0, 0], ['eco', 'Eco', 0, 1], ['sedimentacion', 'Sedimentación', 1, 0], ['estratos', 'Estratos', 0, -1],
+  ['defectos', 'Defectos', -1, 0], ['ruptura', 'Ruptura', 0, 2], ['compactacion', 'Compactación', 2, 0], ['presion', 'Presión', 0, -2],
+  ['engarces', 'Engarces', -2, 0], ['cascada_plus', 'Cascada+', 1, 1], ['mutacion_plus', 'Mutación+', 1, -1], ['inercia', 'Inercia', -1, -1],
+  ['cristalografia', 'Cristalografía', -1, 1], ['eco2', 'Eco II', 0, 3], ['germen', 'Germen', 1, 2], ['frio', 'Frío', 2, 1],
+  ['compactacion2', 'Compactación II', 3, 0], ['sedimento2', 'Sedimento II', 2, -1], ['capilaridad', 'Capilaridad', 1, -2], ['abismo', 'Abismo', 0, -3],
+  ['defectos2', 'Defectos II', -1, -2], ['engarces2', 'Engarces II', -2, -1], ['cristalografia2', 'Cristalografía II', -3, 0],
+  ['deshielo', 'Deshielo', -2, 1], ['ruptura2', 'Ruptura II', -1, 2],
+].map(([id, nombre, x, y]) => ({ id, nombre, x, y, anillo: Math.abs(x) + Math.abs(y) }))
+const NIVEL = { memoria: 4, eco: 4, sedimentacion: 4, estratos: 3, defectos: 2, ruptura: 1, cristalografia: 2 }
+const LV = ['#ffb547', '#ff6b6b', '#2dd4a7', '#9b7bff'], ROM = ['', 'I', 'II', 'III', 'IV']
+const POR = new Map(NODOS.map((n) => [n.x + ',' + n.y, n]))
+const vecinos = (n) => [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => POR.get(n.x + dx + ',' + (n.y + dy))).filter(Boolean)
+for (const n of NODOS) n.n = NIVEL[n.id] ?? 0
+for (const n of NODOS) {
+  const abierto = n.id === 'memoria' || vecinos(n).some((v) => v.anillo < n.anillo && v.n >= 4)
+  n.modo = n.anillo === 3 ? 'hielo' : n.n > 0 ? 'cristal' : abierto ? 'vacio' : 'cerrado'
+}
+const h = (i, k = 1) => { const s = Math.sin(i * 127.1 + k * 311.7) * 43758.5; return s - Math.floor(s) }
+
+// Un emblema por nodo, de la misma familia que los sellos del Relicario: trazo fino, geometría de la pila y del cristal.
+const EMBLEMA = {
+  memoria: 'M0 0a2 2 0 0 1 4 0a4 4 0 0 1-8 0a6 6 0 0 1 12 0a8 8 0 0 1-16 0',
+  eco: 'M-5-6a8 8 0 0 1 0 12M-1-9.5a12.5 12.5 0 0 1 0 19M-8 0h.01',
+  sedimentacion: 'M-9-5h18M-7 0h14M-5 5h10M-2 9.5h4',
+  estratos: 'M0-9l8 4-8 4-8-4zM-8 0l8 4 8-4M-8 5l8 4 8-4',
+  defectos: 'M-8-8v16M8-8v16M0-8v6M2 2v6M-8 0h16',
+  ruptura: 'M0-9a9 9 0 1 0 .01 0M-1-9l3 5-3 4 4 9',
+  compactacion: 'M-3-3h6v6h-6zM-10 0h5M10 0h-5M0-10v5M0 10v-5',
+  cascada_plus: 'M-9-8h5v5h5v5h5v5',
+  mutacion_plus: 'M-6-9c12 6 0 12 12 18M6-9c-12 6 0 12-12 18M-3-4.5h6M-3 4.5h6',
+  cristalografia: 'M0-9l8 4.5v9L0 9l-8-4.5v-9zM0 0v9M0 0l8-4.5M0 0l-8-4.5',
+}
+
+const NS = 'http://www.w3.org/2000/svg'
+function el(tag, at, padre) { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); padre?.appendChild(e); return e }
+const s = document.getElementById('red')
+const defs = el('defs', {}, s)
+defs.innerHTML = `
+  <radialGradient id="cielo" cx="50%" cy="38%" r="75%"><stop offset="0" stop-color="#0d1b30"/><stop offset=".55" stop-color="#060c18"/><stop offset="1" stop-color="#04060d"/></radialGradient>
+  <radialGradient id="vineta" cx="50%" cy="45%" r="70%"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#04060d" stop-opacity="1"/></radialGradient>
+  <radialGradient id="borde-escarcha" cx="50%" cy="48%" r="62%"><stop offset=".62" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></radialGradient>
+  <mask id="m-escarcha"><rect x="-700" y="-420" width="1400" height="840" fill="url(#borde-escarcha)"/></mask>
+  <filter id="f-escarcha" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.11 0.16" numOctaves="4" seed="11"/>
+    <feColorMatrix values="0 0 0 0 .82  0 0 0 0 .93  0 0 0 0 1  0 0 0 3.2 -1.85"/></filter>
+  <filter id="f-polvo" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="4"/>
+    <feColorMatrix values="0 0 0 0 .9  0 0 0 0 .96  0 0 0 0 1  0 0 0 9 -8.3"/></filter>
+  <filter id="aurora" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="40"/></filter>
+  <filter id="halo" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="9"/></filter>
+  <filter id="halo-fino" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="2.5"/></filter>
+  <filter id="desenfoque" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+  <radialGradient id="vidrio" cx="38%" cy="30%" r="80%"><stop offset="0" stop-color="#2a4560"/><stop offset=".45" stop-color="#0c1726"/><stop offset="1" stop-color="#050a12"/></radialGradient>
+  <linearGradient id="arista" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".35" stop-color="#bfeaff" stop-opacity=".25"/><stop offset=".7" stop-color="#9fe3f5" stop-opacity=".08"/><stop offset="1" stop-color="#cdf0ff" stop-opacity=".45"/></linearGradient>
+  ${LV.map((c, i) => `<radialGradient id="tinte${i}" cx="50%" cy="60%" r="60%"><stop offset="0" stop-color="${c}" stop-opacity=".55"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`).join('')}`
+
+// ---------- Fondo: cielo, aurora, la pila de la Arena detrás del vidrio, polvo de escarcha y escarcha en los bordes ----------
+el('rect', { x: -700, y: -420, width: 1400, height: 840, fill: 'url(#cielo)' }, s)
+const aur = el('g', { filter: 'url(#aurora)', opacity: 0.5 }, s)
+el('ellipse', { cx: -160, cy: -210, rx: 260, ry: 50, fill: '#1f6f8a', transform: 'rotate(-12)' }, aur)
+el('ellipse', { cx: 170, cy: -250, rx: 220, ry: 40, fill: '#4b3a9a', transform: 'rotate(8)' }, aur)
+const pila = el('g', { filter: 'url(#desenfoque)', opacity: 0.32, transform: 'translate(0 300)' }, s)
+for (let i = -8; i <= 8; i++) for (let j = -8; j <= 8; j++) if (Math.abs(i) + Math.abs(j) <= 8)
+  el('rect', { x: i * 26 - 13, y: j * 15 - 7.5, width: 26, height: 15, fill: LV[(Math.abs(i * 3 + j * 5)) % 4] }, pila)
+el('rect', { x: -700, y: -420, width: 1400, height: 840, filter: 'url(#f-polvo)', opacity: 0.35 }, s)
+el('rect', { x: -700, y: -420, width: 1400, height: 840, filter: 'url(#f-escarcha)', mask: 'url(#m-escarcha)', opacity: 0.3 }, s)
+el('rect', { x: -700, y: -420, width: 1400, height: 840, fill: 'url(#vineta)' }, s)
+
+// ---------- Escarcha: ramas con halo, núcleo fino y perlas de luz ----------
+const P = (n) => [n.x * 132, -n.y * 118 - 6]
+const gHalo = el('g', { stroke: '#7fd6f0', fill: 'none', filter: 'url(#halo)', opacity: 0.55, 'stroke-linecap': 'round' }, s)
+const gRama = el('g', { stroke: '#e6f8ff', fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, s)
+const gPerla = el('g', {}, s)
+let sem = 1
+function rama(x0, y0, x1, y1, ancho, prof) {
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, pasos = Math.max(4, Math.round(L / 9))
+  let d = `M${x0.toFixed(1)} ${y0.toFixed(1)}`
+  for (let i = 1; i <= pasos; i++) {
+    const t = i / pasos, w = (h(sem++) - 0.5) * 2.4 * (i < pasos ? 1 : 0)
+    d += `L${(x0 + dx * t - uy * w).toFixed(1)} ${(y0 + dy * t + ux * w).toFixed(1)}`
+    if (prof > 0 && i < pasos - 1 && i > 1 && h(sem++) > 0.3) {
+      for (const lado of [1, -1]) {
+        if (h(sem++) < 0.35) continue
+        const la = L * (0.12 + 0.12 * h(sem++)) * (1 - t * 0.4), ca = Math.cos(lado * 1.047), sa = Math.sin(lado * 1.047)
+        const px = x0 + dx * t, py = y0 + dy * t
+        rama(px, py, px + (ux * ca - uy * sa) * la, py + (ux * sa + uy * ca) * la, ancho * 0.5, prof - 1)
+      }
+    }
+  }
+  el('path', { d, 'stroke-width': ancho, opacity: 0.4 + 0.6 * Math.min(1, ancho) }, gRama)
+  if (ancho >= 1.4) el('path', { d, 'stroke-width': ancho * 3 }, gHalo)
+}
+const R = (n) => (n.anillo <= 1 ? 30 : 25)
+for (const n of NODOS) if (n.n >= 4) for (const v of vecinos(n)) {
+  if (v.n >= 4 && v.anillo < n.anillo) continue // cada rama entre completos, una sola vez
+  const [a, b] = P(n), [c, d] = P(v), L = Math.hypot(c - a, d - b), ux = (c - a) / L, uy = (d - b) / L
+  rama(a + ux * R(n), b + uy * R(n), c - ux * (R(v) + 4), d - uy * (R(v) + 4), 2, 2)
+  // Perlas: la luz que viaja por la rama (en el juego se mueven).
+  for (const t of [0.3, 0.7]) {
+    const x = a + (c - a) * t, y = b + (d - b) * t
+    el('circle', { cx: x, cy: y, r: 6, fill: '#bff0ff', filter: 'url(#halo-fino)', opacity: 0.8 }, gPerla)
+    el('circle', { cx: x, cy: y, r: 1.8, fill: '#fff' }, gPerla)
+  }
+}
+
+// ---------- Medallones ----------
+const arco = (r, a0, a1) => {
+  const p = (a) => `${(r * Math.cos(a)).toFixed(2)} ${(r * Math.sin(a)).toFixed(2)}`
+  return `M${p(a0)}A${r} ${r} 0 0 1 ${p(a1)}`
+}
+function medallon(g, n, r, conNombre = true) {
+  const lleno = n.n >= 4, c = n.n ? LV[n.n - 1] : '#9fe3f5'
+  if (n.modo === 'cristal') el('circle', { r: r + 14, fill: c, opacity: lleno ? 0.35 : 0.18, filter: 'url(#halo)' }, g)
+  // Anillo de niveles: cuatro arcos (Ámbar, Coral, Jade, Violeta) que se encienden.
+  for (let i = 0; i < 4; i++) {
+    const a0 = -Math.PI / 2 + (i * Math.PI) / 2 + 0.16, a1 = a0 + Math.PI / 2 - 0.32, on = i < n.n
+    el('path', { d: arco(r + 6, a0, a1), stroke: '#02050b', 'stroke-width': 7, fill: 'none', 'stroke-linecap': 'round' }, g)
+    el('path', { d: arco(r + 6, a0, a1), stroke: on ? LV[i] : '#1a2838', 'stroke-width': 4, fill: 'none', 'stroke-linecap': 'round' }, g)
+    if (on) el('path', { d: arco(r + 6, a0, a1), stroke: '#fff', 'stroke-width': 1, fill: 'none', 'stroke-linecap': 'round', opacity: 0.55 }, g)
+  }
+  // Corona de escarcha en los completos: seis puntas finas.
+  if (lleno) for (let k = 0; k < 6; k++) {
+    const a = (k / 6) * Math.PI * 2 - Math.PI / 2 + Math.PI / 6
+    el('path', { d: `M${(r + 11) * Math.cos(a)} ${(r + 11) * Math.sin(a)}L${(r + 19) * Math.cos(a)} ${(r + 19) * Math.sin(a)}`, stroke: '#e6f8ff', 'stroke-width': 1.3, 'stroke-linecap': 'round' }, g)
+  }
+  // Cuerpo de vidrio: base oscura, tinte del nivel desde abajo, arista especular y un brillo arriba.
+  el('circle', { r, fill: 'url(#vidrio)' }, g)
+  if (n.n) el('circle', { r, fill: `url(#tinte${n.n - 1})` }, g)
+  el('circle', { r: r - 0.75, fill: 'none', stroke: 'url(#arista)', 'stroke-width': 1.5 }, g)
+  el('ellipse', { cx: -r * 0.28, cy: -r * 0.5, rx: r * 0.42, ry: r * 0.16, fill: '#fff', opacity: 0.13, transform: `rotate(-25 ${-r * 0.28} ${-r * 0.5})` }, g)
+  const e = EMBLEMA[n.id]
+  if (e) el('path', { d: e, transform: `scale(${r / 17})`, fill: 'none', stroke: n.modo === 'vacio' ? '#9fe3f5' : '#f2fbff', 'stroke-width': 1.5 * 17 / r, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: n.modo === 'vacio' ? 0.65 : 1 }, g)
+  if (conNombre) {
+    const t = el('text', { y: r + 26, 'text-anchor': 'middle', fill: '#eaf6ff', 'font-size': 12.5, 'font-weight': 600, 'letter-spacing': '0.04em', 'paint-order': 'stroke', stroke: '#03060c', 'stroke-width': 4 }, g)
+    t.textContent = n.nombre
+    if (n.n) { const l = el('tspan', { fill: LV[n.n - 1], 'font-weight': 400, dx: 6 }, t); l.textContent = ROM[n.n] }
+  }
+}
+const gNodos = el('g', {}, s)
+for (const n of NODOS) {
+  const [x, y] = P(n), g = el('g', { transform: `translate(${x} ${y})` }, gNodos)
+  if (n.modo === 'cristal' || n.modo === 'vacio') {
+    if (n.id === 'estratos') el('circle', { r: R(n) + 24, fill: 'none', stroke: '#9fe3f5', 'stroke-width': 1, 'stroke-dasharray': '2 5', opacity: 0.7 }, g) // el elegido
+    medallon(g, n, R(n))
+  } else if (n.modo === 'cerrado') {
+    // Sello helado: hexágono de escarcha sin emblema, con su nombre apagado.
+    const hex = Array.from({ length: 6 }, (_, i) => { const a = (i / 6) * Math.PI * 2; return `${(11 * Math.cos(a)).toFixed(1)},${(11 * Math.sin(a)).toFixed(1)}` }).join(' ')
+    el('polygon', { points: hex, fill: '#0b1522', stroke: '#6f8ea6', 'stroke-width': 1, opacity: 0.8 }, g)
+    el('path', { d: 'M0-6v12M-5.2-3l10.4 6M-5.2 3l10.4-6', stroke: '#8fb0c8', 'stroke-width': 0.8, opacity: 0.6 }, g)
+    const t = el('text', { y: 28, 'text-anchor': 'middle', fill: '#a3b3c6', 'font-size': 11, 'letter-spacing': '0.04em' }, g)
+    t.textContent = n.nombre
+  } else {
+    // Bajo el hielo: tres esquirlas apenas visibles.
+    for (let k = 0; k < 3; k++) {
+      const a = k * 2.1 + h(k, n.x * 7 + n.y), l = 9 + 5 * h(k, 9)
+      el('path', { d: `M0 0L${l * Math.cos(a)} ${l * Math.sin(a)}`, stroke: '#9fb3c4', 'stroke-width': 1, opacity: 0.14 }, g)
+    }
+  }
+}
+// El ícono de la ficha: el mismo medallón, más grande.
+const fi = document.getElementById('ficha-icono')
+fi.innerHTML = defs.outerHTML
+medallon(el('g', {}, fi), NODOS.find((n) => n.id === 'estratos'), 22, false)
+</script>
+</body>
+</html>

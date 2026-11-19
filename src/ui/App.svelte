@@ -308,8 +308,6 @@
   .defecto ul b { color: var(--tinta); font-weight: 600; }
   .abandonar { min-height: 2.75rem; padding: 0; border: 0; background: none; color: var(--apagado); font: inherit; font-size: 0.875rem; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }
   .abandonar:hover, .abandonar:focus-visible { color: var(--coral); }
-  /* En vertical la barra de capas baja a 7rem (Capas.svelte): el cartel se corre para no quedar debajo. */
-  @media (orientation: portrait) and (max-width: 1100px) { .con-capas .defecto { margin-left: 4.5rem; } }
 
   .aviso {
     position: fixed; top: var(--margen); left: 50%; translate: -50% 0; width: max-content;
@@ -416,7 +414,6 @@
     .juego { --margen: 1rem; --col: auto; --pila-radio-max: 100vw; --pila-arriba: 7rem; --pila-abajo: calc(45dvh + 3.5rem); --fondo-abajo: 45dvh; --hoja: 88dvh; }
     .izq { right: var(--margen); }
     .camino { top: calc(var(--pila-arriba) + 1.5rem); bottom: calc(var(--pila-abajo) + 1.5rem); }
-    .con-capas .camino { left: 4.6rem; }
     .energia { font-size: 2.25rem; margin-bottom: 0.25rem; }
     .linea { font-size: 0.875rem; line-height: 1.4; }
     .aviso { top: auto; bottom: calc(45dvh + 4rem); max-width: calc(100% - 2rem); font-size: 0.8125rem; }
@@ -435,6 +432,9 @@
       transform: translateY(calc(var(--hoja) - 45dvh + var(--arrastre)));
       transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
+    /* Con la barra de capas abajo, la hoja se apoya sobre ella: el borde de arriba queda donde estaba (la pila no se mueve). */
+    .con-capas .der { bottom: var(--nav); height: calc(var(--hoja) - var(--nav)); }
+    .con-capas .der:not(.alta) .contenido { max-height: calc(45dvh - 3.75rem - var(--nav)); }
     .der.alta { transform: translateY(max(0px, var(--arrastre))); }
     .der.arrastrando { transition: none; }
     .manija { display: block; flex: none; width: 100%; height: 2.75rem; border: 0; background: none; cursor: grab; touch-action: none; }

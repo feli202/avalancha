@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Red · escarcha v3</title>
+<link rel="stylesheet" href="../../node_modules/@fontsource/space-grotesk/300.css">
+<link rel="stylesheet" href="../../node_modules/@fontsource/space-grotesk/index.css">
+<link rel="stylesheet" href="../../node_modules/@fontsource/space-grotesk/600.css">
+<link rel="stylesheet" href="../../src/ui/hielo.css">
+<style>
+  :root {
+    --fondo: #07080f; --tinta: #e8e9f3; --tenue: rgb(232 233 243 / 0.6); --apagado: rgb(232 233 243 / 0.5); --borde: rgb(255 255 255 / 0.1);
+    --ambar: #ffb547; --coral: #ff6b6b; --jade: #2dd4a7; --violeta: #9b7bff; --hielo: #9fe3f5; --escarcha: #eaf6ff; --noche: #04060d;
+    color-scheme: dark;
+  }
+  *, ::before, ::after { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; overflow: hidden; background: var(--fondo); color: var(--tinta); font-family: 'Space Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* Barra de capas (Capas.svelte) */
+  .capas { position: fixed; left: 0; top: 50%; translate: 0 -50%; z-index: 5; display: grid; gap: 0.25rem; padding: 0.5rem 0; border: 1px solid var(--borde); border-left: 0; background: rgb(7 8 15 / 0.92); }
+  .capas button { --c: var(--ambar); display: grid; justify-items: center; align-content: center; gap: 0.3rem; width: 5rem; min-height: 4.5rem; padding: 0.5rem 0.25rem; border: 0; background: none; color: var(--apagado); font: inherit; font-size: 0.6875rem; line-height: 1.1; }
+  .capas .cristal { --c: var(--hielo); }
+  .capas svg { width: 2.25rem; height: 2.25rem; overflow: visible; filter: saturate(0.55) brightness(0.8); opacity: 0.75; }
+  .capas [aria-current] { color: var(--c); font-weight: 600; background: linear-gradient(var(--c), var(--c)) left / 2px 100% no-repeat, radial-gradient(80% 70% at 30% 45%, color-mix(in srgb, var(--c) 22%, transparent), transparent 75%); }
+  .capas [aria-current] svg { filter: drop-shadow(0 0 0.45rem color-mix(in srgb, var(--c) 70%, transparent)); opacity: 1; scale: 1.08; }
+
+  /* Cristalización (Capas.svelte) */
+  .cristalizacion {
+    position: fixed; inset: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr); overflow: hidden; padding: 2rem 2rem 1.5rem 7rem; color: var(--escarcha);
+    background:
+      linear-gradient(60deg, transparent calc(50% - 0.5px), rgb(159 227 245 / 0.05) 50%, transparent calc(50% + 0.5px)) 0 0 / 34rem 58.9rem,
+      linear-gradient(-60deg, transparent calc(50% - 0.5px), rgb(159 227 245 / 0.035) 50%, transparent calc(50% + 0.5px)) 9rem 0 / 46rem 79.7rem,
+      radial-gradient(120% 80% at 50% 0%, #0a1322, var(--noche) 70%);
+  }
+  .contadores { display: flex; align-items: end; gap: 0.5rem 3rem; margin: 0; }
+  .principal { display: flex; align-items: center; gap: 0.75rem; }
+  .emblema { width: 3.25rem; height: 3.25rem; flex: none; overflow: visible; filter: drop-shadow(0 0 0.3rem rgb(159 227 245 / 0.3)); }
+  dt { font-size: 0.875rem; color: var(--tenue); }
+  dd { margin: 0.125rem 0 0; font-size: 1.5rem; font-weight: 600; line-height: 1; letter-spacing: -0.02em; }
+  .cristales { font-size: 3.75rem; letter-spacing: -0.03em; color: var(--hielo); }
+  .sistemas { margin-top: 1.75rem; }
+  .sistemas svg { fill: none; stroke: currentColor; stroke-width: 1.25; stroke-linejoin: round; }
+
+  /* La Red */
+  .red { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 2rem; min-height: 0; padding-top: 0.5rem; }
+  #escena { width: 100%; height: 100%; display: block; }
+  .ficha { --f: 1rem; align-self: center; display: grid; gap: 0.85rem; padding: 1.15rem 1.25rem 1.3rem; }
+  .ficha header { display: flex; align-items: center; gap: 0.9rem; }
+  .ficha canvas { width: 3.75rem; height: 3.75rem; flex: none; }
+  h2 { margin: 0; font-size: 1.125rem; font-weight: 600; line-height: 1.2; }
+  .nv { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.3rem; color: var(--tenue); font-size: 0.8125rem; }
+  .cuadros { display: inline-flex; gap: 3px; }
+  .cuadros i { width: 0.5rem; height: 0.5rem; background: rgb(159 227 245 / 0.14); }
+  p { margin: 0; }
+  .efecto { font-size: 0.9375rem; color: var(--escarcha); }
+  .efecto b, .prox b { font-weight: 600; }
+  .prox { font-size: 0.8125rem; color: var(--tenue); }
+  .compra { --c: var(--violeta); --b: 1.1rem; display: grid; grid-template-columns: 1fr auto; align-items: center; min-height: 3rem; padding: 0.6rem 1.4rem; font: inherit; font-size: 0.9375rem; font-weight: 600; text-align: left; }
+  .compra .num { color: var(--violeta); font-weight: 600; }
+  .que { margin-top: 0.15rem; padding-top: 0.75rem; border-top: 1px solid var(--borde); color: var(--tenue); font-size: 0.8125rem; line-height: 1.45; }
+</style>
+</head>
+<body>
+<nav class="capas">
+  <button class="arena"><svg viewBox="-12 -12 24 24" id="ic-arena"></svg><span>Arena</span></button>
+  <button class="cristal" aria-current="page"><svg viewBox="-12 -12 24 24">
+    <path d="M0-11 5.5-6V6L0 11-5.5 6V-6Z" fill="#0f3a4d"/><path d="M0-11-5.5-6V6L0 11Z" fill="#9fe3f5" opacity="0.35"/><path d="M0-11 5.5-6V6L0 11Z" fill="#9fe3f5" opacity="0.7"/>
+    <path d="M0-11 5.5-6 0-3.5-5.5-6Z" fill="#eaf6ff" opacity="0.85"/><path d="M0-3.5V11M0-11-5.5-6V6L0 11 5.5 6V-6Z" fill="none" stroke="#eaf6ff" stroke-width="0.6" stroke-linejoin="round" opacity="0.8"/>
+  </svg><span>Cristalización</span></button>
+</nav>
+
+<main class="cristalizacion">
+  <dl class="contadores num">
+    <div class="principal">
+      <svg class="emblema" viewBox="-12 -12 24 24" aria-hidden="true">
+        <path d="M0-11 5.5-6V6L0 11-5.5 6V-6Z" fill="#0f3a4d"/><path d="M0-11-5.5-6V6L0 11Z" fill="#9fe3f5" opacity="0.35"/><path d="M0-11 5.5-6V6L0 11Z" fill="#9fe3f5" opacity="0.7"/>
+        <path d="M0-11 5.5-6 0-3.5-5.5-6Z" fill="#eaf6ff" opacity="0.85"/><path d="M0-3.5V11M0-11-5.5-6V6L0 11 5.5 6V-6Z" fill="none" stroke="#eaf6ff" stroke-width="0.6" stroke-linejoin="round" opacity="0.8"/>
+        <path d="M7.5-9.5v4M5.5-7.5h4" stroke="#fff" stroke-width="0.8" stroke-linecap="round"/>
+      </svg>
+      <div><dt>Cristales</dt><dd class="cristales">5.571</dd></div>
+    </div>
+    <div><dt>Cristales totales</dt><dd>2,75e6</dd></div>
+    <div><dt>Energía · Arena</dt><dd>2,07e24</dd></div>
+  </dl>
+  <nav class="sistemas pestanas-hielo" id="pestanas"></nav>
+
+  <section class="red">
+    <svg id="escena" viewBox="-420 -330 840 660" preserveAspectRatio="xMidYMid meet" role="img" aria-label="La Red"></svg>
+    <aside class="ficha placa grietas">
+      <header>
+        <canvas id="ficha-cara" width="96" height="96"></canvas>
+        <div>
+          <h2>Estratos</h2>
+          <div class="nv num"><span class="cuadros" id="ficha-cuadros"></span>Nv 3 · Jade</div>
+        </div>
+      </header>
+      <p class="efecto">Los estratos se llenan <b>×3</b> más rápido.</p>
+      <p class="prox">Nv 4: <b>×5</b>. Al completarlo, la escarcha llega a Presión e Inercia.</p>
+      <button class="compra gema"><span>Comprar Nv 4</span><span class="num">12</span></button>
+      <p class="que">Cada nodo es una pila de arena. Con el cuarto nivel se derrumba y la escarcha abre a sus vecinos.</p>
+    </aside>
+  </section>
+</main>
+
+<script>
+const NODOS = [
+  ['memoria', 'Memoria', 0, 0], ['eco', 'Eco', 0, 1], ['sedimentacion', 'Sedimentación', 1, 0], ['estratos', 'Estratos', 0, -1],
+  ['defectos', 'Defectos', -1, 0], ['ruptura', 'Ruptura', 0, 2], ['compactacion', 'Compactación', 2, 0], ['presion', 'Presión', 0, -2],
+  ['engarces', 'Engarces', -2, 0], ['cascada_plus', 'Cascada+', 1, 1], ['mutacion_plus', 'Mutación+', 1, -1], ['inercia', 'Inercia', -1, -1],
+  ['cristalografia', 'Cristalografía', -1, 1], ['eco2', 'Eco II', 0, 3], ['germen', 'Germen', 1, 2], ['frio', 'Frío', 2, 1],
+  ['compactacion2', 'Compactación II', 3, 0], ['sedimento2', 'Sedimento II', 2, -1], ['capilaridad', 'Capilaridad', 1, -2], ['abismo', 'Abismo', 0, -3],
+  ['defectos2', 'Defectos II', -1, -2], ['engarces2', 'Engarces II', -2, -1], ['cristalografia2', 'Cristalografía II', -3, 0],
+  ['deshielo', 'Deshielo', -2, 1], ['ruptura2', 'Ruptura II', -1, 2],
+].map(([id, nombre, x, y], i) => ({ id, nombre, x, y, i, anillo: Math.abs(x) + Math.abs(y) }))
+const NIVEL = { memoria: 4, eco: 4, sedimentacion: 4, estratos: 3, defectos: 2, ruptura: 1, cristalografia: 2 }
+const LV = ['#ffb547', '#ff6b6b', '#2dd4a7', '#9b7bff']
+const POR = new Map(NODOS.map((n) => [n.x + ',' + n.y, n]))
+const vecinos = (n) => [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => POR.get(n.x + dx + ',' + (n.y + dy))).filter(Boolean)
+for (const n of NODOS) n.n = NIVEL[n.id] ?? 0
+for (const n of NODOS) {
+  const abierto = n.id === 'memoria' || vecinos(n).some((v) => v.anillo < n.anillo && v.n >= 4)
+  n.modo = n.anillo === 3 ? 'hielo' : n.n > 0 ? 'cristal' : abierto ? 'vacio' : 'cerrado'
+}
+const h = (i, k = 1) => { const s = Math.sin(i * 127.1 + k * 311.7) * 43758.5; return s - Math.floor(s) }
+const NS = 'http://www.w3.org/2000/svg'
+function el(tag, at, padre) { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); padre?.appendChild(e); return e }
+
+// Íconos de la barra y de las pestañas (los de Capas.svelte).
+for (const [x, y, o] of [[-1.3, -2.8, 1], [1.7, -2.8, 0.7], [-2.8, 0.2, 0.9], [0.2, 0.2, 1], [3.2, 0.2, 0.75], [-5.8, 3.2, 0.7], [-2.8, 3.2, 0.85], [0.2, 3.2, 0.65], [3.2, 3.2, 0.9], [6.2, 3.2, 0.6], [-8.8, 6.2, 0.55], [-5.8, 6.2, 0.75], [-2.8, 6.2, 0.6], [0.2, 6.2, 0.8], [3.2, 6.2, 0.55], [6.2, 6.2, 0.7], [9.2, 6.2, 0.5]])
+  el('rect', { x, y, width: 2.6, height: 2.6, fill: '#ffb547', opacity: o }, document.getElementById('ic-arena'))
+const PEST = [['Red', 'M0-7 7 0 0 7-7 0ZM-3.5-3.5 3.5 3.5M3.5-3.5-3.5 3.5'], ['Estratos', 'M-7-6.5h14l-1.5 3h-11ZM-6-1h12l-1.5 3h-9ZM-5 4.5h10l-1.5 3h-7Z'],
+  ['Defectos', 'M-7-3.5h14M-7 3.5h14M-3.5-7V7M3.5-7V0M1.5 0V7'], ['Escarcha', 'M0-7V7M-6-3.5 6 3.5M-6 3.5 6-3.5M0-7-1.5-5.5M0-7 1.5-5.5M0 7-1.5 5.5M0 7 1.5 5.5'],
+  ['Relicario', 'M-6-2.5-3.5-6h7L6-2.5 0 7ZM-6-2.5H6M-3.5-6-1.5-2.5 0 7M3.5-6 1.5-2.5 0 7']]
+document.getElementById('pestanas').innerHTML = PEST.map(([t, d], i) => `<button ${i ? '' : 'aria-current="page"'}><svg viewBox="-8 -8 16 16"><path d="${d}"/></svg><span class="nombre">${t}</span></button>`).join('')
+
+// ---------- Cada nodo es una mini pila abeliana: su propio mandala, teñido con el color de su nivel ----------
+const G = 41, C = (G - 1) / 2
+function pila(granos) {
+  const a = new Uint16Array(G * G), fuera = (i) => Math.hypot((i % G) - C, Math.floor(i / G) - C) > C - 0.5
+  a[C * G + C] = granos
+  const cola = [C * G + C]
+  while (cola.length) {
+    const i = cola.pop(), q = a[i] >> 2
+    if (!q) continue
+    a[i] &= 3
+    for (const j of [i - 1, i + 1, i - G, i + G]) if (!fuera(j)) { a[j] += q; if (a[j] >= 4) cola.push(j) }
+  }
+  return a
+}
+const rgb = (hex) => [1, 3, 5].map((k) => parseInt(hex.slice(k, k + 2), 16))
+const mezcla = (c, d, t) => c.map((v, k) => Math.round(v + (d[k] - v) * t))
+// Como las caras del Relicario: el brillo va al revés de la frecuencia (3 granos, lo más común, oscuro; 0, claro).
+function tonos(hex, apagado) {
+  const c = apagado ? [86, 104, 122] : rgb(hex)
+  return [mezcla(c, [255, 255, 255], 0.35), c, mezcla(c, [6, 9, 18], 0.4), mezcla(c, [6, 9, 18], 0.68)]
+}
+const CACHE = {}
+function cara(n, px = 3) {
+  const clave = n.id + px
+  if (CACHE[clave]) return CACHE[clave]
+  const a = pila(1500 + Math.round(h(n.i, 7) * 2600))
+  const t = tonos(n.n ? LV[n.n - 1] : '#9fe3f5', n.modo !== 'cristal')
+  const cv = document.createElement('canvas')
+  cv.width = cv.height = G * px
+  const g = cv.getContext('2d')
+  for (let i = 0; i < G * G; i++) {
+    const x = i % G, y = Math.floor(i / G)
+    if (Math.hypot(x - C, y - C) > C - 0.5) continue
+    g.fillStyle = `rgb(${t[a[i]]})`
+    g.fillRect(x * px, y * px, px, px)
+  }
+  return (CACHE[clave] = cv.toDataURL())
+}
+
+// Un emblema por nodo (familia de los sellos del Relicario): trazo fino sobre un disco oscuro con un aro claro.
+const EMBLEMA = {
+  memoria: 'M0 0a2 2 0 0 1 4 0a4 4 0 0 1-8 0a6 6 0 0 1 12 0',
+  eco: 'M-4-5.5a7.5 7.5 0 0 1 0 11M0-8a11 11 0 0 1 0 16M-7 0h.01',
+  sedimentacion: 'M-7-4h14M-5.5 0h11M-4 4h8',
+  estratos: 'M0-7l7 3.5-7 3.5-7-3.5zM-7 0l7 3.5 7-3.5M-7 4l7 3.5 7-3.5',
+  defectos: 'M-6.5-6.5v13M6.5-6.5v13M0-6.5v5M1.6 1.5v5M-6.5 0h13',
+  ruptura: 'M-1-7.5l3 4.5-3 3.5 3.5 7',
+  compactacion: 'M-2.5-2.5h5v5h-5zM-8 0h3.5M8 0h-3.5M0-8v3.5M0 8v-3.5',
+  cascada_plus: 'M-7-6h4v4h4v4h4v4',
+  mutacion_plus: 'M-4.5-7c9 4.5 0 9.5 9 14M4.5-7c-9 4.5 0 9.5-9 14',
+  cristalografia: 'M0-7l6 3.5v7L0 7l-6-3.5v-7zM0 0v7M0 0l6-3.5M0 0l-6-3.5',
+}
+
+const s = document.getElementById('escena')
+const defs = el('defs', {}, s)
+defs.innerHTML = `
+  <filter id="halo" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3"/></filter>
+  <filter id="halo-cara" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter>
+  ${NODOS.map((n) => `<clipPath id="c-${n.id}"><circle r="${n.anillo <= 1 ? 38 : 32}"/></clipPath>`).join('')}`
+const P = (n) => [n.x * 134, -n.y * 116 - 8]
+const R = (n) => (n.anillo <= 1 ? 38 : 32)
+
+// ---------- Escarcha: un trazo fino de 1 px con ramitas a 60°, apenas luminoso (como la línea de la pila de la Arena) ----------
+const gHalo = el('g', { stroke: '#9fe3f5', fill: 'none', filter: 'url(#halo)', opacity: 0.45, 'stroke-linecap': 'round' }, s)
+const gRama = el('g', { stroke: '#eaf6ff', fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, s)
+let sem = 1
+function rama(x0, y0, x1, y1, ancho, prof) {
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, pasos = Math.max(4, Math.round(L / 8))
+  let d = `M${x0.toFixed(1)} ${y0.toFixed(1)}`
+  for (let i = 1; i <= pasos; i++) {
+    const t = i / pasos, w = (h(sem++) - 0.5) * 1.2 * (i < pasos ? 1 : 0)
+    d += `L${(x0 + dx * t - uy * w).toFixed(1)} ${(y0 + dy * t + ux * w).toFixed(1)}`
+    if (prof > 0 && i > 1 && i < pasos - 1 && h(sem++) > 0.45) for (const lado of [1, -1]) {
+      const la = L * (0.07 + 0.08 * h(sem++)), ca = Math.cos(lado * 1.047), sa = Math.sin(lado * 1.047), px = x0 + dx * t, py = y0 + dy * t
+      rama(px, py, px + (ux * ca - uy * sa) * la, py + (ux * sa + uy * ca) * la, ancho * 0.6, prof - 1)
+    }
+  }
+  el('path', { d, 'stroke-width': ancho, opacity: ancho >= 1 ? 0.9 : 0.55 }, gRama)
+  if (ancho >= 1) el('path', { d, 'stroke-width': 3 }, gHalo)
+}
+for (const n of NODOS) if (n.n >= 4) for (const v of vecinos(n)) {
+  if (v.n >= 4 && v.anillo < n.anillo) continue
+  const [a, b] = P(n), [c, d] = P(v), L = Math.hypot(c - a, d - b), ux = (c - a) / L, uy = (d - b) / L
+  rama(a + ux * (R(n) + 3), b + uy * (R(n) + 3), c - ux * (R(v) + 3), d - uy * (R(v) + 3), 1.1, 1)
+}
+
+// ---------- Nodos ----------
+const gN = el('g', {}, s)
+function texto(g, y, t, at) { const e = el('text', { y, 'text-anchor': 'middle', ...at }, g); e.textContent = t; return e }
+for (const n of NODOS) {
+  const [x, y] = P(n), r = R(n), g = el('g', { transform: `translate(${x} ${y})`, class: n.modo }, gN)
+  if (n.modo === 'hielo') {
+    el('circle', { r: 5, fill: 'none', stroke: '#9fe3f5', 'stroke-width': 0.75, opacity: 0.18 }, g)
+    continue
+  }
+  if (n.modo === 'cerrado') {
+    // Arena que todavía no cristalizó: la misma pila, gris y muy apagada, sin emblema.
+    el('image', { href: cara(n), x: -r * 0.7, y: -r * 0.7, width: r * 1.4, height: r * 1.4, opacity: 0.28, style: 'image-rendering: pixelated' }, g)
+    el('circle', { r: r * 0.7 + 3, fill: 'none', stroke: '#eaf6ff', 'stroke-width': 0.75, opacity: 0.12 }, g)
+    texto(g, r + 12, n.nombre, { fill: 'rgb(232 233 243 / 0.5)', 'font-size': 11.5 })
+    continue
+  }
+  if (n.id === 'estratos') el('circle', { r: r + 9, fill: 'none', stroke: '#9fe3f5', 'stroke-width': 1, 'stroke-dasharray': '1 4', 'stroke-linecap': 'round' }, g) // el elegido
+  if (n.n >= 4) el('circle', { r: r + 2, fill: LV[3], opacity: 0.35, filter: 'url(#halo-cara)' }, g)
+  const cv = el('g', { 'clip-path': `url(#c-${n.id})` }, g)
+  el('image', { href: cara(n), x: -r, y: -r, width: 2 * r, height: 2 * r, style: 'image-rendering: pixelated', opacity: n.modo === 'vacio' ? 0.55 : 1 }, cv)
+  // Aro de 1 px, como el borde de la pila de la Arena.
+  el('circle', { r: r + 2.5, fill: 'none', stroke: '#eaf6ff', 'stroke-width': 1, opacity: n.n >= 4 ? 0.85 : 0.35 }, g)
+  // Emblema sobre disco oscuro.
+  el('circle', { r: r * 0.5, fill: '#04060d', opacity: 0.72 }, g)
+  el('circle', { r: r * 0.5, fill: 'none', stroke: '#eaf6ff', 'stroke-width': 0.8, opacity: 0.55 }, g)
+  const e = EMBLEMA[n.id]
+  if (e) el('path', { d: e, transform: `scale(${r / 30})`, fill: 'none', stroke: '#ffffff', 'stroke-width': 1.4 * 30 / r, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g)
+  // Nombre y nivel, con la tipografía de la tienda de la Arena: nombre semibold, "Nv" tenue, cuatro cuadros de color.
+  const t = texto(g, r + 19, n.nombre, { fill: '#eaf6ff', 'font-size': 13, 'font-weight': 600 })
+  const fila = el('g', { transform: `translate(0 ${r + 33})` }, g)
+  for (let k = 0; k < 4; k++) el('rect', { x: -21 + k * 11, y: -4, width: 8, height: 8, fill: k < n.n ? LV[k] : 'rgb(159 227 245 / 0.14)' }, fila)
+}
+
+// La red llena su caja: el viewBox se ajusta a lo dibujado.
+// Sin los puntos de hielo del fondo, que llegan hasta el borde.
+{ const h = s.querySelectorAll(".hielo"); h.forEach((e) => e.style.display = "none"); const b = gN.getBBox(), m = 16; h.forEach((e) => e.style.display = ""); s.setAttribute("viewBox", `${b.x - m} ${b.y - m} ${b.width + 2 * m} ${b.height + 2 * m}`) }
+
+// La ficha: la misma cara, más grande, y sus cuatro cuadros.
+const est = NODOS.find((n) => n.id === 'estratos')
+const fc = document.getElementById('ficha-cara').getContext('2d'), im = new Image()
+im.onload = () => { fc.imageSmoothingEnabled = false; fc.save(); fc.beginPath(); fc.arc(48, 48, 46, 0, Math.PI * 2); fc.clip(); fc.drawImage(im, 0, 0, 96, 96); fc.restore()
+  fc.fillStyle = 'rgb(4 6 13 / 0.72)'; fc.beginPath(); fc.arc(48, 48, 23, 0, Math.PI * 2); fc.fill()
+  fc.strokeStyle = 'rgb(234 246 255 / 0.55)'; fc.lineWidth = 1; fc.stroke()
+  fc.save(); fc.translate(48, 48); fc.scale(1.5, 1.5); fc.strokeStyle = '#fff'; fc.lineWidth = 1.1; fc.lineJoin = fc.lineCap = 'round'; fc.stroke(new Path2D(EMBLEMA.estratos)); fc.restore() }
+im.src = cara(est)
+document.getElementById('ficha-cuadros').innerHTML = LV.map((c, k) => `<i style="${k < est.n ? 'background:' + c : ''}"></i>`).join('')
+</script>
+</body>
+</html>

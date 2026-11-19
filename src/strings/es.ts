@@ -159,7 +159,6 @@ export const es = {
       que: 'Crece sola, también con el juego cerrado. Cada orden de espesor hace valer más los derrumbes, pero cuanto más gruesa más frena: romperla conserva la mitad y da Esquirlas.',
     },
     totales: 'Cristales totales',
-      roto: 'Cristales con el Infinito roto (log₁₀)', blando: 'Blando', softcap: 'Mejoras más allá de 1e308',
     sistemas: 'Sistemas de Cristalización',
     pantallas: { red: 'Red', estratos: 'Estratos', defectos: 'Defectos', escarcha: 'Escarcha', relicario: 'Relicario' } as Record<string, string>,
     vacia: 'Todavía no hay nada acá.',
@@ -815,6 +814,7 @@ export const es = {
       romperEsc: (min: number, c: string, d: number) => `cada ${min} min: conserva ×${c} de logX, da ⌊logX × ${c} / ${d}⌋ × Deshielo`,
     },
     rotulo: {
+      roto: 'Cristales con el Infinito roto (log₁₀)', blando: 'Blando', softcap: 'Mejoras más allá de 1e308',
       caudal: 'Granos por segundo', costo: 'Costo del próximo nivel', produccion: 'Energía por segundo',
       mult: 'Multiplicador', anillos: 'Anillos', multAnillos: 'Multiplicador de los anillos', proximoAnillo: 'Próximo anillo',
       densidad: 'Densidad', meta: 'Próxima meta', c: 'Fuerza de la Cascada', derrumbes: 'Derrumbes por grano',

@@ -252,10 +252,11 @@
   @media (max-width: 760px) {
     .estratos { gap: 0.4rem; padding-top: 0.6rem; }
     .total { font-size: 0.875rem; }
-    .vista { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(9rem, 1fr) auto; gap: 0.4rem; }
-    .ficha { height: 14.5rem; padding: 0.4rem 0.8rem 0.75rem; gap: 0.4rem; }
+    /* La ficha toma lo que necesita hasta 14,5 rem; en celulares bajos se achica y scrollea sola (la escena no baja de 6 rem). */
+    .vista { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(6rem, 1fr) minmax(0, auto); gap: 0.4rem; }
+    .ficha { height: auto; max-height: 15.5rem; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 0.4rem 0.8rem 0.75rem; gap: 0.4rem; }
     .ficha h2 { font-size: 1.125rem; }
-    .paso { height: 2.25rem; }
+    .paso { height: 2.75rem; margin-block: -0.25rem; }
     dl { gap: 0.5rem; }
     dd { font-size: 1.125rem; }
     .desglose { display: none; } /* en el celular, el desglose queda en "Cómo funciona" */
@@ -266,4 +267,6 @@
     .prensa { padding: 0.5rem 0.9rem 0.7rem; }
     .que { display: none; }
   }
+  /* Celulares bajos: la Presión total se ve en la Arena y en "Cómo funciona"; acá el lugar es para la escena. */
+  @media (max-width: 760px) and (max-height: 720px) { .total { display: none; } .estratos { grid-template-rows: minmax(0, 1fr); } }
 </style>

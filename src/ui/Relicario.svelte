@@ -353,6 +353,6 @@
     .grilla { grid-template-columns: repeat(6, 1fr); }
     .cabeza { gap: 0.75rem; justify-content: space-between; }
     .cabeza h2, .regla span { display: none; }
-    .cabeza > button { white-space: nowrap; font-size: 0.8125rem; }
+    .cabeza > button { min-height: 2.75rem; white-space: nowrap; font-size: 0.8125rem; }
   }
 </style>

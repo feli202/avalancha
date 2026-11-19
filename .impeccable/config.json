@@ -1,0 +1,32 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "space grotesk",
+        "createdAt": "2026-11-16T07:31:00.203Z",
+        "reason": "Tipografía del juego en todas las capas: CLAUDE.md y bloque 13 de CORRECCIONES_CAPA1 piden la misma letra que la Capa 0"
+      },
+      {
+        "rule": "marquee",
+        "value": "*",
+        "files": [
+          "correcciones-capa1/bocetos-red/escarcha-v2.html"
+        ],
+        "createdAt": "2026-11-16T07:31:00.714Z",
+        "reason": "No hay marquee: es el reflejo lento de la gema de hielo.css, pedido en el bloque 13 (reflejo que se mueve muy lento)"
+      },
+      {
+        "rule": "marquee",
+        "value": "*",
+        "files": [
+          "correcciones-capa1/bocetos-red/escarcha-v3.html"
+        ],
+        "createdAt": "2026-11-16T07:36:52.187Z",
+        "reason": "No hay marquee: es el reflejo lento de la gema de hielo.css, pedido en el bloque 13 (reflejo que se mueve muy lento)"
+      }
+    ]
+  }
+}

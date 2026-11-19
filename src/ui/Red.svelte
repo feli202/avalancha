@@ -457,6 +457,8 @@
     .sig { font-size: 0.75rem; line-height: 1.35; }
     .compra { min-height: 2.75rem; padding: 0.45rem 1.2rem; font-size: 0.875rem; }
     .que { display: none; } /* en el celular no entra: está en "Cómo funciona" */
+    /* Con el dedo: cuadros de 44 px (el visible sigue de 8 px); los márgenes negativos no agrandan la ficha. */
+    .cuadros button { width: 2.75rem; height: 2.75rem; margin: -1rem -0.3rem; }
   }
   /* Celulares bajos: el siguiente nivel se ve al comprar; la red no puede quedar diminuta. */
   @media (max-width: 760px) and (max-height: 740px) { .sig { display: none; } }

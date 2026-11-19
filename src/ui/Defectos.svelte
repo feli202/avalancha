@@ -237,5 +237,6 @@
     dl { gap: 0.4rem; }
     dd { font-size: 0.875rem; }
     .que { display: none; } /* está en "Cómo funciona" */
+    .grupos button { min-height: 2.75rem; }
   }
 </style>
