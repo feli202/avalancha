@@ -76,6 +76,7 @@
     setTimeout(() => (entrando = false), ENTRADA_MS)
   })
 
+  let izqAlto = $state(0) // el camino al Infinito arranca debajo del bloque de números (celular)
   // Móvil: la tienda es una hoja inferior; se arrastra o se toca la manija.
   let alta = $state(false)
   let arrastre = $state<number | null>(null)
@@ -99,7 +100,7 @@
 
 <!-- .lista: se puede comprimir; el botón y el anillo de la pila laten juntos (arrancan en el mismo cuadro). -->
 <!-- inert con un panel encima: el foco y los clics quedan en el panel. -->
-<div class="juego" class:con-capas={s.infinitos > 0} class:en-titulo={juego.titulo} class:entrando class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel !== null} inert={hayPanel()}>
+<div class="juego" style:--izq-alto="{izqAlto}px" class:con-capas={s.infinitos > 0} class:en-titulo={juego.titulo} class:entrando class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel !== null} inert={hayPanel()}>
   <Pila />
   {#if v.compresion && !infinitoRoto(s)}
     <!-- Camino al Infinito: log10(Energía) / log10(Infinito), con una marca en cada umbral de Compresión. Se va al romperlo. -->
@@ -110,7 +111,7 @@
     </div>
   {/if}
 
-  <header class="izq">
+  <header class="izq" bind:clientHeight={izqAlto}>
     <span class="etiqueta">{txt.energia}</span>
     {#if congelada(s)}<span class="energia infinito">{txt.infinito}</span>{:else}{#key juego.primera}<span use:ayuda={ayudaEnergia} class="energia num" class:salta={juego.primera} aria-hidden="true">{formato(s.energia)}</span>{/key}<span class="sr">{hablado(formato(s.energia))}</span>{/if}
     {#if v.tienda}<span class="linea num aparece" use:ayuda={() => ayudaProduccion(juego.s)}><b class="ambar" aria-hidden="true">+{formato(produccion(s))}</b><span class="sr">{hablado(formato(produccion(s)))}</span> {txt.energiaPorSegundo}</span>{/if}
@@ -288,7 +289,7 @@
   /* Camino al Infinito: una línea de 2 px en el margen izquierdo, como el anillo de Compresión (blanco tenue); se llena de
      abajo hacia arriba y las marcas de los umbrales ya pasados se encienden. */
   .camino {
-    position: fixed; left: calc(var(--barra, 0px) + 0.75rem); top: 22vh; bottom: 22vh; width: 2px; pointer-events: none;
+    position: fixed; left: calc(var(--barra, 0px) + 0.75rem); top: max(22vh, calc(var(--margen) + var(--izq-alto) + 2.5rem)); bottom: 22vh; width: 2px; pointer-events: none;
     background: linear-gradient(to top, rgb(232 233 243 / 0.6) calc(var(--p) * 100%), rgb(232 233 243 / 0.08) 0);
     transition: background 0.3s linear;
   }
@@ -414,7 +415,8 @@
     .juego.juego { --barra: 0px; }
     .juego { --margen: 1rem; --col: auto; --pila-radio-max: 100vw; --pila-arriba: 7rem; --pila-abajo: calc(45dvh + 3.5rem); --fondo-abajo: 45dvh; --hoja: 88dvh; }
     .izq { right: var(--margen); }
-    .camino { top: calc(var(--pila-arriba) + 1.5rem); bottom: calc(var(--pila-abajo) + 1.5rem); }
+    /* Debajo del bloque de números (Energía, por segundo, Densidad, Cristales, Defecto), con lugar para el ∞ y margen. */
+    .camino { top: max(calc(var(--pila-arriba) + 1.5rem), calc(var(--margen) + var(--izq-alto) + 2.5rem)); bottom: calc(var(--pila-abajo) + 1.5rem); }
     .energia { font-size: 2.25rem; margin-bottom: 0.25rem; }
     .linea { font-size: 0.875rem; line-height: 1.4; }
     .aviso { top: auto; bottom: calc(45dvh + 4rem); max-width: calc(100% - 2rem); font-size: 0.8125rem; }
