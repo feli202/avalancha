@@ -2122,3 +2122,18 @@ Sin tocar el balance. Todo en vertical hasta 1100 px (celular y tablet); el escr
 - Con un marco puesto (Ajustes → Aspecto), el zoom pasa adentro del marco: la pila se corta con borde limpio en el círculo del marco (`u_recorte` en `lienzo.ts`, `PilaVisual.recorte`, `Pila.svelte`) y afuera queda solo el fondo, sin la pila desenfocada. Sin marco sigue como antes (desenfocada afuera).
 - Celular: con la hoja de la tienda subida, el slider de zoom no se muestra (quedaba encima de la hoja y se tocaba sin querer).
 - Verificado: `capturas-visual.mjs` a 390×844 y 1366×768 (el marco mide lo mismo en todos los zooms) y en el navegador, subir y bajar la hoja saca y vuelve a poner el slider. 316 tests en verde, `svelte-check` y `tsc` 0 errores.
+
+## Siete cambios pedidos (2026-11-19)
+
+Del 1 al 6 sin tocar el balance, con un commit cada uno. El 7 (Red) espera el OK del usuario: abajo.
+
+1. **Marco pegado a la pila** (`Pila.svelte`, `PilaVisual.bordeCss`, `marcos.ts`): el marco va en el borde de la pila tal como se dibuja (`(radio + 1,5) × px`; un grano suelto, 0,5) y la sigue suave al crecer, al comprimir (implota con ella) y con el zoom. Con zoom el marco se abre con la pila **pero no se agranda** (pedido del usuario a mitad de la tarea): `marco()` recibe `u`, el tamaño de los adornos, que en pantalla es `min(radio, foco)`; en la foto y las vistas previas `u = r` y queda igual que antes. Se sacó el recorte del zoom adentro del marco (`u_recorte`, commit anterior). Fuera del círculo nítido el marco se apaga como la pila desenfocada (máscara radial). Se dibuja en un canvas del tamaño de la región, solo cuando cambia el radio.
+2. **Barra de zoom en el celular**: en la fila de la manija de la tienda, a la derecha; fuera de la región de la pila, así nada la toca con ningún zoom.
+3. **Barra del Infinito**: arranca debajo del bloque de números (`--izq-alto`, medido), con lugar para el ∞; en escritorio también.
+4. **Aviso del anillo**: "Anillo N · ×1,10" ya no va sobre la pila; aparece 1,6 s junto al contador de anillos (`juego.anilloNuevo`). El anillo de luz sobre la pila queda.
+5. **Carámbano hacia la Capa 2** (`App.svelte`, `caminoCapa2`): con el Infinito roto, en el lugar del camino, un carámbano de hielo que baja con log10(Cristales totales) / 308,25; tooltip "Cristales totales 1e142 / 1e308"; en el último 10 % la punta tiene una brasa tenue (quieta con Reducir destellos).
+6. **Reliquias**: con el Infinito a mano, pop-up de cristal (`Paneles.svelte`) con los tres tipos, lo que da cada uno y cuánto falta para la próxima fusión; no se cierra solo (se sacó la espera de 30 s y `espera_eleccion_s` del config), la corrida sigue detrás; con el inventario lleno avisa y ofrece Fusionar todo. La reliquia del primer Infinito se sigue eligiendo en el Relicario, con su guía. Con el Infinito automático: la primera vez, con la regla por defecto, una nota con "Configurar" (lleva a Automatización → Reinicios, a la regla); después las reliquias van en el aviso juntado de cada 30 s (se apagan con el aviso de reliquias de Ajustes). `SPEC_CAPA1.md` §5 al día.
+
+**Verificación**: 317 tests en verde, 20/20 en `npm run test:lento`, `svelte-check` y `tsc` 0 errores. Capturas antes/después en `capturas/pedido/` (Edge headless, 390×844, 360×640, 412×915, 768×1024 y 1366×768): marcos rosa, polaroid, galleta y denso en varios zooms, pila chica, creciendo y comprimiendo; sin scroll de página.
+
+**No medido / revisar**: celular real; fps. La nota de la reliquia automática en el celular tapa un momento el sismógrafo (se cierra con un toque). La reliquia que se pierde con el inventario lleno no sale bien en el aviso juntado (toma el último tipo; comentado como shortcut).
