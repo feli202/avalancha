@@ -18,6 +18,8 @@ const base = {
    * "Reducir destellos" de Ajustes; `reducirDestellos` (de antes) es el de la pila y el movimiento. */
   calma: true,
   daltonismo: false,
+  /** v1.0, bloque 8: "Enviar estadísticas anónimas" (estadisticasAnonimas.ts). Do Not Track gana siempre. */
+  estadisticas: true,
   /** I11: con la pila llena, la simulación visual trabaja menos (batería y ventilador). */
   ahorro: false,
   /** Tasa de refresco de la pila (Ajustes, Juego): 15, 30 o 60 cuadros por segundo; 0 = sin límite. Solo visual. */

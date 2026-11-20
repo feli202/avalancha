@@ -2,3 +2,5 @@
 export const DISCORD = 'https://discord.gg/8qEt7E6AV'
 export const ITCH = 'https://exponent-games.itch.io'
 export const SITIO = 'https://feli202.github.io/avalancha/'
+/** v1.0, bloque 8: código de la cuenta de GoatCounter (el "avalancha" de avalancha.goatcounter.com). Vacío: estadísticas apagadas. */
+export const GOATCOUNTER = ''

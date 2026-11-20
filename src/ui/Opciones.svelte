@@ -18,6 +18,7 @@
   import { errores } from './errores'
   import { DISCORD } from '../comunidad'
   import Comunidad from './Comunidad.svelte'
+  import { sinRastreo } from './estadisticasAnonimas'
   import { NOTACIONES, formato } from './formato'
   import Decimal from 'break_infinity.js'
   const EJEMPLO = new Decimal('1.23e308')
@@ -215,6 +216,10 @@
             </div>
           </div>
           <label class="fila">
+            <span class="texto">{txt.opciones.estadisticas}<small>{sinRastreo() ? txt.opciones.estadisticasDnt : txt.opciones.estadisticasDesc} <a href="{import.meta.env.BASE_URL}privacidad.html" target="_blank" rel="noopener">{txt.opciones.privacidad}</a></small></span>
+            <input type="checkbox" bind:checked={ajustes.estadisticas} disabled={sinRastreo()} />
+          </label>
+          <label class="fila">
             <span class="texto">{txt.opciones.ahorro}<small>{txt.opciones.ahorroDesc}</small></span>
             <input type="checkbox" bind:checked={ajustes.ahorro} />
           </label>
@@ -367,6 +372,7 @@
         <section class="lista">
           <!-- v1.0, bloque 7: la comunidad, arriba de todo. -->
           <div class="resumen comunidad-creditos"><Comunidad /></div>
+          <div class="resumen"><p class="rotulo">{txt.opciones.privacidad}</p><p class="grande"><a href="{import.meta.env.BASE_URL}privacidad.html" target="_blank" rel="noopener">{txt.opciones.privacidadLink}</a></p></div>
           {#each txt.opciones.creditos as [rotulo, texto]}
             <div class="resumen"><p class="rotulo">{rotulo}</p><p class="grande">{texto}</p></div>
           {/each}

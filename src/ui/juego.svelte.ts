@@ -9,6 +9,7 @@ import { PX_MAX, type Medidas } from '../render/pilaVisual'
 import { txt } from '../strings'
 import { avisoActivo, type Aviso } from './ajustes.svelte'
 import { formato } from './formato'
+import { mirar as mirarStats } from './estadisticasAnonimas'
 import { nuevosLogros, primerDerrumbe } from './logros'
 import { Vigia, contadoresVacios, transicion, volviste } from './secretos'
 
@@ -559,6 +560,7 @@ export function arrancar() {
     revisarLogros(s)
     vigia.cuadro(ahora, s, !hayPanel(), new Date(ahora).getHours())
     medirEta(s)
+    mirarStats(juego.s)
     if (s.infinitos === 0 && enInfinito(s) && !juego.cinematica && !hayPanel()) primerInfinito()
     if (finCapa1(s) && !juego.vistos.capa2 && !juego.cinematica && !hayCartel()) finDeCapa()
     requestAnimationFrame(cuadro)
