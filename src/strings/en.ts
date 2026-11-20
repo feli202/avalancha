@@ -53,6 +53,20 @@ export const en: typeof es = {
   compresion: (n: number) => `Compression ${n0(n)}`,
   meta: (e: number) => `1e${Math.floor(e)}`,
   comprimir: 'Compress',
+  formato: {
+    palabras: [[63, 'vigintillion', 'vigintillion'], [60, 'novemdecillion', 'novemdecillion'], [57, 'octodecillion', 'octodecillion'],
+      [54, 'septendecillion', 'septendecillion'], [51, 'sexdecillion', 'sexdecillion'], [48, 'quindecillion', 'quindecillion'],
+      [45, 'quattuordecillion', 'quattuordecillion'], [42, 'tredecillion', 'tredecillion'], [39, 'duodecillion', 'duodecillion'],
+      [36, 'undecillion', 'undecillion'], [33, 'decillion', 'decillion'], [30, 'nonillion', 'nonillion'], [27, 'octillion', 'octillion'],
+      [24, 'septillion', 'septillion'], [21, 'sextillion', 'sextillion'], [18, 'quintillion', 'quintillion'],
+      [15, 'quadrillion', 'quadrillion'], [12, 'trillion', 'trillion'], [9, 'billion', 'billion'], [6, 'million', 'million'],
+      [3, 'thousand', 'thousand']] as [number, string, string][],
+    banda: ['to infinity and beyond', 'an imperial ton', 'a metric ton', 'a whole lot', 'quite a bit', 'some', 'a smidge', 'nothing'],
+    roma: 'too much for Rome',
+    arena: (n: string) => `×${n} Earths of sand`,
+    nombres: { cientifica: 'Scientific', ingenieria: 'Engineering', letras: 'Letters', palabras: 'Words', logaritmica: 'Logarithmic',
+      mixta: 'Mixed', pila: 'Pile', arena: 'Earth sand', romanos: 'Roman', binario: 'Binary', banda: 'A lot', ciego: 'Blind' },
+  },
   progreso: (p: number) => `${Math.floor(p * 100)}%`,
   eta: (d: string) => `≈ ${d}`,
   duracion: (seg: number) =>
@@ -569,7 +583,6 @@ export const en: typeof es = {
 
     fotoDesc: 'Saves the pile as it is right now, with the chosen frame.',
     notacionDesc: 'How big numbers are written.',
-    ejemplo: { cientifica: '1.23e46', ingenieria: '12.30e45' },
     reducirDesc: 'Tones down animations and flashes on the pile and the interface: no topple flashes, mica sparkle or camera zoom, and nothing moves on its own.',
     movimiento: 'Reduce motion',
     calmaDesc: 'Automatic purchases don’t light up their row and numbers update more slowly. The pile is unchanged.',
@@ -607,8 +620,6 @@ export const en: typeof es = {
     idioma: 'Language',
     idiomaDesc: 'Changing it reloads the page. Your game is saved first.',
     idiomas: { es: 'Español', en: 'English' },
-    cientifica: 'Scientific',
-    ingenieria: 'Engineering',
     volumen: 'Master volume',
     volumenDesc: 'Sound starts with your first tap or key press.',
     volumenes: {

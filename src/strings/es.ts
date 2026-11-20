@@ -58,6 +58,21 @@ export const es = {
   compresionesTodas: 'todas hechas',
   meta: (e: number) => `1e${Math.floor(e)}`,
   comprimir: 'Comprimir',
+  // v1.0, bloque 4: notaciones (src/ui/formato.ts).
+  formato: {
+    palabras: [[63, 'mil decillones', 'mil decillones'], [60, 'decillón', 'decillones'], [57, 'mil nonillones', 'mil nonillones'],
+      [54, 'nonillón', 'nonillones'], [51, 'mil octillones', 'mil octillones'], [48, 'octillón', 'octillones'],
+      [45, 'mil septillones', 'mil septillones'], [42, 'septillón', 'septillones'], [39, 'mil sextillones', 'mil sextillones'],
+      [36, 'sextillón', 'sextillones'], [33, 'mil quintillones', 'mil quintillones'], [30, 'quintillón', 'quintillones'],
+      [27, 'mil cuatrillones', 'mil cuatrillones'], [24, 'cuatrillón', 'cuatrillones'], [21, 'mil trillones', 'mil trillones'],
+      [18, 'trillón', 'trillones'], [15, 'mil billones', 'mil billones'], [12, 'billón', 'billones'],
+      [9, 'mil millones', 'mil millones'], [6, 'millón', 'millones'], [3, 'mil', 'mil']] as [number, string, string][],
+    banda: ['infinito y más allá', 'una bocha', 'una banda', 'un montón', 'bastante', 'algo', 'poquito', 'nada'],
+    roma: 'demasiado para Roma',
+    arena: (n: string) => `×${n} Tierras de arena`,
+    nombres: { cientifica: 'Científica', ingenieria: 'Ingeniería', letras: 'Letras', palabras: 'En palabras', logaritmica: 'Logarítmica',
+      mixta: 'Mixta', pila: 'Pila', arena: 'Arena de la Tierra', romanos: 'Romanos', binario: 'Binario', banda: 'Una banda', ciego: 'Ciego' } as Record<string, string>,
+  },
   progreso: (p: number) => `${Math.floor(p * 100)} %`,
   eta: (d: string) => `≈ ${d}`,
   /** Duración: "12 s", "4 min", "1 h 5 min". */
@@ -616,7 +631,6 @@ export const es = {
     fotoDesc: 'Guarda la pila tal como está ahora, con el marco elegido.',
     notacionDesc: 'Cómo se escriben los números grandes.',
     /** El mismo número, 1,23 × 10^46, en cada notación. */
-    ejemplo: { cientifica: '1,23e46', ingenieria: '12,30e45' } as Record<string, string>,
     reducirDesc: 'Baja las animaciones y los destellos de la pila y de la interfaz: sin destellos de derrumbe, mica ni zoom de cámara, y nada que se mueva solo.',
     movimiento: 'Reducir movimiento',
     calmaDesc: 'Las compras automáticas no encienden su fila y los números se actualizan más despacio. La pila no cambia.',
@@ -655,8 +669,6 @@ export const es = {
     idiomaDesc: 'Cambiarlo recarga la página. La partida se guarda antes.',
     /** Cada idioma en su propio nombre. */
     idiomas: { es: 'Español', en: 'English' } as Record<string, string>,
-    cientifica: 'Científica',
-    ingenieria: 'Ingeniería',
     volumen: 'Volumen general',
     volumenDesc: 'El sonido arranca con el primer toque o tecla.',
     volumenes: {

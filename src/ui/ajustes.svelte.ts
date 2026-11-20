@@ -7,7 +7,7 @@ import { aplicarVolumen } from './sonido'
 const base = {
   /** Lo elige strings/index.ts; cambiarlo recarga la página. */
   idioma: idioma as string,
-  notacion: 'cientifica' as 'cientifica' | 'ingenieria',
+  notacion: 'cientifica' as string, // v1.0: una de NOTACIONES (formato.ts); una que no existe se lee como científica
   /** 0–1: general, efectos y música (SPEC 6.7, sonido.ts). */
   volumen: 0.8,
   volEfectos: 0.8,

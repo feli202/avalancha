@@ -17,6 +17,9 @@
   import { enApp, esMovil, instalar } from '../instalar.svelte'
   import { errores } from './errores'
   import { DISCORD } from '../comunidad'
+  import { NOTACIONES, formato } from './formato'
+  import Decimal from 'break_infinity.js'
+  const EJEMPLO = new Decimal('1.23e308')
 
   const PESTANAS = ['aspecto', 'juego', 'partida', 'teclado', 'creditos'] as const
   let activa = $state(0)
@@ -179,13 +182,10 @@
           </div>
           <div class="fila">
             <span class="texto"><span id="notacion-t">{txt.opciones.notacion}</span><small>{txt.opciones.notacionDesc}</small></span>
-            <div class="segmentos" role="radiogroup" aria-labelledby="notacion-t">
-              {#each ['cientifica', 'ingenieria'] as const as n}
-                <button role="radio" aria-checked={ajustes.notacion === n} onclick={() => (ajustes.notacion = n)}>
-                  {txt.opciones[n]}<small class="num">{txt.opciones.ejemplo[n]}</small>
-                </button>
-              {/each}
-            </div>
+            <!-- v1.0: doce notaciones; con su ejemplo (1,23e308) al lado del nombre. -->
+            <select class="notacion" aria-labelledby="notacion-t" bind:value={ajustes.notacion}>
+              {#each NOTACIONES as n}<option value={n}>{txt.formato.nombres[n]} · {formato(EJEMPLO, false, n)}</option>{/each}
+            </select>
           </div>
           <label class="fila">
             <span class="texto">{txt.opciones.volumen}<small>{txt.opciones.volumenDesc}</small></span>
@@ -443,12 +443,13 @@
   .avisos[open] summary .cuenta::after { content: ' ▴'; }
   /* Opciones como los modos de la tienda: texto; la elegida, con una línea de 1 px debajo. */
   .segmentos { display: flex; gap: 1.25rem; flex: none; }
+  .notacion { flex: none; max-width: 15rem; min-height: 2.75rem; padding: 0 0.75rem; border: 1px solid var(--borde); border-radius: 0; background: var(--vidrio); color: var(--tinta); font: inherit; font-size: 0.9375rem; }
+  .notacion option { background: #0e101e; }
   .segmentos button {
     display: grid; gap: 0.125rem; justify-items: start; min-height: 3rem; padding: 0.375rem 0; border: 0; border-bottom: 1px solid transparent;
     background: none; color: var(--apagado); font: inherit; font-size: 0.9375rem; cursor: pointer; transition: color 0.15s;
   }
   .segmentos button:hover { color: var(--tenue); }
-  .segmentos small { font-size: 0.75rem; color: var(--apagado); }
   .segmentos button[aria-checked='true'] { color: var(--tinta); font-weight: 600; border-bottom-color: var(--tinta); }
   .resumen { padding-bottom: 1.5rem; }
   .grande { margin: 0; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
