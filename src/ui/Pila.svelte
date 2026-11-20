@@ -370,7 +370,8 @@
   p { margin: 0; font-variant-numeric: tabular-nums; pointer-events: none; white-space: nowrap; }
   .bajar {
     position: absolute; left: 50%; top: min(calc(50% + var(--rp) + 1.25rem), calc(100% - 3.25rem)); translate: -50%; min-height: 2.75rem; padding: 0 0.75rem;
-    border: 0; background: none; color: var(--apagado); font: inherit; font-size: 0.875rem; cursor: pointer; text-shadow: 0 0 0.5rem var(--fondo); transition: color 0.15s;
+    border: 0; border-radius: 1.375rem; background: rgb(7 8 15 / 0.78); backdrop-filter: blur(6px); box-shadow: 0 0 0 1px rgb(159 227 245 / 0.18);
+    color: var(--escarcha); font: inherit; font-size: 0.875rem; cursor: pointer; white-space: nowrap; transition: color 0.15s;
   }
   .bajar:hover, .bajar:focus-visible { color: var(--hielo); }
   .caja-marco { position: absolute; inset: 0; overflow: hidden; pointer-events: none; transition: opacity 0.6s; }
