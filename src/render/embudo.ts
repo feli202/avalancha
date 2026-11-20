@@ -11,11 +11,13 @@ const ALTO_BANDA = 6 // filas de arena de cada bandeja
 const CAIDA = 4 // por banda la bandeja se angosta 2 × CAIDA columnas; la pared diagonal ocupa CAIDA filas
 const ANCHO_0 = 114
 const PASO_BANDA = ALTO_BANDA + 1 + CAIDA
-export const ALTO = ARRIBA + BANDAS * PASO_BANDA
+/** v1.0: debajo del estrato 8, el fondo cerrado del embudo (sin compras; en la Capa 2 va a ser el Horno). */
+export const FONDO = BANDAS
+export const ALTO = ARRIBA + (BANDAS + 1) * PASO_BANDA
 
 export const VACIO = 0
 // 1..4: arena del color 0..3 de la paleta. Las celdas fijas van en `muro`.
-export const PARED = 1, PORO = 2, ROCA = 3
+export const PARED = 1, PORO = 2, ROCA = 3, HORNO = 4
 
 export interface Banda {
   /** Primera fila de arena y fila del piso. */
@@ -44,6 +46,11 @@ export function armarMuro(m: Uint8Array, abiertos: number) {
     for (let i = 1; i <= CAIDA; i++) { m[(b.piso + i) * ANCHO + b.a - 1 + i] = PARED; m[(b.piso + i) * ANCHO + b.b + 1 - i] = PARED }
     if (k >= abiertos) for (let y = b.y; y < b.piso; y++) for (let x = b.a; x <= b.b; x++) m[y * ANCHO + x] = ROCA
   }
+  // el fondo: una bandeja más, cerrada abajo; lo que cae ahí desaparece (como en la roca), así queda vacía
+  const f = banda(FONDO)
+  for (let y = f.y; y <= f.piso; y++) { m[y * ANCHO + f.a - 1] = PARED; m[y * ANCHO + f.b + 1] = PARED }
+  for (let x = f.a - 1; x <= f.b + 1; x++) m[f.piso * ANCHO + x] = PARED
+  for (let y = f.y; y < f.piso; y++) for (let x = f.a; x <= f.b; x++) m[y * ANCHO + x] = HORNO
   // el embudo de arriba: paredes que bajan hasta la primera bandeja
   const b0 = banda(0)
   for (let y = 0; y < b0.y; y++) { m[y * ANCHO + b0.a - 1] = PARED; m[y * ANCHO + b0.b + 1] = PARED }
@@ -102,7 +109,7 @@ export class Embudo {
       this.poros[k] = abierto
       for (let x = b.a; x <= b.b; x++) if (esPoro(x)) m[b.piso * ANCHO + x] = abierto ? VACIO : PORO
     }
-    const libre = (i: number) => !c[i] && (!m[i] || m[i] === ROCA)
+    const libre = (i: number) => !c[i] && (!m[i] || m[i] === ROCA || m[i] === HORNO)
     let perdidos = 0
     this.impar = !this.impar
     for (let y = ALTO - 2; y >= 0; y--) {
@@ -121,7 +128,7 @@ export class Embudo {
           }
         }
         if (dest < 0) continue
-        if (m[dest] === ROCA) { perdidos++; c[i] = VACIO; continue } // cae sobre un estrato cerrado: se filtra en la roca
+        if (m[dest] === ROCA || m[dest] === HORNO) { perdidos++; c[i] = VACIO; continue } // cae sobre un estrato cerrado: se filtra en la roca
         c[dest] = c[i]; c[i] = VACIO
       }
     }

@@ -1,7 +1,7 @@
 <script lang="ts">
   // La pila ocupa toda la ventana, detrás de la interfaz. Clic, toque o barra espaciadora = Puñado.
   import { onMount } from 'svelte'
-  import { CFG, DEFECTOS, anillos, caudal, densidad, escarchaActiva, hayEstratos, multAnillos, multColor, punado, type DefectoId } from '../core'
+  import { CFG, DEFECTOS, anillos, caudal, densidad, escarchaActiva, multAnillos, multColor, punado, type DefectoId } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS, PilaVisual, brillo } from '../render/pilaVisual'
   import { txt } from '../strings'
   import { formato, formatoMult } from './formato'
@@ -295,10 +295,6 @@
       </div>
     {/key}
   {/if}
-  {#if hayEstratos(juego.s) && !juego.titulo && !juego.cinematica}
-    <!-- SPEC_CAPA1 §7.4: la flecha discreta a los Estratos, debajo de la pila. -->
-    <button class="bajar" onclick={() => { juego.pantalla = 'estratos'; juego.capa = 'cristalizacion' }}>{txt.cristal.estratos.bajar}</button>
-  {/if}
   <!-- El marco, recortado a la región de la pila (en el celular no tapa la Energía ni el sismógrafo) y debajo del anillo de
        Compresión: un marco con relleno (Galleta, Polaroid) no lo tapa. -->
   <!-- Con zoom el borde pasa el círculo nítido: afuera el marco se apaga como la pila desenfocada (lienzo.ts, u_foco).
@@ -368,12 +364,6 @@
   .pila { --ext-a: var(--pila-arriba, 0px); --ext-b: calc(var(--pila-abajo, 0px) - var(--fondo-abajo, var(--pila-abajo, 0px))); --cy: calc(50% + (var(--ext-a) - var(--ext-b)) / 2); }
   .pila > canvas { position: absolute; top: calc(-1 * var(--ext-a)); left: 0; width: 100%; height: calc(100% + var(--ext-a) + var(--ext-b)); /* un canvas no se estira con top y bottom */ transform-origin: 50% var(--cy); touch-action: none; } /* none: el pellizco es el zoom de la pila, no el de la página */
   p { margin: 0; font-variant-numeric: tabular-nums; pointer-events: none; white-space: nowrap; }
-  .bajar {
-    position: absolute; left: 50%; top: min(calc(50% + var(--rp) + 1.25rem), calc(100% - 3.25rem)); translate: -50%; min-height: 2.75rem; padding: 0 0.75rem;
-    border: 0; border-radius: 1.375rem; background: rgb(7 8 15 / 0.78); backdrop-filter: blur(6px); box-shadow: 0 0 0 1px rgb(159 227 245 / 0.18);
-    color: var(--escarcha); font: inherit; font-size: 0.875rem; cursor: pointer; white-space: nowrap; transition: color 0.15s;
-  }
-  .bajar:hover, .bajar:focus-visible { color: var(--hielo); }
   .caja-marco { position: absolute; inset: 0; overflow: hidden; pointer-events: none; transition: opacity 0.6s; }
   .caja-marco.oculto { opacity: 0; }
   .marco {

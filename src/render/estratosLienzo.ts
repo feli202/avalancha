@@ -2,7 +2,7 @@
 // Arriba, la base de la pila principal (la pila llena de verdad, achatada); debajo, el embudo de embudo.ts, que corre en
 // estratos.worker.ts. Se crea al entrar a la pantalla y se destruye al salir: el worker solo corre con la pantalla abierta.
 // Dibuja cuando llegan celdas nuevas (20 por segundo) o hay una animación (roca que se rompe, veta); nada con la pestaña oculta.
-import { ALTO, ANCHO, BANDAS, PARED, PORO, ROCA, armarMuro, banda, type Banda } from './embudo'
+import { ALTO, ANCHO, BANDAS, FONDO, HORNO, PARED, PORO, ROCA, armarMuro, banda, type Banda } from './embudo'
 import type { Entrada, Salida } from './estratos.worker'
 import { celdasLlena } from './miniPilas'
 
@@ -48,7 +48,7 @@ export class EstratosLienzo {
   private cuadro = 0
   private sucio = false
   private abiertos = -1
-  private cel = 1; private ox = 0; private oy = 0; private W = 0; private H = 0
+  private cel = 1; private ox = 0; private oy = 0; private W = 0; private H = 0; private angosto = false
 
   constructor(private canvas: HTMLCanvasElement, colores: number[]) {
     this.ctx = canvas.getContext('2d')!
@@ -100,13 +100,14 @@ export class EstratosLienzo {
   }
 
   private medir() {
-    const r = this.canvas.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1)
+    const r = this.canvas.getBoundingClientRect(), dpr = Math.min(3, devicePixelRatio || 1)
     this.W = r.width; this.H = r.height
     this.canvas.width = Math.round(r.width * dpr); this.canvas.height = Math.round(r.height * dpr)
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    // Lugar para los rótulos: a la izquierda el número; a la derecha el aporte (×1,82e14), más largo. En el celular el bloque
-    // se corre a la izquierda para que el aporte entre entero.
-    const arriba = Math.max(28, this.H * MARGEN_ARRIBA), izq = this.W < 500 ? 22 : 32, der = this.W < 500 ? 74 : 32
+    // Lugar para los rótulos: a la izquierda el número y a la derecha el aporte. v1.0: márgenes iguales, así el embudo queda
+    // centrado y recto; en el celular el aporte va adentro de su estrato (angosto: el embudo ocupa casi todo el ancho).
+    this.angosto = this.W < 500
+    const arriba = Math.max(28, this.H * MARGEN_ARRIBA), izq = this.angosto ? 18 : 80, der = izq
     // Celdas de px físicos enteros (pixel art nítido también con densidad 2 o 3), salvo que no entre ni a 1 px.
     const c = Math.min((this.W - izq - der) / ANCHO, (this.H - arriba - 4) / ALTO)
     this.cel = c * dpr >= 1 ? Math.floor(c * dpr) / dpr : Math.max(0.5, c)
@@ -161,7 +162,10 @@ export class EstratosLienzo {
       ctx.font = `600 ${fs}px 'Space Grotesk', system-ui, sans-serif`; ctx.textBaseline = 'middle'
       ctx.textAlign = 'right'; ctx.fillStyle = k === d.foco ? '#9fe3f5' : k < d.abiertos ? 'rgb(232 233 243 / 0.7)' : 'rgb(232 233 243 / 0.35)'
       ctx.fillText(d.numeros[k], x0 - cel * 2 - 6, (y0 + y1) / 2)
-      if (k < d.abiertos) { ctx.textAlign = 'left'; ctx.fillStyle = '#9fe3f5'; ctx.fillText(d.derecha[k], x1 + cel * 2 + 6, (y0 + y1) / 2) }
+      if (k < d.abiertos && this.angosto) { // adentro del estrato, a la derecha, con un halo oscuro para leerse sobre la arena
+        ctx.textAlign = 'right'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgb(4 6 13 / 0.85)'; ctx.lineJoin = 'round'
+        ctx.strokeText(d.derecha[k], x1 - cel * 2, (y0 + y1) / 2); ctx.fillStyle = '#9fe3f5'; ctx.fillText(d.derecha[k], x1 - cel * 2, (y0 + y1) / 2)
+      } else if (k < d.abiertos) { ctx.textAlign = 'left'; ctx.fillStyle = '#9fe3f5'; ctx.fillText(d.derecha[k], x1 + cel * 2 + 6, (y0 + y1) / 2) }
       if (k === d.foco) { // el elegido: un marco fino de hielo
         ctx.strokeStyle = 'rgb(159 227 245 / 0.85)'; ctx.lineWidth = 1
         ctx.strokeRect(Math.round(x0 - cel * 2.5) + 0.5, Math.round(y0 - cel * 1.5) + 0.5, Math.round(x1 - x0 + cel * 5), Math.round(y1 - y0 + cel * 3))
@@ -228,6 +232,7 @@ export class EstratosLienzo {
         let c: number[] | null = null
         if (v && m[i] !== ROCA) { const s = this.colores[v - 1]; c = [s[0], s[1], s[2], 255] }
         else if (m[i] === ROCA) c = ROCAS[(Math.floor(hash(x * 7.1 + y * 131.3) * 3) + (Math.sin(y * 0.9 + Math.sin(x * 0.13) * 1.6) > 0.6 ? 1 : 0))]
+        else if (m[i] === HORNO) c = y > banda(FONDO).piso - 2 ? HORNO_BRASA : HORNO_C // el fondo vacío, con un rescoldo apenas tibio
         else if (m[i] === PORO && this.poros[k]) c = null // poro abierto: hueco
         else if (m[i] === PARED || m[i] === PORO) c = b && y === b.piso ? piso[k] : MURO
         else if (b && k < d.abiertos && x >= b.a && x <= b.b) c = y < b.piso ? fondo[k] : piso[k] // espesor del piso
@@ -268,4 +273,5 @@ export class EstratosLienzo {
 }
 
 const MURO = [58, 92, 118, 255]
+const HORNO_C = [7, 9, 15, 255], HORNO_BRASA = [26, 14, 12, 255]
 const ROCAS = [[11, 14, 20, 255], [16, 20, 28, 255], [21, 26, 36, 255], [27, 33, 48, 255]]
