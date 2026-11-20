@@ -48,6 +48,8 @@ export const en: typeof es = {
     estratos: 'Strata', inercia: 'Inertia', perm: 'Permeability', caudal: 'Flow', empuje: 'push from below',
   } as Record<string, string>,
 
+  compresionesHechas: (n: number, max: number) => `${n}/${max} compressions`,
+  compresionesTodas: 'all done',
   compresion: (n: number) => `Compression ${n0(n)}`,
   meta: (e: number) => `1e${Math.floor(e)}`,
   comprimir: 'Compress',

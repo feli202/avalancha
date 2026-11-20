@@ -1,6 +1,6 @@
 <script lang="ts">
   // Interfaz principal (SPEC 6.4). Cada parte aparece recién cuando juego.vistos lo dice (SPEC 5).
-  import { anillos, autoDisponible, congelada, cristalesAlInfinito, densidad, enElOptimo, enInfinito, infinitoRoto, metaLog10, multAnillos, produccion, puedeComprimir, type DefectoId } from '../core'
+  import { CFG, anillos, autoDisponible, congelada, cristalesAlInfinito, densidad, enElOptimo, enInfinito, infinitoRoto, metaLog10, multAnillos, produccion, puedeComprimir, type DefectoId } from '../core'
   import { cambios, nombre as nombreDef } from './defectos'
   import { txt } from '../strings'
   import { ajustes } from './ajustes.svelte'
@@ -42,8 +42,12 @@
   // §8: dentro de un Defecto no hay Infinito: termina en la meta o abandonando.
   const def = $derived(s.defectos.actual as DefectoId | '')
   const infinitoListo = $derived(alInf && s.infinitos > 0 && !def)
-  const lista = $derived(puedeComprimir(s) || infinitoListo)
+  // Con el Infinito roto la Compresión queda siempre a la vista, en su propio panel arriba del de Infinito: cuántas hay y
+  // cuánto falta para la siguiente. Antes de romperlo, el mismo botón pasa de Compresión a Infinito (como siempre).
+  const separada = $derived(infinitoRoto(s) && (comp.final || alInf))
+  const lista = $derived(separada ? infinitoListo : puedeComprimir(s) || infinitoListo)
   const accion = () => (infinitoListo ? infinitoYa() : comprimirYa())
+  const metaInf = $derived(def ? metaLog10(def) : CFG.infinito_log10)
   const fin = $derived(juego.cinematica)
   const alternarAutoComp = () =>
     (juego.s = { ...juego.s, auto: { ...juego.s.auto, compresion_auto: !juego.s.auto.compresion_auto } })
@@ -62,7 +66,7 @@
     if (conTienda && e.code === 'KeyH') juego.panel = 'ayuda'
     if (e.code !== 'KeyC' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || hayPanel()) return
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-    if (juego.vistos.compresion && lista) accion()
+    if (juego.vistos.compresion && (lista || puedeComprimir(juego.s))) accion()
   }
 
   // Al dejar el título, la clase .entrando escalona la aparición; después se saca (lo que aparezca más tarde usa .aparece).
@@ -200,11 +204,21 @@
       <div class="contenido">
         <Tienda />
         {#if v.compresion}
+          {#if separada}
+            <button class="comprimir aparte aparece" class:encendida={puedeComprimir(s)} disabled={!puedeComprimir(s)} onclick={comprimirYa} aria-keyshortcuts="C">
+              <span class="nombre">{txt.comprimir}</span>
+              <span class="meta num">
+                {txt.compresionesHechas(s.compresiones, CFG.compresion.umbrales_log10.length)}
+                {#if !comp.final}{' · '}{txt.compresion(s.compresiones + 1)} · {txt.meta(comp.meta)} · <b>{txt.progreso(comp.p)}</b>{:else}{' · '}{txt.compresionesTodas}{/if}
+              </span>
+            </button>
+          {/if}
           <!-- Después de la última Compresión la meta es el Infinito: el primero llega solo; los siguientes, con este botón. -->
           <button class="comprimir aparece" data-guia="compresion" use:ayuda={() => ayudaComprimir(juego.s)} disabled={!lista} onclick={accion} aria-keyshortcuts="C">
-            <span class="nombre">{comp.final || alInf ? (def ? nombreDef(def) : txt.haciaInfinito) : txt.comprimir}</span>
+            <span class="nombre">{comp.final || alInf || separada ? (def ? nombreDef(def) : txt.haciaInfinito) : txt.comprimir}</span>
             <span class="meta num">
-              {#if !comp.final}{txt.compresion(s.compresiones + 1)}{' · '}{/if}{txt.meta(comp.meta)} · <b>{txt.progreso(comp.p)}</b>
+              {#if separada}{txt.meta(metaInf)} · <b>{txt.progreso(Math.min(1, Math.max(0, juego.s.energia.log10()) / metaInf))}</b>
+              {:else}{#if !comp.final}{txt.compresion(s.compresiones + 1)}{' · '}{/if}{txt.meta(comp.meta)} · <b>{txt.progreso(comp.p)}</b>{/if}
               {#if !lista && juego.eta !== null} · {txt.eta(txt.duracion(juego.eta))}{/if}
               {#if s.infinitos > 0 && alInf && infinitoRoto(s) && !def}
                 <!-- C6 (§4): con el Infinito roto, cuánto daría y a qué ritmo; brilla cuando el ritmo deja de subir. -->
@@ -405,6 +419,10 @@
   .comprimir .nombre { font-size: 1.25rem; font-weight: 600; }
   .comprimir .meta { font-size: 0.875rem; color: var(--tenue); }
   .comprimir:disabled { cursor: default; }
+  .comprimir.aparte { margin-top: 1rem; padding: 0.5rem 0; }
+  .comprimir.aparte .nombre { font-size: 1rem; }
+  .comprimir.aparte + .comprimir { margin-top: 0; }
+  .comprimir.aparte.encendida .nombre { color: var(--tinta); }
   .comprimir .nombre { color: var(--apagado); transition: color 0.6s; }
   /* Se puede comprimir: el texto se enciende y late, a la vez que el anillo (Pila.svelte). */
   .lista .comprimir .nombre { color: var(--tinta); animation: latido 2.4s ease-in-out infinite; }

@@ -54,6 +54,8 @@ export const es = {
 
   // Compresión
   compresion: (n: number) => `Compresión ${n.toLocaleString('es-AR')}`,
+  compresionesHechas: (n: number, max: number) => `${n}/${max} compresiones`,
+  compresionesTodas: 'todas hechas',
   meta: (e: number) => `1e${Math.floor(e)}`,
   comprimir: 'Comprimir',
   progreso: (p: number) => `${Math.floor(p * 100)} %`,
