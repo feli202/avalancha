@@ -17,6 +17,7 @@
   import { enApp, esMovil, instalar } from '../instalar.svelte'
   import { errores } from './errores'
   import { DISCORD } from '../comunidad'
+  import Comunidad from './Comunidad.svelte'
   import { NOTACIONES, formato } from './formato'
   import Decimal from 'break_infinity.js'
   const EJEMPLO = new Decimal('1.23e308')
@@ -364,6 +365,8 @@
 
       {:else if PESTANAS[activa] === 'creditos'}
         <section class="lista">
+          <!-- v1.0, bloque 7: la comunidad, arriba de todo. -->
+          <div class="resumen comunidad-creditos"><Comunidad /></div>
           {#each txt.opciones.creditos as [rotulo, texto]}
             <div class="resumen"><p class="rotulo">{rotulo}</p><p class="grande">{texto}</p></div>
           {/each}
@@ -452,6 +455,7 @@
   .segmentos button:hover { color: var(--tenue); }
   .segmentos button[aria-checked='true'] { color: var(--tinta); font-weight: 600; border-bottom-color: var(--tinta); }
   .resumen { padding-bottom: 1.5rem; }
+  .comunidad-creditos :global(.comunidad) { justify-content: flex-start; }
   .grande { margin: 0; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
   .bloque { border-top: 1px solid var(--borde); padding-bottom: 0.5rem; }
   .peligro-zona .texto { color: var(--coral); }

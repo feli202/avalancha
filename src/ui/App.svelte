@@ -21,6 +21,7 @@
   import { fade } from 'svelte/transition'
   import AvisoVersion from './AvisoVersion.svelte'
   import Instalar from './Instalar.svelte'
+  import PopComunidad from './PopComunidad.svelte'
   import PaseItch from './PaseItch.svelte'
   import TraerPartida from './TraerPartida.svelte'
   import { abandonarDefectoYa, caminoCapa2, caminoInfinito, comprimirYa, hayCartel, hayPanel, infinitoYa, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
@@ -241,6 +242,7 @@
 <Capas />
 <AvisoVersion />
 <Instalar />
+<PopComunidad />
 <PaseItch />
 <TraerPartida />
 
