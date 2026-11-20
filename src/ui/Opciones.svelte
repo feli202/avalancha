@@ -15,6 +15,8 @@
   import { almacenLocal } from '../guardado/almacen'
   import { leerRespaldoPase, reemplazarConRespaldo, restaurarRespaldo } from '../guardado/pase'
   import { enApp, esMovil, instalar } from '../instalar.svelte'
+  import { errores } from './errores'
+  import { DISCORD } from '../comunidad'
 
   const PESTANAS = ['aspecto', 'juego', 'partida', 'teclado', 'creditos'] as const
   let activa = $state(0)
@@ -87,6 +89,17 @@
       await navigator.clipboard.writeText(texto)
       exportado = { texto, copiado: true }
     } catch { /* sin permiso de portapapeles: queda el texto para copiar a mano */ }
+  }
+  // v1.0: "Reportar un problema": partida, versión y últimos errores, para pegar en el Discord.
+  let reporte = $state<{ texto: string; copiado: boolean } | null>(null)
+  async function alReportar() {
+    const texto = [txt.opciones.reporteEncabezado(VERSION), navigator.userAgent, txt.opciones.reporteErrores + '\n' + (errores.join('\n') || '—'),
+      txt.opciones.reportePartida + '\n' + exportar(partidaActual())].join('\n\n')
+    reporte = { texto, copiado: false }
+    try {
+      await navigator.clipboard.writeText(texto)
+      reporte = { texto, copiado: true }
+    } catch { /* sin permiso: queda el texto */ }
   }
   function alImportar() {
     try {
@@ -276,6 +289,18 @@
                   <button class="accion chica" disabled={!pegado.trim()} onclick={alImportar}>{txt.opciones.importar}</button>
                 </div>
               {/if}
+            {/if}
+          </div>
+
+          <div class="bloque">
+            <div class="fila sin-borde">
+              <span class="texto">{txt.opciones.reportar}<small>{txt.opciones.reportarDesc}</small></span>
+              <button class="accion chica" onclick={alReportar}>{txt.opciones.reportar}</button>
+            </div>
+            {#if reporte}
+              <p class="nota" role="status">{reporte.copiado ? txt.opciones.reportado : txt.opciones.reportadoSinCopiar} <a href={DISCORD} target="_blank" rel="noopener">Discord</a></p>
+              <textarea class="codigo" readonly rows="3" aria-label={txt.opciones.reportar} onfocus={(e) => e.currentTarget.select()}
+                >{reporte.texto}</textarea>
             {/if}
           </div>
 

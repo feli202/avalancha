@@ -22,3 +22,19 @@ export function crearAtenuador(libres: number, olvidoMs: number) {
     return Math.min(1, libres / seguidos)
   }
 }
+
+/** v1.0, bloque 1: muestra un valor a lo sumo cada `ms`, pero el último siempre llega (con un temporizador). Antes se
+ * descartaba: en 1e308 la economía se congela (el estado deja de cambiar) y la vista quedaba para siempre en 99 %, con el
+ * botón de Infinito o de Cascada sin actualizar hasta recargar. */
+export function crearRefresco<T>(ms: number, mostrar: (v: T) => void, ahora = () => performance.now(),
+  programar: (f: () => void, t: number) => unknown = setTimeout, cancelar: (h: any) => void = clearTimeout) {
+  let visto = -Infinity
+  let pendiente: unknown
+  return (v: T, limitar: boolean) => {
+    cancelar(pendiente)
+    const falta = ms - (ahora() - visto)
+    const ya = () => { visto = ahora(); mostrar(v) }
+    if (limitar && falta > 0) pendiente = programar(ya, falta)
+    else ya()
+  }
+}

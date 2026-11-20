@@ -1,6 +1,6 @@
 // CORRECCIONES 2: los límites del sonido.
 import { describe, expect, it } from 'vitest'
-import { crearAtenuador, crearLimite } from '../src/ui/limite'
+import { crearAtenuador, crearLimite, crearRefresco } from '../src/ui/limite'
 
 describe('límite de sonidos', () => {
   it('el mismo sonido no se repite antes de 80 ms; otro distinto sí suena', () => {
@@ -27,5 +27,27 @@ describe('derrumbes seguidos', () => {
     expect(ultimo).toBeLessThan(0.2)
     expect(suma).toBeLessThan(4) // 20 por segundo suenan como ~3
     expect(vol(60_000)).toBe(1) // después de un rato de silencio, entero otra vez
+  })
+})
+
+describe('refresco de la vista (v1.0, bloque 1: el Infinito trabado en 99 %)', () => {
+  it('el último valor siempre llega aunque llegue antes de los 100 ms y después no cambie más', () => {
+    let t = 0
+    const cola: [() => void, number][] = []
+    const vistos: number[] = []
+    const r = crearRefresco<number>(100, (v) => vistos.push(v), () => t, (f, ms) => cola.push([f, t + ms]), (h) => { const i = cola.findIndex((c) => c === h); if (i >= 0) cola.splice(i, 1) })
+    r(1, true) // 99 %
+    t = 50
+    r(2, true) // llega a 1e308 y la economía se congela: nunca vuelve a llamarse
+    expect(vistos).toEqual([1])
+    t = 100
+    cola.splice(0).forEach(([f]) => f())
+    expect(vistos).toEqual([1, 2])
+  })
+  it('sin limitar muestra todo', () => {
+    const vistos: number[] = []
+    const r = crearRefresco<number>(100, (v) => vistos.push(v), () => 0)
+    r(1, false); r(2, false)
+    expect(vistos).toEqual([1, 2])
   })
 })

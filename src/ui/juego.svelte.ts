@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, CFG1, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, type Ausencia, type State } from '../core'
+import { CFG, CFG1, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, campoInvalido, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, type Ausencia, type State } from '../core'
 import { almacenLocal, type Almacen } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
@@ -14,7 +14,8 @@ import { Vigia, contadoresVacios, transicion, volviste } from './secretos'
 
 const PASO = 0.05 // s: paso fijo de la economía (SPEC 8)
 const MAX_PASOS = 200 // por cuadro; con más tiempo acumulado (pestaña oculta, carga) va la simulación fuera de línea
-const GUARDAR_CADA = 10_000 // ms (SPEC 8)
+const GUARDAR_CADA = 10_000 // ms (SPEC 8; v1.0 pide como mínimo cada 30 s)
+let ultimoMalo = '' // para no llenar la consola con el mismo error en cada cuadro
 const AVISAR_DESDE = 60 // s de ausencia para mostrar "Mientras no estabas"
 
 class Juego {
@@ -123,7 +124,9 @@ export function progresoCompresion(s: State) {
   // En un Defecto la meta final es la del Defecto (§8), no el Infinito.
   const meta = final ? (enDefecto(s) ? metaLog10(s.defectos.actual as DefectoId) : CFG.infinito_log10) : u[s.compresiones]
   const desde = u[s.compresiones - 1] ?? 0
-  return { meta, final, p: Math.min(1, Math.max(0, (log10E(s) - desde) / (meta - desde))) }
+  // Llegó al Infinito (la misma condición que el botón): 100 %, sin depender del redondeo del log10.
+  const llego = final && !enDefecto(s) && enInfinito(s)
+  return { meta, final, p: llego ? 1 : Math.min(1, Math.max(0, (log10E(s) - desde) / (meta - desde))) }
 }
 
 /** La barra fina de la izquierda (escala log10): cuánto falta para el Infinito y dónde caen los umbrales de Compresión. */
@@ -131,7 +134,7 @@ export function progresoCompresion(s: State) {
 export const caminoCapa2 = (s: State) => Math.min(1, Math.max(0, s.cristalesTotales.log10()) / CFG.infinito_log10)
 
 export function caminoInfinito(s: State) {
-  return { p: Math.min(1, log10E(s) / CFG.infinito_log10), marcas: CFG.compresion.umbrales_log10.map((u) => u / CFG.infinito_log10) }
+  return { p: enInfinito(s) ? 1 : Math.min(1, log10E(s) / CFG.infinito_log10), marcas: CFG.compresion.umbrales_log10.map((u) => u / CFG.infinito_log10) }
 }
 
 // Tiempo estimado: ritmo de log10(Energía) en los últimos ~30 s de juego (crece exponencial, así que se mide en log).
@@ -529,6 +532,13 @@ export function arrancar() {
       const a = s
       for (; acum >= PASO; acum -= PASO) s = tick(s, PASO)
       transicion(a, s, juego.zoomMaxS).forEach(ganarSecreto)
+    }
+    // v1.0: un NaN o Infinity en la economía se anota y el juego sigue desde el último estado válido (no se traba).
+    const malo = campoInvalido(s)
+    if (malo) {
+      if (malo !== ultimoMalo) console.error(`Avalancha: ${malo} no es finito; sigo con el último estado válido`)
+      ultimoMalo = malo
+      s = previo
     }
     cerrado = false
     // Contra el último estado que vio el bucle, no juego.s: comprimir a mano (botón, tecla C) lo reemplaza entre cuadros.
