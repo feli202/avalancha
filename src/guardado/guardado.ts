@@ -1,6 +1,6 @@
 // Guardado (SPEC 8): la partida como JSON con versión. Puro: el almacenamiento entra como Almacen.
 import Decimal from 'break_infinity.js'
-import { CFG, DEFECTOS, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, type Pieza, type State } from '../core'
+import { CFG, DEFECTOS, campoInvalido, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, type Pieza, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
 import type { Contadores } from '../ui/secretos'
@@ -223,7 +223,34 @@ export function importar(texto: string): Partida {
   return deserializar(new TextDecoder('utf-8', { fatal: true }).decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))))
 }
 
-export const guardar = (a: Almacen, p: Partida) => a.escribir(CLAVE, serializar(p))
+/** v1.0, bloque 2: los últimos 3 guardados válidos, el más nuevo primero (Ajustes → Partida → Respaldos). */
+export const COPIAS = ['avalancha.copia.0', 'avalancha.copia.1', 'avalancha.copia.2']
+/** Un respaldo nuevo como mucho cada minuto: con el guardado cada 10 s, tres seguidos serían casi la misma partida. */
+export const COPIA_CADA_MS = 60_000
+
+/** Valida antes de escribir: si la partida tiene un NaN/Infinity o no se puede volver a leer, tira error y no pisa la buena.
+ * Después rota los respaldos. */
+export function guardar(a: Almacen, p: Partida) {
+  const malo = campoInvalido(p.estado)
+  if (malo) throw new Error(`guardado inválido: ${malo} no es finito`)
+  const texto = serializar(p)
+  deserializar(texto) // tira si no se puede leer de vuelta
+  a.escribir(CLAVE, texto)
+  try {
+    let fecha = -Infinity // sin respaldo o con uno dañado: rota
+    try { fecha = JSON.parse(a.leer(COPIAS[0]) ?? 'null')?.guardadoEn ?? -Infinity } catch { /* dañado */ }
+    if (p.guardadoEn - fecha < COPIA_CADA_MS) return
+    for (let i = COPIAS.length - 1; i > 0; i--) { const t = a.leer(COPIAS[i - 1]); if (t !== null) a.escribir(COPIAS[i], t) }
+    a.escribir(COPIAS[0], texto)
+  } catch (e) { console.warn(e) } // sin lugar para los respaldos: el guardado principal ya está
+}
+
+/** Los respaldos que se pueden leer, el más nuevo primero (con su clave, para recuperarlo). */
+export function leerCopias(a: Almacen): { clave: string; partida: Partida }[] {
+  return COPIAS.flatMap((clave) => {
+    try { const t = a.leer(clave); return t === null ? [] : [{ clave, partida: deserializar(t) }] } catch { return [] }
+  })
+}
 
 /** null: no hay guardado. 'corrupto': no se pudo leer; el texto queda copiado en RESPALDO y el guardado, sin tocar.
  * `ahora` (ms) nombra la copia del respaldo anterior si había otro distinto. */

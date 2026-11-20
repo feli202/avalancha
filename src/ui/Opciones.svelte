@@ -1,7 +1,7 @@
 <script lang="ts">
   // Pantalla de Ajustes (Pantalla.svelte): Aspecto (paletas, efectos y marcos con su vista previa), Juego, Partida y Teclado.
   import { flushSync } from 'svelte'
-  import { exportar, importar, type Partida } from '../guardado/guardado'
+  import { exportar, importar, leerCopias, type Partida } from '../guardado/guardado'
   import { marco } from '../render/marcos'
   import { ALTO, ANCHO, RADIO_ENTERA, imagen, miniPila } from '../render/miniPilas'
   import { COLORES_DALTONISMO, EFECTOS, FONDOS, MARCOS, PALETAS, css } from '../render/paletas'
@@ -70,6 +70,9 @@
   // La que había queda en el respaldo (se vuelve desde acá mismo).
   const reemplazar = (p: Partida) => (noSeEscribio = !reemplazarPartida((a) => reemplazarConRespaldo(a, p)))
   const respaldo = leerRespaldoPase(almacenLocal)
+  // v1.0: los 3 respaldos automáticos; se leen al abrir Ajustes (después de un guardado nuevo).
+  const copias = (guardarYa(), leerCopias(almacenLocal))
+  let recuperar = $state.raw<Partida | null>(null)
   let volver = $state(false)
   function volverAlRespaldo() {
     guardarYa() // que la copia de la actual sea de ahora
@@ -291,6 +294,25 @@
               {/if}
             {/if}
           </div>
+
+          {#if copias.length}
+            <div class="bloque">
+              <div class="fila sin-borde"><span class="texto">{txt.opciones.copias}<small>{txt.opciones.copiasDesc}</small></span></div>
+              {#each copias as c (c.clave)}
+                <div class="fila sin-borde">
+                  <span class="texto"><small>{txt.opciones.copiaDe(new Date(c.partida.guardadoEn).toLocaleString(txt.locale), txt.opciones.descPartida(c.partida.estado.compresiones, txt.duracion(c.partida.estado.tiempoTotal)))}</small></span>
+                  <button class="accion chica" onclick={() => (recuperar = c.partida)}>{txt.opciones.recuperar}</button>
+                </div>
+              {/each}
+              {#if recuperar}
+                <p class="aviso-fuerte" role="alert">{txt.opciones.recuperarConfirma}</p>
+                <div class="acciones">
+                  <button class="accion chica peligro" use:enfocar onclick={() => recuperar && reemplazar({ ...recuperar, guardadoEn: Date.now() })}>{txt.opciones.recuperar}</button>
+                  <button class="secundario" onclick={() => (recuperar = null)}>{txt.opciones.cancelar}</button>
+                </div>
+              {/if}
+            </div>
+          {/if}
 
           <div class="bloque">
             <div class="fila sin-borde">

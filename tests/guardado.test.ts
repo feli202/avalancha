@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { CFG, CFG1, INFINITO, infinito, comprar, comprarTodo, comprimir, disponibles, estadoInicial, fueraDeLinea, tick, type State } from '../src/core'
 import type { Almacen } from '../src/guardado/almacen'
 import {
-  CLAVE, RESPALDO, VERSION, cargar, deserializar, exportar, guardar, importar, serializar, type Partida,
+  CLAVE, COPIAS, COPIA_CADA_MS, RESPALDO, VERSION, cargar, deserializar, exportar, guardar, importar, leerCopias, serializar, type Partida,
 } from '../src/guardado/guardado'
 import guardadoCapa0 from './fixtures/guardado_capa0_infinito.json'
 
@@ -282,5 +282,47 @@ describe('contadores de los logros secretos', () => {
     expect(deserializar(serializar(p)).secretos).toBeUndefined()
     const raro = deserializar(JSON.stringify({ ...JSON.parse(serializar(p)), secretos: { capturas: -2, horas: 2 ** 30, abandonos: { vidrio: -1, macla: 'x' } } }))
     expect(raro.secretos).toEqual({ capturas: 0, horas: 0, abandonos: {} })
+  })
+})
+
+describe('v1.0, bloque 2: la partida nunca se pierde', () => {
+  const memoria = (inicial: Record<string, string> = {}) => {
+    const m = new Map(Object.entries(inicial))
+    const a: Almacen = { leer: (k) => m.get(k) ?? null, escribir: (k, t) => void m.set(k, t) }
+    return { a, m }
+  }
+  it('un estado con NaN o Infinity no se escribe y no pisa el guardado bueno', () => {
+    const { a, m } = memoria()
+    const bueno = partida(jugar(estadoInicial(), 30))
+    guardar(a, bueno)
+    const antes = m.get(CLAVE)
+    expect(() => guardar(a, partida({ ...bueno.estado, granos: NaN }))).toThrow()
+    expect(() => guardar(a, partida({ ...bueno.estado, energia: new Decimal(NaN) }))).toThrow()
+    expect(() => guardar(a, partida({ ...bueno.estado, tiempoTotal: Infinity }))).toThrow()
+    expect(m.get(CLAVE)).toBe(antes)
+  })
+  it('guarda los últimos 3 válidos, uno por minuto como mucho, el más nuevo primero', () => {
+    const { a } = memoria()
+    const s = estadoInicial()
+    const en = (t: number, tiempoTotal: number) => ({ ...partida({ ...s, tiempoTotal }), guardadoEn: t })
+    guardar(a, en(0, 1))
+    guardar(a, en(10_000, 2)) // 10 s después: no rota
+    expect(leerCopias(a).map((c) => c.partida.estado.tiempoTotal)).toEqual([1])
+    guardar(a, en(COPIA_CADA_MS, 3))
+    guardar(a, en(2 * COPIA_CADA_MS, 4))
+    guardar(a, en(3 * COPIA_CADA_MS, 5))
+    expect(leerCopias(a).map((c) => c.partida.estado.tiempoTotal)).toEqual([5, 4, 3])
+    expect(leerCopias(a)[0].clave).toBe(COPIAS[0])
+  })
+  it('un respaldo dañado se saltea al listarlos', () => {
+    const { a } = memoria({ [COPIAS[0]]: 'roto' })
+    guardar(a, { ...partida(estadoInicial()), guardadoEn: 1e13 })
+    expect(leerCopias(a).length).toBe(1) // el nuevo pasó a la 0 y el roto a la 1
+  })
+  it('sin lugar para los respaldos, el guardado principal igual queda', () => {
+    const m = new Map<string, string>()
+    const a: Almacen = { leer: (k) => m.get(k) ?? null, escribir: (k, t) => { if (k !== CLAVE) throw new Error('lleno'); m.set(k, t) } }
+    guardar(a, partida(estadoInicial()))
+    expect(cargar(a, 0)).toEqual(partida(estadoInicial()))
   })
 })
