@@ -196,18 +196,31 @@ vec2 deforma(vec2 q) {
 // Lo que se pinta encima: el borde de la grieta, la línea del plano o las manchas. a: la arena del píxel.
 vec3 marcaDefecto(vec3 col, vec3 fondo, vec4 a, vec2 q) {
   vec2 d = q - L * 0.5;
-  float w = max(0.7, 1.5 * u_dpr / u_escala); // al menos ~1,5 px CSS
-  if (u_defecto == 1) {
+  // Las marcas se leen con cualquier paleta y zoom: un núcleo oscuro con un borde claro (contraste en los dos sentidos), de
+  // al menos ~2,5 px CSS y nunca más finas que media celda.
+  float px = u_dpr / u_escala; // celdas por px CSS
+  float w = max(0.5, 2.5 * px);
+  vec3 luz = vec3(0.85, 0.95, 1.0);
+  if (u_defecto == 1) { // Vacancia: grieta oscura con bordes de luz y el violeta que asoma desde adentro
     float g = abs(grieta(d));
-    col = mix(col, fondo * 0.35, (1.0 - smoothstep(w * 0.6, w * 1.2, g)) * a.a);
-    col += u_colorP[1] * 0.5 * exp(-g / (w * 2.0)) * a.a; // la luz violeta que asoma por la grieta
-  } else if (u_defecto == 2 || u_defecto == 3) {
+    float nucleo = 1.0 - smoothstep(w * 0.5, w, g);
+    float borde = exp(-max(0.0, g - w) / (1.2 * px + 0.15)) * (1.0 - nucleo);
+    col = mix(col, fondo * 0.15, nucleo * a.a);
+    col = mix(col, luz, 0.7 * borde * a.a);
+    col += u_colorP[1] * 0.6 * exp(-g / (w * 3.0)) * a.a;
+  } else if (u_defecto == 2 || u_defecto == 3) { // Dislocación y Macla: el plano, una línea clara con sombra a los lados
     float k = abs(u_defecto == 2 ? planoDesliz(d) : planoMacla(d));
-    col += vec3(0.55, 0.85, 1.0) * 0.35 * exp(-k / w) * a.a;
-  } else if (u_defecto == 4) {
+    float linea = 1.0 - smoothstep(w * 0.35, w * 0.7, k);
+    float sombra = (1.0 - smoothstep(w * 0.7, w * 1.6, k)) * (1.0 - linea);
+    col = mix(col, fondo * 0.2, 0.75 * sombra * a.a);
+    col = mix(col, luz, 0.85 * linea * a.a);
+    col += vec3(0.55, 0.85, 1.0) * 0.3 * exp(-k / (w * 3.0)) * a.a;
+  } else if (u_defecto == 4) { // Impureza: manchas pardas y apagadas, con borde oscuro
     float n = 0.65 * ruido(q * 0.035) + 0.35 * ruido(q * 0.11 + 7.0);
-    float m = smoothstep(0.58, 0.68, n) * a.a;
-    col = mix(col, dot(col, vec3(0.3, 0.55, 0.15)) * vec3(0.6, 0.48, 0.32), 0.8 * m) * (1.0 - 0.35 * m);
+    float m = smoothstep(0.56, 0.6, n) * a.a;
+    float orilla = (smoothstep(0.54, 0.57, n) - smoothstep(0.58, 0.62, n)) * a.a;
+    col = mix(col, dot(col, vec3(0.3, 0.55, 0.15)) * vec3(0.55, 0.42, 0.26), 0.9 * m) * (1.0 - 0.45 * m);
+    col = mix(col, fondo * 0.15, 0.8 * orilla);
   } else if (u_defecto == 5) { // un latido que sale del centro y se apaga hacia el borde
     float r = length(d) / (L * 0.5);
     float pulso = 0.5 + 0.5 * sin(u_ahora * 1.6 - r * 6.0);
