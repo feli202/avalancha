@@ -1,3 +1,9 @@
+<script module lang="ts">
+  import type { Partida as P } from '../guardado/guardado'
+  /** Una partida pegada en la app instalada (TraerPartida.svelte): misma pregunta, con la de Safari. */
+  export const pegada = $state<{ p: P | null }>({ p: null })
+</script>
+
 <script lang="ts">
   // Llega una partida de itch.io en el hash (#import=..., src/guardado/pase.ts). Se valida, se muestran las dos lado a lado y
   // solo se reemplaza con "Cargar la de itch.io"; antes, la de acá queda en el respaldo (Ajustes → Partida).
@@ -12,13 +18,15 @@
 
   const t = txt.pase
   const codigo = paseDeHash(location.hash)
-  let llegada = $state.raw<Partida | null>(null)
+  let deHash = $state.raw<Partida | null>(null)
+  const llegada = $derived(deHash ?? pegada.p)
+  const safari = $derived(!deHash && !!pegada.p)
   let fallo = $state('')
 
   const borrarHash = () => history.replaceState(history.state, '', location.pathname + location.search)
   if (codigo)
     decodificarPase(codigo).then(
-      (p) => (llegada = p),
+      (p) => (deHash = p),
       (e) => { fallo = e instanceof FalloPase ? e.motivo : 'invalida'; borrarHash() },
     )
 
@@ -28,11 +36,11 @@
     try { sessionStorage.setItem(TRAIDA, '1') } catch {}
     // M6: arranca ahora (si no, el tiempo desde el guardado de itch.io contaría como fuera de línea).
     const p = { ...llegada, guardadoEn: Date.now() }
-    if (!reemplazarPartida((a) => reemplazarConRespaldo(a, p))) { llegada = null; fallo = 'escribir' }
+    if (!reemplazarPartida((a) => reemplazarConRespaldo(a, p))) { deHash = pegada.p = null; fallo = 'escribir' }
   }
   function quedarme() {
     borrarHash()
-    llegada = null
+    deHash = pegada.p = null
   }
   const enfocar = (el: HTMLElement) => el.focus()
   const filas = (s: State | null) => (s ? [txt.duracion(s.tiempoTotal), formato(s.energia), formato(s.cristalesTotales)] : [t.sinPartida, '—', '—'])
@@ -43,10 +51,10 @@
   <div class="fondo">
     <div class="tarjeta placa grietas" role="alertdialog" aria-modal="true" aria-labelledby="pase-titulo">
       {#if llegada}
-        <h2 id="pase-titulo">{t.pregunta}</h2>
-        <p>{t.texto}</p>
+        <h2 id="pase-titulo">{safari ? t.preguntaSafari : t.pregunta}</h2>
+        <p>{safari ? t.textoSafari : t.texto}</p>
         <table class="num">
-          <thead><tr><th></th><th>{t.esta}</th><th class="itch">{t.itch}</th></tr></thead>
+          <thead><tr><th></th><th>{t.esta}</th><th class="itch">{safari ? t.deSafari : t.itch}</th></tr></thead>
           <tbody>
             {#each [t.tiempo, t.energia, t.cristales] as rotulo, i}
               <tr><th scope="row">{rotulo}</th><td>{filas(juego.hayPartida ? juego.s : null)[i]}</td><td class="itch">{filas(llegada.estado)[i]}</td></tr>
@@ -55,7 +63,7 @@
         </table>
         {#if juego.hayPartida}<p class="chico">{t.respaldo}</p>{/if}
         <div class="acciones">
-          <button class="gema" onclick={cargar}>{t.cargar}</button>
+          <button class="gema" onclick={cargar}>{safari ? t.cargarSafari : t.cargar}</button>
           <button class="secundario" use:enfocar onclick={quedarme}>{t.quedarme}</button>
         </div>
       {:else}

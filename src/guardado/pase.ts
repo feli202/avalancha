@@ -1,7 +1,7 @@
 // Pase de partida de itch.io a la versión instalable (GitHub Pages): son sitios distintos y cada uno tiene su localStorage.
 // La partida viaja comprimida en el hash de la URL (#import=...), que el navegador nunca manda al servidor.
 // Formato: A<versión de guardado>-<FNV-1a del JSON, 8 hex>-<JSON comprimido con deflate-raw, base64url>.
-import { CLAVE, VERSION, deserializar, guardar, serializar, type Partida } from './guardado'
+import { CLAVE, VERSION, deserializar, guardar, importar, serializar, type Partida } from './guardado'
 import type { Almacen } from './almacen'
 
 /** Copia de la partida que había antes de cargar una de itch.io. Se recupera desde Ajustes → Partida. */
@@ -47,6 +47,13 @@ export async function decodificarPase(codigo: string): Promise<Partida> {
   try { version = JSON.parse(json)?.version } catch { throw new FalloPase('corrupto') }
   if (typeof version === 'number' && version > VERSION) throw new FalloPase('nueva')
   try { return deserializar(json) } catch { throw new FalloPase('invalida') }
+}
+
+/** Un código pegado: el del pase (A3-...) o el de Ajustes → Exportar. Tira FalloPase si no es una partida. No toca el almacenamiento. */
+export async function leerCodigo(texto: string): Promise<Partida> {
+  const limpio = texto.replace(/\s/g, '')
+  if (/^A\d+-/.test(limpio)) return decodificarPase(limpio)
+  try { return importar(limpio) } catch { throw new FalloPase('formato') }
 }
 
 /** La dirección de la app con la partida en el hash, o null si queda demasiado larga para una URL. */

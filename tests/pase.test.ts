@@ -3,9 +3,9 @@ import Decimal from 'break_infinity.js'
 import { describe, expect, it } from 'vitest'
 import { INFINITO, estadoInicial, infinito, tick } from '../src/core'
 import type { Almacen } from '../src/guardado/almacen'
-import { CLAVE, VERSION, guardar, serializar, type Partida } from '../src/guardado/guardado'
+import { CLAVE, VERSION, exportar, guardar, serializar, type Partida } from '../src/guardado/guardado'
 import {
-  FalloPase, RESPALDO_PASE, codificarPase, decodificarPase, leerRespaldoPase, paseDeHash, reemplazarConRespaldo, restaurarRespaldo, urlConPase,
+  FalloPase, RESPALDO_PASE, codificarPase, decodificarPase, leerCodigo, leerRespaldoPase, paseDeHash, reemplazarConRespaldo, restaurarRespaldo, urlConPase,
 } from '../src/guardado/pase'
 
 const partida = (estado = estadoInicial(), extra: Partial<Partida> = {}): Partida => ({ estado, guardadoEn: 1_700_000_000_000, vistos: { guias: true }, record: 12, logros: { granos: true }, ...extra })
@@ -81,6 +81,20 @@ describe('pase de partida por URL', () => {
     d.version = 2
     const p = await decodificarPase(await codigoDe(JSON.stringify(d), 2))
     expect(p.estado.tiempoTotal).toBe(30)
+  })
+})
+
+describe('código pegado (app instalada en iPhone, desde Safari)', () => {
+  it('acepta el de Exportar y el del pase, con espacios y saltos de línea', async () => {
+    const p = conCristales()
+    const ex = exportar(p)
+    expect(serializar(await leerCodigo(`  ${ex.slice(0, 50)}
+${ex.slice(50)} `))).toBe(serializar(p))
+    expect(serializar(await leerCodigo(await codificarPase(p)))).toBe(serializar(p))
+  })
+  it('texto cualquiera: formato', async () => {
+    expect(await motivo(leerCodigo('hola qué tal'))).toBe('formato')
+    expect(await motivo(leerCodigo(btoa('{"version":3}')))).toBe('formato')
   })
 })
 

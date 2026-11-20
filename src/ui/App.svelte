@@ -22,6 +22,7 @@
   import AvisoVersion from './AvisoVersion.svelte'
   import Instalar from './Instalar.svelte'
   import PaseItch from './PaseItch.svelte'
+  import TraerPartida from './TraerPartida.svelte'
   import { abandonarDefectoYa, caminoCapa2, caminoInfinito, comprimirYa, hayCartel, hayPanel, infinitoYa, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
   import { PX_MAX } from '../render/pilaVisual'
   import { foto, guardarImagen } from './foto.svelte'
@@ -245,6 +246,7 @@
 <AvisoVersion />
 <Instalar />
 <PaseItch />
+<TraerPartida />
 
 <!-- Los íconos (foto, logros, estadísticas, ajustes, ayuda) están en todas las capas: fuera de .juego, que queda inert fuera de la
      Arena. Llevan .juego por las variables de margen y las mismas entradas y salidas. -->

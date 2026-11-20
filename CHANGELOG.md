@@ -4,6 +4,7 @@
 - Avalancha se puede **instalar como app** desde el celular o la computadora (Chrome, Edge, Safari en iPhone): una tarjeta lo ofrece una vez y después queda el botón en Ajustes → Partida.
 - Desde **itch.io**, "Instalar como app" abre la página del juego y **se lleva tu partida**; allá te pregunta antes de reemplazar nada y guarda una copia de la que había.
 - Íconos nuevos: una pila de arena dibujada por el juego.
+- **iPhone**: la app instalada guarda aparte de Safari. La guía de instalación copia tu partida y la app, al abrirse vacía, te pide pegarla.
 
 ## 2026-11-19 · versión de prueba del aviso
 - Sin cambios en el juego: publica un build nuevo para probar el aviso "Hay una versión nueva de Avalancha".

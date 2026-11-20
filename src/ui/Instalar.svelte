@@ -55,6 +55,12 @@
     w.opener = null
     cerrar()
   }
+  let partidaCopiada = $state(false)
+  // Sin await antes de escribir: Safari solo deja usar el portapapeles dentro del toque.
+  function copiarPartida() {
+    const texto = exportar(partidaActual())
+    navigator.clipboard.writeText(texto).then(() => (partidaCopiada = true), () => (codigo = texto)) // sin permiso: el texto, para copiar a mano
+  }
   async function copiar() {
     try { await navigator.clipboard.writeText(codigo); copiado = true } catch {}
   }
@@ -92,6 +98,14 @@
       {:else if cual === 'ios'}
         <p>{t.texto}</p>
         <ol class="pasos ios">
+          {#if juego.s.tiempoTotal > 0}
+            <!-- iOS: la app de la pantalla de inicio tiene su propio almacenamiento; la partida pasa por el portapapeles (TraerPartida). -->
+            <li>
+              <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="11" y="11" width="15" height="16" rx="3" /><path d="M7 21V8a3 3 0 0 1 3-3h10" /></svg>
+              <span>{t.iosCopiar[0]} <b>{t.iosCopiar[1]}</b>{t.iosCopiar[2]}</span>
+              <button class="gema chico" onclick={copiarPartida}>{partidaCopiada ? t.copiada : t.copiarPartida}</button>
+            </li>
+          {/if}
           <li>
             <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M10 13H8v15h16V13h-2" /><path d="M16 4v16M11 9l5-5 5 5" /></svg>
             <span>{t.iosPaso1[0]} <b>{t.iosPaso1[1]}</b> {t.iosPaso1[2]}</span>
@@ -101,6 +115,7 @@
             <span>{t.iosPaso2[0]} <b>{t.iosPaso2[1]}</b> {t.iosPaso2[2]}</span>
           </li>
         </ol>
+        {#if codigo}<textarea class="codigo" readonly rows="2" aria-label={t.copiarPartida} onfocus={(e) => e.currentTarget.select()}>{codigo}</textarea>{/if}
       {:else}
         <p>{t.otro}</p>
       {/if}
