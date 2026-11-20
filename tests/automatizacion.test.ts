@@ -129,7 +129,7 @@ describe('Automatización: Infinito automático', () => {
 
   it('al llegar a X Cristales: solo con Romper el Infinito (Ruptura nv1); sin él, igual apenas llega', () => {
     const con = (x: number, ruptura: number) =>
-      conAuto({ ...lleno, red: { ...lleno.red, ruptura } }, { infinito: { modo: 'cristales', log10: Math.log10(x) } })
+      conAuto({ ...lleno, red: { ...lleno.red, ruptura } }, { infinito: { modo: 'cristales', log10: Math.log10(x), mult: 1 } })
     expect(hizo(con(3, 0))).toBe(true) // sin la mejora el modo no cuenta
     expect(hizo(con(2, 1))).toBe(true) // hoy da 2
     expect(hizo(con(3, 1))).toBe(false)
@@ -197,11 +197,11 @@ describe('Automatización: guardado', () => {
       intervalo: { ...estadoInicial().automat.intervalo, coral: 7 },
       cantidad: { ...estadoInicial().automat.cantidad, ambar: 10 },
       compresion: { modo: 'esperar', segundos: 30 },
-      infinito: { modo: 'cristales', log10: 6 },
+      infinito: { modo: 'cristales', log10: 6, mult: 1 },
     })
     expect(ida(plano(s)).automat).toEqual(s.automat)
     expect(ida(plano(s)).auto.jade).toBe(false)
-    const inf = tick({ ...s, energia: INFINITO, maxEnergia: INFINITO, infinitos: 1, automat: { ...s.automat, infinito: { modo: 'llegar', log10: 0 } } }, 0.05)
+    const inf = tick({ ...s, energia: INFINITO, maxEnergia: INFINITO, infinitos: 1, automat: { ...s.automat, infinito: { modo: 'llegar', log10: 0, mult: 1 } } }, 0.05)
     expect(inf.automat.compresion).toEqual(s.automat.compresion)
     expect(inf.auto.jade).toBe(false)
 
@@ -211,7 +211,7 @@ describe('Automatización: guardado', () => {
     expect(roto.automat.intervalo).toMatchObject({ caudal: CFG.automatizacion.intervalo_s, ambar: 2 })
     expect(roto.automat.cantidad.coral).toBe(0)
     expect(roto.automat.compresion).toEqual({ modo: 'umbral', segundos: 0 })
-    expect(roto.automat.infinito).toEqual({ modo: 'llegar', log10: 0 })
+    expect(roto.automat.infinito).toEqual({ modo: 'llegar', log10: 0, mult: 1 })
 
     const { automat: _, ...viejo } = p
     const v = ida({ ...viejo, auto: { caudal: false } })

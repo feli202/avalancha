@@ -18,7 +18,9 @@ export interface Automat {
   intervalo: Record<string, number>
   cantidad: Record<string, Cantidad>
   compresion: { modo: 'umbral' | 'esperar'; segundos: number }
-  infinito: { modo: 'llegar' | 'optimo' | 'cristales'; log10: number }
+  /** v1.0: 'multiplicar' = cuando daría 10^mult veces los Cristales actuales; 'optimo' ya no está en la interfaz (lo usa el
+   * bot del test de balance, como sim_capa1.py). log10 y mult van en log10. */
+  infinito: { modo: 'llegar' | 'multiplicar' | 'cristales' | 'optimo'; log10: number; mult: number }
   segundos: number
   espera: number
 }
@@ -103,7 +105,7 @@ export const estadoInicial =(): State => ({
     intervalo: Object.fromEntries(COMPRAS_AUTO.map((k) => [k, CFG.automatizacion.intervalo_s])),
     cantidad: Object.fromEntries(COMPRAS_AUTO.map((k): [string, Cantidad] => [k, 0])),
     compresion: { modo: 'umbral', segundos: 0 },
-    infinito: { modo: 'llegar', log10: 0 },
+    infinito: { modo: 'llegar', log10: 0, mult: Math.log10(CFG1.infinito_auto.multiplicar_x) },
     segundos: 0,
     espera: 0,
   },

@@ -84,11 +84,13 @@ export function ganarDefecto(s: State): State {
   return cerrarInfinito({ ...s, defectos: { completos: [...s.defectos.completos, s.defectos.actual], actual: '', reintento } })
 }
 
-/** Bloque 10 y C6: el Infinito automático ya puede hacerse. Sin Romper, apenas llega; con el Infinito roto, en el óptimo
- * (§4) o al llegar a X Cristales. */
+/** Bloque 10 y C6: el Infinito automático ya puede hacerse. Sin Romper, apenas llega; con el Infinito roto, al llegar a X
+ * Cristales o (v1.0) cuando daría N veces los Cristales actuales. 'optimo' solo lo usa el bot del test de balance. */
 export function infinitoAutoListo(s: State): boolean {
-  const { modo, log10 } = s.automat.infinito
+  const { modo, log10, mult } = s.automat.infinito
   if (!infinitoRoto(s) || modo === 'llegar') return true
   if (modo === 'optimo') return enElOptimo(s)
-  return cristalesAlInfinito(s).log10() >= log10 - 1e-9 // 1e-9: que 10^3 alcance para 1000
+  const c = cristalesAlInfinito(s).log10()
+  if (modo === 'multiplicar') return c >= Math.max(0, s.cristales.log10()) + mult - 1e-9 // con 0 Cristales cuenta como 1
+  return c >= log10 - 1e-9 // 1e-9: que 10^3 alcance para 1000
 }

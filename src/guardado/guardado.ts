@@ -150,7 +150,8 @@ function leerAutomat(x: State['automat']): State['automat'] {
     intervalo: Object.fromEntries(Object.keys(base.intervalo).map((k) => [k, Math.max(min, Math.floor(x.intervalo[k]))])),
     cantidad: Object.fromEntries(Object.keys(base.cantidad).map((k) => [k, de(x.cantidad[k], [0, 1, 10], 0)])) as State['automat']['cantidad'],
     compresion: { modo: de(x.compresion.modo, ['umbral', 'esperar'], 'umbral'), segundos: pos(x.compresion.segundos) },
-    infinito: { modo: de(x.infinito.modo, ['llegar', 'optimo', 'cristales'], 'llegar'), log10: pos(x.infinito.log10) },
+    // v1.0: 'optimo' ya no está en la interfaz; el que lo tenía pasa a "Apenas llegás" (con ×10 en la 1.1 casi no habría Infinitos).
+    infinito: { modo: de(x.infinito.modo, ['llegar', 'multiplicar', 'cristales'], 'llegar'), log10: pos(x.infinito.log10), mult: pos(x.infinito.mult) },
     segundos: Math.floor(pos(x.segundos)),
     espera: pos(x.espera),
   }

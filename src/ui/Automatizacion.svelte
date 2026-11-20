@@ -12,6 +12,8 @@
   import { txt } from '../strings'
   import IconoTipo from './IconoTipo.svelte'
   import { formato } from './formato'
+  import { leerLog10 } from './numeroTexto'
+  import Decimal from 'break_infinity.js'
   import { juego, nombreAuto } from './juego.svelte'
 
   const a = txt.automat
@@ -41,6 +43,8 @@
   const num = (e: Event, min: number) => Math.min(MAX_S, Math.max(min, Math.floor(Number((e.currentTarget as HTMLInputElement).value)) || min))
   const nombreTipo = (t: string) => rr.tipos[t]?.[0] ?? t
   // Celular: una lista a la vez, con pestañas (en escritorio van las dos columnas y esto no se usa).
+  /** Lo que se está escribiendo en los campos del Infinito (sin escribir: undefined, se muestra el valor guardado). */
+  let textos = $state<Record<string, string | undefined>>({})
   let vista = $state<'compras' | 'reinicios'>(juego.irReliquia ? 'reinicios' : 'compras')
   // "Configurar" de la nota de la primera reliquia automática: abre en su regla.
   $effect(() => {
@@ -140,14 +144,20 @@
                 {/each}
               </div>
               {/if}
-              {#if infinitoRoto(s) && inf.modo === 'cristales'}
-                <label class="campo">{a.cristales}
-                  <!-- Se guarda en log10 (CLAUDE.md): se escribe "1000" o "1e6". -->
-                  <input type="text" inputmode="decimal" value={formato(10 ** inf.log10)}
-                    onchange={(e) => { const x = Number(e.currentTarget.value.replace(',', '.')); automat({ infinito: { ...juego.s.automat.infinito, log10: x > 1 ? Math.log10(x) : 0 } }) }} />
+              {#if infinitoRoto(s) && (inf.modo === 'cristales' || inf.modo === 'multiplicar')}
+                {@const campo = inf.modo === 'cristales' ? 'log10' : 'mult'}
+                {@const escrito = textos[campo]}
+                {@const leido = escrito === undefined ? inf[campo] : leerLog10(escrito)}
+                <!-- v1.0: acepta 1e12, 1E12, 1,5e30 o 1000000; en el celular abre el teclado con letras (por la e). Va en log10. -->
+                <label class="campo">{inf.modo === 'cristales' ? a.cristales : a.veces}
+                  <input type="text" inputmode="text" autocapitalize="off" autocomplete="off" spellcheck="false" enterkeyhint="done"
+                    aria-invalid={leido === null} value={escrito ?? formato(Decimal.pow10(inf[campo]))}
+                    oninput={(e) => (textos = { ...textos, [campo]: e.currentTarget.value })}
+                    onchange={(e) => { const l = leerLog10(e.currentTarget.value); if (l !== null) { automat({ infinito: { ...juego.s.automat.infinito, [campo]: Math.max(0, l) } }); textos = { ...textos, [campo]: undefined } } }} />
+                  <span class="leido num" class:mal={leido === null}>{leido === null ? a.numeroMal : a.entendido(formato(Decimal.pow10(leido), false, 'cientifica'))}</span>
                 </label>
               {/if}
-              <small class="nota">{#if !infinitoRoto(s)}{a.apenas} {/if}{a.daria(txt.cristal.ganados(formato(cristalesAlInfinito(s))).replace('+', ''))}.{#if !infinitoRoto(s)} {a.mejora}{:else if inf.modo === 'optimo'}{' '}{a.optimo}{/if}</small>
+              <small class="nota">{#if !infinitoRoto(s)}{a.apenas} {/if}{a.daria(txt.cristal.ganados(formato(cristalesAlInfinito(s))).replace('+', ''))}.{#if !infinitoRoto(s)} {a.mejora}{:else if inf.modo === 'multiplicar'}{' '}{a.multiplicarNota(formato(Decimal.pow10(inf.mult)))}{/if}</small>
 
               <h3 id="regla-reliquia">{a.reliquia}</h3>
               <div class="modos" role="radiogroup" aria-label={rr.regla.titulo}>
@@ -204,7 +214,10 @@
   .silueta b { color: var(--tenue); }
   .apagado { border-left-color: var(--borde); }
 
-  .campo { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8125rem; color: var(--tenue); white-space: nowrap; }
+  .campo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; font-size: 0.8125rem; color: var(--tenue); white-space: nowrap; }
+  .leido { color: var(--hielo); }
+  .leido.mal { color: var(--coral); white-space: normal; }
+  .campo input[aria-invalid='true'] { border-color: var(--coral); }
   input[type='number'], input[type='text'] {
     width: 4.25rem; min-height: 2rem; padding: 0 0.5rem; border: 1px solid var(--borde); background: var(--fondo);
     color: var(--tinta); font: inherit; font-size: 0.875rem; font-variant-numeric: tabular-nums;

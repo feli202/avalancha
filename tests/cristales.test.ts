@@ -59,10 +59,15 @@ describe('Infinito automático en el óptimo', () => {
   })
   it('los modos del Infinito automático', () => {
     const modo = (m: State['automat']['infinito'], t = 1) => infinitoAutoListo({ ...s(t), automat: { ...s(t).automat, infinito: m } })
-    expect(modo({ modo: 'optimo', log10: 0 })).toBe(true)
-    expect(modo({ modo: 'optimo', log10: 0 }, 1e9)).toBe(false)
-    expect(modo({ modo: 'llegar', log10: 0 }, 1e9)).toBe(true)
-    expect(modo({ modo: 'cristales', log10: 12 })).toBe(true) // da ~10^12,4
-    expect(modo({ modo: 'cristales', log10: 13 })).toBe(false)
+    expect(modo({ modo: 'optimo', log10: 0, mult: 1 })).toBe(true)
+    expect(modo({ modo: 'optimo', log10: 0, mult: 1 }, 1e9)).toBe(false)
+    expect(modo({ modo: 'llegar', log10: 0, mult: 1 }, 1e9)).toBe(true)
+    expect(modo({ modo: 'cristales', log10: 12, mult: 1 })).toBe(true) // da ~10^12,4
+    expect(modo({ modo: 'cristales', log10: 13, mult: 1 })).toBe(false)
+    // v1.0: Multiplicar mis Cristales: N veces los de ahora (da ~10^12,4).
+    const conC = (c: number, mult: number) => infinitoAutoListo({ ...s(1), cristales: Decimal.pow10(c), automat: { ...s(1).automat, infinito: { modo: 'multiplicar', log10: 0, mult } } })
+    expect(conC(11, 1)).toBe(true) // ×10 de 1e11 = 1e12 ≤ 10^12,4
+    expect(conC(12, 1)).toBe(false) // ×10 de 1e12 = 1e13
+    expect(conC(0, 12)).toBe(true) // con 1 Cristal y ×1e12
   })
 })

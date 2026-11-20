@@ -4,6 +4,8 @@ import crudo from '../../balance/config_capa1.json'
 import type { Nodo } from './red'
 
 export interface Config1 {
+  /** v1.0: el modo Multiplicar mis Cristales del Infinito automático, por defecto. */
+  infinito_auto: { multiplicar_x: number }
   cristales: {
     primer_infinito: number; base_log10: number; Q_ordenes_por_x10: number; beta: number
     blando_desde_log10: number; blando_factor: number

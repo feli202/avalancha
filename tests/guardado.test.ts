@@ -326,3 +326,14 @@ describe('v1.0, bloque 2: la partida nunca se pierde', () => {
     expect(cargar(a, 0)).toEqual(partida(estadoInicial()))
   })
 })
+
+describe('v1.0, bloque 10: el modo "En el óptimo" de antes', () => {
+  it('pasa a "Apenas llegás" y el multiplicador arranca en ×10', () => {
+    const p = partida(estadoInicial())
+    const txt = serializar(p).replace(/"infinito":\{"modo":"llegar","log10":0,"mult":1\}/, '"infinito":{"modo":"optimo","log10":0}')
+    expect(txt).toContain('"optimo"')
+    const inf = deserializar(txt).estado.automat.infinito
+    expect(inf.modo).toBe('llegar')
+    expect(inf.mult).toBe(1)
+  })
+})

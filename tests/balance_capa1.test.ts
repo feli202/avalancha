@@ -54,7 +54,7 @@ export function jugar1(revisa = 15, tmax = 17 * H, hasta: 'fin11' | 'fin' = 'fin
   s = elegirSola(infinito(s)) // el primer Infinito
   s = {
     ...s,
-    automat: { ...s.automat, infinito: { modo: 'optimo', log10: 0 } },
+    automat: { ...s.automat, infinito: { modo: 'optimo', log10: 0, mult: 1 } },
     relicario: { ...s.relicario, regla: { ...s.relicario.regla, equipar: true } },
   }
   const eventos: Record<string, number> = {}

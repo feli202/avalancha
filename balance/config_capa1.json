@@ -626,5 +626,7 @@
   "escarcha": 7.0,
   "fin_capa_1e308": 15.0
  },
+ "_infinito_auto": "v1.0: modo Multiplicar mis Cristales: el Infinito automático (y el bot de sim_capa1.py y del test) se hace cuando lo que daría es multiplicar_x veces los Cristales actuales.",
+ "infinito_auto": { "multiplicar_x": 10 },
  "autocompradores_umbral_log10": 1.0
 }
