@@ -552,6 +552,7 @@ export const en: typeof es = {
     },
     especial: { lluvia: 'Grain rain when you type “sand”' },
   },
+  version: { hay: 'A new version of Avalancha is available', actualizar: 'Update', rotulo: 'Version' },
   opciones: {
     creditos: [['Made by', 'feli202'], ['Inspired by', 'Antimatter Dimensions and Revolution Idle']] as [string, string][],
     pestanas: { aspecto: 'Look', juego: 'Game', partida: 'Save', teclado: 'Keys', creditos: 'Credits' },

@@ -10,6 +10,7 @@
   import { borrarPartida, guardarYa, juego, partidaActual, reemplazarPartida, tocarLogo } from './juego.svelte'
   import { SECRETOS, desbloqueados, elegido, logroDe, nombreLogro, type Cosmetico } from './logros'
   import Pantalla from './Pantalla.svelte'
+  import { VERSION } from '../version.svelte'
   import { guardarImagen } from './foto.svelte'
 
   const PESTANAS = ['aspecto', 'juego', 'partida', 'teclado', 'creditos'] as const
@@ -286,6 +287,7 @@
           {#each txt.opciones.creditos as [rotulo, texto]}
             <div class="resumen"><p class="rotulo">{rotulo}</p><p class="grande">{texto}</p></div>
           {/each}
+          <div class="resumen"><p class="rotulo">{txt.version.rotulo}</p><p class="grande num">{VERSION}</p></div>
           <div class="resumen">
             <p class="rotulo">{txt.opciones.estudio}</p>
             <!-- shortcut: marca de texto en lugar del logo del estudio; cambiarla cuando haya archivo. Logro secreto «e». -->

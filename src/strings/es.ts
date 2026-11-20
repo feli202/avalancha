@@ -595,6 +595,8 @@ export const es = {
     },
     especial: { lluvia: 'Lluvia de granos al escribir «arena»' },
   } as Record<string, Record<string, string>>,
+  // Aviso de versión nueva (src/version.svelte.ts) y el número en Créditos.
+  version: { hay: 'Hay una versión nueva de Avalancha', actualizar: 'Actualizar', rotulo: 'Versión' },
   opciones: {
     creditos: [['Hecho por', 'feli202'], ['Inspirado en', 'Antimatter Dimensions y Revolution Idle']] as [string, string][],
     pestanas: { aspecto: 'Aspecto', juego: 'Juego', partida: 'Partida', teclado: 'Teclado', creditos: 'Créditos' } as Record<string, string>,

@@ -10,7 +10,7 @@ import { txt } from './strings'
 
 document.title = txt.titulo
 
-import { vigilarVersion } from './version'
+import { vigilarVersion } from './version.svelte'
 
 arrancar() // primero: carga la partida
 if (import.meta.env.PROD) vigilarVersion()

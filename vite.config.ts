@@ -4,8 +4,12 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { clips } from './scripts/clips.mjs'
 
 // Cada build lleva su número y deja version.json al lado: el juego publicado lo pide sin caché y se recarga si hay otro
-// (GitHub Pages deja el index.html viejo en la caché del navegador; ver src/version.ts).
-const VERSION = String(Date.now())
+// (GitHub Pages deja el index.html viejo en la caché; ver src/version.svelte.ts).
+// Fecha y commit (se lee en Ajustes → Créditos); la hora distingue dos builds del mismo commit.
+// @ts-expect-error: módulo de Node sin tipos
+import { execSync } from 'node:child_process'
+const commit = (() => { try { return String(execSync('git rev-parse --short HEAD')).trim() } catch { return 'local' } })()
+const VERSION = `${new Date().toISOString().slice(0, 16).replace('T', ' ')} · ${commit}`
 
 export default defineConfig({
   define: { __VERSION__: JSON.stringify(VERSION) },

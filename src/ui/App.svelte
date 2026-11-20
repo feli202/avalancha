@@ -19,6 +19,7 @@
   import Titulo from './Titulo.svelte'
   import { formato, formatoMult, hablado } from './formato'
   import { fade } from 'svelte/transition'
+  import AvisoVersion from './AvisoVersion.svelte'
   import { abandonarDefectoYa, caminoCapa2, caminoInfinito, comprimirYa, hayCartel, hayPanel, infinitoYa, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
   import { PX_MAX } from '../render/pilaVisual'
   import { foto, guardarImagen } from './foto.svelte'
@@ -239,6 +240,7 @@
 </div>
 
 <Capas />
+<AvisoVersion />
 
 <!-- Los íconos (foto, logros, estadísticas, ajustes, ayuda) están en todas las capas: fuera de .juego, que queda inert fuera de la
      Arena. Llevan .juego por las variables de margen y las mismas entradas y salidas. -->
