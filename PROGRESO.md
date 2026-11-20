@@ -1,6 +1,6 @@
 # Progreso
 
-Estado (2026-11-18): **Capa 1 hasta C14 (pulido de la 1.2 hecho; falta la auditoría y publicar)**. **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). **Hito 6** (pulido técnico): sonido, móvil y tablet, accesibilidad (Lighthouse 100) y rendimiento (60 fps en GPU integrada). **Primeros 10 segundos**: pantalla de título, logo y primera avalancha con el primer toque. **Guardar imagen**: PNG de 2048×2048 de la pila (botón de cámara, tecla P, "Guardá tu mandala" en el Infinito). **Sonido sintetizado**: todo el audio generado por código con Web Audio (sin archivos), con música generativa. **Guías**: indicadores de sistema nuevo, tooltips y la pantalla "Cómo funciona". La Capa 0 está completa. **Clips verticales** para redes en `marketing/clips/` (modo grabación del panel de debug).
+Estado (2026-11-19): **Capa 1 hasta C14 más el mini parche de calidad de vida (ver al final); publicada en feli202.github.io/avalancha**. **hitos 0, 1, 2a, 2b, 3 y 4 terminados** (proyecto base, núcleo económico, pila visual, efectos de la pila, interfaz principal, Compresión y sistemas tardíos), **Pulido 1** (estilo Arena) y **Pulidos 2, 3 y 4** (rediseño de la interfaz, borde circular, paleta invertida de la pila, supermuestreo). **Hito 5** terminado: 5a (guardado base y progreso fuera de línea) y 5b (exportar/importar, ajustes, estadísticas, logros, teclado). **Rediseño de Logros, Estadísticas y Ajustes**: las tres son pantallas completas (Ajustes: aspecto con vistas previas, juego, partida y teclado) (Logros: 24 logros, mini pilas y recompensas cosméticas; Estadísticas: desglose de la producción, corridas, avalanchas y general). **Hito 6** (pulido técnico): sonido, móvil y tablet, accesibilidad (Lighthouse 100) y rendimiento (60 fps en GPU integrada). **Primeros 10 segundos**: pantalla de título, logo y primera avalancha con el primer toque. **Guardar imagen**: PNG de 2048×2048 de la pila (botón de cámara, tecla P, "Guardá tu mandala" en el Infinito). **Sonido sintetizado**: todo el audio generado por código con Web Audio (sin archivos), con música generativa. **Guías**: indicadores de sistema nuevo, tooltips y la pantalla "Cómo funciona". La Capa 0 está completa. **Clips verticales** para redes en `marketing/clips/` (modo grabación del panel de debug).
 
 ## Qué se hizo
 
@@ -2146,3 +2146,38 @@ Del 1 al 6 sin tocar el balance, con un commit cada uno. El 7 (Red) espera el OK
 - Red en pantalla: la escarcha une a los nodos que ya abren (nv1) y el derrumbe hacia los vecinos sale al comprar el nv1 (el sonido grande queda para el nv4). Textos de la ficha, guía y "Cómo funciona" (es/en) dicen nv1.
 - Verificación: 317 tests en verde, `npm run test:lento` 20/20 con la tabla nueva (±10 %), `svelte-check` y `tsc` 0 errores; Red vista en 1366×768 y 390×844 (`capturas/pedido/p7`).
 - Revisar: un guardado viejo conserva lo que compró barato; con la regla nueva solo se abren más nodos. Después de Ruptura nv3 (Infinitos 37–38) el bot compra ~10 cosas juntas.
+
+## Mini parche de calidad de vida antes de publicar (2026-11-19)
+
+Nueve cambios pedidos más el ícono de iOS, un commit cada uno (el 1 y el 2 juntos: comparten simulador, tabla y archivos, y Memoria se recalibró con los dos).
+
+1. **Sedimentación** (rediseño, balance): ya no conserva compresiones. La Compresión no reinicia el Caudal (nv1), los colores (nv2) ni la Cascada (nv3). **nv4 = el Infinito no reinicia las Mutaciones**: la Compresión nunca las reiniciaba (`comprimir` no las toca, solo `reiniciarArena` del Infinito). Claves `conserva_caudal/colores/cascada/mutaciones` en `config_capa1.json`; `conserva()` en `red.ts`. Memoria sigue conservando las suyas.
+2. **Engarces nv4**: 2 reliquias por Infinito (`reliquias_por_infinito`). `relicario.faltan` dice cuántas quedan por elegir; el pop-up y el Relicario muestran "Reliquia 1 de 2" y la casilla "Las dos del mismo tipo"; `elegirSola` (regla automática) elige las dos.
+   - **Balance** (sim → SPEC → código): con solo esos dos cambios el fin de la 1.1 daba 7,76 h (fuera de rango). Probé `gamma` de los estratos ×1,07 y ×1,12 (7,20 / 7,25 h, pero Romper y Memoria a 1,88 / 3,22 h y el hueco a 46,9 min con ×1,07) y Memoria 4/6/8/10 y 5/7/9/11. Quedó **Memoria 5/7/9/11** (antes 3/5/7/9), un efecto y no un costo.
+   - **Tope de granos**: con el Caudal sin reiniciar, en la 1.2 llega a nivel ~1000 y 2^1000 granos/s desbordaba el `number` (Infinity → NaN, la Arena dejaba de producir; lo encontró el test lento). `GRANOS_MAX` = 1e300 en `formulas.ts` (Caudal y granos); `sim_capa1.py` lleva el mismo tope (no cambia su tabla).
+3. **Inventario fijo**: 24 casilleros (`relicario.casilleros`; `casilleros(s)` en `relicario.ts` es el único lugar a tocar para una mejora que lo duplique). Lleno: la reliquia nueva va a `relicario.espera` (no se pierde), se ve en un casillero aparte con aviso y entra sola cuando una fusión hace lugar (`acomodar`). En 390×844 la grilla entra entera (sin scroll de la caja); con la elección de reliquia abierta en el Relicario la grilla scrollea sola.
+4. **Red**: la ficha dice "Ahora: … · Siguiente: …" y se actualiza al comprar (se borraba el "ver nivel" tocado, que dejaba el texto viejo). Verificado en el navegador comprando dos niveles de Presión.
+5. **Marco que rota**: una vuelta cada 90 s (`marco.segundos_por_vuelta` en `balance/config.json`, cosmético); quieto con Reducir movimiento.
+6. **Compresión después de Romper**: cuando el botón pasa a Infinito, la Compresión queda en su propio panel arriba ("11/17 compresiones · Compresión 12 · 1e172 · 100 %"); antes de romperlo, como siempre.
+7. **Defectos**: grieta de la Vacancia con núcleo oscuro y bordes de luz (≥ 2,5 px CSS, legible con las paletas Arena y Glaciar y con zoom); Dislocación y Macla, línea clara con sombra; Impureza, manchas con borde oscuro.
+8. **Capturas**: "↓ Estratos" con pastilla oscura; en el celular la barra de zoom pasa arriba a la derecha (debajo de los íconos), lejos de la manija.
+9. **Versión nueva**: causa en el commit y en `src/version.svelte.ts` (sin service worker; `index.html` con `max-age=600` en GitHub Pages y el CDN; la recarga sola podía reusar el index viejo). `version.json` con fecha y commit; se consulta al abrir, al volver a la pestaña y cada 10 min; aviso "Hay una versión nueva de Avalancha" → Actualizar (guarda, desregistra service workers, abre `?v=<versión>`). Versión en Ajustes → Créditos.
+10. **iOS**: `apple-touch-icon.png` (180×180, el logo sobre el fondo del juego) y `apple-mobile-web-app-title`.
+
+### Tabla (revisa cada 15 s / 60 s / 5 min)
+
+| Hito | 15 s | 60 s | 5 min |
+| --- | --- | --- | --- |
+| Segundo Infinito | 0,89 | 1,03 | 2,00 |
+| Romper el Infinito | 1,39 | 1,70 | 3,67 |
+| Estratos | 1,89 | 2,55 | 6,17 |
+| Memoria completa | 2,56 | 3,71 | 10,51 |
+| **Fin 1.1** | **7,08** | 8,19 | 14,74 |
+| **Fin de la capa** | **14,62** | 15,78 | 22,44 |
+| Hueco máximo | 30,8 min | 30,7 min | 100 min |
+
+**Verificación**: 318 tests en verde (`npm test`, incluye `balance.test.ts`), `svelte-check` y `tsc` 0 errores, build de producción sin errores. `npm run test:lento`: 19/20; **falla Dislocación** (núcleo 4,77 h, sim 4,30 h, 10,9 % contra ±10 %): el bot del núcleo entra a las 4,28 h y gana a las 4,77 h, un reintento (×30 Cristales) más tarde que el simulador; el resto coincide (fin de la capa 14,70 h contra 14,62 h). Capturas en `capturas/parche/` (`node scripts/capturas-parche.mjs http://localhost:5173 capturas/parche`): 1366×768 y 390×844 sin scroll de página, 60 fps en la Arena.
+
+**No medido**: celular real; el aviso de versión en el celular (se prueba con el segundo commit publicado).
+
+**Revisar**: el segundo Infinito llega antes (0,89 h, antes 1,21) porque Memoria nv1 conserva 5 compresiones. Con Engarces nv4 el aviso juntado del Infinito automático cuenta las dos reliquias como del último tipo elegido (shortcut comentado).
