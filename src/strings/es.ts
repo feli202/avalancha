@@ -386,6 +386,19 @@ export const es = {
   },
 
   // Fuera de línea y guardado (SPEC 8)
+  // v1.0, bloque 6: el resumen al terminar la Capa 1.
+  resumen: {
+    subtitulo: 'Capa 1 completa',
+    tiempo: 'Tiempo jugado', infinitos: 'Infinitos', defectos: 'Defectos', avalancha: 'Mayor avalancha', reliquia: 'Reliquia más alta',
+    descargar: 'Descargar imagen', archivo: 'avalancha-capa1.png', alt: 'Resumen de tu partida con la foto de tu pila',
+  },
+  // v1.0, bloque 7.
+  comunidad: {
+    discord: 'Discord', itch: 'itch.io',
+    titulo: '¡Gracias por jugar!',
+    texto: 'Este es nuestro server de Discord y nuestra cuenta de itch.io. Nos ayuda muchísimo que apoyes el desarrollo siguiéndonos y sumándote al Discord.',
+    ahoraNo: 'Ahora no',
+  },
   ausencia: {
     calculando: 'Calculando lo que pasó mientras no estabas…',
     titulo: 'Mientras no estabas',

@@ -32,7 +32,7 @@ export async function guardarImagen() {
 }
 
 /** true si se guardó o compartió; false si el jugador cerró el menú de compartir. */
-async function entregar(archivo: File) {
+export async function entregar(archivo: File) {
   if (matchMedia('(pointer: coarse)').matches && navigator.canShare?.({ files: [archivo] })) {
     try {
       await navigator.share({ files: [archivo] })

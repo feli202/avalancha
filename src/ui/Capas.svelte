@@ -14,6 +14,9 @@
   import Relicario from './Relicario.svelte'
   import Automatizacion from './Automatizacion.svelte'
   import { GRIETAS } from './grietas'
+  import { filasResumen, imagenResumen } from './resumen'
+  import { entregar } from './foto.svelte'
+  import Comunidad from './Comunidad.svelte'
 
   const PANTALLAS = ['relicario', 'red', 'estratos', 'defectos', 'escarcha']
   // Un ícono por sistema, dibujado con la geometría del juego: la Red un rombo de celdas, los Estratos losas apiladas,
@@ -32,6 +35,13 @@
     if (hayOferta) juego.pantalla = 'relicario' // la primera oferta, al llegar
   }
   const hayOferta = $derived(s.relicario.pendiente > 0)
+  // v1.0, bloque 6: la imagen del resumen, armada al entrar a la pantalla de la Capa 2.
+  let resumen = $state<{ blob: Blob; url: string } | null>(null)
+  $effect(() => {
+    if (juego.capa !== 'capa2' || resumen) return
+    imagenResumen().then((b) => b && (resumen = { blob: b, url: URL.createObjectURL(b) })).catch((e) => console.warn(e))
+  })
+  const descargar = () => resumen && entregar(new File([resumen.blob], txt.resumen.archivo, { type: 'image/png' }))
 </script>
 
 <!-- Un cristal de hielo: prisma hexagonal con caras de distinta luz y un destello frío. -->
@@ -93,6 +103,13 @@
           <h1>{txt.capas.capa2}</h1>
           <p class="lema">{txt.capas.finCapa1}</p>
           <p>{txt.capas.proximamente}</p>
+          <!-- v1.0, bloque 6: el resumen de la partida, descargable como imagen para compartir. -->
+          <div class="resumen">
+            {#if resumen}<img src={resumen.url} alt={txt.resumen.alt} />{/if}
+            <dl class="num">{#each filasResumen(s, juego.record) as [rot, val]}<div><dt>{rot}</dt><dd>{val}</dd></div>{/each}</dl>
+          </div>
+          <button class="gema" disabled={!resumen} onclick={descargar}>{txt.resumen.descargar}</button>
+          <Comunidad />
         </div>
       </main>
     {:else if juego.capa === 'automatizacion'}
@@ -211,6 +228,14 @@
   .proxima h1 { margin: 0; font-size: clamp(2.5rem, 7vw, 4.5rem); line-height: 1; color: var(--escarcha); text-shadow: 0 0.2em 1.2em rgb(255 110 40 / 0.25); }
   .proxima p { margin: 0; font-size: 1.125rem; color: #e8b48f; }
   .proxima .lema { font-size: 1rem; color: var(--tenue); text-wrap: balance; }
+  .cierre { max-height: 100%; overflow-y: auto; }
+  .resumen { display: flex; gap: 1rem; align-items: center; width: 100%; margin-top: 0.5rem; text-align: left; }
+  .resumen img { width: min(9rem, 28vw); aspect-ratio: 1080 / 1350; object-fit: cover; flex: none; border: 1px solid var(--borde); }
+  .resumen dl { display: grid; gap: 0.25rem; margin: 0; flex: 1; font-size: 0.875rem; }
+  .resumen dl div { display: flex; justify-content: space-between; gap: 0.75rem; }
+  .resumen dt { color: var(--tenue); }
+  .resumen dt, .resumen dd { font-size: 0.875rem; line-height: 1.3; }
+  .resumen dd { margin: 0; color: var(--escarcha); font-weight: 600; text-align: right; }
   .grietas { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: #ff7a2e; stroke-width: 0.25; opacity: 0.12; filter: drop-shadow(0 0 2px #ff5a1f); }
   .chispas { position: absolute; inset: 0; pointer-events: none; }
   .chispas i {

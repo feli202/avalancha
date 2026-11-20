@@ -360,6 +360,17 @@ export const en: typeof es = {
     },
   },
 
+  resumen: {
+    subtitulo: 'Layer 1 complete',
+    tiempo: 'Time played', infinitos: 'Infinities', defectos: 'Defects', avalancha: 'Biggest avalanche', reliquia: 'Best relic',
+    descargar: 'Download image', archivo: 'avalancha-layer1.png', alt: 'Summary of your run with a snapshot of your pile',
+  },
+  comunidad: {
+    discord: 'Discord', itch: 'itch.io',
+    titulo: 'Thanks for playing!',
+    texto: 'Here’s our Discord server and our itch.io page. Following us and joining the Discord helps the game’s development a ton.',
+    ahoraNo: 'Not now',
+  },
   ausencia: {
     calculando: 'Working out what happened while you were away…',
     titulo: 'While you were away',
