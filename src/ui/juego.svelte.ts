@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, CFG1, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, tick, type Ausencia, type State } from '../core'
+import { CFG, CFG1, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, type Ausencia, type State } from '../core'
 import { almacenLocal } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
@@ -236,7 +236,7 @@ const reglaPorDefecto = (s: State) => JSON.stringify(s.relicario.regla) === JSON
 /** El Infinito automático eligió la reliquia con la regla de Automatización (sin pop-up). La primera vez, con la regla por
  * defecto, una nota que lo explica y lleva al panel; después va en el aviso juntado de avisoAutomatico. */
 function reliquiaAutomatica(s: State) {
-  // shortcut: toma el tipo de `ultimo`; con el inventario lleno la reliquia se pierde y `ultimo` queda el de antes.
+  // shortcut: toma el tipo de `ultimo`; con Engarces nv4 cuenta las dos como de ese tipo aunque la regla haya elegido dos distintos.
   const t = s.relicario.ultimo
   if (!t) return
   if (!juego.vistos.reliquia_auto && reglaPorDefecto(s)) {
@@ -244,7 +244,7 @@ function reliquiaAutomatica(s: State) {
     juego.notaReliquia = { tipo: t }
     return
   }
-  auto.reliquias[t] = (auto.reliquias[t] ?? 0) + 1
+  auto.reliquias[t] = (auto.reliquias[t] ?? 0) + reliquiasPorInfinito(s)
 }
 /** El pop-up de la reliquia (Paneles.svelte): un Infinito a mano dejó una esperando su tipo. La primera, la del primer
  * Infinito, se elige en el Relicario con su guía. */

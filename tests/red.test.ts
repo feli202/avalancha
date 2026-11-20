@@ -95,16 +95,16 @@ describe('Red', () => {
     expect(Object.values(t3.mutaciones).some((n) => n > 0)).toBe(true)
   })
 
-  it('Memoria nv4: Infinito automático; y conserva 3/5/7/9 compresiones', () => {
+  it('Memoria nv4: Infinito automático; y conserva 5/7/9/11 compresiones', () => {
     const lleno = { energia: INFINITO, maxEnergia: INFINITO, compresiones: 17, infinitos: 1 }
     expect(tick(conRed({ memoria: 3 }, lleno), 0.05).infinitos).toBe(1)
     const t = tick(conRed({ memoria: 4 }, lleno), 0.05)
     expect(t.infinitos).toBe(2)
     expect(t.energia.toNumber()).toBe(0)
     expect(t.red.memoria).toBe(4) // la Red se conserva
-    expect([0, 1, 2, 3, 4].map((n) => infinito(conRed({ memoria: n }, lleno)).compresiones)).toEqual([0, 3, 5, 7, 9])
-    // Sedimentación manda si conserva más.
-    expect(infinito(conRed({ memoria: 4, sedimentacion: 2 }, lleno)).compresiones).toBe(13)
+    expect([0, 1, 2, 3, 4].map((n) => infinito(conRed({ memoria: n }, lleno)).compresiones)).toEqual([0, 5, 7, 9, 11])
+    // Sedimentación ya no conserva compresiones.
+    expect(infinito(conRed({ memoria: 4, sedimentacion: 4 }, lleno)).compresiones).toBe(11)
   })
 
   it('efectos de la Arena: Compactación, Cascada+, Eco y Cristalografía', () => {
@@ -121,14 +121,19 @@ describe('Red', () => {
     // Compactación II: Densidad por cada anillo de la corrida (64 granos = 1 anillo, cada ×2 uno más).
     const g = { granos: CFG.anillos.granos_primer_anillo * 2 ** 99 } // 100 anillos
     expect(densidad(conRed({ compactacion2: 4 }, g)) - densidad(conRed({}, g))).toBeCloseTo(0.04, 9)
-    // Sedimentación nv4: la Cascada no vuelve a cero con la Compresión ni con el Infinito.
+    // Sedimentación: la Compresión no reinicia el Caudal (nv1), los colores (nv2) ni la Cascada (nv3); nv4, el Infinito no
+    // reinicia las Mutaciones (la Compresión nunca las reinició).
     const u = CFG.compresion.umbrales_log10
-    const comp = (red: Record<string, number>) =>
-      tick(conRed(red, { compresiones: 3, cascada: 7, energia: Decimal.pow10(u[3]), auto: { ...estadoInicial().auto, compresion_auto: true } }), 0.001)
-    expect([comp({ memoria: 1 }).compresiones, comp({ memoria: 1 }).cascada]).toEqual([4, 0])
-    expect([comp({ memoria: 1, sedimentacion: 4 }).compresiones, comp({ memoria: 1, sedimentacion: 4 }).cascada]).toEqual([4, 7])
-    const inf = (red: Record<string, number>) => infinito(conRed(red, { cascada: 7, energia: INFINITO, infinitos: 1 })).cascada
-    expect([inf({ sedimentacion: 3 }), inf({ sedimentacion: 4 })]).toEqual([0, 7])
+    const mut = { caudal: 2, colores: 1, expansion: 0, cascada: 3 }
+    const comp = (n: number) => {
+      const c = tick(conRed({ memoria: 1, sedimentacion: n }, { compresiones: 3, caudal: 9, colores: [5, 4, 0, 0], cascada: 7, mutaciones: mut,
+        energia: Decimal.pow10(u[3]), auto: { ...estadoInicial().auto, compresion_auto: true } }), 0.001)
+      return [c.compresiones, c.caudal, c.colores[0], c.cascada, c.mutaciones.cascada]
+    }
+    expect([0, 1, 2, 3].map(comp)).toEqual([[4, 0, 0, 0, 3], [4, 9, 0, 0, 3], [4, 9, 5, 0, 3], [4, 9, 5, 7, 3]])
+    const inf = (n: number) => infinito(conRed({ sedimentacion: n }, { cascada: 7, mutaciones: mut, energia: INFINITO, infinitos: 1 }))
+    expect([inf(3).mutaciones, inf(3).cascada]).toEqual([{ caudal: 0, colores: 0, expansion: 0, cascada: 0 }, 0])
+    expect([inf(4).mutaciones, inf(4).cascada]).toEqual([mut, 0])
     // Eco II ya no suma al exponente del Eco (ahora es de la Escarcha, C10).
     const eco = conRed({ eco: 1, eco2: 4 }, { granos: 100, cristalesTotales: new Decimal(100) })
     expect(valor(eco).div(valor({ ...eco, red: estadoInicial().red })).log10()).toBeCloseTo(0.5 * 2, 9)
@@ -152,11 +157,11 @@ describe('Memoria y Sedimentación en medio de una corrida (C8)', () => {
     const b = estadoInicial()
     const s = { ...b, infinitos: 1, cristales: b.cristales.add(1e6), energia: b.energia.add(1e5), caudal: 7, compresiones: 1 }
     const m = comprarRed(s, 'memoria')
-    expect(m.compresiones).toBe(3)
+    expect(m.compresiones).toBe(5)
     expect(m.caudal).toBe(7)
     expect(m.energia.eq(s.energia)).toBe(true)
-    const mas = { ...m, red: { ...m.red, memoria: 4 }, compresiones: 12 } // ya más arriba: no baja
-    expect(comprarRed(mas, 'sedimentacion').compresiones).toBe(12)
-    expect(comprarRed({ ...mas, compresiones: 2 }, 'sedimentacion').compresiones).toBe(11)
+    const mas = { ...m, red: { ...m.red, memoria: 3 }, compresiones: 12 } // ya más arriba: no baja
+    expect(comprarRed(mas, 'memoria').compresiones).toBe(12)
+    expect(comprarRed({ ...mas, compresiones: 2 }, 'memoria').compresiones).toBe(11)
   })
 })

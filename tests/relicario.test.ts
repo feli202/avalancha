@@ -49,6 +49,18 @@ describe('Relicario: elegir el tipo', () => {
     expect(elegir({ ...s, red: { ...s.red, engarces2: 1 } }, 'mutaciones').relicario.piezas).toBe(llenas)
   })
 
+  it('Engarces nv4: cada Infinito deja dos reliquias; se eligen de a una (o las dos del mismo tipo) y la regla elige las dos', () => {
+    const s = conFoto(infinito(con({}, { ...lleno, infinitos: 1, red: { ...estadoInicial().red, engarces: 4 } })), FOTO(2))
+    expect(s.relicario).toMatchObject({ pendiente: 2, faltan: 2 })
+    const una = elegir(s, 'cauce')
+    expect(una.relicario).toMatchObject({ pendiente: 2, faltan: 1, foto: FOTO(2) })
+    const dos = elegir(una, 'cauce')
+    expect(dos.relicario).toMatchObject({ pendiente: 0, faltan: 0 })
+    expect(dos.relicario.piezas.map((p) => [p.tipo, p.inf, p.foto])).toEqual([['cauce', 2, FOTO(2)], ['cauce', 2, FOTO(2)]])
+    expect(elegirSola(s).relicario.piezas).toHaveLength(2)
+    expect(infinito(con({}, { ...lleno, infinitos: 1, red: { ...estadoInicial().red, engarces: 3 } })).relicario.faltan).toBe(1)
+  })
+
   it('la foto llega también a la pieza que el Infinito automático eligió en el mismo tick', () => {
     const s = con({}, { ...lleno, infinitos: 1, red: { ...estadoInicial().red, memoria: 4 } })
     const t = tick(s, 0.05)
@@ -197,7 +209,7 @@ describe('Relicario: guardado y migración', () => {
 
   it('conserva el inventario y limpia lo imposible', () => {
     const ps = [pz('cauce', 2, 1, FOTO(4)), pz('cascada', 0, 2)]
-    const s = con({ piezas: ps, equipadas: [ps[0].id], pendiente: 2, foto: FOTO(1), ultimo: 'cauce', regla: regla({ modo: 'prioridad', orden: ['mutaciones', 'cauce', 'cascada'] }) }, { infinitos: 6, cristales: new Decimal(3) })
+    const s = con({ piezas: ps, equipadas: [ps[0].id], pendiente: 2, faltan: 1, foto: FOTO(1), ultimo: 'cauce', regla: regla({ modo: 'prioridad', orden: ['mutaciones', 'cauce', 'cascada'] }) }, { infinitos: 6, cristales: new Decimal(3) })
     expect(ida(plano(s)).relicario).toEqual(s.relicario)
     const p = plano(s)
     const roto = { ...p, relicario: { ...p.relicario, pendiente: 40, foto: 'x', regla: { modo: 'otro', orden: ['cauce', 'nada'] },

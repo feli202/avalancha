@@ -133,9 +133,9 @@ export function jugar1(revisa = 15, tmax = 17 * H, hasta: 'fin11' | 'fin' = 'fin
 
 // SPEC_CAPA1 §2 (revisa cada 15 s), en horas.
 const TABLA: [string, number][] = [
-  ['segundo', 1.21], ['memoria', 2.35], ['romper', 1.42], ['estratos', 1.73], ['vacancia', 2.39],
-  ['dislocacion', 4.01], ['macla', 4.57], ['impureza', 5.45], ['fin11', 6.86],
-  ['fatiga', 9.71], ['frontera', 12.19], ['inclusion', 12.80], ['vidrio', 13.72], ['fin', 14.72],
+  ['segundo', 0.89], ['memoria', 2.56], ['romper', 1.39], ['estratos', 1.89], ['vacancia', 2.60],
+  ['dislocacion', 4.30], ['macla', 4.85], ['impureza', 5.75], ['fin11', 7.08],
+  ['fatiga', 9.93], ['frontera', 12.35], ['inclusion', 12.98], ['vidrio', 13.62], ['fin', 14.62],
 ]
 
 /** Peso de cada fuente de log10 V (las que suman), como la pestaña Valor de Estadísticas. */

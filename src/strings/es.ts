@@ -187,6 +187,9 @@ export const es = {
       elegirQue: 'Lleva grabada la pila de este Infinito. Es Ámbar; tres iguales se fusionan en una Coral.',
       ganadas: (t: string) => `Reliquias: ${t}`,
       // El pop-up del Infinito a mano y la nota del primer Infinito automático.
+      // Engarces nv4: dos reliquias por Infinito.
+      deDos: (k: number) => `Reliquia ${k} de 2`,
+      lasDos: 'Las dos del mismo tipo',
       faltan: (n: number) => (n === 1 ? 'Con esta se fusionan tres → Coral' : `Faltan ${n} para la próxima fusión`),
       llenoPop: 'Inventario lleno: si no hacés lugar, esta reliquia se pierde.',
       notaAuto: (t: string, regla: string) => `El Infinito automático eligió la reliquia ${t} con la regla «${regla}».`,
@@ -337,13 +340,13 @@ export const es = {
       nodos: {
         memoria: ['Memoria', 'Mem', (x, n) => `${['Autocompradores y Compresión automática desde el inicio', 'Cascada automática', 'Mutaciones automáticas', 'Infinito automático'].slice(0, n).join(' · ')}. Conserva ${x.conservar_compresiones} compresiones.`],
         eco: ['Eco', 'Eco', (x) => `Cada orden de magnitud de tus Cristales totales multiplica el valor de los derrumbes por 10^${f(x.p)}`],
-        sedimentacion: ['Sedimen­tación', 'Sed', (x, n) => `La pila conserva ${x.conservar_compresiones} compresiones en cada Infinito${n >= 4 ? ' y la Cascada ya no vuelve a cero' : ''}`],
+        sedimentacion: ['Sedimen­tación', 'Sed', (_, n) => `La Compresión ya no reinicia ${['el Caudal', 'el Caudal ni los colores', 'el Caudal, los colores ni la Cascada'][Math.min(n, 3) - 1]}${n >= 4 ? ', y el Infinito ya no reinicia las Mutaciones' : ''}`],
         estratos: ['Estratos', 'Est', (x, n) => (n <= 1 ? 'Abre los Estratos, lo que te deja ir más allá del Infinito: ocho pilas debajo de la principal que se llenan solas y multiplican todo' : `Los estratos se llenan ${f(x.flujo_x)} veces más rápido`)],
         defectos: ['Defectos', 'Def', (_, n) => `Abre ${['Vacancia', 'Dislocación', 'Macla', 'Impureza'].slice(0, n).join(', ')}`],
         ruptura: ['Ruptura', 'Rup', (x) => `La Energía pasa de 1e308 y los Cristales crecen con cuánto la pasás${x.cristales_log10 ? `; cada Infinito da ${f(10 ** x.cristales_log10)} veces más` : '. Abre los Estratos; arriba de 1e308 las mejoras de la Arena se encarecen'}`],
         compactacion: ['Compac­tación', 'Comp', (x) => `Cada derrumbe pesa más: la Densidad sube ${f(x.densidad)}`],
         presion: ['Presión', 'Pres', (x) => `La Presión de los estratos vale ${f(x.w_x)} veces más`],
-        engarces: ['Engarces', 'Eng', (x) => `Podés equipar ${x.espacios} reliquias a la vez`],
+        engarces: ['Engarces', 'Eng', (x) => `Podés equipar ${x.espacios} reliquias a la vez${x.reliquias_por_infinito > 1 ? ` y cada Infinito te da ${x.reliquias_por_infinito} reliquias` : ''}`],
         cascada_plus: ['Cascada+', 'Cas+', (x) => `La Cascada puede subir ${x.nivel_max_extra} niveles más`],
         mutacion_plus: ['Mutación+', 'Mut+', (x) => `Cada Mutación puede subir ${x.nivel_max_extra} niveles más`],
         inercia: ['Inercia', 'Iner', (x) => `En cada Infinito los estratos se van acelerando hasta llenarse ${f(x.impulso_x)} veces más rápido a los 10 minutos`],

@@ -18,6 +18,8 @@ export const espacios = (s: State) => Math.max(1, efectoRed(s, 'engarces', 'espa
 export const fusionAutomatica = (s: State) => (s.red.engarces2 ?? 0) >= 1
 /** Sin casillero libre el Infinito no deja reliquia (hasta fusionar, a mano o con Engarces II). */
 export const inventarioLleno = (s: State) => s.relicario.piezas.length >= R.casilleros
+/** Engarces nv4: reliquias que deja cada Infinito. */
+export const reliquiasPorInfinito = (s: State) => efectoRed(s, 'engarces', 'reliquias_por_infinito', 1)
 
 const pieza = (s: State, id: number) => s.relicario.piezas.find((p) => p.id === id)
 const nuevoId = (s: State) => Math.max(0, ...s.relicario.piezas.map((p) => p.id)) + 1
@@ -125,14 +127,20 @@ export function elegir(s: State, t: string): State {
   const rel = s.relicario
   if (!rel.pendiente || !TIPOS.includes(t)) return s
   const p: Pieza = { id: nuevoId(s), tipo: t, nivel: 0, foto: rel.foto, inf: rel.pendiente }
-  let n = conRel(s, { piezas: [...rel.piezas, p], pendiente: 0, foto: '', ultimo: t })
+  // Engarces nv4: dos reliquias por Infinito; el Infinito sigue pendiente hasta elegir la segunda.
+  const faltan = Math.max(1, rel.faltan) - 1
+  const sigue = faltan ? { faltan } : { pendiente: 0, faltan: 0, foto: '' }
+  let n = conRel(s, { piezas: [...rel.piezas, p], ultimo: t, ...sigue })
   if (rel.regla.fusionar && fusionAutomatica(n)) n = fusionarTodo(n)
   // Inventario lleno: se pierde, salvo que la fusión automática le haga lugar (la nueva completa tres iguales).
-  if (inventarioLleno(s) && n.relicario.piezas.length > Math.max(R.casilleros, rel.piezas.length)) return conRel(s, { pendiente: 0, foto: '' })
+  if (inventarioLleno(s) && n.relicario.piezas.length > Math.max(R.casilleros, rel.piezas.length)) return conRel(s, sigue)
   return rel.regla.equipar ? equiparMejores(n) : n
 }
-/** Sin elegir a tiempo, o con Infinito automático: la regla. */
-export const elegirSola = (s: State): State => (s.relicario.pendiente ? elegir(s, tipoAutomatico(s)) : s)
+/** Sin elegir a tiempo, o con Infinito automático: la regla, para cada reliquia que falte. */
+export function elegirSola(s: State): State {
+  for (let k = 0; s.relicario.pendiente && k < 4; k++) s = elegir(s, tipoAutomatico(s))
+  return s
+}
 
 /** La interfaz pone la instantánea de la pila (el núcleo no ve la pila): en el Infinito pendiente y en las piezas
  * del último Infinito que no la tengan (el Infinito automático elige en el mismo tick). */

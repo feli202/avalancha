@@ -51,10 +51,10 @@
      "Infinito automatico"
     ],
     "conservar_compresiones": [
-     3,
      5,
      7,
-     9
+     9,
+     11
     ]
    },
    "eco": {
@@ -74,13 +74,31 @@
      1,
      0
     ],
-    "conservar_compresiones": [
-     11,
-     13,
-     15,
-     17
+    "efectos": [
+     "la Compresion no reinicia el Caudal",
+     "ni los niveles de colores",
+     "ni la Cascada",
+     "el Infinito no reinicia las Mutaciones"
+    ],
+    "conserva_caudal": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "conserva_colores": [
+     0,
+     1,
+     1,
+     1
     ],
     "conserva_cascada": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "conserva_mutaciones": [
      0,
      0,
      0,
@@ -166,7 +184,13 @@
      3,
      3
     ],
-    "costo_base_log10": 0
+    "costo_base_log10": 0,
+    "reliquias_por_infinito": [
+     1,
+     1,
+     1,
+     2
+    ]
    },
    "cascada_plus": {
     "pos": [

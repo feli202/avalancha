@@ -181,7 +181,7 @@ function leerRelicario(r: any, infinitos: number, espacios: number): State['reli
   const base = estadoInicial().relicario.regla
   return {
     piezas, equipadas,
-    pendiente: ent(r.pendiente, infinitos), foto: foto(r.foto), ultimo: TIPOS.includes(r.ultimo) ? r.ultimo : '',
+    pendiente: ent(r.pendiente, infinitos), faltan: r.pendiente ? Math.max(1, ent(r.faltan, 2)) : 0, foto: foto(r.foto), ultimo: TIPOS.includes(r.ultimo) ? r.ultimo : '',
     regla: {
       modo: MODOS.includes(g.modo) ? g.modo : base.modo,
       orden: [...orden, ...TIPOS.filter((t) => !orden.includes(t))],

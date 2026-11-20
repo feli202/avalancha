@@ -59,10 +59,16 @@ export const densidad = (s: State) => densidadFija(s) ? 1 : // Frontera (§8)
 export const maxCascada = (s: State) => CFG.cascada.nivel_max + cascadaExtra(s)
 export const maxMutacion = (s: State) => CFG.mutaciones.nivel_max + mutacionExtra(s)
 
-/** F: granos por segundo. */
-export const caudal = (s: State) =>
+/** Tope de los granos (son `number`): con Sedimentación el Caudal no vuelve a 0 al comprimir y en la 1.2 pasa de nivel 1000
+ * (2^1000 granos/s), que desborda a Infinity y deja la Arena en NaN (F y G entran como number en la producción).
+ * shortcut: arriba de 1e300 granos los anillos y los derrumbes dejan de crecer (sim_capa1.py va en log10 y no tiene tope);
+ * pasar los granos a log10 o Decimal si eso llega a pesar en el balance. */
+export const GRANOS_MAX = 1e300
+
+/** F: granos por segundo (con el tope de GRANOS_MAX). */
+export const caudal = (s: State) => Math.min(GRANOS_MAX,
   CFG.caudal.granos_base * CFG.caudal.mult_por_nivel ** s.caudal *
-  CFG.mutaciones.caudal.por_nivel ** (s.mutaciones.caudal * (1 + mutacionesRel(s))) // reliquia Mutaciones (SPEC_CAPA1 §5)
+  CFG.mutaciones.caudal.por_nivel ** (s.mutaciones.caudal * (1 + mutacionesRel(s)))) // reliquia Mutaciones (SPEC_CAPA1 §5)
 
 export function anillos(granos: number): number {
   const g0 = CFG.anillos.granos_primer_anillo

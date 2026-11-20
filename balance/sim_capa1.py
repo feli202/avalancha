@@ -64,7 +64,7 @@ class Player:
         s.est_open = 0; s.perm = [0] * 8; s.pres = [0] * 8; s.s = [NEG] * 8
         s.done = set(); s.retry_at = {}
         s.esc_on = False; s.logX = 0.0; s.esq = NEG; s.escup = {k: 0 for k in L1['escarcha']['mejoras']}; s.polish = {t: 0 for t in s.relic}
-        s.casc_lk = 0; s.last_D = 1.0
+        s.last_D = 1.0
         s.last_logG = 10.0; s.last_mut = [0, 0, 0, 0]; s.last_pres = 0.0
 
     def v(s, node, key, default=0):
@@ -116,7 +116,7 @@ class Player:
         if not noRed:
             m['dAdd'] += s.v('compactacion', 'densidad')
             m['cascMax'] = s.v('cascada_plus', 'nivel_max_extra'); m['mutMax'] = s.v('mutacion_plus', 'nivel_max_extra')
-            m['keep'] = max(s.v('memoria', 'conservar_compresiones'), s.v('sedimentacion', 'conservar_compresiones'))
+            m['keep'] = s.v('memoria', 'conservar_compresiones')
             p = s.v('eco', 'p')
             m['eco'] = 0.0 if defect == 'vidrio' else p * max(0.0, s.Ctot)
             m['presion'] = s.presion(); s.last_pres = m['presion']
@@ -148,18 +148,24 @@ def quad(c0, g, s_, L): return c0 + g * L + s_ * L * L / 2
 class Arena:
     def __init__(s, P, defect):
         s.P = P; s.defect = defect; s.m = P.mods(defect)
-        s.tier = min(s.m['keep'], len(COMP)); s.mut = [0, 0, 0, 0]  # caudal colores expansion cascada
+        s.tier = min(s.m['keep'], len(COMP))
+        s.mut = list(P.last_mut) if P.v('sedimentacion', 'conserva_mutaciones') else [0, 0, 0, 0]  # caudal colores expansion cascada; Sedimentacion nv4: el Infinito no las reinicia
+        s.Lf = 0; s.Lc = [0, 0, 0, 0]; s.Lk = 0
         s.reset_run(); s.maxE_ever = NEG
         s.unl_colors = 1; s.plateau_E = NEG; s.plateau_t = 0.0
     def reset_run(s):
-        s.E = NEG; s.lG = NEG; s.Lf = 0; s.Lc = [0, 0, 0, 0]; s.rt = 0.0; s.maxE = NEG
-        s.Lk = getattr(s, 'Lk', s.P.casc_lk) if s.P.v('sedimentacion', 'conserva_cascada') else 0  # Sedimentacion nv4: ni la Compresion ni el Infinito la reinician
+        s.E = NEG; s.lG = NEG; s.rt = 0.0; s.maxE = NEG
+        # Sedimentacion: la Compresion no reinicia el Caudal (nv1), los colores (nv2) ni la Cascada (nv3); el Infinito arma una Arena nueva
+        P = s.P
+        if not P.v('sedimentacion', 'conserva_caudal'): s.Lf = 0
+        if not P.v('sedimentacion', 'conserva_colores'): s.Lc = [0, 0, 0, 0]
+        if not P.v('sedimentacion', 'conserva_cascada'): s.Lk = 0
     def D(s):
         if s.defect == 'frontera': return 1.0
         d = 1 + L0['compresion']['densidad_por_nivel'] * s.tier + s.m['dAdd'] + s.P.v('compactacion2', 'densidad_por_anillo') * s.rings()
         return DFX['macla']['densidad_x'] * d if s.defect == 'macla' else d
     def flow(s): return CAU['granos_base'] * 2 ** s.Lf * 3 ** (s.mut[0] * (1 + s.m['mutEff']))
-    def lF(s): return CAU['granos_base'] * 0 + s.Lf * 0.30103 + s.mut[0] * (1 + s.m['mutEff']) * 0.4771
+    def lF(s): return min(GRANOS_MAX_LOG10, s.Lf * 0.30103 + s.mut[0] * (1 + s.m['mutEff']) * 0.4771)  # el juego guarda F y G como number: tope 1e300
     def rings(s):
         g0 = l10(L0['anillos']['granos_primer_anillo'])
         r = int(math.floor((s.lG - g0) / 0.30103)) + 1 if s.lG >= g0 else 0
@@ -239,6 +245,7 @@ class Arena:
             if not best: return
             s.E = sublog(s.E, best[1]); s.mut[best[0]] += 1
 
+GRANOS_MAX_LOG10 = 300  # GRANOS_MAX de formulas.ts: con Sedimentacion el Caudal no vuelve a 0 y pasaria de 1e308
 CURVA = None      # probe.py: lista donde anotar (t, logE) de la corrida
 ABANDONA = True   # probe.py lo apaga para medir la curva entera
 
@@ -257,7 +264,7 @@ def play_arena(P, defect, check, t_now, stats):
         dt = 0.5 if A.rt < 30 else 1.0 if A.rt < 300 else 2.0
         r = A.lograte()
         if r > NEG: A.E = addlog(A.E, r + l10(dt))
-        A.lG = addlog(A.lG, A.lF() + l10(dt)); A.rt += dt; t += dt
+        A.lG = min(GRANOS_MAX_LOG10, addlog(A.lG, A.lF() + l10(dt))); A.rt += dt; t += dt
         A.maxE = max(A.maxE, A.E); A.maxE_ever = max(A.maxE_ever, A.E)
         while A.unl_colors < 4 and A.maxE_ever >= COLS[A.unl_colors]['desbloqueo_log10']: A.unl_colors += 1
         # estratos (persisten entre Infinitos)
@@ -426,7 +433,7 @@ def simulate(check=15.0, tmax=24 * 3600, verbose=False, horizon_end=True):
         abandono = defect and not ok  # abandonar no es un Infinito: sin Cristales ni reliquia
         t += dur
         if not abandono: P.ninf += 1; stats['infinitos'] += 1
-        P.casc_lk = A.Lk; P.last_D = A.D()
+        P.last_mut = list(A.mut); P.last_D = A.D()
         pp = A.logV_parts()
         stats.setdefault('runs', []).append((round(t / 3600, 2), round(dur / 60, 1), defect, round(A.E, 1), round(P.Ctot, 2),
             {k: round(v, 1) for k, v in pp.items()}, round(A.D(), 2), P.perm[:P.est_open], P.pres[:P.est_open], [round(x) for x in P.s[:P.est_open]]))
@@ -438,7 +445,8 @@ def simulate(check=15.0, tmax=24 * 3600, verbose=False, horizon_end=True):
         if lc > NEG:
             P.C = addlog(P.C, lc); P.Ctot = addlog(P.Ctot, lc)
         stats.setdefault('ganado', {})[P.ninf] = (round(t / 3600, 2), round(dur / 60, 1), lc, defect)
-        if not abandono: pick_relic(P, A)
+        if not abandono:
+            for _ in range(P.v('engarces', 'reliquias_por_infinito', 1)): pick_relic(P, A)  # Engarces nv4: dos reliquias
         P.last_logG = max(10.0, A.lG)
         do_shop(P, t, log, stats)
         if P.red['memoria'] >= 4: mark(t, 'Memoria completa')

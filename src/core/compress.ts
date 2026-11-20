@@ -1,7 +1,7 @@
 import Decimal from 'break_infinity.js'
 import { CFG } from './config'
 import { congelada } from './formulas'
-import { conservaCascada, efectoRed, memoria } from './red'
+import { conserva, efectoRed, memoria } from './red'
 import { AUTOS, estadoInicial, type State } from './state'
 
 /** log10 del umbral de la próxima Compresión (Infinity si ya no quedan). */
@@ -15,8 +15,10 @@ export function comprimir(s: State): State {
   if (!puedeComprimir(s)) return s
   const { energia, caudal, colores, cascada, tiempoCorrida } = estadoInicial()
   return {
-    ...s, energia, granos: 0, caudal, // granos_iniciales es solo para la primera corrida
-    colores, cascada: conservaCascada(s) ? s.cascada : cascada, tiempoCorrida,
+    ...s, energia, granos: 0, // granos_iniciales es solo para la primera corrida
+    // Sedimentación (SPEC_CAPA1 §6.3): con su nivel, la Compresión deja el Caudal, los colores y la Cascada como estaban.
+    caudal: conserva(s, 'caudal') ? s.caudal : caudal, colores: conserva(s, 'colores') ? s.colores : colores,
+    cascada: conserva(s, 'cascada') ? s.cascada : cascada, tiempoCorrida,
     compresiones: s.compresiones + 1,
     mejorCorrida: s.mejorCorrida > 0 ? Math.min(s.mejorCorrida, s.tiempoCorrida) : s.tiempoCorrida,
     compresionesSinAmbar: s.compresionesSinAmbar + (s.colores[0] === 0 ? 1 : 0),

@@ -37,8 +37,12 @@
   // nueva ya corre detrás); no se cierra con Escape ni tocando afuera.
   const r = txt.cristal.relicario
   const ambar = (t: string) => juego.s.relicario.piezas.filter((p) => p.tipo === t && p.nivel === 0).length % 3
+  // Engarces nv4: dos reliquias por Infinito; con "las dos del mismo tipo", un toque elige las dos.
+  let lasDos = $state(false)
   function tomar(t: string) {
     juego.s = elegir(juego.s, t)
+    if (lasDos) juego.s = elegir(juego.s, t)
+    lasDos = false
     sonido.compra('other')
   }
 
@@ -137,6 +141,11 @@
     <div class="centro hielo placa eleccion" role="dialog" aria-modal="true" aria-labelledby="reliquia-t" aria-describedby="reliquia-d">
       <canvas class="cara" use:caraReliquia={{ foto: rel.foto, nivel: 0 }} aria-hidden="true"></canvas>
       <h2 id="reliquia-t" class="titulo">{r.elegir}</h2>
+      {#if rel.faltan > 1}
+        <label class="dos"><input type="checkbox" bind:checked={lasDos} /> {r.lasDos}</label>
+      {/if}
+      {#if rel.faltan > 1}<p class="rotulo dosde">{r.deDos(1)}</p>
+      {:else if rel.piezas.some((p) => p.inf === rel.pendiente)}<p class="rotulo dosde">{r.deDos(2)}</p>{/if}
       <p id="reliquia-d" class="texto">{lleno ? r.llenoPop : r.elegirQue}</p>
       {#if lleno && fusionables(juego.s).length}<button class="gema fusionar" onclick={() => (juego.s = fusionarTodo(juego.s))}>{r.fusionarTodo}</button>{/if}
       <div class="tipos">
@@ -242,6 +251,9 @@
   .eleccion { gap: 0; }
   .eleccion .cara { width: 4.5rem; height: 4.5rem; margin-bottom: 0.75rem; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: var(--hielo-hondo); }
   .eleccion .texto { margin-bottom: 1.25rem; font-size: 0.9375rem; }
+  .eleccion .dos { display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; margin: -0.5rem 0 0.25rem; font-size: 0.9375rem; cursor: pointer; }
+  .eleccion .dos input { width: 1.1rem; height: 1.1rem; accent-color: var(--ambar); }
+  .eleccion .dosde { margin: 0 0 0.5rem; font-size: 0.875rem; }
   .eleccion .fusionar { margin: -0.5rem 0 1rem; padding: 0.5rem 1.5rem; }
   .tipos { display: grid; gap: 0.5rem; width: 100%; }
   .tipos .gema { display: grid; grid-template-columns: 2rem 1fr; gap: 0.1rem 0.85rem; align-items: center; min-height: 3.5rem; padding: 0.55rem 1.5rem; text-align: left; font: inherit; }

@@ -33,21 +33,22 @@ Tiempo de juego **desde el primer Infinito** (la Capa 0 completa dura ~3 h 30). 
 
 | Hito | revisa cada 15 s | cada 60 s | cada 5 min |
 |---|---|---|---|
-| Segundo Infinito | 1,21 h | 1,37 h | 2,33 h |
-| Romper el Infinito (nodo) | 1,42 h | 1,67 h | 3,33 h |
-| Estratos (primer estrato abierto) | 1,73 h | 2,22 h | 5,00 h |
-| Memoria completa (Infinito automático) | 2,35 h | 3,38 h | 9,26 h |
-| Defecto Vacancia | 2,39 h | 3,41 h | 9,30 h |
-| Defecto Dislocación | 4,01 h | 5,03 h | 10,61 h |
-| Defecto Macla | 4,57 h | 5,53 h | 11,27 h |
-| Defecto Impureza | 5,45 h | 6,61 h | 12,10 h |
-| **FIN 1.1**: Estrato 8 lleno → Escarcha | **6,86 h** | 7,81 h | 13,47 h |
-| Defecto Fatiga | 9,71 h | 10,66 h | 16,34 h |
-| Defecto Frontera | 12,19 h | 13,14 h | 18,83 h |
-| Defecto Inclusión | 12,80 h | 13,77 h | 19,45 h |
-| Defecto Vidrio | 13,72 h | 14,39 h | 20,39 h |
-| **FIN CAPA 1**: 1e308 Cristales | **14,72 h** | 15,40 h | 21,39 h |
+| Segundo Infinito | 0,89 h | 1,03 h | 2,00 h |
+| Romper el Infinito (nodo) | 1,39 h | 1,70 h | 3,67 h |
+| Estratos (primer estrato abierto) | 1,89 h | 2,55 h | 6,17 h |
+| Memoria completa (Infinito automático) | 2,56 h | 3,71 h | 10,51 h |
+| Defecto Vacancia | 2,60 h | 3,75 h | 10,54 h |
+| Defecto Dislocación | 4,30 h | 5,40 h | 12,07 h |
+| Defecto Macla | 4,85 h | 5,88 h | 12,28 h |
+| Defecto Impureza | 5,75 h | 6,85 h | 13,43 h |
+| **FIN 1.1**: Estrato 8 lleno → Escarcha | **7,08 h** | 8,19 h | 14,74 h |
+| Defecto Fatiga | 9,93 h | 11,07 h | 17,59 h |
+| Defecto Frontera | 12,35 h | 13,49 h | 20,10 h |
+| Defecto Inclusión | 12,98 h | 14,16 h | 20,74 h |
+| Defecto Vidrio | 13,62 h | 14,77 h | 21,43 h |
+| **FIN CAPA 1**: 1e308 Cristales | **14,62 h** | 15,78 h | 22,44 h |
 
+- **Sedimentación y Engarces nv4 (2026-11-19)**: Sedimentación dejó de conservar compresiones (repetía a Memoria) y ahora la Compresión no reinicia el Caudal / los colores / la Cascada (nv1–3) y el Infinito no reinicia las Mutaciones (nv4). Engarces nv4 da 2 reliquias por Infinito. Sin las 11 compresiones de Sedimentación nv1 el fin de la 1.1 se iba a 7,76 h; se compensó con Memoria 5/7/9/11 (antes 3/5/7/9), un efecto y no un costo: fin 1.1 7,08 h, fin de la capa 14,62 h, hueco 30,8 min. El segundo Infinito llega antes (0,89 h, antes 1,21) porque Memoria nv1 se compra con el primer Cristal. Probado también subir `gamma` de los estratos (×1,12: 7,25 / 14,79 h) pero deja Romper y Memoria más tarde (1,88 / 3,22 h).
 - **Red (2026-11-19)**: un nodo abre a sus vecinos con su primer nivel y cada nivel cuesta al menos ×10 el anterior (§6.2). En los primeros Infinitos se compran una o dos cosas por Infinito, entre varios nodos (Inf 2: Sedimentación y Eco; 3: Ruptura y Estratos; 4: Defectos y Compactación; 5: Engarces, Cristalografía y el estrato 1; 6–10: Memoria nv2, Presión, Cascada+, Mutación+, Inercia; `python3 balance/sim_capa1.py --primeros 12`). Romper el Infinito llega antes que Memoria completa. **El jugador de cada 5 min queda mucho más atrás** (fin de la capa 21,4 h, antes 15,5): hasta Memoria nv4 (1000 Cristales) cada Infinito espera a que mire, y con ~2–20 Cristales por Infinito eso tarda; con el paso de ×10 por nivel no hay Memoria más barata (decisión del usuario).
 - Hueco máximo entre compras de la Capa 1 (después de la hora 1,5): **31 min** (31 min cada 60 s; 60 min para el jugador de cada 5 min). Ganar un Defecto cuenta como compra: da una recompensa permanente (C12). Durante esos huecos siempre hay compras de Arena y la Escarcha creciendo; son las corridas largas del final, donde el jugador espera un Infinito grande.
 - **Abrir un estrato se nota enseguida** (se llena de golpe, §7.2). Lo que multiplica la producción en el momento de abrirlo, `10^(D × Presión que suma)`, medido en el simulador: E1 ×1e2,3 · E2 ×1e7,9 · E3 ×1e13,0 · E4 ×1e18,2 · E5 ×1e27,1 · E6 ×1e47,8 · E7 ×1e80,6 · E8 ×1e118,8. El mínimo pedido es ×100.
@@ -179,15 +180,15 @@ Bases del anillo 3: Eco II 45, Defectos II 55, Germen 65, Compactación II 78, F
 
 | Nodo | nv1 / nv2 / nv3 / nv4 |
 |---|---|
-| **Memoria** | Autocompradores y compresión automática desde el inicio de cada Infinito / + Cascada automática / + Mutaciones automáticas / + Infinito automático. Conserva 3/5/7/9 compresiones (comprada a mitad de una corrida que está más abajo, la corrida salta ahí en el momento; igual Sedimentación). |
+| **Memoria** | Autocompradores y compresión automática desde el inicio de cada Infinito / + Cascada automática / + Mutaciones automáticas / + Infinito automático. Conserva 5/7/9/11 compresiones (comprada a mitad de una corrida que está más abajo, la corrida salta ahí en el momento). |
 | **Eco** | `+p × log10(Cristales totales)` a log V; p = 0,5 / 1,5 / 3 / 5. ("Los cristales recuerdan la arena".) |
-| **Sedimentación** | Conserva 11/13/15/17 compresiones. nv4 además conserva los niveles de Cascada (ni la Compresión ni el Infinito los reinician). |
+| **Sedimentación** | La Compresión deja de reiniciar cosas, una por nivel: nv1 el Caudal, nv2 los niveles de colores, nv3 la Cascada; nv4, el Infinito no reinicia las Mutaciones (la Compresión nunca las reinició: en la Capa 0 son permanentes entre compresiones). Ya no conserva compresiones (eso queda para Memoria). |
 | **Estratos** | **Pide Ruptura nv1** (`requiere` en config) además de Memoria en nv1: es lo que te deja ir más allá del Infinito. Abre la pantalla de Estratos. Velocidad del flujo ×1 / ×1,5 / ×2 / ×3. Un guardado que ya lo tenía sin Ruptura lo conserva y lo sigue subiendo. |
 | **Defectos** | Abre Vacancia / Dislocación / Macla / Impureza. |
 | **Ruptura** | nv1 = **Romper el Infinito**. Cristales ×1 / ×10 / ×100 / ×1000 (log 0/1/2/3). |
 | **Compactación** | Densidad +0,08 / 0,16 / 0,24 / 0,32. |
 | **Presión** | Peso de la Presión de todos los estratos ×1,2 / 1,44 / 1,73 / 2,07. |
-| **Engarces** | Espacios de reliquia 2/2/3/3. |
+| **Engarces** | Espacios de reliquia 2/2/3/3; nv4 además: cada Infinito deja **2 reliquias** (`reliquias_por_infinito`). |
 | **Cascada+** | Nivel máximo de Cascada +5/10/15/20 (y amplía el panel). |
 | **Mutación+** | Nivel máximo de Mutaciones +1/2/3/5. |
 | **Inercia** | Impulso: dentro de cada Infinito el flujo sube lineal con el tiempo de corrida hasta ×1,2/1,4/1,6/2 a los 10 min, y se queda ahí. |

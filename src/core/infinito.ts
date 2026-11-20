@@ -2,10 +2,10 @@
 import Decimal from 'break_infinity.js'
 import { CFG } from './config'
 import { CFG1 } from './config1'
-import { compresionesConservadas, conservaCascada, cristalesRedLog10, efectoRed } from './red'
+import { compresionesConservadas, conserva, cristalesRedLog10, efectoRed } from './red'
 import { INFINITO, enInfinito, infinitoRoto, produccion } from './formulas'
 import { conReintento, enDefecto, metaAlcanzada, puedeEntrar, type DefectoId } from './defectos'
-import { elegirSola } from './relicario'
+import { elegirSola, reliquiasPorInfinito } from './relicario'
 import { estadoInicial, type State } from './state'
 
 const C = CFG1.cristales
@@ -43,7 +43,7 @@ function reiniciarArena(s: State): State {
     ...estadoInicial(), granos: 0, // granos_iniciales es solo para la primera corrida
     auto, automat, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red, estratos, relicario, cristales,
     cristalesTotales, infinitos, defectos, escarcha,
-    cascada: conservaCascada(s) ? s.cascada : 0,
+    ...(conserva(s, 'mutaciones') ? { mutaciones: s.mutaciones } : {}), // Sedimentación nv4
     compresiones: Math.min(compresionesConservadas(s), CFG.compresion.umbrales_log10.length),
   }
 }
@@ -55,7 +55,7 @@ function cerrarInfinito(s: State): State {
     ...reiniciarArena(s),
     // Bloque 8: cada Infinito trae una reliquia que espera su tipo; si quedaba una sin elegir, se elige sola antes.
     // La pila de este Infinito la pone la interfaz (conFoto).
-    relicario: { ...elegirSola(s).relicario, pendiente: s.infinitos + 1, foto: '' },
+    relicario: { ...elegirSola(s).relicario, pendiente: s.infinitos + 1, faltan: reliquiasPorInfinito(s), foto: '' },
     infinitos: s.infinitos + 1,
     cristales: s.cristales.add(c),
     cristalesTotales: s.cristalesTotales.add(c),

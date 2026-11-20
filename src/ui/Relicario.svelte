@@ -39,8 +39,12 @@
   const sel = $derived(rel.piezas.find((p) => p.id === elegida) ?? null)
   const grupoDe = (p: Pieza | null) => (p ? grupos.find((g) => g.includes(p.id)) ?? null : null)
 
+  // Engarces nv4: dos reliquias por Infinito; con "las dos del mismo tipo", un toque elige las dos.
+  let lasDos = $state(false)
   function tomar(t: string) {
     juego.s = elegir(juego.s, t)
+    if (lasDos) juego.s = elegir(juego.s, t)
+    lasDos = false
     sonido.compra('other')
   }
   const enEngarce = (id: number, i: number) => { juego.s = equipar(juego.s, id, i); elegida = null }
@@ -172,7 +176,8 @@
       <div class="eleccion placa" style:--c={color(0)}>
         <div class="nueva">{@render cara({ foto: rel.foto, nivel: 0 })}</div>
         <div class="texto">
-          <h2>{r.elegir}</h2>
+          <h2>{r.elegir}{#if rel.faltan > 1} <small>· {r.deDos(1)}</small>{/if}</h2>
+          {#if rel.faltan > 1}<label class="dos"><input type="checkbox" bind:checked={lasDos} /> {r.lasDos}</label>{/if}
           {#if sinLugar}<small class="aviso">{r.llenoPop}</small>{:else}<small>{r.elegirQue}</small>{/if}
         </div>
         <div class="tipos">
@@ -245,6 +250,8 @@
     content: ''; position: absolute; inset: -16%; z-index: -1;
     clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
     background: linear-gradient(160deg, rgb(255 255 255 / 0.3), transparent 45%), var(--tex-escarcha), rgb(6 13 26 / 0.62);
+  .dos { display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; font-size: 0.875rem; cursor: pointer; }
+  .dos input { width: 1.1rem; height: 1.1rem; accent-color: var(--ambar); }
     box-shadow: inset 0 0 0 1px rgb(220 245 255 / 0.4);
   }
   .izq { display: flex; flex-direction: column; gap: 1rem; min-height: 0; }

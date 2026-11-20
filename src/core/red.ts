@@ -60,7 +60,7 @@ export function comprarRed(s: State, id: string): State {
   if (!puedeComprarRed(s, id)) return s
   const n = nivelRed(s, id)
   const t = { ...s, cristales: s.cristales.sub(costoRed(id, n)), red: { ...s.red, [id]: n + 1 } }
-  // Memoria y Sedimentación: si la corrida está más abajo de lo que el nodo conserva, salta ahí ya (como sim_capa1.py,
+  // Memoria: si la corrida está más abajo de lo que el nodo conserva, salta ahí ya (como sim_capa1.py,
   // que compra antes de armar la corrida). La corrida sigue con lo que tenía; solo sube la Densidad (la pila implosiona).
   const tope = Math.min(compresionesConservadas(t), CFG.compresion.umbrales_log10.length)
   return tope > t.compresiones ? { ...t, compresiones: tope } : t
@@ -74,13 +74,13 @@ export function efectoRed(s: State, id: string, clave: string, def = 0, n = nive
 
 // ---------- efectos que ya usa la Arena (los de Estratos, Defectos, Relicario y Escarcha llegan con su hito) ----------
 export const memoria = (s: State) => nivelRed(s, CENTRO)
-/** Compresiones que conserva el Infinito (Memoria o Sedimentación, la mayor). */
-export const compresionesConservadas = (s: State) =>
-  Math.max(efectoRed(s, CENTRO, 'conservar_compresiones'), efectoRed(s, 'sedimentacion', 'conservar_compresiones'))
+/** Compresiones que conserva el Infinito (Memoria). */
+export const compresionesConservadas = (s: State) => efectoRed(s, CENTRO, 'conservar_compresiones')
 /** Densidad fija de la Red (Compactación); la de Compactación II depende de los anillos y se suma en `densidad`. */
 export const densidadRed = (s: State) => efectoRed(s, 'compactacion', 'densidad')
-/** Sedimentación nv4: ni la Compresión ni el Infinito reinician la Cascada. */
-export const conservaCascada = (s: State) => efectoRed(s, 'sedimentacion', 'conserva_cascada') > 0
+/** Sedimentación: lo que la Compresión ya no reinicia (nv1 Caudal, nv2 colores, nv3 Cascada) y, con nv4, las Mutaciones
+ * en el Infinito. `que` es la clave `conserva_*` del nodo en config. */
+export const conserva = (s: State, que: 'caudal' | 'colores' | 'cascada' | 'mutaciones') => efectoRed(s, 'sedimentacion', `conserva_${que}`) > 0
 export const cascadaExtra = (s: State) => efectoRed(s, 'cascada_plus', 'nivel_max_extra')
 export const mutacionExtra = (s: State) => efectoRed(s, 'mutacion_plus', 'nivel_max_extra')
 /** Eco: + p × log10(Cristales totales) a log10 V. */
