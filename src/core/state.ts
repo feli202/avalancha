@@ -53,8 +53,9 @@ export interface State {
   red: Record<string, number>
   /** SPEC_CAPA1 §5 y bloque 8: el inventario. `equipadas`: el id de la pieza de cada Engarce, en orden. `pendiente`: número del
    * Infinito cuya reliquia espera que se elija el tipo (0 = ninguna); `faltan`, cuántas de ese Infinito quedan por elegir
-   * (2 con Engarces nv4); `foto`, su pila. `ultimo`: el último tipo elegido (Rotar). */
-  relicario: { piezas: Pieza[]; equipadas: number[]; pendiente: number; faltan: number; foto: string; ultimo: string; regla: Regla }
+   * (2 con Engarces nv4); `foto`, su pila. `ultimo`: el último tipo elegido (Rotar). `espera`: las que llegaron con el
+   * inventario lleno; entran solas apenas haya lugar. */
+  relicario: { piezas: Pieza[]; equipadas: number[]; pendiente: number; faltan: number; foto: string; ultimo: string; regla: Regla; espera: Pieza[] }
   /** SPEC_CAPA1 §7. `s`: log10 de granos de cada estrato; `perm` y `pres`: niveles de Permeabilidad y Presión. */
   estratos: { abiertos: number; s: number[]; perm: number[]; pres: number[] }
   /** SPEC_CAPA1 §8. `actual`: el Defecto en curso ('' = ninguno). `reintento`: log10 de los Cristales totales con que conviene
@@ -110,7 +111,7 @@ export const estadoInicial =(): State => ({
   cristales: new Decimal(0),
   cristalesTotales: new Decimal(0),
   red: Object.fromEntries(Object.keys(NODOS).map((k) => [k, 0])),
-  relicario: { piezas: [], equipadas: [], pendiente: 0, faltan: 0, foto: '', ultimo: '', regla: { modo: 'completar', orden: [...CFG1.relicario.tipos], fusionar: true, equipar: false } },
+  relicario: { piezas: [], equipadas: [], pendiente: 0, faltan: 0, espera: [], foto: '', ultimo: '', regla: { modo: 'completar', orden: [...CFG1.relicario.tipos], fusionar: true, equipar: false } },
   estratos: { abiertos: 0, s: ceros(), perm: ceros(), pres: ceros() },
   defectos: { completos: [], actual: '', reintento: {} },
   escarcha: { abierta: false, logX: 0, esquirlas: 0, mejoras: { crecimiento: 0, brillo: 0, aguante: 0 }, reloj: 0 },

@@ -16,14 +16,22 @@ export const escalon = (nivel: number) => ({ color: nivel % 4, vuelta: Math.floo
 export const espacios = (s: State) => Math.max(1, efectoRed(s, 'engarces', 'espacios', 1), efectoRed(s, 'engarces2', 'espacios', 1))
 /** Engarces II: la fusión puede ser automática. */
 export const fusionAutomatica = (s: State) => (s.red.engarces2 ?? 0) >= 1
-/** Sin casillero libre el Infinito no deja reliquia (hasta fusionar, a mano o con Engarces II). */
-export const inventarioLleno = (s: State) => s.relicario.piezas.length >= R.casilleros
+/** Casilleros del inventario: tamaño fijo (config; una mejora futura lo agranda ahí). */
+export const casilleros = (_s: State) => R.casilleros
+/** Sin casillero libre la reliquia nueva va a la espera (hasta fusionar o hacer lugar). */
+export const inventarioLleno = (s: State) => s.relicario.piezas.length >= casilleros(s)
 /** Engarces nv4: reliquias que deja cada Infinito. */
 export const reliquiasPorInfinito = (s: State) => efectoRed(s, 'engarces', 'reliquias_por_infinito', 1)
 
 const pieza = (s: State, id: number) => s.relicario.piezas.find((p) => p.id === id)
-const nuevoId = (s: State) => Math.max(0, ...s.relicario.piezas.map((p) => p.id)) + 1
+const nuevoId = (s: State) => Math.max(0, ...s.relicario.piezas.map((p) => p.id), ...s.relicario.espera.map((p) => p.id)) + 1
 const conRel = (s: State, rel: Partial<State['relicario']>): State => ({ ...s, relicario: { ...s.relicario, ...rel } })
+/** Las que esperaban entran al inventario mientras haya lugar (las más viejas primero). */
+function acomodar(s: State): State {
+  const { piezas, espera } = s.relicario
+  const n = Math.max(0, Math.min(espera.length, casilleros(s) - piezas.length))
+  return n ? conRel(s, { piezas: [...piezas, ...espera.slice(0, n)], espera: espera.slice(n) }) : s
+}
 /** Las piezas que dan efecto (las de los espacios que existen). */
 export const equipadas = (s: State) => s.relicario.equipadas.slice(0, espacios(s)).map((id) => pieza(s, id)).filter((p): p is Pieza => !!p)
 /** Mejor nivel del tipo en el inventario (o solo entre las equipadas); −1 sin ninguna. */
@@ -48,10 +56,10 @@ export function fusionar(s: State, ids: number[]): State {
   const nueva: Pieza = { id: nuevoId(s), tipo: vieja.tipo, nivel: vieja.nivel + 1, foto: vieja.foto, inf: vieja.inf }
   const fuera = new Set(ps.map((p) => p.id))
   const e = s.relicario.equipadas, k = e.findIndex((id) => fuera.has(id))
-  return conRel(s, {
+  return acomodar(conRel(s, {
     piezas: [...s.relicario.piezas.filter((p) => !fuera.has(p.id)), nueva],
     equipadas: e.map((id, i) => (i === k ? nueva.id : id)).filter((id) => !fuera.has(id)),
-  })
+  }))
 }
 
 /** Fusiona mientras haya tres iguales (de abajo hacia arriba: tres Ámbar dan una Coral, que puede completar otras tres). */
@@ -121,19 +129,22 @@ export function tipoAutomatico(s: State): string {
   }
 }
 
-/** Agrega la reliquia del Infinito pendiente, del tipo t (con la pila de ese Infinito); sin lugar en el inventario, se pierde. Después, lo que diga la regla:
- * fusionar solas (con Engarces II) y engarzar las mejores. Sin Infinito pendiente o con un tipo que no existe, el mismo estado. */
+/** Agrega una reliquia del Infinito pendiente, del tipo t (con la pila de ese Infinito); con Engarces nv4 son dos y el
+ * Infinito sigue pendiente hasta elegir la segunda. Después, lo que diga la regla: fusionar solas (con Engarces II) y
+ * engarzar las mejores. Sin lugar en el inventario (ni con la fusión automática) va a la espera: nunca se pierde.
+ * Sin Infinito pendiente o con un tipo que no existe, el mismo estado. */
 export function elegir(s: State, t: string): State {
   const rel = s.relicario
   if (!rel.pendiente || !TIPOS.includes(t)) return s
   const p: Pieza = { id: nuevoId(s), tipo: t, nivel: 0, foto: rel.foto, inf: rel.pendiente }
-  // Engarces nv4: dos reliquias por Infinito; el Infinito sigue pendiente hasta elegir la segunda.
   const faltan = Math.max(1, rel.faltan) - 1
   const sigue = faltan ? { faltan } : { pendiente: 0, faltan: 0, foto: '' }
   let n = conRel(s, { piezas: [...rel.piezas, p], ultimo: t, ...sigue })
   if (rel.regla.fusionar && fusionAutomatica(n)) n = fusionarTodo(n)
-  // Inventario lleno: se pierde, salvo que la fusión automática le haga lugar (la nueva completa tres iguales).
-  if (inventarioLleno(s) && n.relicario.piezas.length > Math.max(R.casilleros, rel.piezas.length)) return conRel(s, sigue)
+  if (n.relicario.piezas.length > Math.max(casilleros(s), rel.piezas.length)) {
+    const fuera = n.relicario.piezas.find((x) => x.id === p.id)
+    n = fuera ? conRel(n, { piezas: n.relicario.piezas.filter((x) => x !== fuera), espera: [...rel.espera, fuera] }) : n
+  }
   return rel.regla.equipar ? equiparMejores(n) : n
 }
 /** Sin elegir a tiempo, o con Infinito automático: la regla, para cada reliquia que falte. */

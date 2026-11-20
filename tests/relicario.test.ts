@@ -36,17 +36,23 @@ describe('Relicario: elegir el tipo', () => {
     expect(dos.relicario.pendiente).toBe(3)
   })
 
-  it('con el inventario lleno el Infinito no deja reliquia, salvo que la fusión automática le haga lugar', () => {
+  it('con el inventario lleno la reliquia espera aparte y entra al hacer lugar; la fusión automática le hace lugar', () => {
     const llenas = [pz('cauce'), pz('cauce'), ...Array.from({ length: R.casilleros - 2 }, (_, i) => pz(TIPOS[1], 1 + (i % 2) + 2 * Math.floor(i / 2)))]
-    const s = con({ piezas: llenas, pendiente: 9, regla: regla({ fusionar: true, equipar: false }) })
-    const perdida = elegir(s, 'cauce')
-    expect(perdida.relicario.piezas).toBe(llenas)
-    expect(perdida.relicario.pendiente).toBe(0)
-    expect(elegirSola(s).relicario.piezas).toBe(llenas) // el Infinito automático tampoco
+    const s = con({ piezas: llenas, pendiente: 9, faltan: 1, regla: regla({ fusionar: true, equipar: false }) })
+    const espera = elegir(s, 'cauce')
+    expect(espera.relicario.piezas).toEqual(llenas)
+    expect(espera.relicario.espera.map((p) => [p.tipo, p.inf])).toEqual([['cauce', 9]])
+    expect(espera.relicario.pendiente).toBe(0)
+    expect(elegirSola(s).relicario.espera).toHaveLength(1) // el Infinito automático tampoco la pierde
+    // Con una tercera Cauce Ámbar en el inventario, Fusionar todo hace lugar.
+    const tres = { ...espera, relicario: { ...espera.relicario, piezas: [...llenas.slice(0, -1), pz('cauce')] } }
+    const f = fusionarTodo(tres)
+    expect(f.relicario.espera).toHaveLength(0) // tres Cauce Ámbar se fusionaron: la que esperaba entró
+    expect(f.relicario.piezas.some((p) => p.inf === 9)).toBe(true)
     // Con Engarces II la nueva completa tres Cauce Ámbar: entra y se fusiona.
     const fusiona = elegir({ ...s, red: { ...s.red, engarces2: 1 } }, 'cauce')
     expect(fusiona.relicario.piezas.length).toBe(R.casilleros - 1)
-    expect(elegir({ ...s, red: { ...s.red, engarces2: 1 } }, 'mutaciones').relicario.piezas).toBe(llenas)
+    expect(elegir({ ...s, red: { ...s.red, engarces2: 1 } }, 'mutaciones').relicario.piezas).toEqual(llenas)
   })
 
   it('Engarces nv4: cada Infinito deja dos reliquias; se eligen de a una (o las dos del mismo tipo) y la regla elige las dos', () => {
@@ -209,7 +215,7 @@ describe('Relicario: guardado y migración', () => {
 
   it('conserva el inventario y limpia lo imposible', () => {
     const ps = [pz('cauce', 2, 1, FOTO(4)), pz('cascada', 0, 2)]
-    const s = con({ piezas: ps, equipadas: [ps[0].id], pendiente: 2, faltan: 1, foto: FOTO(1), ultimo: 'cauce', regla: regla({ modo: 'prioridad', orden: ['mutaciones', 'cauce', 'cascada'] }) }, { infinitos: 6, cristales: new Decimal(3) })
+    const s = con({ piezas: ps, equipadas: [ps[0].id], pendiente: 2, faltan: 1, espera: [pz('cauce', 0, 3)], foto: FOTO(1), ultimo: 'cauce', regla: regla({ modo: 'prioridad', orden: ['mutaciones', 'cauce', 'cascada'] }) }, { infinitos: 6, cristales: new Decimal(3) })
     expect(ida(plano(s)).relicario).toEqual(s.relicario)
     const p = plano(s)
     const roto = { ...p, relicario: { ...p.relicario, pendiente: 40, foto: 'x', regla: { modo: 'otro', orden: ['cauce', 'nada'] },

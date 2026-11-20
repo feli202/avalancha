@@ -145,7 +145,7 @@
         <label class="dos"><input type="checkbox" bind:checked={lasDos} /> {r.lasDos}</label>
       {/if}
       {#if rel.faltan > 1}<p class="rotulo dosde">{r.deDos(1)}</p>
-      {:else if rel.piezas.some((p) => p.inf === rel.pendiente)}<p class="rotulo dosde">{r.deDos(2)}</p>{/if}
+      {:else if [...rel.piezas, ...rel.espera].some((p) => p.inf === rel.pendiente)}<p class="rotulo dosde">{r.deDos(2)}</p>{/if}
       <p id="reliquia-d" class="texto">{lleno ? r.llenoPop : r.elegirQue}</p>
       {#if lleno && fusionables(juego.s).length}<button class="gema fusionar" onclick={() => (juego.s = fusionarTodo(juego.s))}>{r.fusionarTodo}</button>{/if}
       <div class="tipos">

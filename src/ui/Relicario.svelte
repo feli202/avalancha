@@ -6,8 +6,8 @@
   import { tick as despues } from 'svelte'
   import { flip } from 'svelte/animate'
   import {
-    CFG1, TIPOS, desequipar, efectoNivel, elegir, equipadas, equipar, escalon, espacios, fusionables,
-    fusionar, fusionarTodo, inventarioLleno, costoPulido, puedePulir, pulir, type Pieza,
+    TIPOS, desequipar, efectoNivel, elegir, equipadas, equipar, escalon, espacios, fusionables,
+    fusionar, fusionarTodo, inventarioLleno, casilleros as capacidad, costoPulido, puedePulir, pulir, type Pieza,
   } from '../core'
   import { caraReliquia } from '../render/miniPilas'
   import { txt } from '../strings'
@@ -28,8 +28,8 @@
 
   // La grilla: las mejores arriba, las iguales juntas (así se ve qué falta para fusionar).
   const piezas = $derived([...rel.piezas].sort((a, b) => b.nivel - a.nivel || TIPOS.indexOf(a.tipo) - TIPOS.indexOf(b.tipo) || a.inf - b.inf || a.id - b.id))
-  // Fijos: sin lugar el Infinito no deja reliquia. Un guardado de antes con más piezas las muestra todas.
-  const casilleros = $derived(Math.max(CFG1.relicario.casilleros, piezas.length))
+  // Tamaño fijo (config): sin lugar, la reliquia nueva espera aparte. Un guardado de antes con más piezas las muestra todas.
+  const casilleros = $derived(Math.max(capacidad(s), piezas.length))
   const sinLugar = $derived(inventarioLleno(s))
   const puestas = $derived(new Set(rel.equipadas.slice(0, espacios(s))))
   const grupos = $derived(fusionables(s))
@@ -200,11 +200,19 @@
 
   <div class="inventario">
     <div class="cabeza">
-      <h2>{r.inventario} <small class="num" class:aviso={sinLugar}>{r.ocupados(piezas.length, CFG1.relicario.casilleros)}</small></h2>
+      <h2>{r.inventario} <small class="num" class:aviso={sinLugar}>{r.ocupados(piezas.length, capacidad(s))}</small></h2>
       {#if grupos.length}<button class="gema" onclick={fusionarTodas}>{r.fusionarTodo}</button>{/if}
       <!-- La regla automática se configura en Automatización (bloque 10); acá solo se ve cuál es y se va hasta ella. -->
       <button class="regla" onclick={() => (juego.capa = 'automatizacion')}>{r.regla.titulo}<span>: <b>{r.regla.modos[rel.regla.modo]}</b></span></button>
     </div>
+    {#if rel.espera.length}
+      <!-- Inventario lleno: las que llegaron esperan acá (no se pierden) y entran solas al fusionar. -->
+      <div class="esperando placa" role="status" style:--c={color(rel.espera[0].nivel)}>
+        <span class="pieza">{@render cara(rel.espera[0])}<span class="emblema"><IconoTipo tipo={rel.espera[0].tipo} halo={color(0)} /></span>
+          {#if rel.espera.length > 1}<i class="vuelta">×{rel.espera.length}</i>{/if}</span>
+        <small class="aviso">{r.esperando(rel.espera.length)}</small>
+      </div>
+    {/if}
     <div class="grilla" role="listbox" aria-label={r.inventario}>
       {#each piezas as p (p.id)}
         <button
@@ -242,6 +250,8 @@
   small { color: var(--apagado); font-size: 0.8125rem; text-wrap: balance; }
   button { font: inherit; color: var(--escarcha); cursor: pointer; }
 
+  .dos { display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; font-size: 0.875rem; cursor: pointer; }
+  .dos input { width: 1.1rem; height: 1.1rem; accent-color: var(--ambar); }
   .sello { display: block; width: 1.1rem; height: 1.1rem; flex: none; color: var(--escarcha); }
   .cara { display: block; width: 100%; height: 100%; }
   /* El emblema del tipo en el centro de cada reliquia, sobre una placa hexagonal de escarcha que deja ver la pila. */
@@ -250,8 +260,6 @@
     content: ''; position: absolute; inset: -16%; z-index: -1;
     clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
     background: linear-gradient(160deg, rgb(255 255 255 / 0.3), transparent 45%), var(--tex-escarcha), rgb(6 13 26 / 0.62);
-  .dos { display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; font-size: 0.875rem; cursor: pointer; }
-  .dos input { width: 1.1rem; height: 1.1rem; accent-color: var(--ambar); }
     box-shadow: inset 0 0 0 1px rgb(220 245 255 / 0.4);
   }
   .izq { display: flex; flex-direction: column; gap: 1rem; min-height: 0; }
@@ -291,7 +299,9 @@
   .tipos small { font-size: 0.75rem; }
 
   /* Inventario: cabecera fija y la grilla con su propio scroll (lo único que scrollea). */
-  .inventario { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 0.6rem; min-height: 0; }
+  .inventario { display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 0.6rem; min-height: 0; }
+  .esperando { display: grid; grid-template-columns: 3rem 1fr; align-items: center; gap: 0.75rem; padding: 0.4rem 0.6rem; }
+  .esperando .pieza { display: block; width: 3rem; }
   .cabeza { position: relative; display: flex; align-items: center; gap: 1rem; min-height: 2.25rem; }
   .cabeza h2 { margin-right: auto; }
   .cabeza > button { padding: 0.4rem 1rem; font-size: 0.875rem; }

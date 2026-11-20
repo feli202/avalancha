@@ -169,19 +169,24 @@ function leerRelicario(r: any, infinitos: number, espacios: number): State['reli
     ? migrarRelicario(Object.fromEntries(TIPOS.map((t) => [t, ent(r.reliquias[t])])), Array.isArray(r.equipadas) ? r.equipadas.filter((t: unknown) => typeof t === 'string') : [])
     : { piezas: Array.isArray(r.piezas) ? r.piezas : [], equipadas: Array.isArray(r.equipadas) ? r.equipadas : [] }
   const ids = new Set<number>()
-  const piezas: Pieza[] = []
-  for (const p of crudas.piezas as any[]) {
-    if (typeof p !== 'object' || p === null || !TIPOS.includes(p.tipo) || !Number.isInteger(p.id) || p.id < 1 || ids.has(p.id)) continue
-    ids.add(p.id)
-    piezas.push({ id: p.id, tipo: p.tipo, nivel: ent(p.nivel, 60), foto: foto(p.foto), inf: ent(p.inf, infinitos) })
+  const leer = (lista: unknown) => {
+    const out: Pieza[] = []
+    for (const p of (Array.isArray(lista) ? lista : []) as any[]) {
+      if (typeof p !== 'object' || p === null || !TIPOS.includes(p.tipo) || !Number.isInteger(p.id) || p.id < 1 || ids.has(p.id)) continue
+      ids.add(p.id)
+      out.push({ id: p.id, tipo: p.tipo, nivel: ent(p.nivel, 60), foto: foto(p.foto), inf: ent(p.inf, infinitos) })
+    }
+    return out
   }
+  const piezas = leer(crudas.piezas)
   const equipadas = [...new Set(crudas.equipadas as unknown[])].filter((id): id is number => ids.has(id as number)).slice(0, espacios)
+  const espera = leer(r.espera) // las que llegaron con el inventario lleno
   const g = typeof r.regla === 'object' && r.regla !== null ? r.regla : {}
   const orden = Array.isArray(g.orden) ? [...new Set(g.orden.filter((t: unknown) => TIPOS.includes(t as string)) as string[])] : []
   const base = estadoInicial().relicario.regla
   return {
     piezas, equipadas,
-    pendiente: ent(r.pendiente, infinitos), faltan: r.pendiente ? Math.max(1, ent(r.faltan, 2)) : 0, foto: foto(r.foto), ultimo: TIPOS.includes(r.ultimo) ? r.ultimo : '',
+    pendiente: ent(r.pendiente, infinitos), faltan: r.pendiente ? Math.max(1, ent(r.faltan, 2)) : 0, espera, foto: foto(r.foto), ultimo: TIPOS.includes(r.ultimo) ? r.ultimo : '',
     regla: {
       modo: MODOS.includes(g.modo) ? g.modo : base.modo,
       orden: [...orden, ...TIPOS.filter((t) => !orden.includes(t))],
