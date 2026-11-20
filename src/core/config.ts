@@ -41,6 +41,8 @@ export interface Config {
   secretos: Record<string, { api: string; recompensa: string[] } & Record<string, unknown>>
   /** Fondos de la pila en orden: id -> logro que lo da (null = de inicio). */
   fondos: Record<string, string | null>
+  /** El marco de la pila gira despacio (cosmético). */
+  marco: { segundos_por_vuelta: number }
   objetivo_minutos: Record<string, number>
   /** Mejoras de la Arena: por encima de este precio (log10) cada nivel extra multiplica ×10 el siguiente. */
   softcap_desde_log10: number

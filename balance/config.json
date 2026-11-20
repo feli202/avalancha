@@ -76,6 +76,8 @@
   "fondos": { "noche": null, "arenaSeca": "compresion", "milimetrado": "anillo", "desierto": "paciencia", "fractal": "infinito",
               "hielo": "cristal", "aurora": "insomnio", "vacio": "minimalista",
               "grietas": "finCapa", "tempano": "tempano" },
+  "_marco": "Marco de la pila (cosmetico): segundos por vuelta; quieto con Reducir movimiento.",
+  "marco": { "segundos_por_vuelta": 90 },
 
   "_precios": "SPEC 4.11: todo precio es 1eN (exponente redondeado al entero más cercano). Mejoras de la Arena: el primer nivel cuyo exponente normal pasa de softcap_desde_log10 es n_1e308; cada nivel por encima suma 1 al exponente (x10).",
   "softcap_desde_log10": 308,

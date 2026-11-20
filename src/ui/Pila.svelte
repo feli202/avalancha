@@ -254,6 +254,8 @@
         radioMarco = Math.abs(objetivo - radioMarco) < 0.3 ? objetivo : radioMarco + (objetivo - radioMarco) * k
         foco = Math.round(pila.focoCss)
         if (Math.abs(radioMarco - marcoDibujado) > 0.25) dibujarMarco(radioMarco)
+        // Gira despacio alrededor de la pila (CSS `rotate`, aparte del `transform` de la implosión); quieto con Reducir movimiento.
+        lienzoMarco.style.rotate = ajustes.reducirDestellos ? '' : `${((ahora / 1000 / CFG.marco.segundos_por_vuelta) % 1) * 360}deg`
       }
       marcoAntes = ahora
       // SPEC 5: el color nuevo recorre la pila, del centro al borde.
