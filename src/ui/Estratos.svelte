@@ -269,4 +269,6 @@
   }
   /* Celulares bajos: la Presión total se ve en la Arena y en "Cómo funciona"; acá el lugar es para la escena. */
   @media (max-width: 760px) and (max-height: 720px) { .total { display: none; } .estratos { grid-template-rows: minmax(0, 1fr); } }
+  /* v1.0: en celulares bajos (360×640) la ficha se achica y scrollea adentro: el embudo se lleva el lugar. */
+  @media (max-width: 760px) and (max-height: 720px) { .vista { grid-template-rows: minmax(12rem, 1fr) minmax(0, auto); } .ficha { max-height: 10.5rem; } }
 </style>

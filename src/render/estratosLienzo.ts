@@ -254,6 +254,7 @@ export class EstratosLienzo {
   }
 
   private grabado(ctx: CanvasRenderingContext2D, b: Banda, d: Datos, k: number) {
+    if ((b.piso - b.y) * this.cel < 12) return // banda muy baja: el texto no entra (celulares chicos); el costo está en la ficha
     const cx = this.ox + ((b.a + b.b + 1) / 2) * this.cel, cy = this.oy + ((b.y + b.piso) / 2) * this.cel
     ctx.save(); ctx.font = `600 ${Math.max(10, Math.min(13, this.cel * 3))}px 'Space Grotesk', system-ui, sans-serif`
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
