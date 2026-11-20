@@ -100,7 +100,7 @@ si lc < 6:   Cristales = floor(10^lc)             (números chicos enteros)
 ```
 
 - `mult` (en log10) = Ruptura (0/1/2/3) + Cristalografía (0,5/1/1,5/2) + Cristalografía II (0,125/0,25/0,375/0,5 por Defecto completo) + 3 si completaste Vidrio. En el Defecto Vidrio `mult` = 0.
-- **Cuándo hacer Infinito** (cuando la Energía ya pasó 1e308): conviene cuando los Cristales por segundo (`10^lc / duración`) dejan de subir. La interfaz muestra "Cristales al hacer Infinito: X (Y/min)" y marca con un brillo el momento óptimo. El Infinito automático (Memoria nivel 4) hace el Infinito **apenas llegás**; Romper el Infinito (Ruptura nv1) lo mejora: puede esperar "al llegar a X Cristales" (correcciones, bloque 10; se configura en Automatización).
+- **Cuándo hacer Infinito** (cuando la Energía ya pasó 1e308): conviene cuando los Cristales por segundo (`10^lc / duración`) dejan de subir. La interfaz muestra "Cristales al hacer Infinito: X (Y/min)" y marca con un brillo el momento óptimo. El Infinito automático (Memoria nivel 4) hace el Infinito **apenas llegás**; Romper el Infinito (Ruptura nv1) lo mejora: puede esperar "al llegar a X Cristales" o (v1.0) "Multiplicar mis Cristales": cuando lo que daría es N veces los Cristales actuales (N por defecto ×10, `infinito_auto.multiplicar_x`; con ×10 va 1 → 10 → 100…). Los campos de X y N aceptan notación científica (1e12, 1,5e30) y muestran cómo se entendió. El modo "en el óptimo" salió de la interfaz en la 1.0 (el bot de balance lo sigue usando, §2).
 - `Cristales totales` (nunca bajan) es lo que piden los Defectos 5–8 y el fin de la capa (1e308).
 
 ---
@@ -346,7 +346,7 @@ Pantalla de estadísticas (estilo AD): desglose de log10 V por fuente, con porce
 ## 11. Interfaz
 
 - **Barra lateral de capas** (izquierda, 5 rem; neutra, con la sobriedad de la Arena): Arena (una mini pila ámbar en píxeles) → Cristalización (un prisma de hielo), con el nombre debajo del ícono; la activa se enciende con su color. Abajo, separada por una línea, **Automatización** (no es una capa sino de todo el juego). La Capa 2 aparece como silueta gris al final de la 1.2.
-- **Panel de Automatización** (correcciones, bloque 10): "Encender todo" / "Apagar todo"; a la izquierda las compras (Caudal, los cuatro colores, Cascada, Mutaciones), cada una con su intervalo (como mínimo `automatizacion.intervalo_s` = 1 s), su cantidad (×1 / ×10 / Máx) y su interruptor; a la derecha la Compresión automática (al llegar al umbral / esperar X s más) y el Infinito automático (apenas llega; con Romper el Infinito, "al llegar a X Cristales") con la regla de reliquias (§5). Se ven los que el jugador tiene y el siguiente como silueta con lo que lo desbloquea. Una sola regla (`autoDisponible`) decide si un autocomprador existe para la economía, la tienda y el panel. Con los valores por defecto el núcleo hace lo mismo que antes del panel.
+- **Panel de Automatización** (correcciones, bloque 10): "Encender todo" / "Apagar todo"; a la izquierda las compras (Caudal, los cuatro colores, Cascada, Mutaciones), cada una con su intervalo (como mínimo `automatizacion.intervalo_s` = 1 s), su cantidad (×1 / ×10 / Máx) y su interruptor; a la derecha la Compresión automática (al llegar al umbral / esperar X s más) y el Infinito automático (apenas llega; con Romper el Infinito, "al llegar a X Cristales" o "Multiplicar mis Cristales" ×N) con la regla de reliquias (§5). Se ven los que el jugador tiene y el siguiente como silueta con lo que lo desbloquea. Una sola regla (`autoDisponible`) decide si un autocomprador existe para la economía, la tienda y el panel. Con los valores por defecto el núcleo hace lo mismo que antes del panel.
 - La fila de íconos (foto, logros, estadísticas, ajustes, ayuda) está en todas las capas.
 - Dentro de Cristalización, **segunda barra** con: **Red · Estratos · Defectos · Escarcha · Relicario**. Cada una es su propia pantalla a pantalla completa; nunca paneles encima de la pila. Las que no están abiertas no se muestran (o se muestran como "???" solo la siguiente).
 - La pila principal **no se mueve nunca** por la interfaz (misma regla de la Capa 0).
@@ -439,7 +439,17 @@ Es "lento": no corre con `npm test`; se corre con `npm run test:lento` al cerrar
 
 ---
 
-## 18. Qué es aproximado (honesto)
+## 18. Versión 1.0 (actualización final de la Capa 1)
+
+- **Infinito trabado en 99 %**: la Energía guardada era exactamente `INFINITO` (la condición daba bien). La traba era de la vista: con "Reducir destellos" (por defecto) los números se refrescaban a 10 Hz y se descartaba el último cambio; en 1e308 la economía se congela, así que la barra y la Tienda quedaban congeladas hasta recargar. `crearRefresco` (`limite.ts`) siempre muestra el último valor; la barra y el porcentaje usan `enInfinito`. Un NaN/Infinity en la economía se anota en la consola y el juego sigue desde el último estado válido (`campoInvalido`).
+- **Guardado**: cada guardado se valida antes de escribir (no pisa el bueno) y hay 3 respaldos rotativos (uno por minuto como mucho) que se recuperan en Ajustes → Partida. "Reportar un problema" copia partida, versión y últimos errores.
+- **Notaciones** (Ajustes → Juego): científica, ingeniería, letras, en palabras, logarítmica, mixta y las raras (pila en base 4 con los cuadraditos, arena de la Tierra, romanos, binario, una banda, ciego). Un solo formateador (`formato.ts`).
+- **Final de la capa**: en "Capa 2 próximamente", el resumen de la partida descargable como imagen y los links de Discord e itch.io.
+- **Estratos**: debajo del estrato 8, un noveno vacío como fondo cerrado del embudo (en la Capa 2 va a ser el Horno); en el celular el embudo va centrado y ocupa el ancho.
+- **Nodo Defectos**: costos por nivel 1 / 1e15 / 1e20 / 1e27 (§2).
+- **Comunidad y estadísticas**: links a Discord e itch.io, pop-up de comunidad a los 10 min de juego activo (una vez por dispositivo) y estadísticas anónimas con GoatCounter (sin cookies, respetan Do Not Track, apagables).
+
+## 19. Qué es aproximado (honesto)
 
 - El bot elige reliquias y compras con reglas simples ("lo más barato primero", con prioridades). Una persona va a ir un poco más rápido o más lento; la robustez (cada 60 s / 5 min) muestra que el ritmo aguanta.
 - Las corridas del final de la 1.2 duran 30–60 min (Infinitos grandes). Si en pruebas reales se sienten largas, bajar `cristales.blando_factor` hace más corto cada Infinito pero acelera el final: volver a calibrar `escarcha.g_por_presion`.
