@@ -1,5 +1,8 @@
 # Avalancha — novedades
 
+## 2026-11-19 · versión de prueba del aviso
+- Sin cambios en el juego: publica un build nuevo para probar el aviso "Hay una versión nueva de Avalancha".
+
 ## 2026-11-19 · mini parche antes de publicar
 - **Sedimentación** nueva: la Compresión deja de reiniciar el Caudal, los colores y la Cascada (un nivel cada uno); con nv4 el Infinito no reinicia las Mutaciones.
 - **Memoria** conserva 5/7/9/11 compresiones.
