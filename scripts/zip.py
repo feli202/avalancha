@@ -1,10 +1,10 @@
 # Arma avalancha-demo.zip con el contenido de dist/ (index.html en la raíz).
 # No usar Compress-Archive de PowerShell 5.1: guarda las rutas con "\" y en itch.io/galaxy.click el juego queda en negro.
-# uso: npm run zip   (hace la build y después corre esto)
-import pathlib, zipfile
+# uso: npm run zip   (hace la build y después corre esto; v1.0: marketing/itch/avalancha-web.zip)
+import pathlib, sys, zipfile
 
 dist = pathlib.Path('dist')
-salida = pathlib.Path('avalancha-demo.zip')
+salida = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else 'marketing/itch/avalancha-web.zip')
 with zipfile.ZipFile(salida, 'w', zipfile.ZIP_DEFLATED) as z:
     for f in sorted(dist.rglob('*')):
         if f.is_file():

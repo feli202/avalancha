@@ -7,3 +7,4 @@ marketing/clips/
 # Perfiles de Edge de los scripts de capturas (cookies, sesiones): nunca al repo.
 perfil-edge/
 .impeccable/hook.cache.json
+marketing/itch/avalancha-web.zip
