@@ -126,6 +126,8 @@
      -1,
      0
     ],
+    "_costos": "v1.0: costo de cada nivel (log10), para que cada Defecto se abra cerca de cuando se puede completar (estratos 6, 7 y 8; SPEC_CAPA1 §2).",
+    "costos_log10": [0, 15, 20, 27],
     "desbloquea": [
      "vacancia",
      "dislocacion",

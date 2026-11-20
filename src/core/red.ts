@@ -7,7 +7,7 @@ import { cristalesVidrioLog10, defectosCompletos, enVidrio } from './defectos'
 import type { State } from './state'
 
 /** Un nodo: posición en el rombo y, por cada efecto, un arreglo con el valor de cada nivel (1..4). */
-export type Nodo = { pos: number[]; costo_base_log10?: number; paso_log10?: number } & Record<string, unknown>
+export type Nodo = { pos: number[]; costo_base_log10?: number; paso_log10?: number; costos_log10?: number[] } & Record<string, unknown>
 
 export const NODOS: Record<string, Nodo> = { ...CFG1.red.nodos, ...CFG1.red['anillo3_1.2'] }
 /** Los de la 1.2: grises con candado de hielo hasta que se abra la Escarcha. */
@@ -45,6 +45,8 @@ export const abierto = (s: State, id: string) =>
 /** log10 del costo del nivel n → n+1 (§6.2). */
 export function costoRedLog10(id: string, n: number) {
   const r = anillo(id)
+  const lista = NODOS[id].costos_log10 // v1.0: costo por nivel explícito (Defectos)
+  if (lista) return precioLog10(lista[n])
   return precioLog10((NODOS[id].costo_base_log10 ?? CFG1.red.costo_anillo_log10[r]) + (NODOS[id].paso_log10 ?? CFG1.red.paso_nivel_log10[r]) * n)
 }
 

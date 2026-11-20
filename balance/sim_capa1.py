@@ -49,6 +49,7 @@ POS = {k: tuple(v['pos']) for k, v in RED.items()}
 BYPOS = {v: k for k, v in POS.items()}
 def ring(k): x, y = POS[k]; return abs(x) + abs(y)
 def red_cost(k, lvl):
+    if 'costos_log10' in RED[k]: return precio(RED[k]['costos_log10'][lvl])  # v1.0: costo por nivel explicito (Defectos)
     r = ring(k); base = RED[k].get('costo_base_log10', L1['red']['costo_anillo_log10'][r])
     return precio(base + RED[k].get('paso_log10', L1['red']['paso_nivel_log10'][r]) * lvl)
 DFX = L1['defectos']
