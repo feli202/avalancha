@@ -217,6 +217,7 @@
       sonido.hito('ring')
     }
     juego.s = nuevo
+    ver = null // la ficha vuelve a "Ahora · Siguiente" con el nivel nuevo
   }
 
   function tecla(e: KeyboardEvent, id: string) {
@@ -342,8 +343,13 @@
       </header>
       {#if verN}<p class="sig">{r.enNivel(verN, txt.colores[verN - 1])}</p><p class="hace">{efecto(elegido, verN)}</p>
       {:else}
-        {#if oculto(elegido)}<p class="sig">{r.sorpresa}</p>{:else}<p class="hace">{efecto(elegido, Math.max(1, n))}</p>{/if}
-        {#if n > 0 && n < NIVEL_MAX_RED}<p class="sig">{r.siguiente(efecto(elegido, n + 1))}</p>{/if}
+        {#if oculto(elegido)}<p class="sig">{r.sorpresa}</p>
+        {:else}
+          {#key n}
+            <p class="hace" class:fresco={n > 0}>{#if n > 0}<b>{r.ahoraRotulo}</b> {efecto(elegido, n)}{:else}<b>{r.nivel1}</b> {efecto(elegido, 1)}{/if}</p>
+            {#if n > 0 && n < NIVEL_MAX_RED}<p class="sig"><b>{r.siguienteRotulo}</b> {efecto(elegido, n + 1)}</p>{/if}
+          {/key}
+        {/if}
       {/if}
       {#if estado}<p class="estado">{estado}</p>{/if}
       {#if n < NIVEL_MAX_RED && !oculto(elegido)}
@@ -460,6 +466,9 @@
     /* Con el dedo: cuadros de 44 px (el visible sigue de 8 px); los márgenes negativos no agrandan la ficha. */
     .cuadros button { width: 2.75rem; height: 2.75rem; margin: -1rem -0.3rem; }
   }
+  .hace b, .sig b { font-weight: 600; color: var(--escarcha); }
+  .fresco { animation: fresco 0.6s ease-out; }
+  @keyframes fresco { from { color: var(--escarcha); text-shadow: 0 0 0.6rem var(--hielo); } }
   /* Celulares bajos: el siguiente nivel se ve al comprar; la red no puede quedar diminuta. */
   @media (max-width: 760px) and (max-height: 740px) { .sig { display: none; } }
 </style>

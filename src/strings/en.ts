@@ -308,7 +308,7 @@ export const en: typeof es = {
       zoom: 'Network zoom',
       zoomPista: 'Network zoom: wheel or pinch; drag to move it. Double click: fit.',
       nv: (n: number, color?: string) => (color ? `Lv ${n} · ${color}` : 'Not bought'),
-      siguiente: (e: string) => `Next level: ${e}`,
+      ahoraRotulo: 'Now:', siguienteRotulo: 'Next:', nivel1: 'With level 1:',
       verNivel: (n: number, color: string) => `See what level ${n} gives (${color})`,
       enNivel: (n: number, color: string) => `At level ${n} · ${color}`,
       cerrado: 'Opens when a neighbor closer to Memory has its first level.',

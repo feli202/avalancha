@@ -332,7 +332,7 @@ export const es = {
       zoom: 'Zoom de la Red',
       zoomPista: 'Zoom de la Red: rueda o pellizco; arrastrá para moverla. Doble clic: encuadre.',
       nv: (n: number, color?: string) => (color ? `Nv ${n} · ${color}` : 'Sin comprar'),
-      siguiente: (e: string) => `Siguiente nivel: ${e}`,
+      ahoraRotulo: 'Ahora:', siguienteRotulo: 'Siguiente:', nivel1: 'Con el nivel 1:',
       verNivel: (n: number, color: string) => `Ver qué da el nivel ${n} (${color})`,
       enNivel: (n: number, color: string) => `Con el nivel ${n} · ${color}`,
       cerrado: 'Se abre cuando un vecino más cerca de Memoria tiene su primer nivel.',
