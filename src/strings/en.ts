@@ -11,7 +11,7 @@ export const en: typeof es = {
   locale: 'en-US',
   decimal: '.',
   potencia: (m: string, e: string) => `${m} times ten to the ${e}`,
-  titulo: 'Avalanche',
+  titulo: 'Avalancha',
   jugar: 'Play',
   continuar: 'Continue',
   energia: 'Energy',
