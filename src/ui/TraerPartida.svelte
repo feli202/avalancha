@@ -3,7 +3,7 @@
   // la partida. La primera vez que se abre sin partida, ofrece pegar la que se copió en Safari (Instalar.svelte o Exportar).
   // La pregunta y el reemplazo con respaldo son los de PaseItch.svelte.
   import { leerCodigo } from '../guardado/pase'
-  import { enApp } from '../instalar.svelte'
+  import { enApp, esMovil } from '../instalar.svelte'
   import { txt } from '../strings'
   import { hayCartel, juego } from './juego.svelte'
   import { pegada } from './PaseItch.svelte'
@@ -12,7 +12,7 @@
   const t = txt.pase
   const visto = (() => { try { return localStorage.getItem(VISTO) !== null } catch { return true } })()
   // Se decide al cargar: con partida, o ya ofrecido, nunca.
-  const ofrecer = enApp() && !juego.hayPartida && !visto
+  const ofrecer = esMovil() && enApp() && !juego.hayPartida && !visto
   let abierta = $state(false)
   let hecho = $state(false) // ya se mostró en esta sesión
   let texto = $state('')

@@ -14,7 +14,7 @@
   import { guardarImagen } from './foto.svelte'
   import { almacenLocal } from '../guardado/almacen'
   import { leerRespaldoPase, reemplazarConRespaldo, restaurarRespaldo } from '../guardado/pase'
-  import { enApp, instalar } from '../instalar.svelte'
+  import { enApp, esMovil, instalar } from '../instalar.svelte'
 
   const PESTANAS = ['aspecto', 'juego', 'partida', 'teclado', 'creditos'] as const
   let activa = $state(0)
@@ -226,7 +226,7 @@
             <p class="grande num">{txt.opciones.descPartida(juego.s.compresiones, txt.duracion(juego.s.tiempoTotal))}</p>
           </div>
 
-          {#if !enApp()}
+          {#if esMovil() && !enApp()}
             <div class="fila">
               <span class="texto">{txt.instalar.ajustes}<small>{txt.instalar.ajustesDesc}</small></span>
               <button class="accion chica" onclick={() => (instalar.abierta = true)}>{txt.instalar.ajustes}</button>

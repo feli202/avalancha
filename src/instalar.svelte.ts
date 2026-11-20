@@ -15,6 +15,9 @@ export const instalar = $state({ abierta: false, evento: null as EventoInstalar 
 export const enApp = () => matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true
 export const enIframe = (() => { try { return window.top !== window.self } catch { return true } })()
 
+/** Celular o tablet: instalar se ofrece solo ahí (en la computadora no tiene sentido). iPadOS se presenta como Mac: por la pantalla táctil. */
+export const esMovil = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
+
 export type Plataforma = 'itch' | 'prompt' | 'ios' | 'otro'
 export function plataforma(): Plataforma {
   if (enIframe) return 'itch'

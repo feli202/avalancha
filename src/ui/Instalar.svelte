@@ -4,14 +4,14 @@
   import { onDestroy } from 'svelte'
   import { exportar } from '../guardado/guardado'
   import { codificarPase, urlConPase } from '../guardado/pase'
-  import { URL_APP, enApp, instalar, marcarOfrecida, pedirInstalacion, plataforma, recienTraida, yaOfrecida } from '../instalar.svelte'
+  import { URL_APP, enApp, esMovil, instalar, marcarOfrecida, pedirInstalacion, plataforma, recienTraida, yaOfrecida } from '../instalar.svelte'
   import { txt } from '../strings'
   import { guardarYa, hayCartel, invitaTocar, juego, partidaActual } from './juego.svelte'
 
   const t = txt.instalar
   const traida = recienTraida()
   // Ofrecerla sola: con la partida de itch.io recién cargada, o la primera vez en este dispositivo.
-  const ofrecer = !enApp() && (traida || (!yaOfrecida() && !juego.vistos.instalar))
+  const ofrecer = esMovil() && !enApp() && (traida || (!yaOfrecida() && !juego.vistos.instalar))
   const lista = $derived(ofrecer && !juego.titulo && !juego.cinematica && juego.calculo === null && !hayCartel() && !juego.guias.length && (juego.hayPartida || !invitaTocar()))
   let ofrecida = false
   $effect(() => {
