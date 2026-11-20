@@ -3,10 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Que el navegador pregunte siempre por el index.html (los .js y .css llevan hash). src/version.ts cubre al que no hace caso. -->
+    <!-- Que el navegador pregunte siempre por el index.html (los .js y .css llevan hash). src/version.svelte.ts avisa al que no hace caso. -->
     <meta http-equiv="Cache-Control" content="no-cache" />
     <title>Avalancha</title>
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <!-- iOS: "Agregar a pantalla de inicio" no usa SVG; el ícono es el logo en PNG de 180×180 sobre el fondo del juego. -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Avalancha" />
     <style>
       /* SPEC 6.1 */
       :root {
