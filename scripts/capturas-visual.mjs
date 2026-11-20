@@ -46,7 +46,7 @@ for (const [W, H] of [[1366, 768], [390, 844]]) {
   await cdp('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: W < 768 ? 2 : 1, mobile: W < 768 })
   await cdp('Page.navigate', { url })
   await espera(3000)
-  await ev(`localStorage.clear()`)
+  await ev(`localStorage.clear(); localStorage.setItem('avalancha.instalar', '1')`) // sin la tarjeta de instalar encima
   await cdp('Page.navigate', { url })
   await espera(3000)
   await ev(`document.querySelector('.titulo button')?.click()`)

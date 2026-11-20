@@ -12,6 +12,9 @@
   import Pantalla from './Pantalla.svelte'
   import { VERSION } from '../version.svelte'
   import { guardarImagen } from './foto.svelte'
+  import { almacenLocal } from '../guardado/almacen'
+  import { leerRespaldoPase, reemplazarConRespaldo, restaurarRespaldo } from '../guardado/pase'
+  import { enApp, instalar } from '../instalar.svelte'
 
   const PESTANAS = ['aspecto', 'juego', 'partida', 'teclado', 'creditos'] as const
   let activa = $state(0)
@@ -62,7 +65,14 @@
   /** I10: teclas de cosas que todavía no aparecieron (SPEC 5). */
   const TECLA_VISTO: Record<string, string> = { M: 'tienda', C: 'compresion', L: 'tienda', E: 'tienda', P: 'tienda', H: 'tienda' }
   // M6: la importada arranca ahora (si no, un texto de ayer simularía 24 h fuera de línea, una y otra vez).
-  const reemplazar = (p: Partida) => (noSeEscribio = !reemplazarPartida(p))
+  // La que había queda en el respaldo (se vuelve desde acá mismo).
+  const reemplazar = (p: Partida) => (noSeEscribio = !reemplazarPartida((a) => reemplazarConRespaldo(a, p)))
+  const respaldo = leerRespaldoPase(almacenLocal)
+  let volver = $state(false)
+  function volverAlRespaldo() {
+    guardarYa() // que la copia de la actual sea de ahora
+    noSeEscribio = !reemplazarPartida(restaurarRespaldo)
+  }
 
   let reloj: ReturnType<typeof setTimeout>
   function guardarAhora() {
@@ -216,6 +226,13 @@
             <p class="grande num">{txt.opciones.descPartida(juego.s.compresiones, txt.duracion(juego.s.tiempoTotal))}</p>
           </div>
 
+          {#if !enApp()}
+            <div class="fila">
+              <span class="texto">{txt.instalar.ajustes}<small>{txt.instalar.ajustesDesc}</small></span>
+              <button class="accion chica" onclick={() => (instalar.abierta = true)}>{txt.instalar.ajustes}</button>
+            </div>
+          {/if}
+
           <div class="fila">
             <span class="texto">{txt.opciones.guardarAhora}<small>{guardadoOk ? txt.opciones.guardado : txt.opciones.guardadoAuto}</small></span>
             <button class="accion chica" onclick={guardarAhora}>{txt.opciones.guardarAhora}</button>
@@ -261,6 +278,22 @@
               {/if}
             {/if}
           </div>
+
+          {#if respaldo}
+            <div class="bloque">
+              <div class="fila sin-borde">
+                <span class="texto">{txt.pase.respaldoTitulo}<small>{txt.pase.respaldoDesc(txt.opciones.descPartida(respaldo.estado.compresiones, txt.duracion(respaldo.estado.tiempoTotal)))}</small></span>
+                {#if !volver}<button class="accion chica" onclick={() => (volver = true)}>{txt.pase.volver}</button>{/if}
+              </div>
+              {#if volver}
+                <p class="aviso-fuerte" role="alert">{txt.pase.volverConfirma}</p>
+                <div class="acciones">
+                  <button class="accion chica peligro" use:enfocar onclick={volverAlRespaldo}>{txt.pase.volver}</button>
+                  <button class="secundario" onclick={() => (volver = false)}>{txt.opciones.cancelar}</button>
+                </div>
+              {/if}
+            </div>
+          {/if}
 
           <div class="bloque peligro-zona">
             <div class="fila sin-borde">

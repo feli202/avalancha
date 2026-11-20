@@ -59,7 +59,7 @@ for (const [W, H] of TAMANOS) {
   await cdp('Emulation.setTouchEmulationEnabled', { enabled: Math.min(W, H) < 1024 })
   await cdp('Page.navigate', { url })
   await espera(3000)
-  await ev(`localStorage.clear()`)
+  await ev(`localStorage.clear(); localStorage.setItem('avalancha.instalar', '1')`) // sin la tarjeta de instalar encima
   await cdp('Page.navigate', { url })
   await espera(3000)
   await ev(`document.querySelector('.titulo button')?.click()`)

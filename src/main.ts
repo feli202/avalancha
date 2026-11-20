@@ -11,7 +11,9 @@ import { txt } from './strings'
 document.title = txt.titulo
 
 import { vigilarVersion } from './version.svelte'
+import { escucharInstalacion } from './instalar.svelte'
 
+escucharInstalacion() // antes que nada: beforeinstallprompt puede llegar enseguida
 arrancar() // primero: carga la partida
 if (import.meta.env.PROD) vigilarVersion()
 mount(App, { target: document.getElementById('app')! })

@@ -1,6 +1,6 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
 import { CFG, CFG1, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, type Ausencia, type State } from '../core'
-import { almacenLocal } from '../guardado/almacen'
+import { almacenLocal, type Almacen } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
 import { instantanea } from '../render/instantanea'
@@ -404,8 +404,8 @@ export function guardarYa() {
 
 /** Importar o borrar: escribe la partida y recarga, así entra por el mismo camino que una carga (fuera de línea, fotos de la pila).
  * false si no se pudo escribir: no recarga (volvería la partida vieja). */
-export function reemplazarPartida(p: Partida) {
-  try { guardar(almacenLocal, p) } catch (e) { console.warn(e); return false }
+export function reemplazarPartida(p: Partida | ((a: Almacen) => void)) {
+  try { typeof p === 'function' ? p(almacenLocal) : guardar(almacenLocal, p) } catch (e) { console.warn(e); return false }
   reemplazando = true // que el pagehide no la pise con la de ahora
   location.reload()
   return true

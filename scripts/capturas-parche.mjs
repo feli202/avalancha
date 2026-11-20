@@ -48,7 +48,7 @@ const scroll = () => ev(`document.documentElement.scrollHeight > innerHeight + 1
 for (const [W, H] of tam) {
   await cdp('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: W < 768 ? 2 : 1, mobile: W < 768 })
   await cdp('Page.navigate', { url }); await espera(3000)
-  await ev(`localStorage.clear()`)
+  await ev(`localStorage.clear(); localStorage.setItem('avalancha.instalar', '1')`) // sin la tarjeta de instalar encima
   await cdp('Page.navigate', { url }); await espera(3000)
   await ev(`document.querySelector('.titulo button')?.click()`); await espera(2500)
   await ev(`Promise.all([${modulo('/src/ui/juego.svelte.ts')}, ${modulo('/src/ui/ajustes.svelte.ts')}, ${modulo('/src/version.svelte.ts')}]).then(([j, { ajustes: a }, v]) => {

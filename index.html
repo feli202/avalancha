@@ -2,14 +2,22 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!-- Que el navegador pregunte siempre por el index.html (los .js y .css llevan hash). src/version.svelte.ts avisa al que no hace caso. -->
     <meta http-equiv="Cache-Control" content="no-cache" />
     <title>Avalancha</title>
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
-    <!-- iOS: "Agregar a pantalla de inicio" no usa SVG; el ícono es el logo en PNG de 180×180 sobre el fondo del juego. -->
+    <!-- Instalable como app (PWA; src/instalar.svelte.ts). Rutas relativas: el sitio está en feli202.github.io/avalancha/. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#07080f" />
+    <!-- iOS: "Agregar a inicio" no usa SVG ni el manifest para el ícono: una mini pila de 180×180 (scripts/iconos.mjs). -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Avalancha" />
+    <!-- Instalado en iOS: barra de estado negra, el juego empieza debajo. El notch de costado (apaisado) y la barra de inicio, con
+         env(safe-area-inset-*): #app a los costados y --nav en la barra de capas. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <style>
       /* SPEC 6.1 */
       :root {
@@ -38,6 +46,9 @@
       .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
       /* Al cargar, la pantalla entra con un fundido corto (también directo al juego, con partida guardada). */
       #app { animation: entrar 0.5s ease-out; }
+      /* Safe areas (viewport-fit=cover): #app es el bloque contenedor de todo lo fijo (transform), corrido lo que ocupa el notch.
+         Fuera del iPhone los márgenes son 0 y no cambia nada. Abajo no: la barra de capas ya suma el suyo (--nav). */
+      #app { position: fixed; inset: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px); transform: translateX(0); }
       @keyframes entrar { from { opacity: 0; } }
       :focus-visible { outline: 2px solid var(--ambar); outline-offset: 2px; }
       /* Reducir movimiento (Ajustes, ajustes.svelte.ts): en la interfaz los bucles corren una sola vez y las transiciones son
