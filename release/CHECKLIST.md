@@ -22,7 +22,7 @@ Página: https://exponent-games.itch.io/avalanche → Edit game.
 - [ ] **Genre / Tags / AI disclosure / Accessibility**: `itch/etiquetas.txt`.
 - [ ] **Pricing**: *No payments* o *Donate* (pago opcional, lo decide itch, no el juego).
 - [ ] **Visibility**: Public → Save.
-- [ ] **Devlog**: nuevo post "Avalancha 1.0" con `itch/changelog_1.0.md` (inglés arriba, español abajo).
+- [ ] **Devlog**: todo en `itch/devlog_1.0.md` (título, tipo, portada, etiquetas, texto EN/ES y qué imagen va en cada lugar). El changelog técnico completo queda en `itch/changelog_1.0.md`.
 - [ ] Probar la página publicada en la PC y en el celular (tocar Jugar, ver Créditos).
 
 ## 2. galaxy.click
