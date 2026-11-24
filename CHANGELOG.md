@@ -1,5 +1,21 @@
 # Avalancha — novedades
 
+## 2026-11-23 · progreso fuera de línea
+
+**Español**
+
+- **El progreso fuera de línea pasa a ser un empujoncito**: cuenta como mucho 2 horas y a ×0,1 (2 horas fuera = 12 minutos de juego). Lo que pase de 2 horas no da nada.
+- **Sin Infinitos mientras no estás**: la Energía te espera en el umbral (ni Cristales, ni reliquias, ni Infinitos automáticos). Estratos y Escarcha crecen con el mismo tiempo reducido; dentro de un Defecto no avanza nada.
+- Al volver, la pantalla dice cuánto estuviste fuera y a cuánto equivale ("Estuviste 1 día fuera · cuenta como 12 min de juego").
+- Con la pestaña abierta (aunque esté oculta) el juego sigue andando normal.
+
+**English**
+
+- **Offline progress is now a small nudge**: it counts up to 2 hours at ×0.1 (2 hours away = 12 minutes of play). Anything past 2 hours gives nothing.
+- **No Infinities while you're away**: Energy waits for you at the threshold (no Crystals, relics or automatic Infinities). Strata and Frost grow with the same reduced time; inside a Defect nothing advances.
+- When you return, the screen says how long you were away and what it counts as ("You were away 1 day · it counts as 12m of play").
+- With the tab open (even hidden) the game keeps running normally.
+
 ## 2026-11-23 · rendimiento y batería
 
 **Español**

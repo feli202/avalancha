@@ -2301,3 +2301,17 @@ Objetivos: con ahorro menos de un tercio (24 % en la Arena, 5–8 % tapada) ✓;
 **Capturas**: `capturas/rendimiento/antes-arena-celular.png`, `despues-arena-celular.png` (sin ahorro) y `despues-arena-celular-ahorro.png`: la pila se sigue viendo pixel art (con ahorro, más gruesa). `capturas-celular.mjs` en 390×844 y 1366×768 (`capturas/rendimiento/`): ninguna pantalla scrollea. Medidas crudas en `capturas/rendimiento/medidas-*.json`.
 
 **No medido**: un celular real (temperatura y batería de verdad); GPU solo como píxeles pintados.
+
+### Bloque 2: offline mucho más débil (2026-11-23)
+
+Antes un día AFK terminaba la Capa 1 (24 h de tope, ×0,7 en la Capa 1 e Infinitos automáticos offline). Ahora es un empujoncito:
+
+- **Tope 2 h, ×0,1** (`fuera_de_linea.tope_horas` y `.eficiencia` en `balance/config.json`; sale `fuera_de_linea_eficiencia` de `config_capa1.json`). Vale para las dos capas: 2 h fuera = 12 min de juego; lo que pasa de 2 h no da nada.
+- **Sin Infinitos offline** (`tick(s, dt, false)` apaga el Infinito automático): la Energía se frena en el umbral, o donde estaba si ya pasó 1e308 con el Infinito roto. Sin Cristales, reliquias ni Infinitos automáticos; las compresiones automáticas solo dentro de la corrida.
+- **Estratos y Escarcha** crecen con el mismo tiempo reducido (mismo tick). **Dentro de un Defecto no avanza nada** (`Ausencia.defecto`).
+- **Qué es ausencia** (`juego.svelte.ts`): juego cerrado, o el bucle sin correr más de 2 min (`SIN_BUCLE_S`: app en segundo plano, máquina dormida). La pestaña oculta sigue con la economía a 1 Hz (Bloque 1) y no se castiga; si se atrasa (Chrome la espacia hasta una vez por minuto) se pone al día con `fueraDeLinea(s, t, false)`, sin reglas ni pantalla.
+- **Pantalla de regreso** (`Paneles.svelte`): "Estuviste 1 día fuera · cuenta como 12 min de juego", la Energía, compresiones / Estratos / Escarcha, y la regla ("Fuera de línea cuenta hasta 2 h, a ×0,1, y sin Infinitos"); dentro de un Defecto lo dice.
+- Textos de ayuda de la Escarcha ("también con el juego cerrado") aclaran que offline es mucho más lento. SPEC §8 y SPEC_CAPA1 §12 actualizados.
+- **Prueba** (`tests/guardado.test.ts`): `tests/fixtures/mitad_capa1.json` es el bot de la Capa 1 a las 3,9 h (474 Infinitos, Infinito roto, 5 estratos, Infinito automático prendido). 24 h fuera: menos de 30 min de juego simulado (12 min), ningún Infinito, mismos Cristales y reliquias; 30 min jugando dan más Infinitos, Cristales y estrato 1; en un Defecto la ausencia devuelve el mismo estado. Los tests de equivalencia del tick (8 h por tramos = 8 h de tick) pasan a `reglas = false`.
+
+No toca el balance activo (sin cambios en los simuladores ni en la tabla de SPEC_CAPA1 §2): solo la ausencia.

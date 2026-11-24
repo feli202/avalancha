@@ -99,10 +99,10 @@ describe('Escarcha', () => {
     expect(mejorarEscarcha(n, 'aguante')).toBe(n) // 10 > 2
   })
 
-  it('fuera de línea crece con el ×0,7 del tiempo, y se guarda', () => {
+  it('fuera de línea crece con el tiempo que cuenta (×eficiencia), y se guarda', () => {
     const s = abierta(10)
-    const a = fueraDeLinea(s, 3600, CFG1.fuera_de_linea_eficiencia)
-    expect(a.s.escarcha.logX).toBeCloseTo(10 + 3600 * CFG1.fuera_de_linea_eficiencia * crecimientoEscarcha(s), 6)
+    const a = fueraDeLinea(s, 3600)
+    expect(a.s.escarcha.logX).toBeCloseTo(10 + 3600 * CFG.fuera_de_linea.eficiencia * crecimientoEscarcha(s), 6)
     expect(a.escarchaAntes).toBe(10)
     const p = deserializar(serializar({ estado: a.s, guardadoEn: 0, vistos: {}, record: 0, logros: {} }))
     expect(p.estado.escarcha).toEqual(a.s.escarcha)

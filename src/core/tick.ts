@@ -49,12 +49,13 @@ function comprimirSola(s: State, dt: number): State {
   return espera === s.automat.espera ? s : { ...s, automat: { ...s.automat, espera } }
 }
 
-/** Avanza la economía dt segundos (Euler explícito, igual que balance/sim.py). */
-export function tick(s: State, dt: number): State {
+/** Avanza la economía dt segundos (Euler explícito, igual que balance/sim.py). `autoInfinito = false`: fuera de línea, sin
+ * Infinito automático (la Energía espera en el umbral). */
+export function tick(s: State, dt: number, autoInfinito = true): State {
   // Con Memoria nv4 y el interruptor, el Infinito se hace solo cuando lo diga su modo (bloque 10 y C6). Elige su reliquia
   // con la regla (SPEC_CAPA1 §5). Sin Romper, la economía queda congelada en 1e308 hasta el Infinito.
   // Dentro de un Defecto el Infinito automático no corre: solo termina en la meta (ganar, con la misma regla de reliquia).
-  if (!enDefecto(s) && enInfinito(s) && autoActivo(s, 'infinito') && infinitoAutoListo(s)) return elegirSola(infinito(s))
+  if (autoInfinito && !enDefecto(s) && enInfinito(s) && autoActivo(s, 'infinito') && infinitoAutoListo(s)) return elegirSola(infinito(s))
   if (metaAlcanzada(s)) return autoActivo(s, 'infinito') ? elegirSola(ganarDefecto(s)) : ganarDefecto(s)
   if (congelada(s)) return s
   const suma = s.energia.add(produccion(s).mul(dt))

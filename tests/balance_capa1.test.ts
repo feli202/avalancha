@@ -166,13 +166,13 @@ describe.skipIf(lento)('balance de la Capa 1: núcleo real, revisa cada 15 s (le
   it('hueco máximo entre compras de la Capa 1 (desde 1,5 h) < 40 min', () => expect(p.hueco).toBeLessThan(40 * 60))
 })
 
-describe.skipIf(lento)('fuera de línea (lento): 12 h ausente rinden menos que 12 h jugando', () => {
+describe.skipIf(lento)('fuera de línea (lento): 12 h ausente rinden menos que 12 h jugando (cuentan 2 h a ×0,1)', () => {
   it('Cristales totales y estratos', () => {
     let base = jugar1(15, 4 * H, 'fin11').s // con el Infinito roto y el Infinito automático en el óptimo
     if (enDefecto(base)) base = abandonarDefecto(base)
     let activo = base
     for (let i = 0; i < 12 * H; i++) activo = tick(activo, 1)
-    const afuera = fueraDeLinea(base, 12 * H, CFG1.fuera_de_linea_eficiencia).s
+    const afuera = fueraDeLinea(base, 12 * H).s
     expect(afuera.cristalesTotales.lt(activo.cristalesTotales)).toBe(true)
     expect(afuera.estratos.s[0]).toBeLessThan(activo.estratos.s[0])
   }, 30 * 60_000)

@@ -30,7 +30,7 @@ export interface Config {
   /** SPEC 5: Energía máxima a la que aparece cada parte de la interfaz. */
   revelado: { tienda: number; ambar: number; compresion_log10: number }
   punado: { granos: number; max_por_segundo: number }
-  fuera_de_linea: { paso_s: number; max_pasos: number; tope_horas: number }
+  fuera_de_linea: { paso_s: number; max_pasos: number; tope_horas: number; eficiencia: number }
   /** SPEC 7: umbrales de los logros (sin efecto en el balance). */
   logros: {
     granos_pila: number; avalancha: number; anillo: number; densidad: number; anillo_grande: number

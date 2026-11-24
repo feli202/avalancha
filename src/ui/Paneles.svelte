@@ -2,7 +2,7 @@
   // Lo que flota sobre la pila: "Mientras no estabas" y el guardado dañado. Y Escape y el foco de todas las pantallas.
   // Un solo lenguaje: velo oscuro translúcido, sin cajas, jerarquía por tamaño, números con cifras tabulares.
   import { untrack } from 'svelte'
-  import { CFG, CFG1, TIPOS, efectoNivel, elegir, fusionables, fusionarTodo, infinitoRoto, inventarioLleno } from '../core'
+  import { CFG, TIPOS, efectoNivel, elegir, fusionables, fusionarTodo, inventarioLleno } from '../core'
   import { caraReliquia } from '../render/miniPilas'
   import IconoTipo from './IconoTipo.svelte'
   import * as sonido from './sonido'
@@ -99,19 +99,13 @@
   <div class="velo" class:quieto={quieto()} role="presentation" onclick={afuera}>
     <div class="centro recompensa hielo placa grietas" role="dialog" aria-modal="true" aria-labelledby="ausencia-t" aria-describedby="ausencia-d">
       <p id="ausencia-t" class="rotulo">{txt.ausencia.titulo}</p>
+      <p class="detalle num">{txt.ausencia.tiempo(txt.ausencia.fuera(a.fuera), txt.duracion(a.segundos))}</p>
       <p id="ausencia-d" class="grande">
-        {#if a.infinitos > 0}
-          <span class="cifra num">+{formato(a.cristales)}</span>
-          <span class="unidad">{txt.ausencia.cristales}</span>
-        {:else}
-          <span class="cifra num">+{formato(a.energia)}</span>
-          <span class="unidad">{txt.ausencia.energia}</span>
-        {/if}
+        <span class="cifra num">+{formato(a.energia)}</span>
+        <span class="unidad">{txt.ausencia.energia}</span>
       </p>
       <ul class="ganado num">
-        <li>{a.infinitos > 0
-          ? `${txt.ausencia.infinitos(a.infinitos)} · ${txt.ausencia.reliquias(a.infinitos, txt.cristal.relicario.regla.modos[a.s.relicario.regla.modo])}`
-          : infinitoRoto(a.s) ? txt.ausencia.sinInfinitoRoto : txt.ausencia.sinInfinito}</li>
+        <li>{a.defecto ? txt.ausencia.defecto : txt.ausencia.sinInfinito}</li>
         {#if ab > 0}
           <li class="estratos">
             <span>{txt.ausencia.estratos}</span>
@@ -125,12 +119,7 @@
           <li>{txt.ausencia.escarcha((a.s.escarcha.logX - a.escarchaAntes).toLocaleString(txt.locale, { maximumFractionDigits: 1 }))}</li>
         {/if}
       </ul>
-      <p class="detalle num">
-        {a.segundos >= CFG.fuera_de_linea.tope_horas * 3600
-          ? txt.ausencia.tope(CFG.fuera_de_linea.tope_horas)
-          : txt.ausencia.tiempo(txt.duracion(a.segundos))}
-        <span class="sep">·</span>{txt.ausencia.eficiencia(CFG1.fuera_de_linea_eficiencia.toLocaleString(txt.locale))}
-      </p>
+      <p class="detalle">{txt.ausencia.regla(CFG.fuera_de_linea.tope_horas, CFG.fuera_de_linea.eficiencia.toLocaleString(txt.locale))}</p>
       <button class="accion" use:enfocar onclick={cerrar}>{txt.ausencia.seguir}</button>
     </div>
   </div>
@@ -165,15 +154,13 @@
   <div class="velo" class:quieto={quieto()} role="presentation" onclick={afuera}>
     <div class="centro recompensa" role="dialog" aria-modal="true" aria-labelledby="ausencia-t" aria-describedby="ausencia-d">
       <p id="ausencia-t" class="rotulo">{txt.ausencia.titulo}</p>
+      <p class="detalle num">{txt.ausencia.tiempo(txt.ausencia.fuera(a.fuera), txt.duracion(a.segundos))}</p>
       <p id="ausencia-d" class="grande">
         <span class="cifra num">+{formato(a.energia)}</span>
         <span class="unidad">{txt.ausencia.energia}</span>
       </p>
       <p class="detalle num">
-        {a.segundos >= CFG.fuera_de_linea.tope_horas * 3600
-          ? txt.ausencia.tope(CFG.fuera_de_linea.tope_horas)
-          : txt.ausencia.tiempo(txt.duracion(a.segundos))}
-        {#if a.compresiones > 0}<span class="sep">·</span>{txt.ausencia.compresiones(a.compresiones)}{/if}
+        {#if a.compresiones > 0}{txt.ausencia.compresiones(a.compresiones)}<span class="sep">·</span>{/if}{txt.ausencia.regla(CFG.fuera_de_linea.tope_horas, CFG.fuera_de_linea.eficiencia.toLocaleString(txt.locale))}
       </p>
       <button class="accion" use:enfocar onclick={cerrar}>{txt.ausencia.seguir}</button>
     </div>

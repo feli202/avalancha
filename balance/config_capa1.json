@@ -617,7 +617,6 @@
   "_g": "g = g_base * (1 + g_por_presion * Presion) * crecimiento.x^nivel * germen * recompensas",
   "g_por_presion": 0.003
  },
- "fuera_de_linea_eficiencia": 0.7,
  "objetivos_horas_desde_primer_infinito": {
   "segundo_infinito": 1.0,
   "memoria_completa": 1.75,

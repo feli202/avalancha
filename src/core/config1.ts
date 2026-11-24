@@ -48,8 +48,6 @@ export interface Config1 {
     /** §5: Pulido de una pieza de nivel n, en log10 de Esquirlas. */
     pulido: { c0: number; paso: number }
   }
-  /** SPEC_CAPA1 §12: lo que rinde el tiempo con el juego cerrado. */
-  fuera_de_linea_eficiencia: number
   /** Memoria: Cascada y Mutaciones automáticas compran solo si cuestan 10^esto veces menos que la Energía. */
   autocompradores_umbral_log10: number
 }

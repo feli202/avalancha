@@ -112,7 +112,7 @@ for (const [W, H] of TAMANOS) {
     await ev(`window.__j.panel = null`)
     await espera(500)
   }
-  await ev(`${modulo('/src/core/index.ts')}.then((c) => { const j = window.__j; j.ausencia = { s: j.s, segundos: 5400, energia: j.s.energia, compresiones: 3, infinitos: 6, cristales: j.s.cristales.mul(0).add('4.1e12'), estratosAntes: j.s.estratos.s.map((x) => x - 2), escarchaAntes: j.s.escarcha.logX - 1.5 } })`)
+  await ev(`${modulo('/src/core/index.ts')}.then((c) => { const j = window.__j; j.ausencia = { s: j.s, fuera: 86400, segundos: 720, defecto: false, energia: j.s.energia, compresiones: 3, estratosAntes: j.s.estratos.s.map((x) => x - 2), escarchaAntes: j.s.escarcha.logX - 1.5 } })`)
   await mirar('ausencia')
   await ev(`window.__j.ausencia = null`)
   for (const [n, r] of Object.entries(resumen)) {

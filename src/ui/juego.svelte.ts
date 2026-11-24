@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, CFG1, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, campoInvalido, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, type Ausencia, type State } from '../core'
+import { CFG, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, campoInvalido, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, type Ausencia, type State } from '../core'
 import { almacenLocal, type Almacen } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
@@ -18,6 +18,9 @@ const MAX_PASOS = 200 // por cuadro; con más tiempo acumulado (pestaña oculta,
 const GUARDAR_CADA = 10_000 // ms (SPEC 8; v1.0 pide como mínimo cada 30 s)
 let ultimoMalo = '' // para no llenar la consola con el mismo error en cada cuadro
 const AVISAR_DESDE = 60 // s de ausencia para mostrar "Mientras no estabas"
+/** s sin que corra el bucle (la app en segundo plano o la máquina suspendida): eso es una ausencia, con sus reglas (offline.ts).
+ * Con la pestaña oculta el bucle sigue una vez por segundo (Chrome lo espacia hasta una vez por minuto): eso no es ausencia. */
+const SIN_BUCLE_S = 120
 
 class Juego {
   s = $state.raw(estadoInicial())
@@ -460,7 +463,7 @@ export function arrancar() {
   let antes = Date.now()
   let acum = 0
   let p: ReturnType<typeof cargar> = null
-  let calculo: { pasos: Generator<number, Ausencia>; real: number } | null = null
+  let calculo: { pasos: Generator<number, Ausencia>; real: number; ausente: boolean } | null = null
   let vuelta = 0 // ms de la última vuelta del bucle: la interfaz se actualiza como mucho cada uiMs()
   // Con un temporizador y no requestAnimationFrame: entre vuelta y vuelta el navegador no tiene que producir cuadros. Con la
   // pestaña oculta el navegador lo espacia solo (una vez por segundo o más): la economía sigue, a bajo ritmo, sin dibujar nada.
@@ -517,8 +520,10 @@ export function arrancar() {
     // Bloque 8: la pila de antes de estos pasos, por si en ellos llega un Infinito automático (una vez por segundo basta).
     if (ahora - fotoEn > 1000) (fotoActual = fotoPila()), (fotoEn = ahora)
     if (!calculo && acum > MAX_PASOS * PASO) {
-      // Con el juego cerrado la Capa 1 rinde ×0,7 del tiempo; la pestaña abierta (oculta) nunca se castiga.
-      calculo = { pasos: fueraDeLineaPasos(s, acum, cerrado && s.infinitos > 0 ? CFG1.fuera_de_linea_eficiencia : 1), real }
+      // Juego cerrado, app en segundo plano o máquina dormida: ausencia (tope, eficiencia, sin Infinitos). La pestaña abierta
+      // que se atrasó no se castiga: corre todo con el tick normal.
+      const ausente = cerrado || real > SIN_BUCLE_S
+      calculo = { pasos: fueraDeLineaPasos(s, acum, ausente), real, ausente }
       acum = 0
     }
     if (calculo) {
@@ -533,7 +538,7 @@ export function arrancar() {
       }
       const a = r.value
       // Contra el tiempo real (M11): a ×50 un tirón de 1,2 s no es una ausencia. En la Capa 0 no tapa la llegada al primer Infinito.
-      if (calculo.real >= AVISAR_DESDE && a.s !== s && !(s.infinitos === 0 && enInfinito(a.s))) juego.ausencia = a
+      if (calculo.ausente && calculo.real >= AVISAR_DESDE && (a.s !== s || a.defecto) && !(s.infinitos === 0 && enInfinito(a.s))) juego.ausencia = a
       juego.calculo = null
       calculo = null
       juego.saltos++

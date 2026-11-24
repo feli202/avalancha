@@ -42,8 +42,8 @@
 
   "punado": { "granos": 5, "max_por_segundo": 8 },
 
-  "_fuera_de_linea": "SPEC 8: pasos de paso_s hasta max_pasos; con más tiempo, pasos más largos. Tope en horas.",
-  "fuera_de_linea": { "paso_s": 1, "max_pasos": 28800, "tope_horas": 24 },
+  "_fuera_de_linea": "SPEC 8: la ausencia cuenta como mucho tope_horas (lo que pasa no da nada) y ese tiempo vale ×eficiencia (2 h = 12 min de juego), sin Infinitos. Pasos de paso_s hasta max_pasos; con más tiempo, pasos más largos.",
+  "fuera_de_linea": { "paso_s": 1, "max_pasos": 28800, "tope_horas": 2, "eficiencia": 0.1 },
 
   "_logros": "SPEC 7: umbrales de los logros. No afectan el balance.",
   "logros": { "granos_pila": 100, "avalancha": 1000, "anillo": 10, "densidad": 2, "anillo_grande": 50,

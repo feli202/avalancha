@@ -1,12 +1,13 @@
 // Hito 5a: progreso fuera de línea y guardado, con el núcleo real.
 import Decimal from 'break_infinity.js'
 import { describe, expect, it } from 'vitest'
-import { CFG, CFG1, INFINITO, infinito, comprar, comprarTodo, comprimir, disponibles, estadoInicial, fueraDeLinea, tick, type State } from '../src/core'
+import { CFG, CFG1, INFINITO, infinito, comprar, comprarTodo, comprimir, disponibles, enDefecto, estadoInicial, fueraDeLinea, tick, type State } from '../src/core'
 import type { Almacen } from '../src/guardado/almacen'
 import {
   CLAVE, COPIAS, COPIA_CADA_MS, RESPALDO, VERSION, cargar, deserializar, exportar, guardar, importar, leerCopias, serializar, type Partida,
 } from '../src/guardado/guardado'
 import guardadoCapa0 from './fixtures/guardado_capa0_infinito.json'
+import MITAD_CAPA1 from './fixtures/mitad_capa1.json?raw'
 
 const partida = (estado: State): Partida =>
   ({ estado, guardadoEn: 1.7e12, vistos: { tienda: true }, record: 12345, logros: { derrumbe: true } })
@@ -26,10 +27,11 @@ describe('fuera de línea', () => {
   const desde = (compresiones: number) => ({ ...estadoInicial(), compresiones })
 
   for (const c of [0, 3, CFG.autocompradores.compresion_auto]) {
-    it(`8 h fuera de línea = 8 h de tick normal (±1 %), desde la Compresión ${c}`, () => {
+    // Sin reglas de ausencia (la pestaña oculta que se atrasó): la simulación por tramos da lo mismo que el tick normal.
+    it(`8 h simuladas por tramos = 8 h de tick normal (±1 %), desde la Compresión ${c}`, () => {
       let normal = desde(c)
       for (let i = 0; i < HORAS8; i++) normal = tick(normal, 1)
-      const a = fueraDeLinea(desde(c), HORAS8)
+      const a = fueraDeLinea(desde(c), HORAS8, false)
       console.log(
         `C${c}: normal 1e${normal.energia.log10().toFixed(3)} G ${normal.granos.toExponential(3)} comp ${normal.compresiones}` +
           ` | fuera 1e${a.s.energia.log10().toFixed(3)} G ${a.s.granos.toExponential(3)} comp ${a.s.compresiones}`,
@@ -48,15 +50,40 @@ describe('fuera de línea', () => {
   it('hasta max_pasos usa pasos de 1 s: idéntico al tick normal', () => {
     let normal = desde(3)
     for (let i = 0; i < 5000; i++) normal = tick(normal, 1)
-    expect(serializar(partida(fueraDeLinea(desde(3), 5000).s))).toBe(serializar(partida(normal)))
+    expect(serializar(partida(fueraDeLinea(desde(3), 5000, false).s))).toBe(serializar(partida(normal)))
   })
 
-  it('tope de 24 h', () => {
-    const tope = CFG.fuera_de_linea.tope_horas * 3600
-    const a = fueraDeLinea(desde(3), 10 * tope)
-    expect(a.segundos).toBe(tope)
-    expect(a.s.tiempoTotal).toBeCloseTo(tope, 6)
+  it('una ausencia cuenta como mucho tope_horas, a ×eficiencia', () => {
+    const { tope_horas, eficiencia } = CFG.fuera_de_linea
+    const a = fueraDeLinea(desde(3), 10 * tope_horas * 3600)
+    expect(a.fuera).toBe(10 * tope_horas * 3600)
+    expect(a.segundos).toBeCloseTo(tope_horas * 3600 * eficiencia, 6)
+    expect(a.s.tiempoTotal).toBeCloseTo(tope_horas * 3600 * eficiencia, 6)
   })
+
+  // Pedido final: el offline es un empujoncito. Una partida a mitad de la Capa 1 (el bot a las 4 h: Infinito roto, Estratos,
+  // Infinito automático prendido) 24 h fuera rinde menos que 30 min jugando, sin ningún Infinito; dentro de un Defecto, nada.
+  it('mitad de la Capa 1: 24 h fuera < 30 min de juego activo, sin Infinitos; en un Defecto no avanza', () => {
+    const s = deserializar(MITAD_CAPA1).estado
+    expect(s.infinitos).toBeGreaterThan(10)
+    const a = fueraDeLinea(s, 24 * 3600)
+    expect(a.s.tiempoTotal - s.tiempoTotal).toBeLessThan(30 * 60)
+    expect(a.s.infinitos).toBe(s.infinitos)
+    expect(a.s.cristalesTotales.eq(s.cristalesTotales)).toBe(true)
+    expect(a.s.relicario.piezas.length).toBe(s.relicario.piezas.length)
+    // 30 min jugando (con sus Infinitos automáticos) dan más que la ausencia, en Cristales y en los Estratos.
+    let activo = s
+    for (let i = 0; i < 30 * 60; i++) activo = tick(activo, 1)
+    expect(activo.infinitos).toBeGreaterThan(s.infinitos)
+    expect(activo.cristalesTotales.gt(a.s.cristalesTotales)).toBe(true)
+    expect(activo.estratos.s[0]).toBeGreaterThan(a.s.estratos.s[0])
+    // Dentro de un Defecto la ausencia no hace nada.
+    const d: State = { ...s, defectos: { ...s.defectos, actual: 'vacancia' } }
+    expect(enDefecto(d)).toBe(true)
+    const b = fueraDeLinea(d, 24 * 3600)
+    expect(b.defecto).toBe(true)
+    expect(b.s).toBe(d)
+  }, 60_000)
 
   it('sin tiempo (o con el reloj para atrás) no cambia nada', () => {
     const s = desde(3)
