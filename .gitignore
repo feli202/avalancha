@@ -8,3 +8,16 @@ marketing/clips/
 perfil-edge/
 .impeccable/hook.cache.json
 marketing/itch/avalancha-web.zip
+
+# Tráiler: tomas crudas y videos en 4K (se regeneran con grabar.mjs y montar.py)
+marketing/trailer/tomas/
+marketing/trailer/revision/
+marketing/trailer/*.mp4
+
+# Claves locales (ElevenLabs CLI): nunca a git
+.env.local
+.env*.local
+
+# release/: los zip y los videos se rehacen (ver release/CHECKLIST.md)
+release/**/*.zip
+release/**/*.mp4

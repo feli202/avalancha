@@ -11,5 +11,7 @@ function guardado(): unknown {
 
 /** El guardado; si no hay, el del navegador: español si empieza con "es", si no, inglés. */
 const g = guardado()
-export const idioma = g === 'es' || g === 'en' ? g : globalThis.navigator?.language?.startsWith('es') ? 'es' : 'en'
+// VITE_IDIOMA: idioma de entrada de un build (galaxy.click sale en inglés); el ajuste guardado manda igual.
+const porBuild = import.meta.env?.VITE_IDIOMA
+export const idioma = g === 'es' || g === 'en' ? g : porBuild === 'es' || porBuild === 'en' ? porBuild : globalThis.navigator?.language?.startsWith('es') ? 'es' : 'en'
 export const txt = idioma === 'en' ? en : es

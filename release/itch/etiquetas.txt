@@ -1,0 +1,19 @@
+Género (Genre): Simulation
+
+Etiquetas (itch.io acepta hasta 10):
+incremental
+idle
+clicker
+prestige
+simulation
+math
+physics
+sandpile
+relaxing
+singleplayer
+
+Plataformas: HTML5 (navegador) · Windows, macOS, Linux, Android, iOS (se juega en el navegador)
+Idiomas: English, Spanish
+Entradas: Mouse, Teclado, Pantalla táctil
+Accesibilidad: Paleta para daltonismo, controles configurables por teclado, reducir destellos
+Uso de IA (pregunta de itch.io): Sí, en el código. Gráficos, recursos y música: hechos por nosotros.

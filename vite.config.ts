@@ -9,7 +9,8 @@ import { clips } from './scripts/clips.mjs'
 // @ts-expect-error: módulo de Node sin tipos
 import { execSync } from 'node:child_process'
 const commit = (() => { try { return String(execSync('git rev-parse --short HEAD')).trim() } catch { return 'local' } })()
-const VERSION = `${new Date().toISOString().slice(0, 16).replace('T', ' ')} · ${commit}`
+import pkg from './package.json' with { type: 'json' }
+const VERSION = `${pkg.version} · ${new Date().toISOString().slice(0, 16).replace('T', ' ')} · ${commit}`
 
 export default defineConfig({
   define: { __VERSION__: JSON.stringify(VERSION) },

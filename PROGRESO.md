@@ -2315,3 +2315,10 @@ Antes un día AFK terminaba la Capa 1 (24 h de tope, ×0,7 en la Capa 1 e Infini
 - **Prueba** (`tests/guardado.test.ts`): `tests/fixtures/mitad_capa1.json` es el bot de la Capa 1 a las 3,9 h (474 Infinitos, Infinito roto, 5 estratos, Infinito automático prendido). 24 h fuera: menos de 30 min de juego simulado (12 min), ningún Infinito, mismos Cristales y reliquias; 30 min jugando dan más Infinitos, Cristales y estrato 1; en un Defecto la ausencia devuelve el mismo estado. Los tests de equivalencia del tick (8 h por tramos = 8 h de tick) pasan a `reglas = false`.
 
 No toca el balance activo (sin cambios en los simuladores ni en la tabla de SPEC_CAPA1 §2): solo la ausencia.
+
+## Carpeta release/ para publicar la 1.0 (2026-11-24)
+
+- **Build final**: `package.json` 1.0.0 entra en la versión (`vite.config.ts`: `1.0.0 · fecha · commit`, la que se ve en Créditos y la que compara el aviso de versión). Créditos suma la fila de IA ("Code: AI-assisted · Graphics, assets and music: made by us" / "Código: asistido por IA · …"). `VITE_IDIOMA=en` fija el idioma de entrada de un build (el de galaxy.click; el ajuste guardado manda igual).
+- **Verificado**: 402 tests, `tsc` 0 errores; build sin el panel de debug (solo con `import.meta.env.DEV`); rutas relativas, carga en la subcarpeta gzip de `itch-falso` sin errores ni 404; Discord (invitación válida por la API), itch.io y la página `exponent-games.itch.io/avalanche` dan 200; `capturas-celular.mjs` en 390×844, 360×640 y 1366×768: ninguna pantalla scrollea, sin errores (en 1366 marca botones de menos de 44 px, igual que antes); Créditos en 390 se ve entero.
+- **release/**: `itch/` (zip, portadas, capturas EN/ES y de celular, GIF, tráileres, descripciones, etiquetas, changelog), `galaxy/` (zip en inglés, miniaturas 1280×720, 512, 256 y 630×500 porque galaxy.click no publica el tamaño, descripción en borrador), `reddit/` (post en borrador y el GIF de 8,6 MB), `redes/` (tráileres verticales, portada, 5 textos por idioma), `CHECKLIST.md`. Zips y mp4 ignorados por git.
+- **Falta (a mano)**: los textos de galaxy y reddit que iba a pasar el usuario; subir a cada sitio; el tráiler a YouTube para itch.

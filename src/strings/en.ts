@@ -582,7 +582,7 @@ export const en: typeof es = {
   },
   version: { hay: 'A new version of Avalancha is available', actualizar: 'Update', rotulo: 'Version' },
   opciones: {
-    creditos: [['Made by', 'feli202'], ['Inspired by', 'Antimatter Dimensions and Revolution Idle']] as [string, string][],
+    creditos: [['Made by', 'feli202'], ['Inspired by', 'Antimatter Dimensions and Revolution Idle'], ['AI', 'Code: AI-assisted · Graphics, assets and music: made by us']] as [string, string][],
     pestanas: { aspecto: 'Appearance', juego: 'Game', partida: 'Save', teclado: 'Controls', creditos: 'Credits' },
     cuantos: (n: number, total: number) => `${n} / ${total}`,
     bloqueadoPor: (logro: string) => `Achievement: ${logro}`,
