@@ -3,7 +3,7 @@
   import { CFG, anillos, autoDisponible, congelada, cristalesAlInfinito, densidad, enElOptimo, enInfinito, infinitoRoto, metaLog10, multAnillos, produccion, puedeComprimir, type DefectoId } from '../core'
   import { cambios, nombre as nombreDef } from './defectos'
   import { txt } from '../strings'
-  import { ajustes } from './ajustes.svelte'
+  import { ajustes, quieto } from './ajustes.svelte'
   import Ayuda from './Ayuda.svelte'
   import { ayuda, ayudaAnillos, ayudaComprimir, ayudaDensidad, ayudaEnergia, ayudaProduccion, ayudaSimple } from './ayudas.svelte'
   import Capas from './Capas.svelte'
@@ -105,7 +105,7 @@
 
 <!-- .lista: se puede comprimir; el botón y el anillo de la pila laten juntos (arrancan en el mismo cuadro). -->
 <!-- inert con un panel encima: el foco y los clics quedan en el panel. -->
-<div class="juego" style:--izq-alto="{izqAlto}px" class:con-capas={s.infinitos > 0} class:en-titulo={juego.titulo} class:entrando class:quieto={ajustes.reducirDestellos} class:lista class:fin class:alejado={juego.panel !== null} inert={hayPanel()}>
+<div class="juego" style:--izq-alto="{izqAlto}px" class:con-capas={s.infinitos > 0} class:en-titulo={juego.titulo} class:entrando class:quieto={quieto()} class:lista class:fin class:alejado={juego.panel !== null} class:tapada={juego.capa !== 'arena'} inert={hayPanel()}>
   <Pila />
   {#if v.compresion && !infinitoRoto(s)}
     <!-- Camino al Infinito: log10(Energía) / log10(Infinito), con una marca en cada umbral de Compresión. Se va al romperlo. -->
@@ -281,7 +281,7 @@
 </div>
 
 <!-- La foto: un destello suave al tocar y el aviso al terminar. -->
-{#key foto.destello}{#if foto.destello}<div class="destello" class:quieto={ajustes.reducirDestellos} aria-hidden="true"></div>{/if}{/key}
+{#key foto.destello}{#if foto.destello}<div class="destello" class:quieto={quieto()} aria-hidden="true"></div>{/if}{/key}
 {#key foto.guardada}{#if foto.guardada}<p class="guardada" role="status">{txt.foto.guardada}</p>{/if}{/key}
 
 {#if juego.titulo}<Titulo />{/if}
@@ -433,10 +433,9 @@
   /* Se puede comprimir: el texto se enciende y late, a la vez que el anillo (Pila.svelte). */
   .lista .comprimir .nombre { color: var(--tinta); animation: latido 2.4s ease-in-out infinite; }
   .quieto .comprimir .nombre { animation: none; text-shadow: 0 0 0.75rem rgb(232 233 243 / 0.6); }
-  @keyframes latido {
-    0%, 100% { text-shadow: 0 0 0.75rem rgb(232 233 243 / 0.7), 0 0 0.25rem var(--fondo); }
-    50% { text-shadow: 0 0 0.25rem rgb(232 233 243 / 0.2), 0 0 0.25rem var(--fondo); opacity: 0.75; }
-  }
+  /* Solo opacidad (se compone sin repintar): el brillo queda fijo y el texto late. */
+  .lista .comprimir .nombre { text-shadow: 0 0 0.75rem rgb(232 233 243 / 0.6), 0 0 0.25rem var(--fondo); }
+  @keyframes latido { 50% { opacity: 0.7; } }
 
   .autocomp { display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; font-size: 0.8125rem; color: var(--tenue); cursor: pointer; }
   .autocomp input { width: 1.25rem; height: 1.25rem; margin: 0; accent-color: var(--tinta); }
@@ -451,7 +450,8 @@
   .cristales-inf { display: block; transition: text-shadow 0.4s; }
   .cristales-inf.optimo { animation: brillo-optimo 1.6s ease-in-out infinite; }
   .quieto .cristales-inf.optimo { animation: none; text-shadow: 0 0 0.6rem var(--hielo); }
-  @keyframes brillo-optimo { 50% { text-shadow: 0 0 0.8rem var(--hielo), 0 0 0.2rem var(--hielo); } }
+  .cristales-inf.optimo { text-shadow: 0 0 0.6rem var(--hielo); }
+  @keyframes brillo-optimo { 50% { opacity: 0.7; } }
 
   .destello { position: fixed; inset: 0; z-index: 20; background: #fff; pointer-events: none; opacity: 0; animation: destello 0.6s ease-out; }
   .destello.quieto { animation-duration: 0.9s; animation-name: destelloSuave; }
@@ -466,6 +466,8 @@
   /* Logros: la pila se aleja y se apaga mientras entra la pantalla (Logros.svelte). */
   .juego { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s, filter 0.6s; }
   .juego.alejado { transform: scale(0.82); opacity: 0; filter: blur(6px); }
+  /* Tapada por Cristalización o Automatización (opacas): los bucles de la Arena se pausan, no se ven. */
+  .juego.tapada, .juego.tapada :global(*), .juego.tapada :global(*::before), .juego.tapada :global(*::after) { animation-play-state: paused !important; }
   .juego.quieto.alejado { transform: none; filter: none; }
   /* z-index 6: por encima de Cristalización y Automatización (4) y de la barra de capas (5): los íconos están en toda capa. */
   .ajustes { position: fixed; top: var(--margen); right: calc(var(--margen) - 0.8125rem); z-index: 6; display: flex; } /* el trazo del ícono, al ras de la lista */

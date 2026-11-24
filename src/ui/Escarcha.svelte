@@ -8,7 +8,7 @@
     puedeRomperEscarcha, romperEscarcha, type MejoraEscarcha, type State,
   } from '../core'
   import { txt } from '../strings'
-  import { ajustes } from './ajustes.svelte'
+  import { quieto } from './ajustes.svelte'
   import { ayuda, type Tip } from './ayudas.svelte'
   import { formato, formatoMult } from './formato'
   import { juego } from './juego.svelte'
@@ -103,7 +103,7 @@
     <p class="total num">{escarchaActiva(s) ? t.total(n2(logX), vale, frena) : t.vidrio}</p>
     <div class="vista">
       <div class="escena" role="img" aria-label={t.escena}>
-        <svg viewBox="-100 -100 200 200" class:quieta={ajustes.reducirDestellos} class:sacude={!!rotura && !ajustes.reducirDestellos}>
+        <svg viewBox="-100 -100 200 200" class:quieta={quieto()} class:sacude={!!rotura && !quieto()}>
           <defs>
             <linearGradient id="esc-hielo" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" stop-color="#f4fcff" /><stop offset="0.45" stop-color="#bfeaff" /><stop offset="1" stop-color="#5fb8d8" />
@@ -177,7 +177,7 @@
   .placa-hex path { transform: scale(var(--g)); transition: transform 1.2s ease-out, fill-opacity 0.8s; }
   /* el borde que está creciendo titila apenas, como hielo que se forma */
   .placa-hex path.borde { stroke: rgb(236 250 255 / 0.9); animation: formarse 2.4s ease-in-out infinite alternate; }
-  @keyframes formarse { to { stroke-opacity: 0.35; } }
+  @keyframes formarse { to { opacity: 0.35; } }
   /* Romper: sacudón, grietas blancas desde el centro y cada hexágono sale despedido, gira y se apaga (del centro hacia afuera). */
   .sacude { animation: sacudir 0.32s ease-out; }
   @keyframes sacudir { 20% { transform: translate(-1.6%, 0.8%); } 45% { transform: translate(1.4%, -1%); } 70% { transform: translate(-0.8%, 0.5%); } }

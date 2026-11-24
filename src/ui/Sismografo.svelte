@@ -3,19 +3,34 @@
   // la levanta a log10(derrumbes) y después decae suave, como la aguja de un sismógrafo.
   import { onMount } from 'svelte'
   import { txt } from '../strings'
-  import { sismo } from './juego.svelte'
+  import { juego, sismo } from './juego.svelte'
+  import { ajustes, fpsTope } from './ajustes.svelte'
 
   const VENTANA_MS = 20_000
   const DECAE_S = 0.35 // constante de tiempo de la caída de cada pico
   const MEDIR_MS = 250
   const RANGO_MIN = 0.5 // décadas: alto mínimo de la escala, para no agrandar ruido cuando todo es parejo
+  const FPS_MAX = 20 // la línea corre ~11 px CSS por segundo: a 20 cuadros ya se ve continua (y el blur de la sombra es caro)
   let canvas: HTMLCanvasElement
 
   onMount(() => {
     const ctx = canvas.getContext('2d')!
     const muestras: [number, number][] = [] // [instante, valor] por cuadro
     let v = 0, piso = 0, tope = 2, antes = performance.now(), medido = -Infinity, bajo = 0, alto = 2
+    // Tamaño medido al cambiar (leer clientWidth en cada cuadro fuerza un layout); a lo sumo densidad 2.
+    let w = 0, h = 0, dpr = 1
+    const obs = new ResizeObserver(([e]) => {
+      dpr = Math.min(devicePixelRatio || 1, 2)
+      w = canvas.width = Math.round(e.contentRect.width * dpr)
+      h = canvas.height = Math.round(e.contentRect.height * dpr)
+    })
+    obs.observe(canvas)
+    let espera: ReturnType<typeof setTimeout> | undefined
     let raf = requestAnimationFrame(function dibujar(ahora) {
+      // Con el tope de la pila (60, 20 con ahorro); tapado por Cristalización o Automatización, nada.
+      // Tapado: se fija de nuevo en un rato, sin pedir cuadros.
+      if (juego.capa !== 'arena') return void (espera = setTimeout(() => (raf = requestAnimationFrame(dibujar)), 250))
+      if (!w || ahora - antes < 1000 / Math.min(fpsTope(), FPS_MAX) - 1) return void (raf = requestAnimationFrame(dibujar))
       const dt = Math.min(0.1, (ahora - antes) / 1000)
       antes = ahora
       v *= Math.exp(-dt / DECAE_S)
@@ -36,15 +51,12 @@
       tope += (alto - tope) * k
       const y01 = (m: number) => Math.min(Math.max((m - piso) / (tope - piso), 0), 1)
 
-      const dpr = devicePixelRatio
-      const w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr)
-      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h }
       ctx.clearRect(0, 0, w, h)
       ctx.lineWidth = 1.75 * dpr
       ctx.lineJoin = 'round'
       ctx.strokeStyle = 'rgb(232 233 243 / 0.95)'
       ctx.shadowColor = 'rgb(232 233 243 / 0.55)'
-      ctx.shadowBlur = 5 * dpr
+      ctx.shadowBlur = ajustes.bateria ? 0 : 5 * dpr // ahorro: sin brillo
       // Línea base plana desde el borde izquierdo: ocupa todo el ancho aunque todavía no haya 20 s de muestras.
       const base = h - 2 * dpr
       ctx.beginPath()
@@ -53,7 +65,7 @@
       ctx.stroke()
       raf = requestAnimationFrame(dibujar)
     })
-    return () => cancelAnimationFrame(raf)
+    return () => { cancelAnimationFrame(raf); clearTimeout(espera); obs.disconnect() }
   })
 </script>
 

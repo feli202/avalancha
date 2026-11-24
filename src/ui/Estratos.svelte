@@ -9,7 +9,7 @@
   import { EstratosLienzo } from '../render/estratosLienzo'
   import { COLORES_DALTONISMO, PALETAS } from '../render/paletas'
   import { txt } from '../strings'
-  import { ajustes } from './ajustes.svelte'
+  import { ajustes, quieto } from './ajustes.svelte'
   import { ayuda, type Tip } from './ayudas.svelte'
   import { velocidadEstrato } from './desglose'
   import { formato, formatoMult } from './formato'
@@ -68,7 +68,7 @@
     // Lo lleno que se ve cada bandeja: crece con los granos (s_k en log10) y está llena al tope. Es visual, no balance.
     const objetivo = ocho.map((k) => (k >= n ? 0 : frenado(k) ? 1 : Math.min(0.9, s.estratos.s[k] / (s.estratos.s[k] + 6))))
     lienzo?.poner({
-      abiertos: n, objetivo, foco, quieta: ajustes.reducirDestellos, sePuedeAbrir: puedeAbrir(s),
+      abiertos: n, objetivo, foco, quieta: quieto(), sePuedeAbrir: puedeAbrir(s),
       // el chorro de la pila: más grueso con más velocidad, con tope
       chorro: n ? Math.min(5, 0.6 + Math.log2(1 + gamma(0) / E.gamma_log10_por_s) * 0.8) : 0,
       tope: ocho.map(frenado),

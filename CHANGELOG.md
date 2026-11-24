@@ -1,5 +1,19 @@
 # Avalancha — novedades
 
+## 2026-11-23 · rendimiento y batería
+
+**Español**
+
+- **Mucho menos consumo en el celular**: la pila se dibuja a la resolución de sus celdas (sigue siendo pixel art), nunca a más de 60 fps aunque la pantalla sea de 120 Hz, y solo cuando algo cambia. Con la pestaña oculta o la Arena tapada no se dibuja nada.
+- **Modo ahorro de batería** (Ajustes → Juego), prendido de entrada en celulares: pila a 20 fps y a media resolución, sin brillos ni partículas, interfaz a 4 actualizaciones por segundo y, si no tocás nada por un minuto, la pila se queda quieta. Se gana igual.
+- La tasa de refresco ya no tiene "Sin límite": 15, 30 o 60.
+
+**English**
+
+- **Much lower battery use on phones**: the pile is drawn at its cell resolution (still pixel art), never above 60 fps even on 120 Hz screens, and only when something changes. Nothing is drawn while the tab is hidden or the Sand is covered.
+- **Battery saver** (Settings → Game), on by default on phones: the pile at 20 fps and half resolution, no glow or particles, the interface updates 4 times a second, and after a minute without input the pile holds still. You earn the same.
+- Frame rate no longer has "Unlimited": 15, 30 or 60.
+
 ## 2026-11-20 · versión 1.0 (fin de la Capa 1)
 
 **Español** (para pegar en itch.io)

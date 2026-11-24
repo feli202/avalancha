@@ -5,7 +5,7 @@
   import { ALTURA_DE_COLOR, COLOR_CSS, PilaVisual, brillo } from '../render/pilaVisual'
   import { txt } from '../strings'
   import { formato, formatoMult } from './formato'
-  import { ajustes } from './ajustes.svelte'
+  import { ajustes, fpsTope, quieto } from './ajustes.svelte'
   import { COLORES_DALTONISMO, EFECTOS, FONDOS, MARCOS, PALETAS, css } from '../render/paletas'
   import { marco } from '../render/marcos'
   import { contarAvalancha, muestraAvalancha } from '../guardado/historial'
@@ -19,6 +19,8 @@
   const LEJOS = 0.5 // cámara de la pantalla de título
   const ACERCAR_MS = 1400 // al entrar, la cámara se acerca; el primer grano del Caudal cae a 1 s
   const IMPLOSION_MS = 900 // lo que dura la animación implotar del CSS
+  const QUIETA_MS = 60_000 // modo ahorro: sin toques por este lapso, la pila deja de animarse (se sigue ganando igual)
+  const FPS_TAPADA = 4 // con Cristalización o Automatización encima: solo se siguen los cambios (compresiones, anillos)
 
   const MARCO_LADO = 1.6 // en radios: el marco más grande (Polaroid) llega a 1,54
   const MARCO_MIN = 12 // px CSS: con la pila recién vacía el marco no se achica a un punto
@@ -151,7 +153,11 @@
       if (sismo.length > 1000) sismo.shift() // nadie lo vacía hasta que aparece el sismógrafo
     }
     $effect(() => void (pila.destellos = ajustes.reducirDestellos))
-    $effect(() => void (pila.ahorro = ajustes.ahorro))
+    $effect(() => void (pila.ahorro = ajustes.bateria))
+    $effect(() => void (pila.resolucion = ajustes.bateria ? 0.5 : 1))
+    let tocadoEn = performance.now()
+    const tocar = () => (tocadoEn = performance.now())
+    for (const ev of ['pointerdown', 'keydown', 'wheel'] as const) addEventListener(ev, tocar, { capture: true, passive: true })
     $effect(() => void (pila.paleta = paleta))
     $effect(() => void (pila.efecto = EFECTOS.indexOf(elegido('efecto', EFECTOS, ajustes.efecto, juego.logros))))
     $effect(() => void (pila.fondo = elegido('fondo', FONDOS, ajustes.fondo, juego.logros)))
@@ -183,15 +189,20 @@
     let tapadaDesde = 0
     let marcoAntes = 0
     let proximo = 0 // ms del próximo cuadro con la tasa de refresco de Ajustes
-    let raf = requestAnimationFrame(function cuadro(ahora) {
+    // Tapada, con un temporizador lento en vez de pedir cuadros: el navegador no produce cuadros para nada.
+    let espera: ReturnType<typeof setTimeout> | undefined
+    const otra = () => (pila.tapada ? (espera = setTimeout(() => cuadro(performance.now()), 1000 / FPS_TAPADA)) : (raf = requestAnimationFrame(cuadro)))
+    let raf = requestAnimationFrame(cuadro)
+    function cuadro(ahora: number) {
       // Modo grabación (debug): el guion maneja la pila; acá no pasa nada más.
       if (grabacion.cuadro) return void ((raf = requestAnimationFrame(cuadro)), grabacion.cuadro(ahora))
-      // Tasa de refresco (Ajustes): solo visual; la economía corre en su propio reloj (juego.svelte.ts).
-      if (ajustes.fps) {
-        const paso = 1000 / ajustes.fps
-        if (ahora < proximo - 1) return void (raf = requestAnimationFrame(cuadro))
+      // Tasa de refresco (Ajustes, nunca más de 60; 20 con ahorro): solo visual; la economía corre en su propio reloj (juego.svelte.ts).
+      {
+        const paso = 1000 / (pila.tapada ? FPS_TAPADA : fpsTope())
+        if (ahora < proximo - 1) return void otra()
         proximo = Math.max(proximo + paso, ahora - paso)
       }
+      pila.quieta = ajustes.bateria && ahora - tocadoEn > QUIETA_MS
       const s = juego.s
       // Microscopio: tiempo real con el zoom al máximo en esta Compresión (sin contar el título ni la pestaña oculta).
       if (s.compresiones !== compZoom) (compZoom = s.compresiones), (juego.zoomMaxS = 0)
@@ -199,7 +210,7 @@
       cuadroAntes = ahora
       // Título: la pila quieta y lejos. Al entrar, la cámara se acerca.
       if (!juego.titulo && entro < 0) entro = ahora
-      const t = entro < 0 ? 0 : ajustes.reducirDestellos || !entro ? 1 : Math.min(1, (ahora - entro) / ACERCAR_MS)
+      const t = entro < 0 ? 0 : quieto() || !entro ? 1 : Math.min(1, (ahora - entro) / ACERCAR_MS)
       pila.zoom = LEJOS + (1 - LEJOS) * (1 - (1 - t) ** 3)
       // Vuelta de una ausencia: lo que pasó afuera (compresiones, anillos, colores) no se anima; la pila salta a su foto.
       if (juego.saltos !== saltosAntes) {
@@ -254,8 +265,6 @@
         radioMarco = Math.abs(objetivo - radioMarco) < 0.3 ? objetivo : radioMarco + (objetivo - radioMarco) * k
         foco = Math.round(pila.focoCss)
         if (Math.abs(radioMarco - marcoDibujado) > 0.25) dibujarMarco(radioMarco)
-        // Gira despacio alrededor de la pila (CSS `rotate`, aparte del `transform` de la implosión); quieto con Reducir movimiento.
-        lienzoMarco.style.rotate = ajustes.reducirDestellos ? '' : `${((ahora / 1000 / CFG.marco.segundos_por_vuelta) % 1) * 360}deg`
       }
       marcoAntes = ahora
       // SPEC 5: el color nuevo recorre la pila, del centro al borde.
@@ -273,10 +282,12 @@
         efecto({ anillo: { r: pila.radioCss, color: pila.colorDominante() } })
       }
       anillosAntes = n
-      raf = requestAnimationFrame(cuadro)
-    })
+      otra()
+    }
     return () => {
       cancelAnimationFrame(raf)
+      clearTimeout(espera)
+      for (const ev of ['pointerdown', 'keydown', 'wheel'] as const) removeEventListener(ev, tocar, { capture: true })
       pila.destruir()
     }
   })
@@ -284,11 +295,11 @@
 
 <svelte:window onkeydown={tecla} />
 
-<div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:cristaliza={juego.cinematica === 'infinito'} class:quieto={ajustes.reducirDestellos}>
+<div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:cristaliza={juego.cinematica === 'infinito'} class:quieto={quieto()}>
   <canvas bind:this={canvas} onpointerdown={bajar} onpointermove={mover} onpointerup={levantar} onpointercancel={levantar} aria-label={txt.pila}></canvas>
   <div class="tope" bind:clientWidth={radioMax}></div>
   {#if sinWebGL}<p class="sin-webgl" role="alert">{txt.sinWebGL}</p>{/if}
-  {#if juego.lluvia && !ajustes.reducirDestellos}
+  {#if juego.lluvia && !quieto()}
     {#key juego.lluvia.id}
       <div class="lluvia" style:--c={colorLluvia} aria-hidden="true">
         {#each { length: GRANOS_LLUVIA } as _, i}<i style:left="{(i * 37.3) % 100}%" style:--d="{(i * 0.173) % 1.7}s" style:--v="{1.1 + ((i * 0.29) % 0.9)}s"></i>{/each}
@@ -301,9 +312,10 @@
        La rampa empieza recién cuando el marco ya se salió del foco, así encuadrado no se apaga nada. -->
   <div class="caja-marco" class:oculto={juego.titulo || juego.cinematica === 'fin' || marcoId === 'ninguno'} aria-hidden="true" bind:clientWidth={cajaAncho} bind:clientHeight={cajaAlto}
     style:--foco="{foco * (1 + Math.max(0, 2.6 - (1.6 * radioMarco) / (foco || 1)))}px">
-    <canvas class="marco" bind:this={lienzoMarco}></canvas>
+    <!-- Gira despacio alrededor de la pila con una animación CSS de `rotate` (aparte del `transform` de la implosión). -->
+    <canvas class="marco" class:gira={!quieto() && juego.capa === 'arena' && marcoId !== 'ninguno' && !juego.titulo} style:--vuelta="{CFG.marco.segundos_por_vuelta}s" bind:this={lienzoMarco}></canvas>
   </div>
-  <div class="efectos" class:quieto={ajustes.reducirDestellos} aria-hidden="true">
+  <div class="efectos" class:quieto={quieto()} aria-hidden="true">
     {#if juego.vistos.compresion && comp.meta !== undefined}
       <!-- Compresión: el anillo se cierra con el progreso (escala logarítmica); al 100 % brilla. -->
       <svg class="compresion aparece" width={2 * ra + 8} height={2 * ra + 8} viewBox="{-ra - 4} {-ra - 4} {2 * ra + 8} {2 * ra + 8}">
@@ -362,7 +374,7 @@
   /* En el celular el canvas pasa la región de la pila hasta arriba de todo y hasta la tienda (--fondo-abajo, App.svelte): el fondo
      sigue debajo de la Energía y del sismógrafo y se difumina en el borde (lienzo.ts); la pila queda centrada en su región. */
   .pila { --ext-a: var(--pila-arriba, 0px); --ext-b: calc(var(--pila-abajo, 0px) - var(--fondo-abajo, var(--pila-abajo, 0px))); --cy: calc(50% + (var(--ext-a) - var(--ext-b)) / 2); }
-  .pila > canvas { position: absolute; top: calc(-1 * var(--ext-a)); left: 0; width: 100%; height: calc(100% + var(--ext-a) + var(--ext-b)); /* un canvas no se estira con top y bottom */ transform-origin: 50% var(--cy); touch-action: none; } /* none: el pellizco es el zoom de la pila, no el de la página */
+  .pila > canvas { position: absolute; top: calc(-1 * var(--ext-a)); left: 0; width: 100%; height: calc(100% + var(--ext-a) + var(--ext-b)); /* un canvas no se estira con top y bottom */ transform-origin: 50% var(--cy); touch-action: none; image-rendering: pixelated; } /* none: el pellizco es el zoom de la pila, no el de la página */
   p { margin: 0; font-variant-numeric: tabular-nums; pointer-events: none; white-space: nowrap; }
   .caja-marco { position: absolute; inset: 0; overflow: hidden; pointer-events: none; transition: opacity 0.6s; }
   .caja-marco.oculto { opacity: 0; }
@@ -371,7 +383,10 @@
     mask: radial-gradient(circle, #000 var(--foco), rgb(0 0 0 / 0.3) calc(var(--foco) * 1.3));
   }
   /* El marco es parte de la pila: implota con ella. */
+  .marco.gira { animation: girar var(--vuelta) linear infinite; }
+  @keyframes girar { to { rotate: 360deg; } }
   .implota .marco { animation: implotar 0.9s cubic-bezier(0.6, 0, 0.9, 0.4) forwards; }
+  .implota .marco.gira { animation: implotar 0.9s cubic-bezier(0.6, 0, 0.9, 0.4) forwards, girar var(--vuelta) linear infinite; }
   .implota.quieto .marco { animation: apagar 0.9s ease-in forwards; }
   .efectos { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
   .compresion { position: absolute; translate: -50% -50%; overflow: visible; transition: width 0.6s, height 0.6s; }
@@ -382,8 +397,10 @@
     transition: stroke-dashoffset 0.3s linear, stroke 0.6s;
   }
   /* Se puede comprimir (.lista en App.svelte): brilla y late a la vez que el botón. */
-  :global(.lista) .arco { stroke: var(--tinta); filter: drop-shadow(0 0 5px rgb(232 233 243 / 0.8)); animation: brillar 2.4s ease-in-out infinite; }
-  .quieto .arco { animation: none; }
+  /* Late el svg entero (opacidad de un elemento: se compone sola); latiendo el circle, con su drop-shadow, se repintaba. */
+  :global(.lista) .arco { stroke: var(--tinta); filter: drop-shadow(0 0 5px rgb(232 233 243 / 0.8)); }
+  :global(.lista) .compresion { animation: brillar 2.4s ease-in-out infinite; }
+  :global(.lista) .quieto .compresion { animation: none; }
   .aparece { animation: desvanecer 0.8s ease-out reverse; }
   @keyframes brillar { 50% { opacity: 0.55; } }
   .flota {

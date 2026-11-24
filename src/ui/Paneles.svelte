@@ -9,7 +9,7 @@
   import { almacenLocal } from '../guardado/almacen'
   import { RESPALDO } from '../guardado/guardado'
   import { txt } from '../strings'
-  import { ajustes } from './ajustes.svelte'
+  import { quieto } from './ajustes.svelte'
   import { formato } from './formato'
   import { hayEleccion, juego, tomarCandado } from './juego.svelte'
 
@@ -58,7 +58,7 @@
 <svelte:window onkeydown={teclaVentana} />
 
 {#if juego.otraPestana}
-  <div class="velo" class:quieto={ajustes.reducirDestellos}>
+  <div class="velo" class:quieto={quieto()}>
     <div class="centro" role="alertdialog" aria-modal="true" aria-labelledby="otra-t" aria-describedby="otra-d">
       <h2 id="otra-t" class="titulo">{txt.otraPestana.titulo}</h2>
       <p id="otra-d" class="texto">{txt.otraPestana.texto}</p>
@@ -67,7 +67,7 @@
   </div>
 {:else if juego.guardadoRoto}
   <!-- No se cierra con Escape ni tocando afuera: hasta aceptar, no se guarda nada. -->
-  <div class="velo" class:quieto={ajustes.reducirDestellos}>
+  <div class="velo" class:quieto={quieto()}>
     <div class="centro" role="alertdialog" aria-modal="true" aria-labelledby="roto-t" aria-describedby="roto-d">
       <h2 id="roto-t" class="titulo">{txt.guardadoRoto.titulo}</h2>
       <p id="roto-d" class="texto">{txt.guardadoRoto.texto}</p>
@@ -83,7 +83,7 @@
   </div>
 {:else if juego.calculo !== null}
   <!-- C8: el cálculo de la ausencia va de a tramos; mientras, una barra (de hielo en la Capa 1). -->
-  <div class="velo" class:quieto={ajustes.reducirDestellos}>
+  <div class="velo" class:quieto={quieto()}>
     <div class="centro calculando" class:hielo={juego.s.infinitos > 0} class:placa={juego.s.infinitos > 0} role="status" aria-live="polite">
       <p class="rotulo">{txt.ausencia.calculando}</p>
       <div class="pista" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(juego.calculo * 100)} aria-label={txt.ausencia.calculando}>
@@ -96,7 +96,7 @@
   <!-- SPEC_CAPA1 §12: en la Capa 1, una placa de hielo con lo que ganaste afuera. -->
   {@const a = juego.ausencia}
   {@const ab = a.s.estratos.abiertos}
-  <div class="velo" class:quieto={ajustes.reducirDestellos} role="presentation" onclick={afuera}>
+  <div class="velo" class:quieto={quieto()} role="presentation" onclick={afuera}>
     <div class="centro recompensa hielo placa grietas" role="dialog" aria-modal="true" aria-labelledby="ausencia-t" aria-describedby="ausencia-d">
       <p id="ausencia-t" class="rotulo">{txt.ausencia.titulo}</p>
       <p id="ausencia-d" class="grande">
@@ -137,7 +137,7 @@
 {:else if hayEleccion() && juego.panel === null}
   {@const rel = juego.s.relicario}
   {@const lleno = inventarioLleno(juego.s)}
-  <div class="velo" class:quieto={ajustes.reducirDestellos}>
+  <div class="velo" class:quieto={quieto()}>
     <div class="centro hielo placa eleccion" role="dialog" aria-modal="true" aria-labelledby="reliquia-t" aria-describedby="reliquia-d">
       <canvas class="cara" use:caraReliquia={{ foto: rel.foto, nivel: 0 }} aria-hidden="true"></canvas>
       <h2 id="reliquia-t" class="titulo">{r.elegir}</h2>
@@ -162,7 +162,7 @@
   </div>
 {:else if juego.ausencia}
   {@const a = juego.ausencia}
-  <div class="velo" class:quieto={ajustes.reducirDestellos} role="presentation" onclick={afuera}>
+  <div class="velo" class:quieto={quieto()} role="presentation" onclick={afuera}>
     <div class="centro recompensa" role="dialog" aria-modal="true" aria-labelledby="ausencia-t" aria-describedby="ausencia-d">
       <p id="ausencia-t" class="rotulo">{txt.ausencia.titulo}</p>
       <p id="ausencia-d" class="grande">

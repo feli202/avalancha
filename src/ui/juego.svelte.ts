@@ -7,7 +7,7 @@ import { instantanea } from '../render/instantanea'
 import type { Toma } from '../render/marcos'
 import { PX_MAX, type Medidas } from '../render/pilaVisual'
 import { txt } from '../strings'
-import { avisoActivo, type Aviso } from './ajustes.svelte'
+import { avisoActivo, uiMs, type Aviso } from './ajustes.svelte'
 import { formato } from './formato'
 import { mirar as mirarStats } from './estadisticasAnonimas'
 import { nuevosLogros, primerDerrumbe } from './logros'
@@ -461,6 +461,11 @@ export function arrancar() {
   let acum = 0
   let p: ReturnType<typeof cargar> = null
   let calculo: { pasos: Generator<number, Ausencia>; real: number } | null = null
+  let vuelta = 0 // ms de la última vuelta del bucle: la interfaz se actualiza como mucho cada uiMs()
+  // Con un temporizador y no requestAnimationFrame: entre vuelta y vuelta el navegador no tiene que producir cuadros. Con la
+  // pestaña oculta el navegador lo espacia solo (una vez por segundo o más): la economía sigue, a bajo ritmo, sin dibujar nada.
+  let reloj: ReturnType<typeof setTimeout> | undefined
+  const seguir = (ms = uiMs()) => { clearTimeout(reloj); reloj = setTimeout(cuadro, Math.max(0, ms)) }
   let cerrado = false // SPEC_CAPA1 §12: el primer salto tras cargar es tiempo con el juego cerrado (no una pestaña oculta)
   try { p = cargar(almacenLocal, Date.now()) } catch (e) { console.warn(e) } // sin almacenamiento: se juega sin guardar
   if (p === 'corrupto') juego.guardadoRoto = true
@@ -498,9 +503,13 @@ export function arrancar() {
     // En el título el reloj no avanza: lo de afuera se simula al entrar (una partida nueva arranca de ese momento).
     if (juego.titulo) {
       if (nueva) antes = simuladoHasta = ahora
-      requestAnimationFrame(cuadro)
+      seguir()
       return
     }
+    // La interfaz (todo lo que lee juego.s) se actualiza como mucho cada uiMs(): 10 veces por segundo, 4 con ahorro. La economía
+    // avanza con pasos fijos, así que da lo mismo de a dos pasos que de a uno.
+    if (!document.hidden && !calculo && ahora >= vuelta && ahora - vuelta < uiMs() - 4) return seguir(uiMs() - (ahora - vuelta))
+    vuelta = ahora
     const real = Math.max(0, ahora - antes) / 1000
     acum += real * (juego.otraPestana ? 0 : juego.velocidad)
     antes = ahora
@@ -519,7 +528,7 @@ export function arrancar() {
       while (!r.done && performance.now() < hasta) r = calculo.pasos.next()
       if (!r.done) {
         juego.calculo = r.value
-        requestAnimationFrame(cuadro)
+        seguir(0)
         return
       }
       const a = r.value
@@ -563,7 +572,7 @@ export function arrancar() {
     mirarStats(juego.s)
     if (s.infinitos === 0 && enInfinito(s) && !juego.cinematica && !hayPanel()) primerInfinito()
     if (finCapa1(s) && !juego.vistos.capa2 && !juego.cinematica && !hayCartel()) finDeCapa()
-    requestAnimationFrame(cuadro)
+    seguir()
   }
-  requestAnimationFrame(cuadro)
+  seguir()
 }

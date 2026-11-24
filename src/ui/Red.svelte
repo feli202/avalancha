@@ -7,7 +7,7 @@
   } from '../core'
   import { EMBLEMA, cara, rama, semilla } from '../render/redCaras'
   import { txt } from '../strings'
-  import { ajustes } from './ajustes.svelte'
+  import { ajustes, quieto } from './ajustes.svelte'
   import { formato } from './formato'
   import { juego } from './juego.svelte'
   import * as sonido from './sonido'
@@ -189,7 +189,7 @@
   $effect(() => {
     if (!escarchaAbierta(s) || juego.vistos.red_anillo3) return
     juego.vistos = { ...juego.vistos, red_anillo3: true }
-    if (ajustes.reducirDestellos) return
+    if (quieto()) return
     derrite = true
     sonido.hito('ring')
     setTimeout(() => (derrite = false), 3800)
@@ -207,7 +207,7 @@
     const nuevo = comprarRed(antes, id)
     if (nuevo === antes) return
     sonido.compra('other')
-    if (nivelRed(nuevo, id) === ABRE_RED && !ajustes.reducirDestellos) {
+    if (nivelRed(nuevo, id) === ABRE_RED && !quieto()) {
       const esta = { id, k: ++k }
       derrumbe = esta
       setTimeout(() => { if (derrumbe === esta) derrumbe = null }, 1400)

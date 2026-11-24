@@ -3,6 +3,7 @@ import { almacenLocal } from '../guardado/almacen'
 import { AJUSTES } from '../guardado/guardado'
 import { idioma } from '../strings'
 import { aplicarVolumen } from './sonido'
+import { esMovil } from '../instalar.svelte'
 
 const base = {
   /** Lo elige strings/index.ts; cambiarlo recarga la página. */
@@ -20,10 +21,12 @@ const base = {
   daltonismo: false,
   /** v1.0, bloque 8: "Enviar estadísticas anónimas" (estadisticasAnonimas.ts). Do Not Track gana siempre. */
   estadisticas: true,
-  /** I11: con la pila llena, la simulación visual trabaja menos (batería y ventilador). */
-  ahorro: false,
-  /** Tasa de refresco de la pila (Ajustes, Juego): 15, 30 o 60 cuadros por segundo; 0 = sin límite. Solo visual. */
-  fps: 0,
+  /** Modo ahorro de batería (Ajustes, Juego): prendido de entrada en celulares. Pila a 20 fps y a media resolución, sin
+   * brillos ni partículas, la simulación de la pila al mínimo, interfaz a 4 Hz. Reemplaza al `ahorro` de I11. */
+  bateria: esMovil(),
+  /** Tasa de refresco de la pila (Ajustes, Juego): 15, 30 o 60 cuadros por segundo. Nunca más de 60 (un 0 guardado, de
+   * cuando existía "sin límite", es 60). Solo visual. */
+  fps: 60,
   /** Cosméticos de los logros (paletas.ts); si el elegido no está desbloqueado, se usa el primero (logros.ts, elegido). */
   paleta: 'arena',
   efecto: 'normal',
@@ -37,6 +40,13 @@ const base = {
   aviso_defectos: true,
   aviso_logros: true,
 }
+
+/** Tope de cuadros por segundo de la pila: el elegido, nunca más de 60 aunque la pantalla sea de 120 Hz; 20 con ahorro. */
+export const fpsTope = () => Math.min(ajustes.fps || 60, 60, ajustes.bateria ? 20 : 60)
+/** ms entre actualizaciones de la interfaz: como mucho 10 por segundo, 4 con ahorro. */
+export const uiMs = () => (ajustes.bateria ? 250 : 100)
+/** Sin movimiento decorativo: Reducir movimiento, o el modo ahorro (sin rotación, partículas ni efectos pesados). */
+export const quieto = () => ajustes.reducirDestellos || ajustes.bateria
 
 export const AVISOS = ['revelado', 'infinito', 'auto', 'reliquia', 'defectos', 'logros'] as const
 export type Aviso = (typeof AVISOS)[number]
@@ -64,5 +74,6 @@ $effect.root(() => {
   $effect(() => void [ajustes.volumen, ajustes.volEfectos, ajustes.volMusica, aplicarVolumen()])
   $effect(() => void document.documentElement.classList.toggle('daltonismo', ajustes.daltonismo))
   $effect(() => void document.documentElement.classList.toggle('reducir-movimiento', ajustes.reducirDestellos))
+  $effect(() => void document.documentElement.classList.toggle('ahorro', ajustes.bateria))
   $effect(() => void (document.documentElement.lang = ajustes.idioma))
 })

@@ -2224,3 +2224,80 @@ Doce bloques del pedido de `actualizacion-final-capa1/PROMPT.md`, un commit cada
 **Verificación**: `npm test` (todos), `npm run test:lento` 20/20, `tsc` y `svelte-check` 0 errores, build sin errores. `capturas-celular.mjs` en 390×844, 360×640 y 1366×768: ninguna pantalla scrollea ni tiene nada afuera.
 
 **Pendiente**: crear la cuenta de GoatCounter y pegar el código; subir el zip a itch; revisión de un nativo de `marketing/textos_en_dudas.md`; probar en celulares reales.
+
+## Tráiler vertical en 4K (2026-11-20)
+
+`marketing/trailer/`: `trailer_vertical_en.mp4` (44,5 s) y `trailer_vertical_es.mp4` (44,7 s), 2160×3840 a 60 fps, H.264 veryfast CRF 18, AAC 192k, más `miniatura_vertical.png` (pantalla de título del juego). Todo lo que se ve sale del juego (build de producción); el horizontal queda para después.
+
+- **Tomas** (`grabar.mjs`): Playwright (`playwright-core`, con el Edge instalado) sobre `vite preview`, `deviceScaleFactor` 4 (el juego dibuja en 4K, no se reescala). Partidas de debug armadas con el núcleo real en el servidor de desarrollo. Cuadro por cuadro con el reloj falso de Playwright (60 fps exactos); las animaciones CSS se pausan y avanzan con el mismo reloj. Time-lapse y cámara lenta con `vel` (número o función: el Infinito va lento hasta que aparece el ∞, Romper lento hasta 1e900). Audio en una pasada aparte en tiempo real (`AudioNode.connect` interceptado → `MediaRecorder`). La música es la generativa del juego (toma `musica`, solo audio, normalizada a −18 LUFS).
+- **Voz** (`voz.py`): edge-tts, gratis y sin clave, con el tiempo de cada palabra. Inglés `en-US-ChristopherNeural` (grave, F0 ~112 Hz; probadas también Steffan y Guy), español `es-AR-TomasNeural` (rioplatense). rate −5 %, pitch −6 Hz.
+- **Montaje** (`montar.py v|h en|es`): cortes y frases en `MONTAJE`; subtítulos ASS palabra por palabra en Space Grotesk (`fuente/`, pasada de woff a ttf), la palabra que suena en ámbar, en la zona segura de TikTok; música con sidechain bajo la voz; sonido del juego debajo (`GANANCIA` por toma); las tomas con interfaz se achican al 86 % y bajan para que el contador no quede bajo la barra de TikTok (`ACHICAR`). Cierre: pantalla de título + "Play free"/"Jugalo gratis" + exponent-games.itch.io/avalanche.
+- **Revisión**: un cuadro cada 2 s en `revision/hoja_v_en.jpg` y `hoja_v_es.jpg`. Loudness −15,8 / −16,9 LUFS.
+- **Limitaciones**: la energía avanza en pasos de 0,05 s, así que "números" arranca en 4,5e34 (no en 1e6) y Romper salta de 5,9e941 a 9,9e1115; el mandala que crece cambia de paleta por cortes (cuatro paletas reales de logros), no en continuo. 4K tarda ~1–2,5 s por cuadro.
+- **Horizontal (pendiente)**: falta `node marketing/trailer/grabar.mjs inicio avalancha crece crece_brasa crece_glaciar crece_aurora numeros comprimir infinito red reliquias estratos defectos romper titulo --h` y `python marketing/trailer/montar.py h en|es` (la línea de tiempo `h` está escrita pero sin probar).
+
+## Tráiler vertical: voz de ElevenLabs (2026-11-23)
+
+`marketing/trailer/final/trailer_vertical_en.mp4` y `trailer_vertical_es.mp4`: el mismo video 4K (copiado bit a bit, `-c:v copy`) con el audio rehecho. No hay horizontales (por ahora solo verticales).
+
+- **Voz**: ElevenLabs, voz **Brian** (grave, resonante, reconfortante), modelo `eleven_multilingual_v2`, stability 0,6, style 0, speed 0,95. Una sola generación por idioma con el guion entero y los tiempos de cada carácter (`voz_elevenlabs.py`; no regenera si ya existe). **802 créditos** (385 EN + 417 ES) de 10 000. Clave en `.env.local` (onboard de la CLI de ElevenLabs, ignorado por git).
+- **Mezcla** (`montar.py v en|es --audio`): sin la voz vieja; la nueva se corta en tramos (hasta cada punto, coma o puntos suspensivos) y cada tramo empieza y termina donde empiezan y terminan sus palabras en los subtítulos ya grabados (se estira entre ×0,9 y ×1,12). En español cuatro tramos quedan 0,2–0,45 s más largos que su subtítulo ("esto", "Hasta llegar al infinito", "Avalancha", "Jugalo gratis…"). Música del juego con sidechain y arena debajo, como antes. −16 LUFS, pico real −1,3 dBFS.
+- **Revisión**: sin silencios (ningún tramo de 0,5 s bajo −50 dB), nada de la voz vieja (correlación 0,09 contra 0,41 de la nueva), inicio y final en `revision/audio/`.
+
+## Cambios finales: rendimiento, batería y offline (2026-11-23)
+
+Pedido: en el celular calentaba mucho y gastaba batería; y el offline estaba roto (un día AFK terminaba la Capa 1). Dos bloques, un commit cada uno. Sin rebalanceo ni simulador.
+
+### Bloque 1: rendimiento y batería
+
+**Cómo se midió** (`scripts/medir-rendimiento.mjs`): build de producción, Edge headless por CDP emulando un celular de gama media (390×844, densidad 3, UA Android, **CPU 4× más lenta**), partida a mitad de la Capa 1 con la pila llena (1 grano = 10²² granos) y los autocompradores prendidos. 10 s por escenario. Columnas: cuadros de la pila por segundo (dibujos WebGL ÷ 2 pasadas), ms de CPU por segundo del hilo principal (`Performance.getMetrics` TaskDuration) y del worker de la pila (lo que reporta cada respuesta), Mpx por segundo que pinta WebGL (lo que paga la GPU), tamaño del canvas de la pila y cuadros con cambios en el DOM por segundo. La emulación de densidad no llega a `device-pixel-content-box` (daba px CSS): la sonda lo anula y el juego usa contentRect × devicePixelRatio como un celular real. Las medidas varían ±20 % entre corridas (la máquina tiene otras cargas): antes y después se midieron intercalados, dos rondas, y va la mediana. Ojo: el build de antes **satura** el CPU emulado (la Arena cae a 2–25 fps), así que su consumo está subestimado; por eso va también ms por cuadro.
+
+**Antes** (mediana de 3 corridas; "pila fps" = cuadros que se llegaron a dibujar; GPU = Mpx pintados por segundo):
+
+| Escenario | CPU hilo principal (ms/s) | Worker de la pila (ms/s) | Total | Pila fps | GPU (Mpx/s) | Canvas de la pila | Cuadros con cambios en el DOM /s |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Arena | 983 | 246 | 1229 | 25 (de 2 a 57: satura) | 83 (187 a 57 fps) | 1170×1393 (densidad 3) | 9,6 |
+| Cristalización (Red) | 982 | 359 | 1341 | 0 (tapada) | 0 | 1170×1393 | 19 |
+| Automatización | 847 | 477 | 1324 | 0 (tapada) | 0 | 1170×1393 | 22 |
+| Pestaña oculta | 22 | 0 | 22 | 0 | 0 | — | 0 (la economía tampoco corría: se calculaba todo al volver) |
+
+Interfaz: los números se actualizaban en cada cuadro (60 Hz; 10 Hz con "Reducir destellos" solo la tienda y los contadores). Con la Arena tapada, el worker seguía simulando la pila.
+
+**Después, sin ahorro** (mediana de 2 corridas):
+
+| Escenario | CPU (ms/s) | Worker (ms/s) | Total | vs. antes | Pila fps | GPU (Mpx/s) | Canvas | DOM /s |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Arena | 452 | 82 | 534 | **43 %** | 34 (≤ 60, a demanda) | 12 | 390×464 (1 px por px CSS) | 9,5 (≤ 10 Hz) |
+| Cristalización (Red) | 414 | 0 | 414 | **31 %** | 0 | 0 | — | 18 |
+| Automatización | 138 | 0 | 138 | **10 %** | 0 | 0 | — | 9 |
+| Pestaña oculta | 22 | 0 | 22 | casi nada | 0 | 0 | — | 0 (la economía sigue a 1 Hz) |
+
+**Después, con ahorro** (mediana de 5 corridas):
+
+| Escenario | CPU (ms/s) | Worker (ms/s) | Total | vs. antes | Pila fps | GPU (Mpx/s) | Canvas | DOM /s |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Arena | 273 | 18 | 291 | **24 %** | 20 | 1,8 | 195×232 (½ px por px CSS) | 4,3 (≤ 4 Hz) |
+| Arena, 70 s sin tocar | 165 | 0 | 165 | 13 % | 0 (quieta) | 0 | — | 3,8 |
+| Cristalización (Red) | 105 | 0 | 105 | **8 %** | 0 | 0 | — | 2,9 |
+| Automatización | 62 | 0 | 62 | **5 %** | 0 | 0 | — | 1,7 |
+| Pestaña oculta | 20 | 0 | 20 | casi nada | 0 | 0 | — | 0 |
+
+Objetivos: con ahorro menos de un tercio (24 % en la Arena, 5–8 % tapada) ✓; sin ahorro menos de la mitad (43 % en la Arena, 10–31 % tapada) ✓; oculta casi nada (~20 ms/s con la CPU 4× lenta, ~5 ms/s reales, por la economía a 1 Hz) ✓. Y como antes saturaba el CPU, la diferencia real por cuadro es mayor (Arena: ~49 ms → ~16 ms por cuadro).
+
+**Qué cambió (para todos, siempre):**
+- **Nunca más de 60 fps** (`fpsTope()` en `ajustes.svelte.ts`; la tasa "Sin límite" desaparece: 15, 30 o 60; un 0 guardado vale 60).
+- **Pila pixel art a baja resolución**: el canvas mide como mucho 1 px real por px CSS (nunca devicePixelRatio 2 o 3; 0,5 con ahorro) y CSS lo agranda con `image-rendering: pixelated` (`PilaVisual.medirCanvas`). En el celular de densidad 3 son 9× menos píxeles (187 → 21 Mpx/s). La relación px/CSS se mide al cambiar de tamaño: leer `clientWidth` en cada cuadro forzaba un layout.
+- **Render a demanda** (`PilaVisual.dibujar`): no se pinta si no hubo granos nuevos, destello que se apaga (0,9 s), cámara que se mueve, brillo de los colores, ajuste o fundido; los destellos que se apagan sin granos nuevos, a 30 fps; la respiración de la arena, a 15 fps (sin ahorro) o nunca (con ahorro). Los setters (paleta, fondo, defecto, escarcha…) marcan cambio solo si el valor cambia.
+- **Nada se dibuja si no se ve**: con Cristalización o Automatización encima la pila ni simula ni dibuja (antes el worker seguía); su bucle pasa a un temporizador de 4 Hz en vez de pedir cuadros. Pestaña oculta o app en segundo plano: no hay cuadros; la economía sigue sola con un temporizador (el navegador lo espacia a 1 Hz o más).
+- **Pila decorativa** (llena y cada grano vale 10^k, k ≥ 1): el worker trabaja 4 ms por pedido y 20 pedidos por segundo como mucho (antes 12 ms en cada cuadro). La economía no depende de esto.
+- **Interfaz como mucho a 10 Hz** (4 con ahorro): el bucle de la economía (`juego.svelte.ts`) corre cada `uiMs()` con un temporizador, no en cada cuadro; los pasos de 0,05 s son los mismos, así que da igual de a uno que de a dos. Svelte ya actualiza solo los nodos cuyo valor cambió. Las guías y tooltips siguen su objetivo a 10 Hz (cada lectura forzaba un layout).
+- **Sismógrafo**: era lo más caro de la Arena (`shadowBlur` a densidad 3 en cada cuadro y `clientWidth` por cuadro). Ahora a 20 fps, densidad ≤ 2, tamaño por ResizeObserver, sin sombra con ahorro, y quieto cuando está tapado.
+- **CSS continuo solo con transform/opacity y sin backdrop-filter**: el latido de Comprimir, el brillo del óptimo, el emblema del Defecto actual, el borde de la Escarcha y las reliquias listas animaban text-shadow, filter, stroke-opacity o box-shadow (repintado en cada cuadro); ahora el brillo queda fijo y late la opacidad. El tooltip no usa más backdrop-filter. El marco gira con una animación CSS (`rotate`) y no con JS en cada cuadro, y solo si hay marco (antes giraba invisible con "ninguno"). El anillo de Compresión late con la opacidad del svg entero (antes, la del circle con drop-shadow: repintaba). Los dos granitos del ícono de Arena de la barra salen del SVG con `filter` (cada cuadro lo refiltraba: era lo más caro de Cristalización) a dos elementos con transform/opacidad. La nevada de Cristalización baja ~7 px/s: la mueve un temporizador a 10 Hz (solo transform) en vez de componer las tres capas a 60 fps, y las capas son más chicas. Con la Arena tapada, sus animaciones se pausan (`.juego.tapada`).
+- **Audio**: el AudioContext se suspende si no suena nada (sin música, o volumen 0, y 4 s sin efectos); el próximo sonido lo prende (`sonido.ts`).
+- **Red y Estratos**: ya eran a demanda y se destruyen al salir; con ahorro, sin animaciones de fondo (`quieto()`).
+
+**Modo ahorro de batería** (Ajustes → Juego, `ajustes.bateria`, prendido de entrada si `esMovil()`, apagado en PC; reemplaza al `ahorro` de I11): 20 fps de tope; pila a media resolución con "nearest"; `quieto()` = Reducir movimiento o ahorro, así que sin brillos, partículas, rotación del marco ni efectos pesados de avalancha (la compresión es un destello simple); `:root.ahorro` corta todo bucle CSS después de una vuelta y todo backdrop-filter; simulación de la pila a 5 pedidos de 3 ms por segundo y, con 1 min sin toques (pointerdown, tecla o rueda), quieta (ni worker ni dibujo); interfaz a 4 Hz; Estratos y Red sin animaciones de fondo.
+
+**Capturas**: `capturas/rendimiento/antes-arena-celular.png`, `despues-arena-celular.png` (sin ahorro) y `despues-arena-celular-ahorro.png`: la pila se sigue viendo pixel art (con ahorro, más gruesa). `capturas-celular.mjs` en 390×844 y 1366×768 (`capturas/rendimiento/`): ninguna pantalla scrollea. Medidas crudas en `capturas/rendimiento/medidas-*.json`.
+
+**No medido**: un celular real (temperatura y batería de verdad); GPU solo como píxeles pintados.

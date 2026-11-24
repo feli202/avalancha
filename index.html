@@ -68,6 +68,9 @@
          instantáneas. La pila no entra: tiene su versión quieta propia (.quieto en Pila.svelte). */
       :root.reducir-movimiento body :not(.pila, .pila *), :root.reducir-movimiento body :not(.pila, .pila *)::before,
       :root.reducir-movimiento body :not(.pila, .pila *)::after { animation-iteration-count: 1 !important; transition-duration: 0s !important; }
+      /* Modo ahorro de batería: ningún brillo ni bucle decorativo sigue corriendo (una vuelta y queda quieto) y nada de
+         desenfoque detrás de un panel. Las transiciones cortas quedan. */
+      :root.ahorro body *, :root.ahorro body *::before, :root.ahorro body *::after { animation-iteration-count: 1 !important; backdrop-filter: none !important; }
     </style>
   </head>
   <body>

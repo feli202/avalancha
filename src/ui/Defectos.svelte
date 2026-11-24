@@ -178,8 +178,8 @@
   .plano { stroke: var(--c); stroke-width: 0.7; stroke-dasharray: 3 2; opacity: 0.7; }
   .hecho .atomo, header .atomo { fill: color-mix(in srgb, var(--c) 40%, transparent); stroke: var(--c); }
   .emblema:not(.abierto, .hecho, .actual) .red { opacity: 0.45; }
-  .actual .red { animation: late 2.4s ease-in-out infinite; }
-  @keyframes late { 50% { filter: drop-shadow(0 0 0.35rem var(--c)); } }
+  .actual .red { filter: drop-shadow(0 0 0.3rem var(--c)); animation: late 2.4s ease-in-out infinite; }
+  @keyframes late { 50% { opacity: 0.7; } }
   :global(.quieto) .actual .red { animation: none; filter: drop-shadow(0 0 0.3rem var(--c)); }
   @media (prefers-reduced-motion: reduce) { .actual .red { animation: none; } }
 

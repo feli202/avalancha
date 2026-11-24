@@ -4,14 +4,14 @@
   import { onMount } from 'svelte'
   import { fade } from 'svelte/transition'
   import { txt } from '../strings'
-  import { ajustes } from './ajustes.svelte'
+  import { quieto } from './ajustes.svelte'
   import { juego } from './juego.svelte'
 
   let boton: HTMLButtonElement
   onMount(() => boton.focus())
 </script>
 
-<div class="titulo" class:quieto={ajustes.reducirDestellos} out:fade={{ duration: 700 }}>
+<div class="titulo" class:quieto={quieto()} out:fade={{ duration: 700 }}>
   <div class="centro">
     <img src="{import.meta.env.BASE_URL}logo.svg" alt="" width="64" height="64" />
     <h1>{txt.titulo}</h1>

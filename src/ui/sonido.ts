@@ -64,7 +64,7 @@ function abrir() {
 }
 addEventListener('pointerdown', abrir)
 addEventListener('keydown', abrir)
-document.addEventListener('visibilitychange', () => ctx && (document.hidden ? ctx.suspend() : ctx.resume()))
+document.addEventListener('visibilitychange', () => ctx && (document.hidden ? ctx.suspend() : componer()))
 
 let limitador: DynamicsCompressorNode
 /** Modo grabación: la salida del juego como MediaStream (null si el audio todavía no arrancó). */
@@ -82,7 +82,16 @@ export function aplicarVolumen() {
   musica.gain.value = ajustes.volMusica
 }
 
-const listo = () => ctx !== null && ctx.state === 'running'
+/** El audio se suspende cuando no suena nada (sin música y sin efectos hace COLA_MS, o el volumen en 0): el reloj de audio
+ * del sistema no corre de gusto. El próximo sonido lo vuelve a prender. */
+const COLA_MS = 4000 // la reverberación dura 3,5 s
+let sonoHasta = 0
+const listo = () => {
+  if (!ctx || document.hidden || ajustes.volumen === 0) return false
+  if (ctx.state === 'suspended') void ctx.resume()
+  sonoHasta = performance.now() + COLA_MS
+  return true
+}
 const azar = (a: number, b: number) => a + Math.random() * (b - a)
 
 /** 4 s de chasquidos sueltos y suavizados: la textura de la arena. Se toca en trozos al azar, así nunca suena igual. */
@@ -315,6 +324,11 @@ export function fondo(n: number) {
 }
 
 function componer() {
+  if (!ctx) return
+  if (ajustes.volumen === 0 || ajustes.volMusica === 0 || capas === 0) {
+    if (ctx.state === 'running' && performance.now() > sonoHasta) void ctx.suspend()
+    return
+  }
   if (!listo() || performance.now() < silencioHasta) return
   const ahora = ctx!.currentTime
   CAPAS.forEach((k, i) => {

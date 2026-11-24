@@ -1,0 +1,62 @@
+[
+ {
+  "escenario": "Arena",
+  "visible": "visible",
+  "fps": 59.9,
+  "cpuMsPorSeg": 440,
+  "workerMsPorSeg": 82,
+  "dibujosPorSeg": 68.1,
+  "megapixPorSeg": 12.3,
+  "domPorSeg": 9.5,
+  "dpr": 3,
+  "msgsPorSeg": 17.1,
+  "timersPorSeg": 9.6,
+  "lienzos": "svelte-1rvt21m 390×464 (css 390×464) | marco svelte-1rvt21m 300×150 (css 390×296) | svelte-uus8vm 435×64 (css 217×32)",
+  "cpuMsPorCuadro": 7.3
+ },
+ {
+  "escenario": "Cristalización (Red)",
+  "visible": "visible",
+  "fps": 3.7,
+  "cpuMsPorSeg": 402,
+  "workerMsPorSeg": 0,
+  "dibujosPorSeg": 0,
+  "megapixPorSeg": 0,
+  "domPorSeg": 17.1,
+  "dpr": 3,
+  "msgsPorSeg": 0,
+  "timersPorSeg": 27.5,
+  "lienzos": "svelte-1rvt21m 390×464 (css 390×464) | marco svelte-1rvt21m 300×150 (css 390×296) | svelte-uus8vm 435×64 (css 217×32)",
+  "cpuMsPorCuadro": 108.6
+ },
+ {
+  "escenario": "Automatización",
+  "visible": "visible",
+  "fps": 3.7,
+  "cpuMsPorSeg": 134,
+  "workerMsPorSeg": 0,
+  "dibujosPorSeg": 0,
+  "megapixPorSeg": 0,
+  "domPorSeg": 9.3,
+  "dpr": 3,
+  "msgsPorSeg": 0,
+  "timersPorSeg": 16.8,
+  "lienzos": "svelte-1rvt21m 390×464 (css 390×464) | marco svelte-1rvt21m 300×150 (css 390×296) | svelte-uus8vm 435×64 (css 217×32)",
+  "cpuMsPorCuadro": 36.2
+ },
+ {
+  "escenario": "Pestaña oculta",
+  "visible": "hidden",
+  "fps": 0,
+  "cpuMsPorSeg": 16,
+  "workerMsPorSeg": 0,
+  "dibujosPorSeg": 0,
+  "megapixPorSeg": 0,
+  "domPorSeg": 0,
+  "dpr": 3,
+  "msgsPorSeg": 0,
+  "timersPorSeg": 0.6,
+  "lienzos": "svelte-1rvt21m 390×464 (css 390×464) | marco svelte-1rvt21m 300×150 (css 390×296) | svelte-uus8vm 435×64 (css 217×32)",
+  "cpuMsPorCuadro": 0
+ }
+]

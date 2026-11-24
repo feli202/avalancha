@@ -4,7 +4,7 @@
   import { miniPila, paletaBase } from '../render/miniPilas'
   import { PALETAS, css } from '../render/paletas'
   import { txt } from '../strings'
-  import { ajustes } from './ajustes.svelte'
+  import { ajustes, quieto } from './ajustes.svelte'
   import { juego } from './juego.svelte'
   import { CAPAS, RECOMPENSA, SECRETOS, descLogro, nombreLogro, premioSecreto, secreto } from './logros'
   import Pantalla from './Pantalla.svelte'
@@ -61,7 +61,7 @@
         {@const si = !!juego.logros[k]}
         {@const oculto = enSecretos ? !si : secreto(k, juego.logros, juego.vistos)}
         <li class="tarjeta" class:si class:oculto data-tarjeta style:--i={i}>
-          <canvas class="imagen" use:miniPila={{ clave: k, quieta: ajustes.reducirDestellos || oculto }} aria-hidden="true"></canvas>
+          <canvas class="imagen" use:miniPila={{ clave: k, quieta: quieto() || oculto }} aria-hidden="true"></canvas>
           <div class="texto">
             <h3>{oculto ? txt.secreto : nombre(k)}</h3>
             {#if !oculto}<p>{desc(k)}</p>

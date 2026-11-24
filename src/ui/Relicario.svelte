@@ -290,7 +290,7 @@
   /* Elegir el tipo de la reliquia nueva. */
   .eleccion { display: grid; grid-template-columns: 4rem 1fr; gap: 0.6rem 0.9rem; align-items: center; padding: 0.9rem; }
   .nueva { width: 4rem; aspect-ratio: 1; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: var(--hielo-hondo); animation: latir 2.4s ease-in-out infinite; }
-  @keyframes latir { 50% { filter: brightness(1.25); } }
+  @keyframes latir { 50% { opacity: 0.75; } }
   .texto { display: grid; gap: 0.2rem; }
   .tipos { grid-column: 1 / -1; display: grid; gap: 0.35rem; }
   .tipos button { display: grid; grid-template-columns: 1.75rem 1fr; gap: 0 0.75rem; align-items: center; padding: 0.45rem 1.4rem; text-align: left; }
@@ -326,8 +326,8 @@
   .pieza.elegido { outline: 2px solid var(--escarcha); outline-offset: -2px; }
   /* Engarzada: un cristal de hielo en la esquina de abajo a la derecha. */
   .pieza.puesta::before { content: ''; position: absolute; z-index: 1; right: 7%; bottom: 7%; width: 16%; aspect-ratio: 0.7; background: var(--hielo); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
-  .pieza.lista::after { animation: lista 2.6s ease-in-out infinite; }
-  @keyframes lista { 50% { box-shadow: inset 0 0 0 2px var(--c), inset 0 1px 0 rgb(255 255 255 / 0.6); } }
+  .pieza.lista::after { box-shadow: inset 0 0 0 2px var(--c), inset 0 1px 0 rgb(255 255 255 / 0.6); animation: lista 2.6s ease-in-out infinite; }
+  @keyframes lista { 50% { opacity: 0.55; } }
   .pieza.mas { filter: saturate(1.3) brightness(1.15); }
   .vuelta { position: absolute; z-index: 1; left: 8%; bottom: 6%; font-style: normal; font-size: 0.6875rem; font-weight: 700; color: var(--escarcha); text-shadow: 0 0 0.3rem var(--c); }
 

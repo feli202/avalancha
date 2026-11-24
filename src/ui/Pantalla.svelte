@@ -3,7 +3,7 @@
   // La pila se aleja detrás (App.svelte); Esc cierra (Paneles.svelte).
   import type { Snippet } from 'svelte'
   import { txt } from '../strings'
-  import { ajustes } from './ajustes.svelte'
+  import { quieto } from './ajustes.svelte'
   import { juego } from './juego.svelte'
 
   interface Pestana { id: string; texto: string; bloqueada?: string }
@@ -24,7 +24,7 @@
   }
 </script>
 
-<div class="pantalla" class:quieto={ajustes.reducirDestellos} role="dialog" aria-modal="true" aria-label={titulo}>
+<div class="pantalla" class:quieto={quieto()} role="dialog" aria-modal="true" aria-label={titulo}>
   <header class="barra">
     <div class="pestanas" role="tablist" aria-label={titulo} tabindex="-1" onkeydown={flechas}>
       {#each pestanas as p, i (p.id)}

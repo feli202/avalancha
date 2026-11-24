@@ -6,7 +6,7 @@
   import { ALTO, ANCHO, RADIO_ENTERA, imagen, miniPila } from '../render/miniPilas'
   import { COLORES_DALTONISMO, EFECTOS, FONDOS, MARCOS, PALETAS, css } from '../render/paletas'
   import { txt } from '../strings'
-  import { AVISOS, ajustes, avisoActivo } from './ajustes.svelte'
+  import { AVISOS, ajustes, avisoActivo, quieto } from './ajustes.svelte'
   import { borrarPartida, guardarYa, juego, partidaActual, reemplazarPartida, tocarLogo } from './juego.svelte'
   import { SECRETOS, desbloqueados, elegido, logroDe, nombreLogro, type Cosmetico } from './logros'
   import Pantalla from './Pantalla.svelte'
@@ -137,7 +137,7 @@
           {#if tipo === 'marco'}
             <canvas class="vista cuadrada" use:vistaMarco={{ id, paleta: actual.paleta, colores: coloresActuales }} aria-hidden="true"></canvas>
           {:else}
-            <canvas class="vista" use:miniPila={{ clave: `${tipo}:${id}`, quieta: ajustes.reducirDestellos || tipo === 'paleta' || tipo === 'fondo' }} aria-hidden="true"></canvas>
+            <canvas class="vista" use:miniPila={{ clave: `${tipo}:${id}`, quieta: quieto() || tipo === 'paleta' || tipo === 'fondo' }} aria-hidden="true"></canvas>
           {/if}
           <span class="pie">
             <span class="nombre">
@@ -210,8 +210,8 @@
           <div class="fila">
             <span class="texto"><span id="fps-t">{txt.opciones.fps}</span><small>{txt.opciones.fpsDesc}</small></span>
             <div class="segmentos" role="radiogroup" aria-labelledby="fps-t">
-              {#each [15, 30, 60, 0] as f}
-                <button role="radio" aria-checked={ajustes.fps === f} onclick={() => (ajustes.fps = f)}>{f || txt.opciones.sinLimite}</button>
+              {#each [15, 30, 60] as f}
+                <button role="radio" aria-checked={(ajustes.fps || 60) === f} onclick={() => (ajustes.fps = f)}>{f}</button>
               {/each}
             </div>
           </div>
@@ -221,7 +221,7 @@
           </label>
           <label class="fila">
             <span class="texto">{txt.opciones.ahorro}<small>{txt.opciones.ahorroDesc}</small></span>
-            <input type="checkbox" bind:checked={ajustes.ahorro} />
+            <input type="checkbox" bind:checked={ajustes.bateria} />
           </label>
           <label class="fila">
             <span class="texto">{txt.opciones.daltonismo}<small>{txt.opciones.daltonismoDesc}</small></span>

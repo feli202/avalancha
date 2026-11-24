@@ -2,7 +2,7 @@
   // SPEC_CAPA1 §11: la barra lateral de capas (Arena / Cristalización) y la pantalla de Cristalización con su segunda barra.
   // Aparecen con el primer Infinito. Las pantallas de cada sistema llegan con su hito (C2–C10): por ahora, solo el nombre.
   import { txt } from '../strings'
-  import { ajustes } from './ajustes.svelte'
+  import { ajustes, quieto } from './ajustes.svelte'
   import { formato } from './formato'
   import { hayCartel, juego } from './juego.svelte'
   import Nevada from './Nevada.svelte'
@@ -57,7 +57,7 @@
 {/snippet}
 
 {#if s.infinitos > 0 && !juego.titulo}
-  <div class="capa1" class:quieto={ajustes.reducirDestellos} class:calma={ajustes.calma} inert={hayCartel()}>
+  <div class="capa1" class:quieto={quieto()} class:calma={ajustes.calma} inert={hayCartel()}>
     {#if juego.capa === 'cristalizacion'}
       <main class="cristalizacion" class:llega={!juego.vistos.cristales} class:fija={juego.vistos.cristales}>
         <Nevada />
@@ -120,14 +120,14 @@
 
     <nav class="capas" aria-label={txt.capas.barra}>
       <button class="arena" aria-current={juego.capa === 'arena' ? 'page' : undefined} onclick={() => (juego.capa = 'arena')}>
-        <svg viewBox="-12 -12 24 24" aria-hidden="true">
+        <span class="icono"><svg viewBox="-12 -12 24 24" aria-hidden="true">
           <!-- Una mini pila de arena en píxeles, como el logo: más clara arriba, dos granos cayendo. -->
           {#each [[-1.3, -2.8, 1], [1.7, -2.8, 0.7], [-2.8, 0.2, 0.9], [0.2, 0.2, 1], [3.2, 0.2, 0.75], [-5.8, 3.2, 0.7], [-2.8, 3.2, 0.85], [0.2, 3.2, 0.65], [3.2, 3.2, 0.9], [6.2, 3.2, 0.6], [-8.8, 6.2, 0.55], [-5.8, 6.2, 0.75], [-2.8, 6.2, 0.6], [0.2, 6.2, 0.8], [3.2, 6.2, 0.55], [6.2, 6.2, 0.7], [9.2, 6.2, 0.5]] as [x, y, o]}
             <rect {x} {y} width="2.6" height="2.6" fill="var(--ambar)" opacity={o} />
           {/each}
-          <rect class="grano" x="-0.1" y="-8.6" width="1.8" height="1.8" fill="var(--ambar)" />
-          <rect class="grano" x="0.9" y="-11.6" width="1.4" height="1.4" fill="var(--ambar)" opacity="0.6" />
-        </svg>
+        </svg><!-- Los dos granos que caen, afuera del SVG (que tiene filter): animados con transform y opacidad se componen solos;
+          adentro, cada cuadro repintaba y refiltraba el ícono. Posición y tamaño en unidades del viewBox (--u). -->
+          <span class="granos" aria-hidden="true"><i class="grano" style:--x="11.9" style:--y="3.4" style:--l="1.8"></i><i class="grano tenue" style:--x="12.9" style:--y="0.4" style:--l="1.4"></i></span></span>
         <span>{txt.capas.arena}</span>
       </button>
       <button class="cristal" aria-current={juego.capa === 'cristalizacion' ? 'page' : undefined} onclick={() => (juego.capa = 'cristalizacion')}>
@@ -200,11 +200,19 @@
     background: var(--c); box-shadow: 0 0 0.5rem var(--c);
   }
   .capas [aria-current] svg { filter: drop-shadow(0 0 0.45rem color-mix(in srgb, var(--c) 70%, transparent)); opacity: 1; scale: 1.08; }
-  .capas .grano { animation: grano 3.2s ease-in infinite; }
+  /* 1em = una unidad del viewBox del ícono (24 por lado): los fotogramas quedan sin var() y se componen solos. */
+  .capas .icono { position: relative; display: block; width: 2.25rem; height: 2.25rem; font-size: calc(2.25rem / 24); }
+  .capas .granos { position: absolute; inset: 0; opacity: 0.6; transition: opacity 0.3s; }
+  .capas [aria-current] .granos, .capas button:hover .granos { opacity: 1; }
+  .capas .grano {
+    position: absolute; left: calc(var(--x) * 1em); top: calc(var(--y) * 1em); width: calc(var(--l) * 1em); height: calc(var(--l) * 1em);
+    background: var(--ambar); animation: grano 3.2s ease-in infinite;
+  }
+  .capas .grano.tenue { background: color-mix(in srgb, var(--ambar) 60%, transparent); }
   .capas .grano + .grano { animation-delay: 1.4s; }
   .capas .destello { opacity: 0; }
   .capas [aria-current] .destello { animation: destello 5s ease-in-out infinite; }
-  @keyframes grano { from { translate: 0 -2px; opacity: 0; } 30% { opacity: 1; } 80%, to { translate: 0 6px; opacity: 0; } }
+  @keyframes grano { from { transform: translateY(-2em); opacity: 0; } 30% { opacity: 1; } 80%, to { transform: translateY(6em); opacity: 0; } }
   @keyframes destello { 0%, 70%, 100% { opacity: 0; } 82% { opacity: 0.9; } }
   /* Reducir movimiento: nada se mueve. Reducir destellos: el destello del cristal queda fijo (no titila). */
   .quieto .capas .grano { animation: none; }
@@ -309,6 +317,7 @@
     }
     .capas button { flex: 1; width: auto; min-height: 0; gap: 0.2rem; padding: 0.4rem 0.25rem; font-size: 0.6875rem; }
     .capas svg { width: 1.625rem; height: 1.625rem; }
+    .capas .icono { width: 1.625rem; height: 1.625rem; font-size: calc(1.625rem / 24); }
     /* La activa: la marca pasa al borde de arriba. */
     .capas [aria-current]::after { left: 50%; top: -1px; width: 1.75rem; height: 2px; translate: -50% 0; border-radius: 0 0 2px 2px; }
     .capas [aria-current] { background: radial-gradient(55% 70% at 50% 0%, color-mix(in srgb, var(--c) 16%, transparent), transparent 80%); }
