@@ -4,7 +4,7 @@ Todo lo que se sube está en esta carpeta. Los `.zip` y `.mp4` no van a git (pes
 
 ## 0. Antes de empezar
 
-- [ ] Reemplazar los borradores por tus textos: `galaxy/descripcion_galaxy.md` y `reddit/post_reddit.md` (arriba de cada uno dice BORRADOR).
+- [ ] Leer las descripciones y cambiar lo que quieras: itch `itch/descripcion_en.md` / `descripcion_es.md` (la primera línea es la descripción corta), galaxy `galaxy/descripcion_galaxy.md`, Reddit `reddit/post_reddit.md`, perfiles de TikTok/Instagram, YouTube y Discord en `redes/descripciones_perfiles.md`.
 - [ ] Abrir https://feli202.github.io/avalancha/ → Ajustes → Créditos: dice `1.0.0 · …`, la línea de IA y los botones de Discord e itch.io.
 
 ## 1. itch.io (primero: es el link de todo lo demás)
@@ -17,7 +17,7 @@ Página: https://exponent-games.itch.io/avalanche → Edit game.
 - [ ] **Embed options**: tamaño 1280×720 (o *Click to launch in fullscreen* para celular), tildar *Mobile friendly* (orientación: Default), *Fullscreen button*. No tildar *SharedArrayBuffer*.
 - [ ] **Cover image**: `itch/portada-630x500.png` (itch pide 630×500; si deja, la de 1260×1000).
 - [ ] **Screenshots**: `itch/en-1…en-6-*.png` (página en inglés) y `itch/celular-1…3-*.png`. Las `es-*` son para la página en español o para devlogs.
-- [ ] **Trailer**: itch solo acepta un link de YouTube/Vimeo → subir `itch/trailer_vertical_en.mp4` a YouTube (como Short) y pegar el link.
+- [ ] **Trailer**: itch solo acepta un link de YouTube/Vimeo → subir `itch/trailer_vertical_en.mp4` a YouTube (como Short, título y descripción en `redes/descripciones_perfiles.md`) y pegar el link.
 - [ ] **Description**: `itch/descripcion_en.md` (y debajo, o en la página en español, `descripcion_es.md`). El GIF `itch/avalancha-600.gif` va arriba de la descripción.
 - [ ] **Genre / Tags / AI disclosure / Accessibility**: `itch/etiquetas.txt`.
 - [ ] **Pricing**: *No payments* o *Donate* (pago opcional, lo decide itch, no el juego).
@@ -42,12 +42,13 @@ galaxy.click no publica los tamaños de la miniatura: en el formulario de subida
 ## 4. TikTok e Instagram
 
 - [ ] TikTok: `redes/trailer_vertical_es.mp4` (o `_en`) con un texto de `redes/textos_redes.md`.
+- [ ] Bio de TikTok e Instagram: `redes/descripciones_perfiles.md`.
 - [ ] Instagram Reels: el mismo video, portada `redes/miniatura_vertical.png`, el link en la bio.
 - [ ] Repetir en días distintos con los otros textos (hay 5 por idioma).
 
 ## 5. Discord
 
-- [ ] Anunciar en https://discord.gg/8qEt7E6AV con los links de itch y galaxy y el changelog.
+- [ ] Anunciar en https://discord.gg/8qEt7E6AV con el texto de `redes/descripciones_perfiles.md` (pegar el link de galaxy cuando esté).
 
 ## Rehacer los archivos que no van a git
 

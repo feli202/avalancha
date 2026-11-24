@@ -1,3 +1,5 @@
+<!-- itch.io → "Descripción corta": Un juego incremental sobre una pila de arena de verdad. Cada avalancha te paga. -->
+
 # Avalancha
 
 **Un juego incremental sobre una pila de arena de verdad.** Caen granos, las celdas se derrumban y cada derrumbe te da Energía.

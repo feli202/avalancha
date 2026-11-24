@@ -1,3 +1,5 @@
+<!-- itch.io → "Short description or tagline": An incremental game played on a real sandpile. Every avalanche pays you. -->
+
 # Avalancha
 
 **An incremental game played on a real sandpile.** Grains fall, cells topple, and every topple pays out Energy.
