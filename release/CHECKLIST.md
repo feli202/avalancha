@@ -9,6 +9,8 @@ Todo lo que se sube está en esta carpeta. Los `.zip` y `.mp4` no van a git (pes
 
 ## 1. itch.io (primero: es el link de todo lo demás)
 
+- [ ] **Perfil de Exponent Games** (Edit profile → avatar): `exponent_avatar.png` (1080×1080, 248 KB, la misma foto de siempre comprimida sin pérdida). Sirve también para Discord, galaxy.click, Reddit, TikTok e Instagram.
+
 Página: https://exponent-games.itch.io/avalanche → Edit game.
 
 - [ ] **Uploads**: borrar el zip viejo, subir `itch/avalancha-web.zip`, marcar *This file will be played in the browser*.
