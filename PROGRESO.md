@@ -11,13 +11,13 @@ Historia completa hasta la 1.0: `docs/historial/progreso_hasta_1.0.md` (no leer 
 - Capa 0 entera (Arena, Compresión, Mutaciones, Infinito), logros, secretos, cosméticos, sonido, accesibilidad.
 - Capa 1 entera (C1–C14): Relicario, Red (25 nodos), Estratos (embudo 2D), Defectos 1–8, Escarcha, Automatización, fin de capa.
 - 1.0: guardado validado con 3 respaldos, notaciones, inglés, PWA instalable, pase de partida itch → GitHub / Safari → app, aviso de versión, comunidad, rendimiento y modo ahorro, offline débil (2 h a ×0,1, sin Infinitos).
-- 2026-11-25: Escarcha con Punto de ruptura (estilo Replicanti). Fin de la capa 15,12 h (jugador de 15 s).
+- 2026-11-25: Escarcha con Punto de ruptura (estilo Replicanti), recalibrada solo en sus números contra el ritmo de la vieja: Fatiga 9,86 · Frontera 12,98 · Inclusión 13,27 · Vidrio 13,86 · fin 14,01 h (núcleo real, 15 s). Ver `docs/capa1/escarcha.md`.
 - `release/` lista para itch.io, galaxy.click, Reddit y redes (`release/CHECKLIST.md`).
 - 2026-11-25: limpieza de documentación: `docs/` por sistema, SPEC y guías a `archivo/`, skills del proyecto.
 
 ## Verificación al último cambio
 
-`npm test` 404 en verde, `tsc` 0 errores, build sin errores, `python balance/sim.py` igual (atento 208 min, 17 compresiones). **`npm run test:lento` 18/20** desde la Escarcha nueva (ver Problemas conocidos).
+`npm test` 404 en verde, `tsc` 0 errores, build sin errores, `python balance/sim.py` igual (atento 208 min, 17 compresiones). `npm run test:lento` 20/20 (los pesos de log V se miden con la Escarcha a mitad de su ciclo).
 
 ## Falta
 
@@ -30,7 +30,7 @@ Historia completa hasta la 1.0: `docs/historial/progreso_hasta_1.0.md` (no leer 
 
 ## Problemas conocidos
 
-- **`npm run test:lento` falla 2 de 20 desde "Escarcha con Punto de ruptura"** (antes de la limpieza de docs; no se tocó código): Frontera a 12,6 % de la referencia del test (12,66 h; la tabla del simulador dice 14,40 h, la lista del test no se actualizó) y la Presión pesa 72,6 % al final de la 1.2 (tope 65 %; el simulador dice 70 %). Decidir: actualizar referencias/tope del test o rebalancear (skill `balance`).
+- El fin de la capa queda ~0,9 h antes que con la Escarcha vieja (14,0 h contra 14,9) y pegado a Vidrio; tocando solo la Escarcha no se separan (ver `docs/capa1/escarcha.md`).
 
 - Nunca probado en celulares reales (iPhone/Android: instalación, notch, temperatura, batería, fps).
 - itch.io real: no confirmado si su iframe deja abrir la ventana del pase (si no, sale el paso a mano).

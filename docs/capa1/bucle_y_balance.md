@@ -46,20 +46,22 @@ Estadísticas (estilo AD): desglose de log10 V por fuente (`desglose.ts`).
 | Macla | 4,65 h | 5,75 h | 12,28 h |
 | Impureza | 5,92 h | 7,04 h | 13,54 h |
 | **Fin 1.1** | **7,39 h** | 8,50 h | 14,98 h |
-| Fatiga | 9,96 h | 11,00 h | 17,49 h |
-| Frontera | 14,40 h | 13,92 h | 20,38 h |
-| Inclusión | 14,52 h | 14,75 h | 21,07 h |
-| Vidrio | 14,81 h | 15,75 h | 21,67 h |
-| **Fin de la capa** | **15,12 h** | 16,25 h | 22,69 h |
+| Fatiga | 9,69 h | 11,00 h | 17,49 h |
+| Frontera | 13,14 h | 13,92 h | 20,38 h |
+| Inclusión | 13,43 h | 14,75 h | 21,07 h |
+| Vidrio | 13,88 h | 15,75 h | 21,67 h |
+| **Fin de la capa** | **14,03 h** | 16,25 h | 22,69 h |
 
-Las columnas de 60 s y 5 min no se volvieron a medir tras la Escarcha con Punto de ruptura (2026-11-25). 86 rupturas, hueco máximo entre compras 35,7 min (< 40). Ganar un Defecto cuenta como compra.
+Las columnas de 60 s y 5 min no se volvieron a medir tras la Escarcha con Punto de ruptura (2026-11-25). Escarcha recalibrada el mismo día ([escarcha.md](escarcha.md)): 42 rupturas, hueco máximo entre compras 30,2 min (< 40); el núcleo real da 9,86 / 12,98 / 13,27 / 13,86 / 14,01 h. Ganar un Defecto cuenta como compra.
 
 Peso de cada fuente en log10 V:
 
 | | Colores | Anillos | Cascada | Mutaciones | **Presión** | Eco | Cauce | Escarcha |
 |---|---|---|---|---|---|---|---|---|
 | Fin 1.1 | 19 % | 2 % | 4 % | 0 % | **58 %** | 12 % | 5 % | — |
-| Fin capa | 12 % | 1 % | 1 % | 0 % | **70 %** | 8 % | 4 % | 4 % |
+| Fin capa | 13 % | 1 % | 2 % | 0 % | **66 %** | 9 % | 4 % | 5 % |
+
+(La Escarcha medida en el instante del último Infinito, justo después de romperse; a mitad de su ciclo pesa mucho más, ver [escarcha.md](escarcha.md).)
 
 La Presión es el motor a propósito. Si con jugadores "solo importan los estratos": bajar `estratos.w_base_por_profundidad` y subir `escarcha.g_log10_por_s`, siempre con el simulador.
 

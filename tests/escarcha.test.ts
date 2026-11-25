@@ -98,13 +98,15 @@ describe('Escarcha', () => {
   })
 
   it('mejoras: cuestan 10^round(c0 + paso × L) Esquirlas', () => {
-    const s = { ...abierta(0), escarcha: { ...abierta(0).escarcha, esquirlas: 13 } }
-    expect(costoMejoraEscarcha(s, 'crecimiento')).toBe(1) // 10^0
-    expect(costoMejoraEscarcha(s, 'brillo')).toBe(10) // 10^round(0,5)
+    const M = CFG1.escarcha.mejoras, precio = (k: 'crecimiento' | 'brillo' | 'umbral', L: number) => 10 ** Math.round(M[k].c0 + M[k].paso * L)
+    const pago = precio('crecimiento', 0) + precio('brillo', 0)
+    const s = { ...abierta(0), escarcha: { ...abierta(0).escarcha, esquirlas: pago } }
+    expect(costoMejoraEscarcha(s, 'crecimiento')).toBe(precio('crecimiento', 0))
+    expect(costoMejoraEscarcha(s, 'brillo')).toBe(precio('brillo', 0))
     const n = mejorarEscarcha(mejorarEscarcha(s, 'crecimiento'), 'brillo')
     expect(n.escarcha.mejoras).toMatchObject({ crecimiento: 1, brillo: 1 })
-    expect(n.escarcha.esquirlas).toBe(2)
-    expect(mejorarEscarcha(n, 'umbral')).toBe(n) // 10 > 2
+    expect(n.escarcha.esquirlas).toBe(0)
+    expect(mejorarEscarcha(n, 'umbral')).toBe(n) // sin Esquirlas
   })
 
   it('fuera de línea crece con el tiempo que cuenta (×eficiencia), y se guarda', () => {

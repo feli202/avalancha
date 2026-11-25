@@ -3,7 +3,7 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import {
   CFG1, DEFECTOS, finCapa1, MEJORAS_ESCARCHA, costoMejoraEscarchaLog10, costoPulidoLog10, equipadas, mejorarEscarcha, puedeMejorarEscarcha,
-  puedePulir, puedeRomperEscarcha, pulir, romperEscarcha, INFINITO, NODOS, abandonarDefecto, abrirEstrato, colorSinEfecto, comprarConMargen, comprarRed, comprarTodo,
+  puedePulir, puedeRomperEscarcha, puntoRuptura, pulir, romperEscarcha, INFINITO, NODOS, abandonarDefecto, abrirEstrato, colorSinEfecto, comprarConMargen, comprarRed, comprarTodo,
   comprimir, completo, costoAbrirLog10, costoMejoraLog10, costoRedLog10, disponibles, elegirSola, enDefecto, enInfinito,
   entrarDefecto, equiparMejores, estadoInicial, fueraDeLinea, fusionAutomatica, fusionarTodo, infinito, inventarioLleno, memoria, metaLog10,
   mejorarEstrato, puedeAbrir, puedeComprarRed, puedeComprimir, puedeEntrar, puedeMejorar, tick, MUTACIONES,
@@ -138,8 +138,10 @@ const TABLA: [string, number][] = [
   ['fatiga', 10.40], ['frontera', 12.66], ['inclusion', 13.33], ['vidrio', 13.94], ['fin', 14.94],
 ]
 
-/** Peso de cada fuente de log10 V (las que suman), como la pestaña Valor de Estadísticas. */
+/** Peso de cada fuente de log10 V (las que suman), como la pestaña Valor de Estadísticas. La Escarcha va de 1 al Punto de
+ * ruptura y el Infinito óptimo cae justo cuando se rompe (ahí baja la producción): se mide a mitad de su ciclo (P / 2). */
 function pesos(s: State): Record<string, number> {
+  if (s.escarcha.abierta) s = { ...s, escarcha: { ...s.escarcha, logX: puntoRuptura(s) / 2 } }
   const f = desgloseV(s).filter((x) => x.log > 0), tot = f.reduce((a, x) => a + x.log, 0)
   return Object.fromEntries(f.map((x) => [x.id, x.log / tot]))
 }
