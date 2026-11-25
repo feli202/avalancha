@@ -37,7 +37,7 @@ galaxy.click no publica los tamaños de la miniatura: en el formulario de subida
 ## 3. Reddit (después de que itch esté público)
 
 - [ ] r/incremental_games: post con `reddit/avalancha.gif` (8,6 MB) y el texto de `reddit/post_reddit.md`. Leer las reglas del sub antes (suelen pedir post de texto con link y reservar la autopromoción a ciertos días o al hilo semanal).
-- [ ] Responder comentarios las primeras horas; el feedback de balance va a `PENDIENTES.md`.
+- [ ] Responder comentarios las primeras horas; el feedback de balance va a `PROGRESO.md` (Problemas conocidos).
 
 ## 4. TikTok e Instagram
 

@@ -13,4 +13,4 @@ npm test
 npm run build
 ```
 
-Especificación: `SPEC.md` (Capa 0) y `SPEC_CAPA1.md` (Capa 1). Balance: `balance/`. Estado: `PROGRESO.md`.
+Documentación: `docs/INDICE.md`. Balance: `balance/`. Estado: `PROGRESO.md`.

@@ -1,27 +1,60 @@
 # Avalancha — instrucciones para Claude Code
 
-Juego incremental web sobre una pila de arena abeliana. Estamos construyendo la **Capa 0** (del primer grano al primer Infinito).
+Juego incremental web sobre una pila de arena abeliana. Versión 1.0: Capa 0 (Arena) y Capa 1 (Cristalización) completas. Estado actual: `PROGRESO.md`.
 
-- La especificación completa está en `SPEC.md`. Leela entera antes de empezar y seguí el plan de hitos de la sección 9, en orden.
-- Las constantes de balance viven **solo** en `balance/config.json`. Nunca escribas números de balance en el código.
-- `balance/sim.py` es el simulador de referencia (Python 3, sin dependencias). `python3 balance/sim.py` debe dar los tiempos de la sección 2 de `SPEC.md`.
-- La economía (`src/core/`) es pura y determinista: sin DOM, sin `Date.now()`, sin aleatoriedad. Todo lo visual va aparte.
-- `tests/balance.test.ts` usa el núcleo real del juego. Tiene que pasar al terminar cada hito.
-- Si un cambio toca el balance: primero simulador, después `SPEC.md`, después código.
-- Textos de interfaz en español rioplatense, en un archivo de cadenas (nunca en los componentes).
-- Antes de dar un hito por terminado, abrí el juego y miralo funcionando (60 fps, nada roto en móvil).
-- Al terminar una tarea, actualizá `PROGRESO.md`.
+## Cómo leer la documentación
 
-Capa 1 — Cristalización (agregar al final de CLAUDE.md)
-Estamos construyendo la Capa 1. La spec es `SPEC_CAPA1.md`; leela entera antes de cada hito C1–C14 (sección 16) y seguí el orden.
-Constantes de la Capa 1: solo en `balance/config_capa1.json`. Los datos de los nodos de la Red, Defectos y reliquias se leen de ahí: agregar un nodo no debería requerir tocar código.
-`balance/sim_capa1.py` es el simulador de referencia de la Capa 1. `python3 balance/sim_capa1.py` tiene que dar la tabla de la sección 2 de `SPEC_CAPA1.md` (±0,1 h). Tarda unos minutos.
-`balance/probe.py` mide hasta dónde llega el jugador en un Defecto a una hora dada; úsalo si cambia una meta.
-Si un cambio toca el balance: primero simulador, después `SPEC_CAPA1.md`, después código. Nunca al revés.
-Todo número grande de la Capa 1 (Cristales, `s_k` de los estratos, espesor de la Escarcha) vive en log10 o break_infinity.
-La escena three.js de los Estratos se crea al entrar a su pantalla y se destruye al salir. Medí fps antes de cerrar C5.
-Llevá `PROGRESO.md` al día: hito actual, qué quedó hecho, qué falta, decisiones tomadas.
+- **Leé solo los archivos de `docs/` del sistema que vas a tocar; nunca toda la documentación.** Mapa en `docs/INDICE.md`.
+- `archivo/` y `docs/historial/` no se leen salvo que el usuario lo pida (SPEC originales, correcciones viejas, historia).
 
-Pantallas sin scroll (regla para todo lo que se haga de ahora en más)
-Cada pantalla del juego entra entera en la ventana, sin scroll de página, en escritorio y en el celular. Si hay una lista larga (inventario, logros, nodos), scrollea solo esa caja dentro de la pantalla fija. Probalo en 1366×768 y en 390×844 antes de dar algo por terminado.
-Valores como multiplicadores o en notación matemática (×3, ^1,015, +0,02 a c, × (1 + 0,3 × nivel)), nunca en porcentajes.
+## Mapa
+
+| Para… | Leé |
+|---|---|
+| Estructura del código, configs, build | `docs/general/arquitectura.md` |
+| Colores, textos, sonido, accesibilidad | `docs/general/estilo.md` |
+| Guardado, respaldos, migraciones, pase de partida | `docs/general/guardado.md` |
+| fps, batería, modo ahorro | `docs/general/rendimiento.md` |
+| GitHub Pages, itch, PWA, aviso de versión | `docs/general/distribucion.md` |
+| Pila visual, worker, shader, marcos | `docs/capa0/pila.md` |
+| Fórmulas de la Arena, precios, tiempos de la Capa 0 | `docs/capa0/economia.md` |
+| Compresión e Infinito | `docs/capa0/compresion.md` |
+| Tienda, revelado, ajustes, logros | `docs/capa0/interfaz.md` |
+| Tabla de tiempos de la Capa 1, producción completa | `docs/capa1/bucle_y_balance.md` |
+| Cristales / Red / Relicario / Estratos / Defectos / Escarcha | `docs/capa1/<sistema>.md` |
+| Autocompradores y panel de Automatización | `docs/capa1/automatizacion.md` |
+| Offline | `docs/capa1/offline.md` |
+| Barra de capas, estética helada, guías | `docs/capa1/interfaz.md` |
+
+## Reglas de trabajo
+
+- Constantes de balance **solo** en `balance/config.json` (Capa 0) y `balance/config_capa1.json` (Capa 1). Nunca números de balance en el código. Los nodos de la Red, Defectos y reliquias se leen de config.
+- Si un cambio toca el balance: **simulador → doc del sistema → código**. Nunca al revés (skill `balance`).
+- `src/core/` es puro y determinista: sin DOM, sin `Date.now()`, sin aleatoriedad. Todo lo visual va aparte.
+- Números grandes de la Capa 1 (Cristales, `s_k`, `logX`) en log10 o break_infinity.
+- Textos de interfaz en español rioplatense (e inglés) solo en `src/strings/es.ts` y `en.ts`, nunca en los componentes.
+- Valores como multiplicadores o notación matemática (×3, ^1,015, +0,02 a c), nunca porcentajes.
+- **Pantallas sin scroll**: cada pantalla entra entera en 1366×768 y 390×844; una lista larga scrollea solo su caja.
+- Escenas pesadas (Estratos, Red) se crean al entrar a su pantalla y se destruyen al salir. Nunca más de 60 fps.
+- Antes de dar algo por terminado: tests en verde y mirarlo funcionando en el navegador (1366×768 y 390×844, 60 fps, nada roto en el celular).
+- Al terminar una tarea, actualizá `PROGRESO.md` (corto: estado, hecho, falta, problemas) y el doc de `docs/` del sistema que cambió.
+- `master` = código. `main` = solo la build publicada en GitHub Pages: nunca commitear código ni docs ahí.
+
+## Comandos (en esta máquina es `python`, no `python3`)
+
+```bash
+npm run dev            # juego + panel de debug, http://localhost:5173 (preview_start "avalancha")
+npm test               # tests unitarios + balance de la Capa 0
+npm run test:lento     # balance completo de la Capa 1 (~45 s)
+npm run typecheck      # tsc
+npx svelte-check       # tipos de los .svelte
+npm run build          # dist/
+python balance/sim.py              # Capa 0: atento 3 h 28 min
+python balance/sim_capa1.py --robustez   # Capa 1: tarda minutos
+```
+
+## Skills del proyecto (`.claude/skills/`)
+
+- `balance` — correr simuladores, probe y tests de balance; orden para cambiar números.
+- `publicar-pages` — publicar la build en GitHub Pages (rama `main`).
+- `zip-itch` — zip para itch.io y galaxy.click y prueba con `itch-falso`.

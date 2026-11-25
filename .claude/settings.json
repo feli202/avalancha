@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./archivo/**)",
+      "Read(./docs/historial/**)"
+    ]
+  }
+}
