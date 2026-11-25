@@ -25,7 +25,7 @@ export function recompensa(id: DefectoId) {
     impureza: [0, D.impureza.recompensa_cascada_c],
     fatiga: [1, D.fatiga.recompensa_escarcha_g_x],
     frontera: [0, D.frontera.recompensa_densidad],
-    inclusion: [1, D.inclusion.recompensa_escarcha_H_x],
+    inclusion: [1, D.inclusion.recompensa_escarcha_P_x],
     vidrio: [0, D.vidrio.cristales_log10],
   }[id]
   return td().recompensa[id](a, b)

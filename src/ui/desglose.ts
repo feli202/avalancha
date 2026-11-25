@@ -2,7 +2,7 @@
 // Usa las fórmulas del núcleo; los factores con partes internas las traen en `partes`.
 import {
   CFG, CFG1, anillos, cascadaC, cascadaRel, caudal, cauceRel, densidad, efectoRed, empuje, factorCaudal, hayEstratos, impulso, multAnillos,
-  multCascada, multColor, mutacionesRel, presion, presionEstrato, valor, ecoLog10, aporteEscarcha, penalEscarcha, type State,
+  multCascada, multColor, mutacionesRel, presion, presionEstrato, valor, ecoLog10, aporteEscarcha, type State,
 } from '../core'
 
 export interface Factor {
@@ -49,11 +49,9 @@ export function desglose(s: State): Factor[] {
     ...(s.estratos.abiertos && hayEstratos(s)
       ? [{ id: 'presion', log: presion(s), partes: s.estratos.s.slice(0, s.estratos.abiertos).map((_, k) => ({ id: `estrato${k}`, log: presionEstrato(s, k), n: k + 1 })) }]
       : []),
-    // La Escarcha (SPEC_CAPA1 §9): su aporte a V y su freno (fuera de la Densidad).
+    // La Escarcha (SPEC_CAPA1 §9): su aporte a V.
     ...(s.escarcha.abierta
-      ? [{ id: 'escarcha', log: aporteEscarcha(s) - penalEscarcha(s), partes: [
-        { id: 'escarchaAporte', log: aporteEscarcha(s), n: s.escarcha.logX }, { id: 'escarchaPenal', log: -penalEscarcha(s) },
-      ] }]
+      ? [{ id: 'escarcha', log: aporteEscarcha(s), partes: [{ id: 'escarchaAporte', log: aporteEscarcha(s), n: s.escarcha.logX }] }]
       : []),
     // El exponente: V^D = V × V^(D−1). Lo que suma es (D − 1) × log10 V.
     { id: 'densidad', log: (densidad(s) - 1) * logV, partes: [{ id: 'exponente', log: (densidad(s) - 1) * logV, n: densidad(s) }] },

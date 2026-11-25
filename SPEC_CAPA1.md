@@ -42,12 +42,13 @@ Tiempo de juego **desde el primer Infinito** (la Capa 0 completa dura ~3 h 30). 
 | Defecto Macla | 4,65 h | 5,75 h | 12,28 h |
 | Defecto Impureza | 5,92 h | 7,04 h | 13,54 h |
 | **FIN 1.1**: Estrato 8 lleno → Escarcha | **7,39 h** | 8,50 h | 14,98 h |
-| Defecto Fatiga | 10,40 h | 11,00 h | 17,49 h |
-| Defecto Frontera | 12,66 h | 13,92 h | 20,38 h |
-| Defecto Inclusión | 13,33 h | 14,75 h | 21,07 h |
-| Defecto Vidrio | 13,94 h | 15,75 h | 21,67 h |
-| **FIN CAPA 1**: 1e308 Cristales | **14,94 h** | 16,25 h | 22,69 h |
+| Defecto Fatiga | 9,96 h | 11,00 h | 17,49 h |
+| Defecto Frontera | 14,40 h | 13,92 h | 20,38 h |
+| Defecto Inclusión | 14,52 h | 14,75 h | 21,07 h |
+| Defecto Vidrio | 14,81 h | 15,75 h | 21,67 h |
+| **FIN CAPA 1**: 1e308 Cristales | **15,12 h** | 16,25 h | 22,69 h |
 
+- **Escarcha con Punto de ruptura (2026-11-25)**: la Escarcha crece hasta un tope y se rompe al llegar (§9), sin reloj de 30 min ni freno. Con un tope fijo pesa menos que la vieja (que engordaba sin límite): 4 % de log V al final de la 1.2 (antes 40 %). Para que el fin siga en rango: `punto_ruptura` 50, Umbral ×1,3 por nivel, Brillo multiplicativo ×1,4 por nivel, `esquirlas_por_ruptura_div` 3. Fin de la capa 15,12 h (antes 14,94), 86 rupturas, hueco máximo 35,7 min. Las columnas de 60 s y 5 min no se volvieron a medir.
 - **Nodo Defectos (v1.0, 2026-11-20)**: los niveles 2–4 abrían Dislocación, Macla e Impureza casi dos horas antes de poder ganarlas (se compraban a las 2,54 / 2,67 / 2,88 h). Ahora cada nivel tiene su costo propio (`red.nodos.defectos.costos_log10` = 1, 1e15, 1e20, 1e27 Cristales), a la par de los estratos 6, 7 y 8 que cada uno pide: se compran a las 3,54 / 4,64 / 5,48 h y los Defectos se ganan a las 3,99 / 4,65 / 5,92 h. El fin de la 1.1 se corre 0,31 h (7,08 → 7,39 h) y el de la capa 0,32 h (14,62 → 14,94 h, rango 14–16 h); hueco máximo 38,9 min (< 40). Con 1e25 en el nv4 el hueco pasaba a 40,2 min. `npm run test:lento` 20/20.
 - **Infinito automático (v1.0)**: el modo "En el óptimo" salió de la interfaz y entró "Multiplicar mis Cristales" (×N, por defecto ×10, `infinito_auto.multiplicar_x`). El bot sigue con su regla del óptimo: en el óptimo cada Infinito da una mediana de ×0,26 los Cristales que se tienen (1045 Infinitos medidos), así que un bot con ×10 no termina la 1.1 (las corridas llegan al tope de 6 h).
 
@@ -65,7 +66,7 @@ Tiempo de juego **desde el primer Infinito** (la Capa 0 completa dura ~3 h 30). 
 | | Colores | Anillos | Cascada | Mutaciones | **Presión** | Eco | Cauce | **Escarcha** |
 |---|---|---|---|---|---|---|---|---|
 | Fin 1.1 | 19 % | 2 % | 4 % | 0 % | **58 %** | 12 % | 5 % | — |
-| Fin 1.2 | 7 % | 1 % | 1 % | 0 % | **45 %** | 5 % | 2 % | **40 %** |
+| Fin 1.2 | 12 % | 1 % | 1 % | 0 % | **70 %** | 8 % | 4 % | **4 %** |
 
   La Presión (Estratos) es el motor de la capa a propósito: es el sistema nuevo más visual. Si en las pruebas con gente se siente que "solo importan los estratos", el primer ajuste es bajar `estratos.w_base_por_profundidad` y subir `escarcha.g_log10_por_s`, siempre volviendo a correr el simulador.
 
@@ -79,7 +80,7 @@ Tiempo de juego **desde el primer Infinito** (la Capa 0 completa dura ~3 h 30). 
 4. La Arena vuelve a empezar pero mucho más rápido: la Red conserva compresiones y automatiza; los Estratos y el Relicario multiplican.
 5. Cuando la Red lo permite, entrás a un **Defecto** (un Infinito con una regla rota) para una recompensa permanente.
 6. Con **Romper el Infinito** (un nodo) la Energía pasa de 1e308 y los Cristales escalan con cuánto la pasás. Ahí se abren los **Estratos**: lo que te deja ir más allá. Las mejoras de la Arena que pasan de 1e308 entran en softcap (cada nivel ×10 el siguiente, `SPEC.md` §4.11).
-7. En la 1.2 la **Escarcha** crece sola; la rompés cada tanto para Esquirlas y con ellas la mejorás y pulís reliquias.
+7. En la 1.2 la **Escarcha** crece sola; crece hasta su Punto de ruptura y la rompés para Esquirlas y con ellas la mejorás y pulís reliquias.
 
 Lo que **se conserva** en un Infinito: Cristales, Red, Relicario, Estratos (la arena de los estratos sigue ahí), Defectos, Escarcha. Lo que **se reinicia**: todo lo de la Arena (Energía, granos, Caudal, colores, Cascada, Mutaciones, compresiones), salvo las compresiones que conserve la Red.
 
@@ -199,14 +200,14 @@ Bases del anillo 3: Eco II 45, Defectos II 55, Germen 65, Compactación II 78, F
 | **Eco II** | Eco de la Escarcha: su crecimiento × (1 + 0,001/0,002/0,003/0,004 × log10(Cristales totales)). |
 | **Defectos II** | Abre Fatiga / Frontera / Inclusión / Vidrio. |
 | **Germen** | Crecimiento de la Escarcha ×1,5/2,25/3,4/5,1. |
-| **Frío** | Aguante H de la Escarcha ×1,5/2,25/3,4/5,1. |
+| **Frío** | Punto de ruptura P de la Escarcha ×1,5/2,25/3,4/5,1. |
 | **Compactación II** | Densidad +0,0001/0,0002/0,0003/0,0004 por cada anillo de la corrida actual. |
 | **Sedimento II** | Profundidad: el peso de cada estrato pasa de `k` a `k^1,05 / k^1,1 / k^1,15 / k^1,2`. |
 | **Capilaridad** | Separación entre estratos: el tope pasa de `s_(k−1) − 2` a `− 1,75 / − 1,5 / − 1,25 / − 1`. |
 | **Abismo** | Estratos llenos: cada estrato en su tope pesa ×1,1/1,2/1,3/1,4 (el estrato 1 no tiene tope: cuenta siempre como lleno). |
 | **Engarces II** | Fusión automática de reliquias, espacios 3 y Pulido más barato (×0,7/0,5/0,35/0,25 en el exponente). |
 | **Cristalografía II** | Facetas: Cristales ×10^(0,125/0,25/0,375/0,5 × Defectos completos). Con los 8 y nv4, ×1e4. |
-| **Deshielo** | Rompe la Escarcha sola cada 30 min; Esquirlas ×1/2/4/8. |
+| **Deshielo** | Rompe la Escarcha sola al llegar al Punto de ruptura; Esquirlas ×1/2/4/8. |
 | **Ruptura II** | Q −1/−2/−3/−4. |
 
 Cada nodo tiene una mecánica propia (ninguno repite el efecto de otro). Los valores de Compactación II y Eco II salen del simulador: con los del primer borrador (+0,001 de Densidad por anillo, +0,05 por orden de Cristales) la 1.2 duraba menos de una hora.
@@ -276,7 +277,7 @@ Un Defecto es un Infinito con una regla rota. Se entra desde su pantalla (sale d
 | 4 | **Impureza** | Derrumbes por grano con tope 1e4 y colores a la mitad (^0,5, Cauce incluido). | 3471 | Cascada +0,1 de `c` | Defectos nv4, 7 estratos |
 | 5 | **Fatiga** | La producción se divide por 10 cada 10 min de corrida (`−t/600` en log; la Compresión reinicia el reloj). | 11464 | Escarcha crece ×2 | Defectos II nv1, 1e60 Cristales totales |
 | 6 | **Frontera** | Densidad = 1. | 7067 | Densidad +0,2 | Defectos II nv2, 1e80 |
-| 7 | **Inclusión** | La Presión de los Estratos no funciona. | 23500 | Aguante de la Escarcha ×1,5 | Defectos II nv3, 1e105 |
+| 7 | **Inclusión** | La Presión de los Estratos no funciona. | 23500 | Punto de ruptura de la Escarcha ×1,5 | Defectos II nv3, 1e105 |
 | 8 | **Vidrio** | Sin Relicario, sin Eco, sin Escarcha, los estratos quietos y sin los bonos de Cristales de la Red (el resto de la Red sí funciona). | 41518 | Cristales ×1000 | Defectos II nv4, 1e150 |
 
 - Las metas 1–4 se calibraron con `balance/probe.py` (C7, con el softcap pasado 1e308): el jugador de la tabla de §2 en la hora de cada Defecto juega el Defecto sin meta ni abandono, y la meta es lo que alcanza a los **30 min** (rango pedido: 20–40 min). Medido (log10 E a 1 / 20 / 30 / 40 min):
@@ -311,22 +312,22 @@ Un Defecto es un Infinito con una regla rota. Se entra desde su pantalla (sale d
 
 ## 9. Escarcha (1.2)
 
-Una capa de hielo que cubre la pila principal y **crece sola con el tiempo** (también con el juego cerrado, al 70 %).
+Una capa de hielo sobre la pila principal que **crece sola hasta su Punto de ruptura** (también con el juego cerrado, con las reglas de §12). Al estilo de los Replicanti: crecer más rápido es romper más seguido.
 
 ```
-logX   += g × dt                                   (logX = "espesor", en log10)
-g       = 0,004 × (1 + 0,003 × Presión) × 1,12^Crecimiento × Germen × (2 si Fatiga)
-aporte  = m × logX                                  (se suma a log10 V)
-m       = 1 + 0,04 × Brillo
-penal.  = −log10(1 + logX / H)                      (se resta a log10 de la producción)
-H       = 50 × 1,5^Aguante × Frío × (1,5 si Inclusión)
+logX   = min(P, logX + g × dt)                     (logX = "espesor", en log10; se queda en P)
+g       = 0,004 × (1 + 0,003 × Presión) × 1,12^Crecimiento × Germen × Eco II × (2 si Fatiga)
+aporte  = m × logX                                  (se suma a log10 V, dentro de la Densidad)
+m       = 1,4^Brillo
+P       = 50 × 1,3^Umbral × Frío × (1,5 si Inclusión)   (Punto de ruptura)
 ```
 
-- **Romper la Escarcha** (botón, cada 30 min como mínimo; automático con Deshielo): conserva el 50 % de `logX` y da `floor(logX × 0,5 / 10) × Deshielo.esquirlas_x` **Esquirlas**. Animación: el hielo se agrieta en hexágonos y salta.
-- **Mejoras con Esquirlas** (costo en log10 de Esquirlas, nivel L, redondeado al entero más cercano como todo precio, también el Pulido): Crecimiento `0 + 0,4L` (×1,12 a g), Brillo `0,5 + 0,5L` (+0,04 a m), Aguante `0,5 + 0,4L` (×1,5 a H). Y el Pulido de reliquias (§5).
+- **Romper la Escarcha** (botón, solo con `logX = P`; automático con Deshielo): da `floor(P / 3) × Deshielo.esquirlas_x` **Esquirlas** y `logX` vuelve a `logX_tras_romper` (1). Si no se rompe, espera en `P` sin perder nada. Animación: el hielo se agrieta en hexágonos y salta.
+- **Mejoras con Esquirlas** (costo en log10 de Esquirlas, nivel L, redondeado al entero más cercano como todo precio, también el Pulido): Crecimiento `0 + 0,4L` (×1,12 a g: llega antes), Brillo `0,5 + 0,5L` (×1,4 a m: multiplica más), Umbral `0,5 + 0,4L` (×1,3 a P: tarda más, suma más y da más Esquirlas). Y el Pulido de reliquias (§5). No hay freno: la penalidad del viejo Aguante se sacó.
+- Pantalla: barra de progreso a P con el porcentaje y el tiempo estimado, y el botón Romper que se enciende al llegar. La escarcha del borde de la pila crece con la barra (`logX / P`).
 - No funciona en el Defecto Vidrio.
 - Se desbloquea al llegar al hito de la 1.1 (Estrato 8 lleno con los 4 primeros Defectos): los Defectos ayudan a abrirla. Con ella se abre el anillo 3 de la Red.
-- **C10 (núcleo, `src/core/escarcha.ts`)**: `g` usa la Presión de los estratos sin el ×0,5 de Dislocación (como `last_pres` del simulador, que la toma al empezar la corrida; el juego la lee en vivo). Las recompensas de Fatiga (×2 a g) e Inclusión (×1,5 a H) están en `config_capa1.json` (`recompensa_escarcha_g_x`, `recompensa_escarcha_H_x`). El aporte va dentro de la Densidad (con la Presión y el Eco); la penalidad, fuera. El reloj de 30 min solo corre con la Escarcha activa (no en Vidrio). Las Esquirlas se guardan como número (son enteras y chicas). `tests/escarcha.test.ts` compara 1 h contra `balance/ref_escarcha.py` (mismo logX, Esquirlas, g, H y m).
+- **Núcleo (`src/core/escarcha.ts`)**: `g` usa la Presión de los estratos sin el ×0,5 de Dislocación (como `last_pres` del simulador). Las recompensas de Fatiga (×2 a g) e Inclusión (×1,5 a P) están en `config_capa1.json` (`recompensa_escarcha_g_x`, `recompensa_escarcha_P_x`); Frío es `escarcha_P_x`. `reloj` cuenta los segundos desde la última ruptura (logro Témpano). Las Esquirlas se guardan como número. Un guardado viejo con `aguante` lo carga como `umbral`. `tests/escarcha.test.ts` compara 1 h contra `balance/ref_escarcha.py` (mismo logX, Esquirlas, g, P y m).
 
 ---
 
@@ -373,7 +374,7 @@ El simulador no modela el offline: lo prueba `tests/balance_capa1.test.ts` (12 h
 ## 13. Guardado
 
 - Versión de guardado nueva (v2) con migración desde v1: un jugador que ya tenía el Infinito de la Capa 0 arranca la Capa 1 con 1 Cristal y la primera reliquia del Relicario.
-- Se guarda: Cristales (break_infinity), Cristales totales, niveles de la Red, inventario de reliquias (tipo, nivel, pila, Infinito) + pulidos + engarzadas + regla automática, número de Infinito, estratos abiertos, `s_k` (log10), niveles de Permeabilidad y Presión, Defectos completos, Escarcha `logX`, Esquirlas, mejoras de Escarcha, temporizador de la Escarcha.
+- Se guarda: Cristales (break_infinity), Cristales totales, niveles de la Red, inventario de reliquias (tipo, nivel, pila, Infinito) + pulidos + engarzadas + regla automática, número de Infinito, estratos abiertos, `s_k` (log10), niveles de Permeabilidad y Presión, Defectos completos, Escarcha `logX`, Esquirlas, mejoras de Escarcha, segundos desde la última ruptura.
 - Exportar/importar como en la Capa 0. Test de ida y vuelta.
 
 ---

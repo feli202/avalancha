@@ -1,6 +1,6 @@
-// SPEC_CAPA1 §9: la Escarcha. Un espesor logX (log10) que crece solo, suma m × logX a log10 V y resta log10(1 + logX/H) a
-// la producción. Se rompe cada 30 min como mínimo: conserva la mitad y da Esquirlas. Igual que Player.esc_params y el bloque
-// "escarcha (persiste)" de play_arena en balance/sim_capa1.py.
+// SPEC_CAPA1 §9: la Escarcha. Un espesor logX (log10) que crece solo hasta el Punto de ruptura P y suma m × logX a log10 V.
+// En P se puede romper (a mano, o sola con Deshielo): da ⌊P / div⌋ Esquirlas y logX vuelve a logX_tras_romper. Si no se
+// rompe, se queda en P. Igual que Player.esc_params y el bloque "escarcha (persiste)" de play_arena en balance/sim_capa1.py.
 import { precioLog10 } from './config'
 import { CFG1 } from './config1'
 import { DEFECTOS_11, completo, enVidrio } from './defectos'
@@ -9,7 +9,7 @@ import { efectoRed } from './red'
 import type { MejoraEscarcha, State } from './state'
 
 const E = CFG1.escarcha, M = E.mejoras, DF = CFG1.defectos
-export const MEJORAS_ESCARCHA: MejoraEscarcha[] = ['crecimiento', 'brillo', 'aguante']
+export const MEJORAS_ESCARCHA: MejoraEscarcha[] = ['crecimiento', 'brillo', 'umbral']
 
 /** El hito de la 1.1: el Estrato 8 lleno teniendo los 4 primeros Defectos. Abre la Escarcha (y el anillo 3 de la Red). */
 export const hitoEscarcha = (s: State) =>
@@ -26,46 +26,45 @@ export const factoresCrecimiento = (s: State) => ({
   eco2: 1 + efectoRed(s, 'eco2', 'escarcha_eco') * Math.max(0, s.cristalesTotales.log10()),
   fatiga: completo(s, 'fatiga') ? DF.fatiga.recompensa_escarcha_g_x : 1,
 })
-/** Los factores de H. */
-export const factoresAguante = (s: State) => ({
-  base: E.H,
-  aguante: M.aguante.x_H ** s.escarcha.mejoras.aguante,
-  frio: efectoRed(s, 'frio', 'escarcha_H_x', 1),
-  inclusion: completo(s, 'inclusion') ? DF.inclusion.recompensa_escarcha_H_x : 1,
+/** Los factores del Punto de ruptura P. */
+export const factoresRuptura = (s: State) => ({
+  base: E.punto_ruptura,
+  umbral: M.umbral.x_P ** s.escarcha.mejoras.umbral,
+  frio: efectoRed(s, 'frio', 'escarcha_P_x', 1),
+  inclusion: completo(s, 'inclusion') ? DF.inclusion.recompensa_escarcha_P_x : 1,
 })
 const producto = (o: Record<string, number>) => Object.values(o).reduce((a, b) => a * b, 1)
 /** g: cuánto crece logX por segundo. */
 export const crecimientoEscarcha = (s: State) => producto(factoresCrecimiento(s))
-/** H: el espesor con que la penalidad llega a log10 2. */
-export const aguanteEscarcha = (s: State) => producto(factoresAguante(s))
+/** P: el Punto de ruptura, el espesor tope. */
+export const puntoRuptura = (s: State) => producto(factoresRuptura(s))
 /** m: cuánto suma cada orden de espesor a log10 V. */
-export const brilloEscarcha = (s: State) => E.m + M.brillo.suma_m * s.escarcha.mejoras.brillo
+export const brilloEscarcha = (s: State) => E.m * M.brillo.x_m ** s.escarcha.mejoras.brillo
 
 /** Lo que suma a log10 V (queda multiplicado por la Densidad, §10). */
 export const aporteEscarcha = (s: State) => (escarchaActiva(s) ? brilloEscarcha(s) * s.escarcha.logX : 0)
-/** Lo que resta a log10 de la producción. */
-export const penalEscarcha = (s: State) => (escarchaActiva(s) ? Math.log10(1 + s.escarcha.logX / aguanteEscarcha(s)) : 0)
+/** Segundos que faltan para llegar a P (0 si ya llegó). */
+export const faltaRuptura = (s: State) => Math.max(0, puntoRuptura(s) - s.escarcha.logX) / crecimientoEscarcha(s)
 
 /** Avanza la Escarcha dt segundos de Arena; antes de abrirse, solo mira si llegó el hito. */
 export function crecerEscarcha(s: State, dt: number): State['escarcha'] {
   const e = s.escarcha
   if (!e.abierta) return hitoEscarcha(s) ? { ...e, abierta: true } : e
   if (!escarchaActiva(s)) return e
-  return { ...e, logX: e.logX + crecimientoEscarcha(s) * dt, reloj: e.reloj + dt }
+  return { ...e, logX: Math.min(puntoRuptura(s), e.logX + crecimientoEscarcha(s) * dt), reloj: e.reloj + dt }
 }
 
 // ---------- romper ----------
-export const ESPERA_RUPTURA_S = E.ruptura_bot_min * 60
-export const puedeRomperEscarcha = (s: State) => escarchaActiva(s) && s.escarcha.reloj >= ESPERA_RUPTURA_S
+export const puedeRomperEscarcha = (s: State) => escarchaActiva(s) && s.escarcha.logX >= puntoRuptura(s) - 1e-9
 /** Deshielo: la rompe sola (con el interruptor del panel de Automatización) y multiplica las Esquirlas. */
 export const deshielo = (s: State) => efectoRed(s, 'deshielo', 'auto_ruptura') > 0
 export const esquirlasAlRomper = (s: State) =>
-  Math.floor((s.escarcha.logX * (1 - E.conserva_al_romper)) / E.esquirlas_por_ruptura_div) * efectoRed(s, 'deshielo', 'esquirlas_x', 1)
-/** Conserva conserva_al_romper de logX y da Esquirlas; si no se puede, devuelve el mismo estado. */
+  Math.floor(puntoRuptura(s) / E.esquirlas_por_ruptura_div) * efectoRed(s, 'deshielo', 'esquirlas_x', 1)
+/** Da Esquirlas y logX vuelve a logX_tras_romper; si no llegó a P, devuelve el mismo estado. */
 export function romperEscarcha(s: State): State {
   if (!puedeRomperEscarcha(s)) return s
   const e = s.escarcha
-  return { ...s, escarcha: { ...e, logX: e.logX * E.conserva_al_romper, esquirlas: e.esquirlas + esquirlasAlRomper(s), reloj: 0 } }
+  return { ...s, escarcha: { ...e, logX: E.logX_tras_romper, esquirlas: e.esquirlas + esquirlasAlRomper(s), reloj: 0 } }
 }
 
 // ---------- mejoras con Esquirlas (costo 10^N, N entero) ----------

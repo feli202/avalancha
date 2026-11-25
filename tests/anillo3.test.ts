@@ -3,7 +3,7 @@
 import Decimal from 'break_infinity.js'
 import { describe, expect, it } from 'vitest'
 import {
-  CFG1, abierto, aguanteEscarcha, costoPulido, costoPulidoLog10, crecimientoEscarcha, equipadas, espacios, esquirlasAlRomper,
+  CFG1, abierto, puntoRuptura, costoPulido, costoPulidoLog10, crecimientoEscarcha, equipadas, espacios, esquirlasAlRomper,
   estadoInicial, ordenesQ, puedePulir, pulir, tick, type Pieza, type State,
 } from '../src/core'
 
@@ -29,20 +29,21 @@ describe('Anillo 3 de la Red', () => {
     expect(crecimientoEscarcha(con({ eco2: 2 }, { cristalesTotales: Decimal.pow10(100) })) / g0).toBeCloseTo(1 + A3.eco2.escarcha_eco[1] * 100, 9)
   })
 
-  it('Frío multiplica el aguante H', () => {
-    expect(aguanteEscarcha(con({ frio: 3 })) / aguanteEscarcha(con({}))).toBeCloseTo(A3.frio.escarcha_H_x[2], 9)
+  it('Frío multiplica el Punto de ruptura P', () => {
+    expect(puntoRuptura(con({ frio: 3 })) / puntoRuptura(con({}))).toBeCloseTo(A3.frio.escarcha_P_x[2], 9)
   })
 
   it('Ruptura II resta órdenes a Q', () => {
     expect(ordenesQ(con({})) - ordenesQ(con({ ruptura2: 4 }))).toBe(A3.ruptura2.Q_resta[3])
   })
 
-  it('Deshielo: la rompe sola cada 30 min desde tick y multiplica las Esquirlas', () => {
+  it('Deshielo: la rompe sola desde tick al llegar al Punto de ruptura y multiplica las Esquirlas', () => {
+    const E = CFG1.escarcha, base = Math.floor(E.punto_ruptura / E.esquirlas_por_ruptura_div)
     const lista = (red: Record<string, number>) =>
-      con(red, { escarcha: { ...estadoInicial().escarcha, abierta: true, logX: 100, reloj: CFG1.escarcha.ruptura_bot_min * 60 } })
-    expect(esquirlasAlRomper(lista({ deshielo: 3 }))).toBe(5 * A3.deshielo.esquirlas_x[2])
+      con(red, { escarcha: { ...estadoInicial().escarcha, abierta: true, logX: E.punto_ruptura, reloj: 600 } })
+    expect(esquirlasAlRomper(lista({ deshielo: 3 }))).toBe(base * A3.deshielo.esquirlas_x[2])
     const r = tick(lista({ deshielo: 3 }), 0.001)
-    expect(r.escarcha.esquirlas).toBe(5 * A3.deshielo.esquirlas_x[2])
+    expect(r.escarcha.esquirlas).toBe(base * A3.deshielo.esquirlas_x[2])
     expect(r.escarcha.reloj).toBeLessThan(1)
     expect(tick(lista({}), 0.001).escarcha.esquirlas).toBe(0) // sin Deshielo no la rompe
     const apagado = lista({ deshielo: 1 })

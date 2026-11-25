@@ -106,7 +106,7 @@ export function jugar1(revisa = 15, tmax = 17 * H, hasta: 'fin11' | 'fin' = 'fin
       s = comprarConMargen(s, ['cascada'], Infinity)
       s = comprarConMargen(s, muts, Infinity)
       if (puedeComprimir(s)) s = comprimir(s)
-      if (puedeRomperEscarcha(s)) s = romperEscarcha(s) // sin Deshielo, a mano cada 30 min (con Deshielo ya la rompió tick)
+      if (puedeRomperEscarcha(s)) s = romperEscarcha(s) // sin Deshielo, a mano al llegar al Punto de ruptura (con Deshielo ya la rompió tick)
       if (enInfinito(s) && !enDefecto(s) && memoria(s) < 4) {
         antes = s
         s = infinito(s)

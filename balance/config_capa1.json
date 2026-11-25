@@ -277,7 +277,7 @@
      2,
      1
     ],
-    "escarcha_H_x": [
+    "escarcha_P_x": [
      1.5,
      2.25,
      3.4,
@@ -510,8 +510,8 @@
   "inclusion": {
    "regla": "la Presion de los Estratos no funciona",
    "meta_log10": 23500,
-   "recompensa": "la Escarcha aguanta x1,5 (H)",
-   "recompensa_escarcha_H_x": 1.5
+   "recompensa": "Punto de ruptura de la Escarcha x1,5",
+   "recompensa_escarcha_P_x": 1.5
   },
   "vidrio": {
    "regla": "sin Relicario, sin Eco y sin Escarcha",
@@ -587,9 +587,10 @@
  "escarcha": {
   "g_log10_por_s": 0.004,
   "m": 1.0,
-  "H": 50,
-  "esquirlas_por_ruptura_div": 10,
-  "ruptura_bot_min": 30,
+  "_ruptura": "crece hasta P = punto_ruptura * umbral.x_P^nivel * frio * inclusion; romper da floor(P / div) Esquirlas y logX vuelve a logX_tras_romper",
+  "punto_ruptura": 50,
+  "logX_tras_romper": 1,
+  "esquirlas_por_ruptura_div": 3,
   "mejoras": {
    "crecimiento": {
     "c0": 0,
@@ -599,12 +600,12 @@
    "brillo": {
     "c0": 0.5,
     "paso": 0.5,
-    "suma_m": 0.04
+    "x_m": 1.4
    },
-   "aguante": {
+   "umbral": {
     "c0": 0.5,
     "paso": 0.4,
-    "x_H": 1.5
+    "x_P": 1.3
    }
   },
   "_pulido": "Pulido (5): subir una pieza de nivel n a n+1 cuesta 10^round(c0 + paso * n * pulido_x) Esquirlas; calibrado con sim_capa1.py para que no reemplace a la fusion",
@@ -613,7 +614,6 @@
    "paso": 1.5
   },
   "dentro_de_densidad": true,
-  "conserva_al_romper": 0.5,
   "_g": "g = g_base * (1 + g_por_presion * Presion) * crecimiento.x^nivel * germen * recompensas",
   "g_por_presion": 0.003
  },

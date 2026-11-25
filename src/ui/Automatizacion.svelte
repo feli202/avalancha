@@ -6,7 +6,7 @@
   // Aparecen los que el jugador tiene, más el siguiente como silueta. Pantalla fija: solo scrollea cada lista.
   import { flip } from 'svelte/animate'
   import {
-    AUTOS, CFG, CFG1, COMPRAS_AUTO, MODOS, autoDisponible, esquirlasAlRomper, cristalesAlInfinito, encenderTodo, fusionAutomatica, infinitoRoto,
+    AUTOS, CFG, COMPRAS_AUTO, MODOS, autoDisponible, esquirlasAlRomper, cristalesAlInfinito, encenderTodo, fusionAutomatica, infinitoRoto,
     type Automat, type Cantidad, type Regla,
   } from '../core'
   import { txt } from '../strings'
@@ -133,7 +133,7 @@
                 </label>
               {/if}
             {:else if si && k === 'escarcha'}
-              <small class="nota">{a.escarchaNota(CFG1.escarcha.ruptura_bot_min, txt.cristal.cuantasEsquirlas(String(esquirlasAlRomper(s))))}</small>
+              <small class="nota">{a.escarchaNota(txt.cristal.cuantasEsquirlas(String(esquirlasAlRomper(s))))}</small>
             {:else if si && k === 'infinito'}
               {@const inf = s.automat.infinito}
               <!-- Siempre apenas llega; Romper el Infinito lo mejora: en el óptimo (C6) o al dar X Cristales. -->

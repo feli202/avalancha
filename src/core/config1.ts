@@ -30,7 +30,7 @@ export interface Config1 {
     impureza: Defecto & { derrumbes_tope_log10: number; colores_x: number; recompensa_cascada_c: number }
     fatiga: Defecto & { decada_s: number; recompensa_escarcha_g_x: number }
     frontera: Defecto & { recompensa_densidad: number }
-    inclusion: Defecto & { recompensa_escarcha_H_x: number }
+    inclusion: Defecto & { recompensa_escarcha_P_x: number }
     vidrio: Defecto & { cristales_log10: number }
     reintento_cristales_totales_log10: number
     abandono_min: number; abandono_revisar_min: number; abandono_ventana_min: number; abandono_meta_max_min: number
@@ -38,12 +38,11 @@ export interface Config1 {
   }
   /** SPEC_CAPA1 §9: la Escarcha. */
   escarcha: {
-    g_log10_por_s: number; g_por_presion: number; m: number; H: number; esquirlas_por_ruptura_div: number
-    ruptura_bot_min: number; conserva_al_romper: number
+    g_log10_por_s: number; g_por_presion: number; m: number; punto_ruptura: number; logX_tras_romper: number; esquirlas_por_ruptura_div: number
     mejoras: {
       crecimiento: { c0: number; paso: number; x: number }
-      brillo: { c0: number; paso: number; suma_m: number }
-      aguante: { c0: number; paso: number; x_H: number }
+      brillo: { c0: number; paso: number; x_m: number }
+      umbral: { c0: number; paso: number; x_P: number }
     }
     /** §5: Pulido de una pieza de nivel n, en log10 de Esquirlas. */
     pulido: { c0: number; paso: number }

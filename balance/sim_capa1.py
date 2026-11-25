@@ -138,8 +138,8 @@ class Player:
     def esc_params(s):
         E = L1['escarcha']; up = s.escup; M = E['mejoras']
         g = E['g_log10_por_s'] * (1 + E.get('g_por_presion', 0.01) * s.last_pres) * M['crecimiento']['x'] ** up['crecimiento'] * s.v('germen', 'escarcha_g_x', 1) * (DFX['fatiga']['recompensa_escarcha_g_x'] if 'fatiga' in s.done else 1) * (1 + s.v('eco2', 'escarcha_eco') * max(0.0, s.Ctot))
-        H = E['H'] * M['aguante']['x_H'] ** up['aguante'] * s.v('frio', 'escarcha_H_x', 1) * (DFX['inclusion']['recompensa_escarcha_H_x'] if 'inclusion' in s.done else 1)
-        m = E['m'] + M['brillo']['suma_m'] * up['brillo']
+        H = E['punto_ruptura'] * M['umbral']['x_P'] ** up['umbral'] * s.v('frio', 'escarcha_P_x', 1) * (DFX['inclusion']['recompensa_escarcha_P_x'] if 'inclusion' in s.done else 1)  # H = Punto de ruptura
+        m = E['m'] * M['brillo']['x_m'] ** up['brillo']
         return g, H, m
 
 # ------------------------------------------------------------------ Arena
@@ -202,9 +202,6 @@ class Arena:
         if s.defect == 'impureza': tpg = min(tpg, DFX['impureza']['derrumbes_tope_log10'])
         r = s.lF() + tpg + s.D() * sum(s.logV_parts().values())
         P = s.P
-        if P.esc_on and s.defect != 'vidrio':
-            g, H, m = P.esc_params(); pen = 1
-            r -= pen * l10(1 + P.logX / H)
         if s.defect == 'fatiga': r -= s.rt / DFX['fatiga']['decada_s']
         return r
     # ---- tienda de la Arena
@@ -284,14 +281,11 @@ def play_arena(P, defect, check, t_now, stats):
         if autos: next_auto = t + 1.0
         # escarcha (persiste)
         if P.esc_on and defect != 'vidrio':
-            g, H, m = P.esc_params(); P.logX += g * dt
+            g, H, m = P.esc_params(); P.logX = min(H, P.logX + g * dt)  # crece hasta el Punto de ruptura H y ahi se queda
             EC = L1['escarcha']
-            P.esc_t = getattr(P, 'esc_t', 0.0) + dt
-            if P.esc_t >= EC['ruptura_bot_min'] * 60 and (human or P.red['deshielo'] >= 1):
-                P.esc_t = 0.0
-                keep = EC['conserva_al_romper']
-                gain = math.floor(P.logX * (1 - keep) / EC['esquirlas_por_ruptura_div']) * P.v('deshielo', 'esquirlas_x', 1)
-                P.esq = addlog(P.esq, l10(gain)) if gain > 0 else P.esq; P.logX *= keep; stats['rupturas_escarcha'] += 1
+            if P.logX >= H - 1e-9 and (human or P.red['deshielo'] >= 1):
+                gain = math.floor(H / EC['esquirlas_por_ruptura_div']) * P.v('deshielo', 'esquirlas_x', 1)
+                P.esq = addlog(P.esq, l10(gain)) if gain > 0 else P.esq; P.logX = EC['logX_tras_romper']; stats['rupturas_escarcha'] += 1
         if autos or human:
             which = ''
             if auto_all or A.tier >= au['caudal']: which += 'f'

@@ -1,10 +1,11 @@
 <script lang="ts">
   // SPEC_CAPA1 §9: la pantalla de la Escarcha. A la izquierda la placa de hielo (nace de un hexágono y crece hacia afuera con
-  // el espesor; al romperla se raja y salta en pedazos); a la derecha la ficha: espesor, lo que suma y lo que frena, Romper y las tres mejoras.
+  // el espesor hacia el Punto de ruptura; al romperla se raja y salta en pedazos); a la derecha la ficha: espesor, lo que suma, el
+  // Punto de ruptura, la barra hasta él, Romper y las tres mejoras.
   import Decimal from 'break_infinity.js'
   import {
-    CFG1, ESPERA_RUPTURA_S, MEJORAS_ESCARCHA, aguanteEscarcha, aporteEscarcha, autoActivo, brilloEscarcha, costoMejoraEscarcha,
-    crecimientoEscarcha, densidad, escarchaActiva, esquirlasAlRomper, factoresCrecimiento, mejorarEscarcha, puedeMejorarEscarcha,
+    CFG1, MEJORAS_ESCARCHA, aporteEscarcha, autoActivo, brilloEscarcha, costoMejoraEscarcha, crecimientoEscarcha, densidad,
+    escarchaActiva, esquirlasAlRomper, factoresCrecimiento, faltaRuptura, mejorarEscarcha, puedeMejorarEscarcha, puntoRuptura,
     puedeRomperEscarcha, romperEscarcha, type MejoraEscarcha, type State,
   } from '../core'
   import { txt } from '../strings'
@@ -24,19 +25,25 @@
   const logX = $derived(s.escarcha.logX)
   const D = $derived(densidad(s))
   const vale = $derived(formato(Decimal.pow10(aporteEscarcha(s) * D)))
-  const frena = $derived(formatoMult(1 + logX / aguanteEscarcha(s)))
+  const P = $derived(puntoRuptura(s))
+  const pct = $derived(Math.min(100, (100 * logX) / P))
   const factores = $derived(Object.entries(factoresCrecimiento(s)).filter(([k, x]) => k !== 'base' && Math.abs(x - 1) > 1e-9))
   const tipAporte = (): Tip => ({ titulo: t.aporte, que: t.aporteQue, hielo: true, desglose: t.aporteCuenta(n2(brilloEscarcha(juego.s)), n2(juego.s.escarcha.logX), n2(densidad(juego.s)), vale) })
-  const tipFreno = (): Tip => ({ titulo: t.freno, que: t.frenoQue, hielo: true, desglose: t.frenoCuenta(n2(juego.s.escarcha.logX), n2(aguanteEscarcha(juego.s)), frena) })
+  const tipRuptura = (): Tip => ({ titulo: t.ruptura, que: t.rupturaQue, hielo: true, desglose: t.rupturaCuenta(n2(puntoRuptura(juego.s)), formatoMult(M.umbral.x_P ** juego.s.escarcha.mejoras.umbral)) })
   const tipCrece = (): Tip => ({
     titulo: t.crecimiento, que: t.crecimientoQue, hielo: true, ahora: t.porMinuto(n2(crecimientoEscarcha(juego.s) * 60, 3)),
     desglose: [`${t.factores.base} ${n2(CFG1.escarcha.g_log10_por_s * 60, 3)}/min`, ...factores.map(([k, x]) => `${t.factores[k]} ×${formatoMult(x)}`)].join(' · '),
   })
-  /** Valor de la mejora en el nivel L (lo que se muestra antes → después). */
-  const efectoEn = (k: MejoraEscarcha, L: number) =>
-    k === 'crecimiento' ? formatoMult(M.crecimiento.x ** L) : k === 'brillo' ? n2(brilloEscarcha({ ...s, escarcha: { ...s.escarcha, mejoras: { ...s.escarcha.mejoras, brillo: L } } }))
-      : n2(aguanteEscarcha({ ...s, escarcha: { ...s.escarcha, mejoras: { ...s.escarcha.mejoras, aguante: L } } }))
-  const FORMULA: Record<MejoraEscarcha, string> = { crecimiento: formatoMult(M.crecimiento.x), brillo: n2(M.brillo.suma_m), aguante: formatoMult(M.aguante.x_H) }
+  /** Efecto de la mejora en el nivel L, ya con su texto ("g ×1,25", "m = 1,4", "P = 65"). */
+  const efectoEn = (k: MejoraEscarcha, L: number) => {
+    const conL = { ...juego.s, escarcha: { ...juego.s.escarcha, mejoras: { ...juego.s.escarcha.mejoras, [k]: L } } }
+    return t.mejoras[k][2](k === 'crecimiento' ? formatoMult(M.crecimiento.x ** L) : k === 'brillo' ? n2(brilloEscarcha(conL)) : n2(puntoRuptura(conL)))
+  }
+  const FORMULA: Record<MejoraEscarcha, string> = { crecimiento: formatoMult(M.crecimiento.x), brillo: formatoMult(M.brillo.x_m), umbral: formatoMult(M.umbral.x_P) }
+  const tipMejora = (k: MejoraEscarcha) => (): Tip => {
+    const L = juego.s.escarcha.mejoras[k]
+    return { titulo: t.mejoras[k][0], que: t.mejoras[k][1], hielo: true, ahora: t.ahora(efectoEn(k, L)), prox: t.siguiente(efectoEn(k, L + 1)) }
+  }
 
   function hacer(n: State) {
     if (n === juego.s) return
@@ -61,8 +68,8 @@
       }
     return c
   })()
-  // Hasta qué anillo llegó: satura con el espesor en la escala del aguante base H (visual, no balance).
-  const alcance = $derived(0.6 + (ANILLOS + 0.5) * (logX / (logX + CFG1.escarcha.H)))
+  // Hasta qué anillo llegó: crece con la barra al Punto de ruptura (visual, no balance).
+  const alcance = $derived(0.6 + (ANILLOS + 0.5) * (pct / 100))
   /** 0 = todavía no está, 1 = hexágono entero; en el medio está creciendo (el borde). */
   const crece = (c: (typeof CELDAS)[number], a: number) => Math.max(0, Math.min(1, (a - c.umbral) / 0.9))
   /** Cuanto más adentro del borde, más gruesa (más opaca). */
@@ -92,7 +99,8 @@
   }
   $effect(() => () => clearTimeout(timer))
 
-  const falta = $derived(Math.max(0, ESPERA_RUPTURA_S - s.escarcha.reloj))
+  const falta = $derived(faltaRuptura(s))
+  const lista = $derived(puedeRomperEscarcha(s))
   const sola = $derived(autoActivo(s, 'escarcha'))
 </script>
 
@@ -100,7 +108,7 @@
   {#if !s.escarcha.abierta}
     <p>{t.cerrada}</p>
   {:else}
-    <p class="total num">{escarchaActiva(s) ? t.total(n2(logX), vale, frena) : t.vidrio}</p>
+    <p class="total num">{escarchaActiva(s) ? t.total(n2(logX), n2(P), vale) : t.vidrio}</p>
     <div class="vista">
       <div class="escena" role="img" aria-label={t.escena}>
         <svg viewBox="-100 -100 200 200" class:quieta={quieto()} class:sacude={!!rotura && !quieto()}>
@@ -138,23 +146,27 @@
         <dl class="num">
           <div use:ayuda={tipCrece}><dt>{t.espesor}</dt><dd>{n2(logX)}</dd><small>{t.porMinuto(n2(crecimientoEscarcha(s) * 60, 3))}</small></div>
           <div use:ayuda={tipAporte}><dt>{t.aporte}</dt><dd class="hielo">×{vale}</dd><small>+{n2(aporteEscarcha(s))}</small></div>
-          <div use:ayuda={tipFreno}><dt>{t.freno}</dt><dd class="frena">÷{frena}</dd><small>H {n2(aguanteEscarcha(s))}</small></div>
+          <div use:ayuda={tipRuptura}><dt>{t.ruptura}</dt><dd>{n2(P)}</dd><small>{t.mejoras.umbral[0]} {t.nv(s.escarcha.mejoras.umbral)}</small></div>
         </dl>
         <div class="desglose num" use:ayuda={tipCrece}>
           <span>{t.crecimiento}</span>
           <ul>{#each factores as [k, x] (k)}<li>{t.factores[k]} <b>×{formatoMult(x)}</b></li>{/each}</ul>
         </div>
-        <button class="romper gema" aria-disabled={!puedeRomperEscarcha(s)} onclick={romper}>
+        <div class="barra num" class:llena={lista} role="progressbar" aria-label={t.barra} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.floor(pct)}>
+          <i style:width="{pct}%"></i>
+          <span>{Math.floor(pct)} % · {escarchaActiva(s) ? (lista ? t.lista : t.rompeEn(txt.duracion(falta))) : t.vidrio}</span>
+        </div>
+        <button class="romper gema" class:lista aria-disabled={!lista} onclick={romper}>
           <b>{t.romper}</b>
-          <small class="num">{sola ? t.sola : puedeRomperEscarcha(s) ? t.romperDa(esq(esquirlasAlRomper(s))) : t.falta(txt.duracion(falta))}</small>
+          <small class="num">{sola && !lista ? t.sola : t.romperDa(esq(esquirlasAlRomper(s)))}</small>
         </button>
         {#each MEJORAS_ESCARCHA as k (k)}
           {@const L = s.escarcha.mejoras[k]}
-          <button class="mejora gema" aria-disabled={!puedeMejorarEscarcha(s, k)} onclick={() => hacer(mejorarEscarcha(juego.s, k))}>
+          <button class="mejora gema" aria-disabled={!puedeMejorarEscarcha(s, k)} onclick={() => hacer(mejorarEscarcha(juego.s, k))} use:ayuda={tipMejora(k)}>
             <b>{t.mejoras[k][0]}<span class="nv">{t.nv(L)}</span></b>
             <span class="costo num">{formato(costoMejoraEscarcha(s, k), true)}</span>
-            <small class="num">{t.mejoras[k][1](efectoEn(k, L), efectoEn(k, L + 1))}</small>
-            <small class="num formula">{t.mejoras[k][2](FORMULA[k])}</small>
+            <small class="num">{efectoEn(k, L)} → {efectoEn(k, L + 1)}</small>
+            <small class="num formula">{t.mejoras[k][3](FORMULA[k])}</small>
           </button>
         {/each}
       </aside>
@@ -206,13 +218,19 @@
   dt { font-size: 0.75rem; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   dd { margin: 0.125rem 0 0; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   dd.hielo { color: var(--hielo); }
-  dd.frena { color: var(--coral); }
   small { display: block; color: var(--apagado); font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .desglose { font-size: 0.75rem; color: var(--tenue); }
   .desglose ul { display: flex; flex-wrap: wrap; gap: 0.3rem; height: calc(2 * 1.45rem + 0.3rem); overflow: hidden; margin: 0.3rem 0 0; padding: 0; list-style: none; }
   .desglose li { height: 1.45rem; padding: 0.2rem 0.45rem; white-space: nowrap; background: rgb(159 227 245 / 0.06); clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%); }
   .desglose b { font-weight: 600; color: var(--escarcha); }
 
+  /* la barra al Punto de ruptura: se llena con el espesor y brilla al llegar */
+  .barra { position: relative; height: 1.6rem; overflow: hidden; background: rgb(159 227 245 / 0.08); clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
+  .barra i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, rgb(95 184 216 / 0.45), rgb(191 234 255 / 0.75)); transition: width 0.5s linear; }
+  .barra.llena i { background: linear-gradient(90deg, #bfeaff, #f4fcff); }
+  .barra span { position: relative; display: block; padding: 0 0.6rem; font-size: 0.75rem; line-height: 1.6rem; color: var(--texto, #fff); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .barra.llena span { color: #0b2233; font-weight: 600; }
+  .romper.lista { box-shadow: 0 0 0.9rem rgb(191 234 255 / 0.55); }
   .romper { --b: 1.1rem; display: grid; gap: 0.2rem; min-height: 3.5rem; padding-block: 0.65rem; font-size: 1rem; }
   .romper small { color: var(--hielo); }
   .romper[aria-disabled='true'] small { color: var(--apagado); }

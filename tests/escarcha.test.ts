@@ -1,7 +1,7 @@
 import Decimal from 'break_infinity.js'
 import { describe, expect, it } from 'vitest'
 import {
-  CFG, CFG1, aguanteEscarcha, autoActivo, brilloEscarcha, costoMejoraEscarcha, crecerEscarcha, crecimientoEscarcha, densidad,
+  CFG, CFG1, puntoRuptura, autoActivo, brilloEscarcha, costoMejoraEscarcha, crecerEscarcha, crecimientoEscarcha, densidad,
   INFINITO, estadoInicial, fueraDeLinea, infinito, mejorarEscarcha, produccion, puedeRomperEscarcha, romperEscarcha, tick, type State,
 } from '../src/core'
 import { deserializar, serializar } from '../src/guardado/guardado'
@@ -21,13 +21,13 @@ const con = (c: (typeof SIM)[number]): State => {
 
 describe('Escarcha', () => {
   for (const c of SIM)
-    it(`igual que sim_capa1.py tras 1 h con el mismo estado: ${c.nombre} (logX, Esquirlas, g, H, m)`, () => {
+    it(`igual que sim_capa1.py tras 1 h con el mismo estado: ${c.nombre} (logX, Esquirlas, g, P, m)`, () => {
       let s = con(c)
       expect(crecimientoEscarcha(s)).toBeCloseTo(c.g, 12)
-      expect(aguanteEscarcha(s)).toBeCloseTo(c.H, 9)
+      expect(puntoRuptura(s)).toBeCloseTo(c.H, 9) // H del sim = Punto de ruptura
       expect(brilloEscarcha(s)).toBeCloseTo(c.m, 12)
       // Los mismos pasos que play_arena (0,5 / 1 / 2 s) y el jugador que revisa cada 15 s: rompe a mano en la primera
-      // revisión con 30 min cumplidos; con Deshielo, sola apenas se puede (en el juego lo hace tick).
+      // revisión en el Punto de ruptura; con Deshielo, sola apenas llega (en el juego lo hace tick).
       let t = 0, revision = 0, rupturas = 0
       while (t < c.segundos) {
         const dt = t < 30 ? 0.5 : t < 300 ? 1 : 2
@@ -47,10 +47,17 @@ describe('Escarcha', () => {
     return { ...s, auto: sinAutos, granos: 1e6, colores: [40, 20, 10, 5], ...extra, escarcha: { ...s.escarcha, abierta: true, logX } }
   }
 
-  it('la producción gana D × m × logX y pierde log10(1 + logX / H)', () => {
-    const sin = abierta(0), conX = abierta(80)
+  it('la producción gana D × m × logX (sin freno)', () => {
+    const sin = abierta(0), conX = abierta(40)
     const dif = produccion(conX).log10() - produccion(sin).log10()
-    expect(dif).toBeCloseTo(densidad(sin) * brilloEscarcha(conX) * 80 - Math.log10(1 + 80 / aguanteEscarcha(conX)), 6)
+    expect(dif).toBeCloseTo(densidad(sin) * brilloEscarcha(conX) * 40, 6)
+  })
+
+  it('crece hasta el Punto de ruptura y se queda ahí', () => {
+    const s = abierta(puntoRuptura(abierta(0)) - 0.001)
+    const n = tick(s, 1000)
+    expect(n.escarcha.logX).toBe(puntoRuptura(s))
+    expect(tick(n, 1000).escarcha.logX).toBe(puntoRuptura(s))
   })
 
   it('tick la hace crecer g × dt; no corre en el Defecto Vidrio ni antes de abrirse', () => {
@@ -79,12 +86,13 @@ describe('Escarcha', () => {
     expect(tick({ ...n, estratos: s.estratos }, 1).escarcha.abierta).toBe(true)
   })
 
-  it('romper: cada 30 min como mínimo, conserva la mitad y da ⌊logX × 0,5 / 10⌋ Esquirlas', () => {
-    const s = abierta(100)
-    expect(romperEscarcha(s)).toBe(s) // recién abierta: reloj en 0
-    const listo = { ...s, escarcha: { ...s.escarcha, reloj: CFG1.escarcha.ruptura_bot_min * 60 } }
+  it('romper: solo en el Punto de ruptura, da ⌊P / div⌋ Esquirlas y logX vuelve a logX_tras_romper', () => {
+    const E = CFG1.escarcha, P = E.punto_ruptura
+    const s = abierta(P - 1)
+    expect(romperEscarcha(s)).toBe(s) // todavía no llegó
+    const listo = abierta(P)
     const r = romperEscarcha(listo)
-    expect(r.escarcha).toMatchObject({ logX: 50, esquirlas: 5, reloj: 0 })
+    expect(r.escarcha).toMatchObject({ logX: E.logX_tras_romper, esquirlas: Math.floor(P / E.esquirlas_por_ruptura_div), reloj: 0 })
     // Sin Deshielo, tick no la rompe sola.
     expect(tick({ ...listo, auto: { ...listo.auto, escarcha: true } }, 1).escarcha.esquirlas).toBe(0)
   })
@@ -96,7 +104,7 @@ describe('Escarcha', () => {
     const n = mejorarEscarcha(mejorarEscarcha(s, 'crecimiento'), 'brillo')
     expect(n.escarcha.mejoras).toMatchObject({ crecimiento: 1, brillo: 1 })
     expect(n.escarcha.esquirlas).toBe(2)
-    expect(mejorarEscarcha(n, 'aguante')).toBe(n) // 10 > 2
+    expect(mejorarEscarcha(n, 'umbral')).toBe(n) // 10 > 2
   })
 
   it('fuera de línea crece con el tiempo que cuenta (×eficiencia), y se guarda', () => {
@@ -106,5 +114,12 @@ describe('Escarcha', () => {
     expect(a.escarchaAntes).toBe(10)
     const p = deserializar(serializar({ estado: a.s, guardadoEn: 0, vistos: {}, record: 0, logros: {} }))
     expect(p.estado.escarcha).toEqual(a.s.escarcha)
+  })
+
+  it('un guardado viejo con Aguante lo carga como Umbral', () => {
+    const s = abierta(10)
+    const viejo = JSON.parse(serializar({ estado: s, guardadoEn: 0, vistos: {}, record: 0, logros: {} }))
+    viejo.estado.escarcha.mejoras = { crecimiento: 1, brillo: 2, aguante: 3 }
+    expect(deserializar(JSON.stringify(viejo)).estado.escarcha.mejoras).toEqual({ crecimiento: 1, brillo: 2, umbral: 3 })
   })
 })

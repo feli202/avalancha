@@ -8,7 +8,7 @@
     CFG1, ESTRATOS, NODOS, NIVEL_MAX_RED, cauceRel, cascadaRel, costoAbrir, cristalesAlInfinito, cristalesRedLog10, infinitoRoto, ordenesQ, espacios,
     gammaEstrato, memoria, mutacionesRel, nivelRed, presion, separacion,
     DEFECTOS, baseAnillo, colorSX, completo, hitoColor, metaLog10,
-    aguanteEscarcha, aporteEscarcha, brilloEscarcha, crecimientoEscarcha, esquirlasAlRomper, penalEscarcha, efectoRed,
+    puntoRuptura, aporteEscarcha, brilloEscarcha, crecimientoEscarcha, esquirlasAlRomper, efectoRed,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
   import { txt } from '../strings'
@@ -159,8 +159,8 @@
       sec('c1_escarcha', [
         { r: g.rotulo.gEsc, g: c1.gEsc(d(EC.g_log10_por_s, 4), d(EC.g_por_presion, 4)), v: s.escarcha.abierta ? `= ${d(crecimientoEscarcha(s), 5)}` : '' },
         { r: g.rotulo.aporteEsc, g: c1.aporteEsc, v: s.escarcha.abierta ? `m = ${d(brilloEscarcha(s))} → +${d(aporteEscarcha(s))}` : '' },
-        { r: g.rotulo.frenoEsc, g: c1.frenoEsc(d(EC.H)), v: s.escarcha.abierta ? `H = ${d(aguanteEscarcha(s))} → −${d(penalEscarcha(s), 3)}` : '' },
-        { r: g.rotulo.romperEsc, g: c1.romperEsc(EC.ruptura_bot_min, d(EC.conserva_al_romper), EC.esquirlas_por_ruptura_div), v: s.escarcha.abierta ? txt.cristal.cuantasEsquirlas(String(esquirlasAlRomper(s))) : '' },
+        { r: g.rotulo.frenoEsc, g: c1.frenoEsc(d(EC.punto_ruptura)), v: s.escarcha.abierta ? `P = ${d(puntoRuptura(s))}` : '' },
+        { r: g.rotulo.romperEsc, g: c1.romperEsc(EC.esquirlas_por_ruptura_div, d(EC.logX_tras_romper)), v: s.escarcha.abierta ? txt.cristal.cuantasEsquirlas(String(esquirlasAlRomper(s))) : '' },
       ]),
     ]
   }

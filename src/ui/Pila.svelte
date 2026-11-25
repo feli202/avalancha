@@ -1,7 +1,7 @@
 <script lang="ts">
   // La pila ocupa toda la ventana, detrás de la interfaz. Clic, toque o barra espaciadora = Puñado.
   import { onMount } from 'svelte'
-  import { CFG, DEFECTOS, anillos, caudal, densidad, escarchaActiva, multAnillos, multColor, punado, type DefectoId } from '../core'
+  import { CFG, DEFECTOS, anillos, caudal, densidad, escarchaActiva, puntoRuptura, multAnillos, multColor, punado, type DefectoId } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS, PilaVisual, brillo } from '../render/pilaVisual'
   import { txt } from '../strings'
   import { formato, formatoMult } from './formato'
@@ -162,9 +162,8 @@
     $effect(() => void (pila.efecto = EFECTOS.indexOf(elegido('efecto', EFECTOS, ajustes.efecto, juego.logros))))
     $effect(() => void (pila.fondo = elegido('fondo', FONDOS, ajustes.fondo, juego.logros)))
     $effect(() => void (pila.defecto = DEFECTOS.indexOf(juego.s.defectos.actual as DefectoId) + 1))
-    // SPEC_CAPA1 §9: la escarcha del borde engorda con logX y satura (visual, no balance).
-    const ESCARCHA_MITAD = 50
-    $effect(() => { const x = escarchaActiva(juego.s) ? juego.s.escarcha.logX : 0; pila.escarcha = Math.round((1000 * x) / (x + ESCARCHA_MITAD)) / 1000 })
+    // SPEC_CAPA1 §9: la escarcha del borde crece con la barra al Punto de ruptura (logX / P).
+    $effect(() => { pila.escarcha = escarchaActiva(juego.s) ? Math.round((1000 * juego.s.escarcha.logX) / puntoRuptura(juego.s)) / 1000 : 0 })
     $effect(() => void (pila.radioMax = radioMax || Infinity))
     $effect(() => void (pila.acercar = juego.zoom))
     canvas.addEventListener('wheel', rueda, { passive: false })

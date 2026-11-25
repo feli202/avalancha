@@ -5,7 +5,7 @@ import {
   baseAnillo, cascadaCExtra, cascadaX, colorSinEfecto, coloresX, densidadExtra, densidadFija, densidadX, derrumbesTope, fatigaLog10, hitoColor,
   presionX, sinMutaciones,
 } from './defectos'
-import { aporteEscarcha, penalEscarcha } from './escarcha'
+import { aporteEscarcha } from './escarcha'
 import { presion } from './estratos'
 import { cascadaExtra, densidadRed, ecoLog10, efectoRed, mutacionExtra, nivelRed } from './red'
 import { cascadaRel, cauceRel, mutacionesRel } from './relicario'
@@ -107,7 +107,7 @@ export const valor = (s: State) =>
 /** Energía que da un grano que cae ahora: (K × G) × V^D. */
 export const energiaPorGrano = (s: State) =>
   valor(s).pow(densidad(s)).mul(Math.min(CFG.K_derrumbes_por_grano * s.granos, derrumbesTope(s))) // Impureza: tope
-    .mul(Decimal.pow10(-penalEscarcha(s) - fatigaLog10(s))) // SPEC_CAPA1 §10: la penalidad de la Escarcha y la Fatiga, fuera de la Densidad
+    .mul(Decimal.pow10(-fatigaLog10(s))) // SPEC_CAPA1 §10: la Fatiga, fuera de la Densidad
 
 /** Energía/s = F × (K × G) × V^D. */
 export const produccion = (s: State) => energiaPorGrano(s).mul(caudal(s))

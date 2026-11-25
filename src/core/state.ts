@@ -85,7 +85,7 @@ export interface State {
 export const COMPRAS_AUTO = ['caudal', ...CFG.colores.map((c) => c.id), 'cascada', 'mutaciones']
 /** Todos los interruptores, en el orden del panel. */
 export const AUTOS = [...COMPRAS_AUTO, 'compresion_auto', 'infinito', 'escarcha']
-export type MejoraEscarcha = 'crecimiento' | 'brillo' | 'aguante'
+export type MejoraEscarcha = 'crecimiento' | 'brillo' | 'umbral'
 
 const ceros = () => Array<number>(CFG1.estratos.cantidad).fill(0)
 
@@ -116,7 +116,7 @@ export const estadoInicial =(): State => ({
   relicario: { piezas: [], equipadas: [], pendiente: 0, faltan: 0, espera: [], foto: '', ultimo: '', regla: { modo: 'completar', orden: [...CFG1.relicario.tipos], fusionar: true, equipar: false } },
   estratos: { abiertos: 0, s: ceros(), perm: ceros(), pres: ceros() },
   defectos: { completos: [], actual: '', reintento: {} },
-  escarcha: { abierta: false, logX: 0, esquirlas: 0, mejoras: { crecimiento: 0, brillo: 0, aguante: 0 }, reloj: 0 },
+  escarcha: { abierta: false, logX: 0, esquirlas: 0, mejoras: { crecimiento: 0, brillo: 0, umbral: 0 }, reloj: 0 },
   tiempoTotal: 0,
   tiempoInfinito: 0,
   granosTotales: 0,

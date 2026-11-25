@@ -12,7 +12,7 @@ import json, os
 import sim_capa1 as S
 
 SEG = 3600
-CHECK = 15.0  # el jugador de referencia: rompe a mano en la primera revision despues de los 30 min
+CHECK = 15.0  # el jugador de referencia: rompe a mano en la primera revision despues de llegar al Punto de ruptura
 
 class Fin(Exception): pass
 
@@ -44,10 +44,10 @@ CASOS = [
     caso('recien abierta', {'estratos': 1}, 3, [40, 30, 27.5, 0, 0, 0, 0, 0], 0.0, {}),
     # A mitad de la 1.2: mejoras, Germen, Eco II y Frio, Fatiga e Inclusion hechos, seis estratos.
     caso('con mejoras', {'estratos': 2, 'presion': 1, 'germen': 2, 'eco2': 3, 'frio': 1}, 6, [80, 70, 65, 60, 50, 40, 0, 0], 120.0,
-         {'crecimiento': 5, 'brillo': 3, 'aguante': 4}, done=('fatiga', 'inclusion'), Ctot=150.0),
-    # Deshielo nv3: la rompe sola apenas pasan los 30 min y da x4 Esquirlas.
-    caso('deshielo', {'estratos': 4, 'germen': 4, 'deshielo': 3}, 8, [120, 110, 100, 90, 80, 70, 60, 50], 300.0,
-         {'crecimiento': 2, 'brillo': 1, 'aguante': 1}, Ctot=250.0),
+         {'crecimiento': 5, 'brillo': 3, 'umbral': 4}, done=('fatiga', 'inclusion'), Ctot=150.0),
+    # Deshielo nv3: la rompe sola apenas llega al Punto de ruptura y da x4 Esquirlas.
+    caso('deshielo', {'estratos': 4, 'germen': 4, 'deshielo': 3}, 8, [120, 110, 100, 90, 80, 70, 60, 50], 10.0,
+         {'crecimiento': 2, 'brillo': 1, 'umbral': 1}, Ctot=250.0),
 ]
 
 if __name__ == '__main__':
