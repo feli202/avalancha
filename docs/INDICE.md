@@ -29,6 +29,7 @@ Leé solo el archivo del sistema que vas a tocar. Lo vigente HOY (versión 1.0 +
 
 ## Capa 2 · Fuego (spec de diseño; leer solo los archivos que nombra cada fase de PROGRESO.md)
 - [capa2/migracion.md](capa2/migracion.md) — tope de 1e308 Cristales, devolución de compras, respaldo y aviso.
+- [capa2/beta.md](capa2/beta.md) — puerta de la beta: `esBeta`, marca en la partida, tarjeta, servicio de Apps Script.
 - [capa2/fundicion.md](capa2/fundicion.md) — reinicio de la Capa 2, Brasas, qué se reinicia y qué es permanente.
 - [capa2/temperatura_motor.md](capa2/temperatura_motor.md) — Temperatura (K), Motor de Brasas, reparto del calor.
 - [capa2/horno.md](capa2/horno.md) — estrato 9, Vidrio y mejoras del Horno.

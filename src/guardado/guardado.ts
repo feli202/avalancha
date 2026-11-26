@@ -34,7 +34,17 @@ export interface Partida {
   secretos?: Contadores
   /** Solo al leer: la partida pasaba el tope de Cristales y se acaba de llevar a él (Capa 2, migración); lo que se devolvió. */
   tope?: string[]
+  /** Capa 2, fase 1B: la marca de beta, con el código con que se entró. Sin ella el juego es el público (`esBeta`). */
+  beta?: MarcaBeta
 }
+
+export interface MarcaBeta { codigo: string; desde: number }
+/** 8 caracteres sin los que se confunden (0 O 1 I L): el mismo alfabeto que `apps-script/beta.gs`. */
+export const CODIGO_BETA = /^[2-9A-HJKMNP-Z]{8}$/
+/** La única pregunta de todo el código de la Capa 2: ¿esta partida (o `juego`) está en la beta? */
+export const esBeta = (p: { beta?: MarcaBeta }) => !!p.beta
+const leerMarca = (x: any): MarcaBeta | undefined =>
+  typeof x?.codigo === 'string' && CODIGO_BETA.test(x.codigo) && typeof x.desde === 'number' && Number.isFinite(x.desde) ? { codigo: x.codigo, desde: x.desde } : undefined
 
 // Decimal como [mantisa, exponente]: dos doubles, que JSON guarda sin perder un dígito.
 const dec = (d: Decimal) => [d.mantissa, d.exponent]
@@ -137,6 +147,7 @@ export function deserializar(texto: string): Partida {
     zoomMaxS: positivo((d as any).zoomMaxS),
     secretos: contadores((d as any).secretos),
     ...(topada !== leida && { tope: devueltas }),
+    ...(leerMarca((d as any).beta) && { beta: leerMarca((d as any).beta) }),
     // Partidas de antes del historial: no viene, y el juego arranca uno con el comienzo estimado por el tiempo de juego.
     ...((d as any).historial !== undefined && { historial: limpiarHistorial((d as any).historial, d.guardadoEn - e.tiempoTotal * 1000) }),
   }
@@ -260,9 +271,12 @@ export function guardar(a: Almacen, p: Partida) {
  * pasaba de 1e308 (para cuando el fuego de Ruptura levante el tope). Sale al final de los respaldos. */
 export const COPIA_TOPE = 'avalancha.copia.antesDelTope'
 
+/** Capa 2, fase 1B: la partida beta que se dejó al volver a la de antes de la beta (`guardado/beta.ts`). */
+export const COPIA_BETA = 'avalancha.copia.beta'
+
 /** Los respaldos que se pueden leer, el más nuevo primero (con su clave, para recuperarlo); al final, el de antes del tope. */
 export function leerCopias(a: Almacen): { clave: string; partida: Partida }[] {
-  return [...COPIAS, COPIA_TOPE].flatMap((clave) => {
+  return [...COPIAS, COPIA_BETA, COPIA_TOPE].flatMap((clave) => {
     try { const t = a.leer(clave); return t === null ? [] : [{ clave, partida: deserializar(t) }] } catch { return [] }
   })
 }

@@ -17,6 +17,8 @@ Historia completa hasta la 1.0: `docs/historial/progreso_hasta_1.0.md` (no leer 
 
 ## Verificación al último cambio
 
+Fase 1B: `npm test` 442 en verde (+23: `tests/beta.test.ts`, `tests/beta_script.test.ts` con el script y datos falsos), `tsc` y `svelte-check` 0 errores. Mirado con la partida real en 1366×768 y 390×844 con el servicio simulado: cerrada, inválido, enviando, sin conexión, enviado, aviso, entrar (marca + respaldo), pantalla en la beta, volver desde Ajustes. El servicio real de Apps Script no está probado (falta el SETUP).
+
 Fase 1A: `npm test` 419 en verde (`tests/tope.test.ts` con la partida real), `test:lento` 20/20, `tsc` y `svelte-check` 0 errores, mirado en 1366×768 y 390×844 con la partida real.
 
 Antes: `npm test` 404 en verde, `npm run test:lento` 20/20 (pesos de log V con la Escarcha a mitad de su ciclo), `tsc` 0 errores, build sin errores. `python balance/sim.py` igual (atento 208 min, 17 compresiones); `sim_capa1.py --robustez`: fin de la capa 14,03 / 15,64 / 22,21 h (15 s / 60 s / 5 min).
@@ -35,7 +37,7 @@ Spec en `docs/capa2/`. Orden de fases:
 
 - [x] 0 preparación (spec partida en `docs/capa2/`, diseño original en `archivo/DISENO_CAPA2.md`, reglas en CLAUDE.md)
 - [x] 1A bloquear Capa 1 (2026-11-25): tope de Cristales en 1e308 (`topeCristales`) y migración al cargar con respaldo `COPIA_TOPE`, para todos. Ver `docs/capa2/migracion.md`. Falta probar en un celular real.
-- [ ] 1B puerta de la beta
+- [x] 1B puerta de la beta (2026-11-26): botón "Jugar beta" en la pantalla de la Capa 2, tarjeta de código y pedido por mail, marca `beta` en la partida con respaldo "Antes de la beta" y vuelta en Ajustes, `esBeta`, servicio `apps-script/beta.gs` + `SETUP_BETA.md`, privacidad. Ver `docs/capa2/beta.md`. **Falta:** hacer el SETUP (hoja, clave, implementar) y pegar la URL en `BETA_URL` (`src/comunidad.ts`); sin eso el botón dice "La beta todavía no está abierta".
 - [ ] 2 simulador
 - [ ] 3 Fundición
 - [ ] 4 Motor y Red de fuego

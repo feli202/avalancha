@@ -1,7 +1,8 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
 import { CFG, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, campoInvalido, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, topeCristales, type Ausencia, type State } from '../core'
 import { almacenLocal, type Almacen } from '../guardado/almacen'
-import { cargar, guardar, type Partida } from '../guardado/guardado'
+import { cargar, guardar, type MarcaBeta, type Partida } from '../guardado/guardado'
+import { entrarBeta, volverDeBeta } from '../guardado/beta'
 import { historialVacio, registrar } from '../guardado/historial'
 import { instantanea } from '../render/instantanea'
 import type { Toma } from '../render/marcos'
@@ -43,6 +44,8 @@ class Juego {
   eta = $state<number | null>(null)
   /** La avalancha más grande de la pila visual, en derrumbes. */
   record = $state(0)
+  /** Capa 2, fase 1B: la marca de beta de la partida (preguntar con `esBeta(juego)`). */
+  beta = $state.raw<MarcaBeta | undefined>(undefined)
   /** C8: fracción hecha del cálculo de la ausencia (null = no hay cálculo en curso). */
   calculo = $state<number | null>(null)
   /** "Mientras no estabas": lo que pasó en la última ausencia, hasta que se cierra. */
@@ -390,7 +393,7 @@ let simuladoHasta = Date.now()
 
 export const partidaActual = (): Partida =>
   ({ estado: juego.s, guardadoEn: simuladoHasta, vistos: juego.vistos, record: juego.record, logros: juego.logros, historial,
-    zoom: juego.zoom, zoomMaxS: juego.zoomMaxS, secretos: vigia.c })
+    zoom: juego.zoom, zoomMaxS: juego.zoomMaxS, secretos: vigia.c, beta: juego.beta })
 
 let reemplazando = false
 let fallos = 0
@@ -418,6 +421,10 @@ export function reemplazarPartida(p: Partida | ((a: Almacen) => void)) {
   location.reload()
   return true
 }
+
+/** Capa 2, fase 1B: con el código ya verificado y el aviso aceptado. Guarda "Antes de la beta", marca la partida y recarga. */
+export const entrarALaBeta = (codigo: string) => reemplazarPartida((a) => entrarBeta(a, partidaActual(), codigo, Date.now()))
+export const volverDeLaBeta = () => (guardarYa(), reemplazarPartida((a) => volverDeBeta(a, Date.now())))
 
 export const borrarPartida = () =>
   reemplazarPartida({ estado: estadoInicial(), guardadoEn: Date.now(), vistos: {}, record: 0, logros: {}, historial: historialVacio(Date.now()) })
@@ -483,6 +490,7 @@ export function arrancar() {
     juego.logros = p.logros
     juego.zoom = p.zoom ?? 0
     juego.zoomMaxS = p.zoomMaxS ?? 0
+    juego.beta = p.beta
     vigia.c = { ...contadoresVacios(), ...p.secretos }
     if (volviste(Date.now(), p.guardadoEn)) ganarSecreto('volviste')
     historial = p.historial ?? historialVacio(p.guardadoEn - p.estado.tiempoTotal * 1000)

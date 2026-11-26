@@ -1,13 +1,14 @@
 <script lang="ts">
   // Pantalla de Ajustes (Pantalla.svelte): Aspecto (paletas, efectos y marcos con su vista previa), Juego, Partida y Teclado.
   import { flushSync } from 'svelte'
-  import { exportar, importar, leerCopias, type Partida } from '../guardado/guardado'
+  import { esBeta, exportar, importar, leerCopias, type Partida } from '../guardado/guardado'
+  import { leerAntesDeBeta } from '../guardado/beta'
   import { marco } from '../render/marcos'
   import { ALTO, ANCHO, RADIO_ENTERA, imagen, miniPila } from '../render/miniPilas'
   import { COLORES_DALTONISMO, EFECTOS, FONDOS, MARCOS, PALETAS, css } from '../render/paletas'
   import { txt } from '../strings'
   import { AVISOS, ajustes, avisoActivo, quieto } from './ajustes.svelte'
-  import { borrarPartida, guardarYa, juego, partidaActual, reemplazarPartida, tocarLogo } from './juego.svelte'
+  import { borrarPartida, guardarYa, juego, volverDeLaBeta, partidaActual, reemplazarPartida, tocarLogo } from './juego.svelte'
   import { SECRETOS, desbloqueados, elegido, logroDe, nombreLogro, type Cosmetico } from './logros'
   import Pantalla from './Pantalla.svelte'
   import { VERSION } from '../version.svelte'
@@ -79,6 +80,9 @@
   const copias = (guardarYa(), leerCopias(almacenLocal))
   let recuperar = $state.raw<Partida | null>(null)
   let volver = $state(false)
+  // Capa 2, fase 1B: la partida de antes de entrar a la beta (solo mientras se está en la beta).
+  const antesBeta = esBeta(juego) ? leerAntesDeBeta(almacenLocal) : null
+  let volverBeta = $state(false)
   function volverAlRespaldo() {
     guardarYa() // que la copia de la actual sea de ahora
     noSeEscribio = !reemplazarPartida(restaurarRespaldo)
@@ -315,6 +319,22 @@
                 <div class="acciones">
                   <button class="accion chica peligro" use:enfocar onclick={() => recuperar && reemplazar({ ...recuperar, guardadoEn: Date.now() })}>{txt.opciones.recuperar}</button>
                   <button class="secundario" onclick={() => (recuperar = null)}>{txt.opciones.cancelar}</button>
+                </div>
+              {/if}
+            </div>
+          {/if}
+
+          {#if antesBeta}
+            <div class="bloque">
+              <div class="fila sin-borde">
+                <span class="texto">{txt.beta.volverTitulo}<small>{txt.beta.volverDesc(txt.opciones.descPartida(antesBeta.estado.compresiones, txt.duracion(antesBeta.estado.tiempoTotal)))}</small></span>
+                {#if !volverBeta}<button class="accion chica" onclick={() => (volverBeta = true)}>{txt.beta.volver}</button>{/if}
+              </div>
+              {#if volverBeta}
+                <p class="aviso-fuerte" role="alert">{txt.beta.volverConfirma}</p>
+                <div class="acciones">
+                  <button class="accion chica peligro" use:enfocar onclick={() => (noSeEscribio = !volverDeLaBeta())}>{txt.beta.volver}</button>
+                  <button class="secundario" onclick={() => (volverBeta = false)}>{txt.opciones.cancelar}</button>
                 </div>
               {/if}
             </div>
