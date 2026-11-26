@@ -24,3 +24,6 @@ release/**/*.mp4
 
 # Códigos de beta en claro (scripts/codigos_beta.py): nunca a git
 privado/
+
+# Tráiler: finales en 4K (400 MB)
+marketing/trailer/final/

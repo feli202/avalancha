@@ -1,0 +1,82 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Sub,Space Grotesk,92,&H00FFFFFF,&H00FFFFFF,&H000F0807,&H8C07080F,-1,0,0,0,100,100,0,0,4,5,14,2,110,210,600,1
+Style: Fin,Space Grotesk,86,&H00FFFFFF,&H00FFFFFF,&H000F0807,&H96000000,-1,0,0,0,100,100,0,0,1,4,2,5,0,0,0,1
+Style: Url,Space Grotesk,50,&H0047B5FF,&H00FFFFFF,&H000F0807,&H96000000,0,0,0,0,100,100,0,0,1,3,2,5,0,0,0,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.31,0:00:00.44,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Un {\alpha&HFF&}grano
+Dialogue: 0,0:00:00.44,0:00:01.16,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Un {\c&H47B5FF&}grano
+Dialogue: 0,0:00:01.81,0:00:02.19,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Cuatro {\alpha&HFF&}granos {\alpha&HFF&}y
+Dialogue: 0,0:00:02.19,0:00:02.86,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Cuatro {\c&H47B5FF&}granos {\alpha&HFF&}y
+Dialogue: 0,0:00:02.86,0:00:02.95,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Cuatro {\c&HFFFFFF&}granos {\c&H47B5FF&}y
+Dialogue: 0,0:00:02.95,0:00:03.13,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}se {\alpha&HFF&}derrumba
+Dialogue: 0,0:00:03.13,0:00:03.99,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}se {\c&H47B5FF&}derrumba
+Dialogue: 0,0:00:04.26,0:00:04.71,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Esa {\alpha&HFF&}es {\alpha&HFF&}la
+Dialogue: 0,0:00:04.71,0:00:04.85,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Esa {\c&H47B5FF&}es {\alpha&HFF&}la
+Dialogue: 0,0:00:04.85,0:00:05.00,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Esa {\c&HFFFFFF&}es {\c&H47B5FF&}la
+Dialogue: 0,0:00:05.00,0:00:05.35,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}única {\alpha&HFF&}regla
+Dialogue: 0,0:00:05.35,0:00:06.06,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}única {\c&H47B5FF&}regla
+Dialogue: 0,0:00:07.16,0:00:07.40,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Pero {\alpha&HFF&}una {\alpha&HFF&}regla
+Dialogue: 0,0:00:07.40,0:00:07.62,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Pero {\c&H47B5FF&}una {\alpha&HFF&}regla
+Dialogue: 0,0:00:07.62,0:00:07.87,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Pero {\c&HFFFFFF&}una {\c&H47B5FF&}regla
+Dialogue: 0,0:00:07.87,0:00:08.45,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}alcanza {\alpha&HFF&}para
+Dialogue: 0,0:00:08.45,0:00:08.65,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}alcanza {\c&H47B5FF&}para
+Dialogue: 0,0:00:08.65,0:00:09.33,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}construir {\alpha&HFF&}esto
+Dialogue: 0,0:00:09.33,0:00:10.05,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}construir {\c&H47B5FF&}esto
+Dialogue: 0,0:00:11.96,0:00:12.25,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Cada {\alpha&HFF&}avalancha
+Dialogue: 0,0:00:12.25,0:00:12.75,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Cada {\c&H47B5FF&}avalancha
+Dialogue: 0,0:00:12.75,0:00:13.10,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}genera {\alpha&HFF&}energía
+Dialogue: 0,0:00:13.10,0:00:14.62,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}genera {\c&H47B5FF&}energía
+Dialogue: 0,0:00:14.62,0:00:14.92,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Cada {\alpha&HFF&}mejora
+Dialogue: 0,0:00:14.92,0:00:15.66,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Cada {\c&H47B5FF&}mejora
+Dialogue: 0,0:00:15.66,0:00:16.24,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}avalanchas {\alpha&HFF&}más
+Dialogue: 0,0:00:16.24,0:00:16.46,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}avalanchas {\c&H47B5FF&}más
+Dialogue: 0,0:00:16.46,0:00:17.33,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}grandes
+Dialogue: 0,0:00:17.59,0:00:18.05,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Comprimí {\alpha&HFF&}la {\alpha&HFF&}pila
+Dialogue: 0,0:00:18.05,0:00:18.22,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Comprimí {\c&H47B5FF&}la {\alpha&HFF&}pila
+Dialogue: 0,0:00:18.22,0:00:19.50,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Comprimí {\c&HFFFFFF&}la {\c&H47B5FF&}pila
+Dialogue: 0,0:00:19.50,0:00:19.94,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Empezá {\alpha&HFF&}de {\alpha&HFF&}nuevo
+Dialogue: 0,0:00:19.94,0:00:20.05,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Empezá {\c&H47B5FF&}de {\alpha&HFF&}nuevo
+Dialogue: 0,0:00:20.05,0:00:21.39,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Empezá {\c&HFFFFFF&}de {\c&H47B5FF&}nuevo
+Dialogue: 0,0:00:21.39,0:00:21.64,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Más {\alpha&HFF&}rápido
+Dialogue: 0,0:00:21.64,0:00:22.45,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Más {\c&H47B5FF&}rápido
+Dialogue: 0,0:00:22.71,0:00:23.00,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Hasta {\alpha&HFF&}llegar {\alpha&HFF&}al
+Dialogue: 0,0:00:23.00,0:00:23.28,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Hasta {\c&H47B5FF&}llegar {\alpha&HFF&}al
+Dialogue: 0,0:00:23.28,0:00:23.38,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Hasta {\c&HFFFFFF&}llegar {\c&H47B5FF&}al
+Dialogue: 0,0:00:23.38,0:00:24.27,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}infinito
+Dialogue: 0,0:00:24.96,0:00:25.09,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Y {\alpha&HFF&}entonces {\alpha&HFF&}todo
+Dialogue: 0,0:00:25.09,0:00:26.10,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Y {\c&H47B5FF&}entonces {\alpha&HFF&}todo
+Dialogue: 0,0:00:26.10,0:00:26.34,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Y {\c&HFFFFFF&}entonces {\c&H47B5FF&}todo
+Dialogue: 0,0:00:26.34,0:00:26.50,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}se {\alpha&HFF&}congela
+Dialogue: 0,0:00:26.50,0:00:27.35,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}se {\c&H47B5FF&}congela
+Dialogue: 0,0:00:32.06,0:00:32.17,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Y {\alpha&HFF&}el {\alpha&HFF&}infinito
+Dialogue: 0,0:00:32.17,0:00:32.28,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Y {\c&H47B5FF&}el {\alpha&HFF&}infinito
+Dialogue: 0,0:00:32.28,0:00:32.82,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Y {\c&HFFFFFF&}el {\c&H47B5FF&}infinito
+Dialogue: 0,0:00:32.82,0:00:32.99,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}se {\alpha&HFF&}rompe
+Dialogue: 0,0:00:32.99,0:00:33.73,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}se {\c&H47B5FF&}rompe
+Dialogue: 0,0:00:35.96,0:00:37.56,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Avalancha
+Dialogue: 0,0:00:37.56,0:00:37.74,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Un {\alpha&HFF&}juego
+Dialogue: 0,0:00:37.74,0:00:38.08,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Un {\c&H47B5FF&}juego
+Dialogue: 0,0:00:38.08,0:00:38.73,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}incremental
+Dialogue: 0,0:00:38.73,0:00:39.52,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}gratis {\alpha&HFF&}basado {\alpha&HFF&}en
+Dialogue: 0,0:00:39.52,0:00:39.96,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}gratis {\c&H47B5FF&}basado {\alpha&HFF&}en
+Dialogue: 0,0:00:39.96,0:00:40.04,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}gratis {\c&HFFFFFF&}basado {\c&H47B5FF&}en
+Dialogue: 0,0:00:40.04,0:00:40.17,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}un {\alpha&HFF&}problema
+Dialogue: 0,0:00:40.17,0:00:40.56,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}un {\c&H47B5FF&}problema
+Dialogue: 0,0:00:40.56,0:00:41.20,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}matemático {\alpha&HFF&}real
+Dialogue: 0,0:00:41.20,0:00:41.91,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}matemático {\c&H47B5FF&}real
+Dialogue: 0,0:00:42.17,0:00:42.60,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Jugalo {\alpha&HFF&}gratis {\alpha&HFF&}en
+Dialogue: 0,0:00:42.60,0:00:43.03,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Jugalo {\c&H47B5FF&}gratis {\alpha&HFF&}en
+Dialogue: 0,0:00:43.03,0:00:43.19,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Jugalo {\c&HFFFFFF&}gratis {\c&H47B5FF&}en
+Dialogue: 0,0:00:43.19,0:00:43.28,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}tu {\alpha&HFF&}navegador
+Dialogue: 0,0:00:43.28,0:00:44.15,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}tu {\c&H47B5FF&}navegador
+Dialogue: 1,0:00:40.70,0:00:44.95,Fin,,0,0,0,,{\an5\pos(540,1109)\fad(400,0)}Jugalo gratis
+Dialogue: 1,0:00:40.95,0:00:44.95,Url,,0,0,0,,{\an5\pos(540,1190)\fad(400,0)}exponent-games.itch.io/avalanche

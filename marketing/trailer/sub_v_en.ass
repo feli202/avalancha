@@ -1,0 +1,78 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Sub,Space Grotesk,92,&H00FFFFFF,&H00FFFFFF,&H000F0807,&H8C07080F,-1,0,0,0,100,100,0,0,4,5,14,2,110,210,600,1
+Style: Fin,Space Grotesk,86,&H00FFFFFF,&H00FFFFFF,&H000F0807,&H96000000,-1,0,0,0,100,100,0,0,1,4,2,5,0,0,0,1
+Style: Url,Space Grotesk,50,&H0047B5FF,&H00FFFFFF,&H000F0807,&H96000000,0,0,0,0,100,100,0,0,1,3,2,5,0,0,0,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.31,0:00:00.65,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}One {\alpha&HFF&}grain
+Dialogue: 0,0:00:00.65,0:00:01.59,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}One {\c&H47B5FF&}grain
+Dialogue: 0,0:00:01.85,0:00:02.21,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Four {\alpha&HFF&}grains {\alpha&HFF&}and
+Dialogue: 0,0:00:02.21,0:00:03.14,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Four {\c&H47B5FF&}grains {\alpha&HFF&}and
+Dialogue: 0,0:00:03.14,0:00:03.31,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Four {\c&HFFFFFF&}grains {\c&H47B5FF&}and
+Dialogue: 0,0:00:03.31,0:00:03.45,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}it {\alpha&HFF&}falls
+Dialogue: 0,0:00:03.45,0:00:04.44,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}it {\c&H47B5FF&}falls
+Dialogue: 0,0:00:04.70,0:00:05.06,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}That's {\alpha&HFF&}the {\alpha&HFF&}only
+Dialogue: 0,0:00:05.06,0:00:05.20,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}That's {\c&H47B5FF&}the {\alpha&HFF&}only
+Dialogue: 0,0:00:05.20,0:00:05.56,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}That's {\c&HFFFFFF&}the {\c&H47B5FF&}only
+Dialogue: 0,0:00:05.56,0:00:06.34,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}rule
+Dialogue: 0,0:00:07.16,0:00:07.37,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}But {\alpha&HFF&}one {\alpha&HFF&}rule
+Dialogue: 0,0:00:07.37,0:00:07.71,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}But {\c&H47B5FF&}one {\alpha&HFF&}rule
+Dialogue: 0,0:00:07.71,0:00:08.05,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}But {\c&HFFFFFF&}one {\c&H47B5FF&}rule
+Dialogue: 0,0:00:08.05,0:00:08.20,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}is {\alpha&HFF&}enough {\alpha&HFF&}to
+Dialogue: 0,0:00:08.20,0:00:08.53,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}is {\c&H47B5FF&}enough {\alpha&HFF&}to
+Dialogue: 0,0:00:08.53,0:00:08.67,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}is {\c&HFFFFFF&}enough {\c&H47B5FF&}to
+Dialogue: 0,0:00:08.67,0:00:09.27,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}build {\alpha&HFF&}this
+Dialogue: 0,0:00:09.27,0:00:10.10,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}build {\c&H47B5FF&}this
+Dialogue: 0,0:00:11.96,0:00:12.37,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Every {\alpha&HFF&}avalanche
+Dialogue: 0,0:00:12.37,0:00:13.00,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Every {\c&H47B5FF&}avalanche
+Dialogue: 0,0:00:13.00,0:00:13.32,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}makes {\alpha&HFF&}energy
+Dialogue: 0,0:00:13.32,0:00:14.78,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}makes {\c&H47B5FF&}energy
+Dialogue: 0,0:00:14.78,0:00:15.20,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Every {\alpha&HFF&}upgrade
+Dialogue: 0,0:00:15.20,0:00:15.73,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Every {\c&H47B5FF&}upgrade
+Dialogue: 0,0:00:15.73,0:00:16.00,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}makes {\alpha&HFF&}bigger
+Dialogue: 0,0:00:16.00,0:00:16.46,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}makes {\c&H47B5FF&}bigger
+Dialogue: 0,0:00:16.46,0:00:17.71,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}avalanches
+Dialogue: 0,0:00:17.97,0:00:18.55,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Compress {\alpha&HFF&}the
+Dialogue: 0,0:00:18.55,0:00:18.66,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Compress {\c&H47B5FF&}the
+Dialogue: 0,0:00:18.66,0:00:20.13,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}pile
+Dialogue: 0,0:00:20.13,0:00:20.56,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Start {\alpha&HFF&}again
+Dialogue: 0,0:00:20.56,0:00:21.96,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Start {\c&H47B5FF&}again
+Dialogue: 0,0:00:21.96,0:00:23.04,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Faster
+Dialogue: 0,0:00:23.30,0:00:23.71,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Until {\alpha&HFF&}you {\alpha&HFF&}reach
+Dialogue: 0,0:00:23.71,0:00:23.90,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Until {\c&H47B5FF&}you {\alpha&HFF&}reach
+Dialogue: 0,0:00:23.90,0:00:24.17,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Until {\c&HFFFFFF&}you {\c&H47B5FF&}reach
+Dialogue: 0,0:00:24.17,0:00:25.22,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}infinity
+Dialogue: 0,0:00:25.48,0:00:25.68,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}And {\alpha&HFF&}then
+Dialogue: 0,0:00:25.68,0:00:26.26,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}And {\c&H47B5FF&}then
+Dialogue: 0,0:00:26.26,0:00:26.80,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}everything
+Dialogue: 0,0:00:26.80,0:00:27.87,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}freezes
+Dialogue: 0,0:00:32.06,0:00:32.27,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}And {\alpha&HFF&}infinity
+Dialogue: 0,0:00:32.27,0:00:32.86,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}And {\c&H47B5FF&}infinity
+Dialogue: 0,0:00:32.86,0:00:33.86,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}breaks
+Dialogue: 0,0:00:35.96,0:00:37.74,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Avalancha
+Dialogue: 0,0:00:37.74,0:00:37.88,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}A {\alpha&HFF&}free
+Dialogue: 0,0:00:37.88,0:00:38.24,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}A {\c&H47B5FF&}free
+Dialogue: 0,0:00:38.24,0:00:38.88,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}incremental {\alpha&HFF&}game
+Dialogue: 0,0:00:38.88,0:00:39.19,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}incremental {\c&H47B5FF&}game
+Dialogue: 0,0:00:39.19,0:00:39.53,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}built {\alpha&HFF&}on {\alpha&HFF&}a
+Dialogue: 0,0:00:39.53,0:00:39.66,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}built {\c&H47B5FF&}on {\alpha&HFF&}a
+Dialogue: 0,0:00:39.66,0:00:39.71,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}built {\c&HFFFFFF&}on {\c&H47B5FF&}a
+Dialogue: 0,0:00:39.71,0:00:40.19,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}real {\alpha&HFF&}math
+Dialogue: 0,0:00:40.19,0:00:40.52,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}real {\c&H47B5FF&}math
+Dialogue: 0,0:00:40.52,0:00:41.40,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}problem
+Dialogue: 0,0:00:41.66,0:00:41.94,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}Play {\alpha&HFF&}it {\alpha&HFF&}free
+Dialogue: 0,0:00:41.94,0:00:42.07,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Play {\c&H47B5FF&}it {\alpha&HFF&}free
+Dialogue: 0,0:00:42.07,0:00:42.43,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}Play {\c&HFFFFFF&}it {\c&H47B5FF&}free
+Dialogue: 0,0:00:42.43,0:00:42.53,Sub,,0,0,0,,{\alpha&H00&}{\c&H47B5FF&}in {\alpha&HFF&}your {\alpha&HFF&}browser
+Dialogue: 0,0:00:42.53,0:00:42.68,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}in {\c&H47B5FF&}your {\alpha&HFF&}browser
+Dialogue: 0,0:00:42.68,0:00:43.65,Sub,,0,0,0,,{\alpha&H00&}{\c&HFFFFFF&}in {\c&HFFFFFF&}your {\c&H47B5FF&}browser
+Dialogue: 1,0:00:40.70,0:00:44.45,Fin,,0,0,0,,{\an5\pos(540,1109)\fad(400,0)}Play free
+Dialogue: 1,0:00:40.95,0:00:44.45,Url,,0,0,0,,{\an5\pos(540,1190)\fad(400,0)}exponent-games.itch.io/avalanche
