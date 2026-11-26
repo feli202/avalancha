@@ -27,6 +27,18 @@ Leé solo el archivo del sistema que vas a tocar. Lo vigente HOY (versión 1.0 +
 - [capa1/offline.md](capa1/offline.md) — progreso fuera de línea (las dos capas).
 - [capa1/interfaz.md](capa1/interfaz.md) — barra de capas, estética helada, carámbano, primer Infinito, fin de capa, guías.
 
+## Capa 2 · Fuego (spec de diseño; leer solo los archivos que nombra cada fase de PROGRESO.md)
+- [capa2/migracion.md](capa2/migracion.md) — tope de 1e308 Cristales, devolución de compras, respaldo y aviso.
+- [capa2/fundicion.md](capa2/fundicion.md) — reinicio de la Capa 2, Brasas, qué se reinicia y qué es permanente.
+- [capa2/temperatura_motor.md](capa2/temperatura_motor.md) — Temperatura (K), Motor de Brasas, reparto del calor.
+- [capa2/horno.md](capa2/horno.md) — estrato 9, Vidrio y mejoras del Horno.
+- [capa2/red_fuego.md](capa2/red_fuego.md) — quinto nivel de los 25 nodos, efectos y precios en Brasas.
+- [capa2/escarcha_reliquias.md](capa2/escarcha_reliquias.md) — Escarcha eterna y Relicario de fuego.
+- [capa2/liberaciones.md](capa2/liberaciones.md) — Lecho, Desborde, Metamorfosis, Inercia eterna.
+- [capa2/defectos_cargas.md](capa2/defectos_cargas.md) — Defectos con 5 cargas.
+- [capa2/escalado_ignicion.md](capa2/escalado_ignicion.md) — escalado tras la 1.ª Fundición e Ignición (5.778 K).
+- [capa2/ritmo_balance.md](capa2/ritmo_balance.md) — resumen, ritmo objetivo, reglas de balance, plan de implementación.
+
 ## No leer salvo pedido
 - `historial/` — PROGRESO viejo completo hasta la 1.0.
-- `../archivo/` — SPEC originales, guías, correcciones y actualizaciones ya aplicadas.
+- `../archivo/` — `DISENO_CAPA2.md` (diseño original entero de la Capa 2), SPEC originales, guías, correcciones y actualizaciones ya aplicadas.

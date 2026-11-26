@@ -40,6 +40,17 @@ Juego incremental web sobre una pila de arena abeliana. Versión 1.0: Capa 0 (Ar
 - Al terminar una tarea, actualizá `PROGRESO.md` (corto: estado, hecho, falta, problemas) y el doc de `docs/` del sistema que cambió.
 - `master` = código. `main` = solo la build publicada en GitHub Pages: nunca commitear código ni docs ahí.
 
+## Capa 2
+
+- La spec está en `docs/capa2/`; leé solo los archivos que nombra cada fase de `PROGRESO.md`.
+- Constantes de la Capa 2 solo en `balance/config_capa2.json`.
+- Todo lo de la Capa 2 queda detrás de la marca de beta de la partida: sin la marca, el juego público no cambia.
+- Las partidas beta pueden estar más adelantadas que lo implementado: cada fase funciona con ellas, y si la partida llega más lejos que lo hecho, muestra "próximamente" sin romperse.
+- Cada cambio de guardado lleva migración y test, también para partidas beta.
+- Si toca el balance: primero `balance/sim_capa2.py`, después `docs/capa2`, después código.
+- Números grandes en log10 o break_infinity. Nada de análisis largos de balance si no hacen falta.
+- Antes de cada push: decime cómo probarlo en local y esperá mi OK.
+
 ## Comandos (en esta máquina es `python`, no `python3`)
 
 ```bash

@@ -27,6 +27,24 @@ Historia completa hasta la 1.0: `docs/historial/progreso_hasta_1.0.md` (no leer 
 - Tráiler horizontal (línea de tiempo `h` escrita sin probar en `marketing/trailer/`).
 - Capa 2 (ganchos en `docs/capa1/bucle_y_balance.md`).
 
+## Capa 2 (Fuego, en beta)
+
+Spec en `docs/capa2/`. Orden de fases:
+
+- [x] 0 preparación (spec partida en `docs/capa2/`, diseño original en `archivo/DISENO_CAPA2.md`, reglas en CLAUDE.md)
+- [ ] 1A bloquear Capa 1
+- [ ] 1B puerta de la beta
+- [ ] 2 simulador
+- [ ] 3 Fundición
+- [ ] 4 Motor y Red de fuego
+- [ ] 5 Horno
+- [ ] 6 liberaciones
+- [ ] 7 Escarcha eterna y Relicario
+- [ ] 8 Defectos con 5 cargas
+- [ ] 9 Fusión y escalado
+- [ ] 10 Ignición
+- [ ] 11 auditoría y publicación
+
 ## Problemas conocidos
 
 - El fin de la capa queda ~0,9 h antes que con la Escarcha vieja (14,0 h contra 14,9) y pegado a Vidrio; tocando solo la Escarcha no se separan (ver `docs/capa1/escarcha.md`).
