@@ -5,7 +5,8 @@ import { precioLog10 } from './config'
 import { CFG1 } from './config1'
 import { efectoRed } from './red'
 import { enVidrio } from './defectos'
-import { templadoX } from './fuego'
+import { CFG2 } from './config2'
+import { comprarFuego, extraSector, templadoX, tieneFuego } from './fuego'
 import type { Pieza, Regla, State } from './state'
 
 const R = CFG1.relicario
@@ -14,11 +15,16 @@ export const MODOS: Regla['modo'][] = ['completar', 'fijo', 'rotar', 'subir', 'p
 
 /** Escalera: el color (0 Ámbar … 3 Violeta) y cuántas vueltas lleva (el "+1"). */
 export const escalon = (nivel: number) => ({ color: nivel % 4, vuelta: Math.floor(nivel / 4) })
-export const espacios = (s: State) => Math.max(1, efectoRed(s, 'engarces', 'espacios', 1), efectoRed(s, 'engarces2', 'espacios', 1))
-/** Engarces II: la fusión puede ser automática. */
-export const fusionAutomatica = (s: State) => (s.red.engarces2 ?? 0) >= 1
-/** Casilleros del inventario: tamaño fijo (config; una mejora futura lo agranda ahí). */
-export const casilleros = (_s: State) => R.casilleros
+/** Capa 2 (beta), Relicario de fuego (Engarces de fuego): inventario doble y todo automático (docs/capa2/escarcha_reliquias.md). */
+export const relicarioFuego = (s: State) => tieneFuego(s, 'engarces')
+/** Engaste de lava (Engarces II de fuego): un espacio más y las engarzadas cuentan un nivel más. */
+const lava = (s: State) => tieneFuego(s, 'engarces2')
+export const espacios = (s: State) =>
+  Math.max(1, efectoRed(s, 'engarces', 'espacios', 1), efectoRed(s, 'engarces2', 'espacios', 1)) + (lava(s) ? CFG2.red_fuego.engarces2.espacios : 0)
+/** Engarces II: la fusión puede ser automática (con el Relicario de fuego, siempre). */
+export const fusionAutomatica = (s: State) => (s.red.engarces2 ?? 0) >= 1 || relicarioFuego(s)
+/** Casilleros del inventario: tamaño fijo de config, × 2 con el Relicario de fuego. */
+export const casilleros = (s: State) => R.casilleros * (relicarioFuego(s) ? CFG2.red_fuego.engarces.casilleros_x : 1)
 /** Sin casillero libre la reliquia nueva va a la espera (hasta fusionar o hacer lugar). */
 export const inventarioLleno = (s: State) => s.relicario.piezas.length >= casilleros(s)
 /** Engarces nv4: reliquias que deja cada Infinito. */
@@ -85,6 +91,7 @@ export function pulir(s: State, id: number): State {
   const p = pieza(s, id)!
   let n = conRel(s, { piezas: s.relicario.piezas.map((x) => (x.id === id ? { ...x, nivel: x.nivel + 1 } : x)) })
   n = { ...n, escarcha: { ...n.escarcha, esquirlas: n.escarcha.esquirlas - costoPulido(s, p.nivel) } }
+  if (relicarioFuego(n)) return ordenarDeFuego(n)
   return s.relicario.regla.fusionar && fusionAutomatica(n) ? fusionarTodo(n) : n
 }
 
@@ -163,13 +170,45 @@ export function conFoto(s: State, foto: string): State {
   return conRel(s, { foto: rel.pendiente && !rel.foto ? foto : rel.foto, piezas: rel.piezas.map((p) => (falta(p) ? { ...p, foto } : p)) })
 }
 
+// ---------- Relicario de fuego ----------
+
+/** Todo automático: la reliquia que esperaba su tipo se elige con la regla, las que esperaban lugar vuelven, se fusiona todo
+ * (también con las de la espera, para que nunca se trabe) y se engarzan las mejores. Sin lugar, esperan las de menor nivel que
+ * no están engarzadas. Es también la migración al encenderlo: una pieza engarzada solo sale por otra de nivel mayor
+ * (equiparMejores) y nada se pierde, así que nadie pierde poder. */
+export function ordenarDeFuego(s: State): State {
+  s = elegirSola(s)
+  s = equiparMejores(fusionarTodo(conRel(s, { piezas: [...s.relicario.piezas, ...s.relicario.espera], espera: [] })))
+  const sobra = s.relicario.piezas.length - casilleros(s)
+  if (sobra <= 0) return s
+  const puesta = new Set(s.relicario.equipadas)
+  const fuera = s.relicario.piezas.filter((p) => !puesta.has(p.id)).sort((a, b) => a.nivel - b.nivel || b.id - a.id).slice(0, sobra)
+  return conRel(s, { piezas: s.relicario.piezas.filter((p) => !fuera.includes(p)), espera: fuera })
+}
+/** Cada Infinito con el Relicario de fuego: una reliquia de cada tipo (sin elegir), y a ordenar. */
+export function reliquiasDeFuego(s: State, inf: number): State {
+  const id = nuevoId(s)
+  return ordenarDeFuego(conRel(s, { espera: [...s.relicario.espera, ...TIPOS.map((tipo, k) => ({ id: id + k, tipo, nivel: 0, foto: '', inf }))] }))
+}
+/** Encender un nivel de fuego desde la interfaz: con el Relicario de fuego (o su Engaste) el Relicario se ordena en el acto. */
+export function encenderFuego(s: State, id: string): State {
+  const n = comprarFuego(s, id)
+  return n !== s && relicarioFuego(n) && (id === 'engarces' || id === 'engarces2') ? ordenarDeFuego(n) : n
+}
+
 // ---------- efectos (solo las equipadas; dos del mismo tipo se suman; tabla de §5, igual que mods() de sim_capa1.py) ----------
 const POR_NIVEL: Record<string, number> = {
   cauce: R.cauce_colores_pct_por_nivel, cascada: R.cascada_c_por_nivel, mutaciones: R.mutaciones_efecto_por_nivel,
 }
 /** El efecto de una pieza del tipo y nivel dados. */
 export const efectoNivel = (t: string, nivel: number) => (nivel < 0 ? 0 : POR_NIVEL[t] * (nivel + 1))
-const efecto = (s: State, t: string) => enVidrio(s) ? 0 : templadoX(s) * equipadas(s).reduce((a, p) => a + (p.tipo === t ? efectoNivel(t, p.nivel) : 0), 0) // Templado del Horno
+/** El efecto de las engarzadas de un tipo: × Templado del Horno × sector Relicario del Motor; con Engaste de lava, un nivel más. */
+export const efectoTipo = (s: State, t: string) => {
+  if (enVidrio(s)) return 0
+  const mas = lava(s) ? CFG2.red_fuego.engarces2.niveles : 0
+  return templadoX(s) * extraSector(s, 'relicario') * equipadas(s).reduce((a, p) => a + (p.tipo === t ? efectoNivel(t, p.nivel + mas) : 0), 0)
+}
+const efecto = efectoTipo
 /** Cauce: los colores valen (log10) × (1 + esto). */
 export const cauceRel = (s: State) => efecto(s, 'cauce')
 /** Cascada: se suma al exponente c. */

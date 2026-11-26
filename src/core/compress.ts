@@ -2,7 +2,7 @@ import Decimal from 'break_infinity.js'
 import { CFG } from './config'
 import { CFG2 } from './config2'
 import { congelada, infinitoRoto } from './formulas'
-import { lechoInfinito } from './fuego'
+import { lechoInfinito, tieneFuego } from './fuego'
 import { conserva, efectoRed, memoria } from './red'
 import { AUTOS, estadoInicial, type State } from './state'
 
@@ -38,7 +38,8 @@ const POR_MEMORIA: Record<string, number> = { cascada: 2, mutaciones: 3, infinit
  * inicio de cada Infinito; Cascada, Mutaciones e Infinito, con su nivel de Memoria. La única regla: la usan la economía
  * (autoActivo), la tienda (el interruptor "auto") y el panel de Automatización. */
 export const autoDisponible = (s: State, clave: string) =>
-  clave === 'escarcha' ? efectoRed(s, 'deshielo', 'auto_ruptura') > 0 : // Romper la Escarcha: con Deshielo (Â§9)
+  clave === 'escarcha' ? efectoRed(s, 'deshielo', 'auto_ruptura') > 0 && !tieneFuego(s, 'frio') : // Romper la Escarcha: con Deshielo (§9); la eterna no se rompe
+  clave === 'escarcha_mejoras' ? tieneFuego(s, 'deshielo') && tieneFuego(s, 'frio') : // Deshielo automático (fuego)
   clave in POR_MEMORIA ? memoria(s) >= POR_MEMORIA[clave] : memoria(s) >= 1 || s.compresiones >= CFG.autocompradores[clave]
 /** Lo tiene y está prendido: compra solo. */
 export const autoActivo = (s: State, clave: string) => autoDisponible(s, clave) && s.auto[clave]

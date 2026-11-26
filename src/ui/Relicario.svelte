@@ -6,8 +6,8 @@
   import { tick as despues } from 'svelte'
   import { flip } from 'svelte/animate'
   import {
-    TIPOS, desequipar, efectoNivel, elegir, equipadas, equipar, escalon, espacios, fusionables,
-    fusionar, fusionarTodo, inventarioLleno, casilleros as capacidad, costoPulido, puedePulir, pulir, type Pieza,
+    TIPOS, desequipar, efectoNivel, elegir, equipar, escalon, espacios, fusionables,
+    fusionar, fusionarTodo, inventarioLleno, casilleros as capacidad, costoPulido, puedePulir, pulir, relicarioFuego, efectoTipo, type Pieza,
   } from '../core'
   import { caraReliquia } from '../render/miniPilas'
   import { txt } from '../strings'
@@ -33,7 +33,9 @@
   const sinLugar = $derived(inventarioLleno(s))
   const puestas = $derived(new Set(rel.equipadas.slice(0, espacios(s))))
   const grupos = $derived(fusionables(s))
-  const totales = $derived(TIPOS.map((t) => [t, equipadas(s).reduce((a, p) => a + (p.tipo === t ? efectoNivel(t, p.nivel) : 0), 0)] as const).filter(([, x]) => x > 0))
+  // Lo que suma de verdad: con Templado, el sector Relicario y Engaste de lava (efectoTipo).
+  const totales = $derived(TIPOS.map((t) => [t, efectoTipo(s, t)] as const).filter(([, x]) => x > 0))
+  const deFuego = $derived(relicarioFuego(s))
 
   let elegida = $state<number | null>(null)
   const sel = $derived(rel.piezas.find((p) => p.id === elegida) ?? null)
@@ -191,6 +193,8 @@
           {/each}
         </div>
       </div>
+    {:else if deFuego}
+      <small class="ayuda fuego">{r.fuego}</small>
     {:else if sinLugar}
       <small class="ayuda aviso" role="status">{r.lleno}</small>
     {:else}
@@ -203,7 +207,7 @@
       <h2>{r.inventario} <small class="num" class:aviso={sinLugar}>{r.ocupados(piezas.length, capacidad(s))}</small></h2>
       {#if grupos.length}<button class="gema" onclick={fusionarTodas}>{r.fusionarTodo}</button>{/if}
       <!-- La regla automática se configura en Automatización (bloque 10); acá solo se ve cuál es y se va hasta ella. -->
-      <button class="regla" onclick={() => (juego.capa = 'automatizacion')}>{r.regla.titulo}<span>: <b>{r.regla.modos[rel.regla.modo]}</b></span></button>
+      <button class="regla" onclick={() => (juego.capa = 'automatizacion')}>{r.regla.titulo}<span>: <b>{deFuego ? r.todoAuto : r.regla.modos[rel.regla.modo]}</b></span></button>
     </div>
     {#if rel.espera.length}
       <!-- Inventario lleno: las que llegaron esperan acá (no se pierden) y entran solas al fusionar. -->
@@ -277,6 +281,7 @@
   .totales { display: grid; gap: 0.2rem; margin: 0; padding: 0; list-style: none; color: var(--tenue); font-size: 0.875rem; }
   .totales li { display: flex; gap: 0.45rem; align-items: center; }
   .ayuda { text-align: center; }
+  .ayuda.fuego { color: #ffb38a; }
   .aviso { color: var(--coral); }
 
   /* Ficha de la reliquia elegida. */

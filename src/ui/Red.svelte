@@ -42,7 +42,7 @@
   // El número que muestra el efecto de cada nivel de fuego ("Con fuego: …"); los que no llevan número reciben 0.
   const ARG_FUEGO: Record<string, number> = {
     memoria: RF.memoria.autocompradores_x, cristalografia: RF.cristalografia.vidrio_s_por_infinito,
-    compactacion: RF.compactacion.densidad_x, presion: RF.presion.w_por_kK,
+    compactacion: RF.compactacion.densidad_x, presion: RF.presion.w_por_kK, germen: RF.germen.g_por_kK, engarces: RF.engarces.casilleros_x,
   }
   const beta = $derived(esBeta(juego))
   const verFuego = $derived(beta && !oculto(elegido) && (verN === 5 || (!verN && n >= NIVEL_MAX_RED)))

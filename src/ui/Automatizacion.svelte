@@ -6,7 +6,7 @@
   // Aparecen los que el jugador tiene, más el siguiente como silueta. Pantalla fija: solo scrollea cada lista.
   import { flip } from 'svelte/animate'
   import {
-    AUTOS, CFG, COMPRAS_AUTO, MODOS, autoDisponible, esquirlasAlRomper, cristalesAlInfinito, encenderTodo, fusionAutomatica, infinitoRoto,
+    AUTOS, CFG, COMPRAS_AUTO, MODOS, autoDisponible, esquirlasAlRomper, cristalesAlInfinito, encenderTodo, escarchaEterna, fusionAutomatica, infinitoRoto, relicarioFuego,
     type Automat, type Cantidad, type Regla,
   } from '../core'
   import { txt } from '../strings'
@@ -23,7 +23,7 @@
   const MAX_S = 3600 // tope de los campos de segundos: cosmético, la economía acepta cualquiera
   const COLOR: Record<string, string> = {
     caudal: 'var(--tinta)', ambar: 'var(--ambar)', coral: 'var(--coral)', jade: 'var(--jade)', violeta: 'var(--violeta)',
-    cascada: 'var(--ambar)', mutaciones: 'var(--ambar)', compresion_auto: 'var(--tinta)', infinito: 'var(--hielo)', escarcha: 'var(--hielo)',
+    cascada: 'var(--ambar)', mutaciones: 'var(--ambar)', compresion_auto: 'var(--tinta)', infinito: 'var(--hielo)', escarcha: 'var(--hielo)', escarcha_mejoras: 'var(--hielo)',
   }
 
   /** Lo que se ve: lo que tiene y el primero que todavía no (silueta). */
@@ -31,9 +31,11 @@
   const sig = $derived(AUTOS.find((k) => !tiene.has(k)))
   const compras = $derived(COMPRAS_AUTO.filter((k) => tiene.has(k) || k === sig))
   // Romper la Escarcha (SPEC_CAPA1 §9): se ve desde que se abre la Escarcha; se activa con Deshielo.
-  const reinicios = $derived(['compresion_auto', 'infinito', 'escarcha'].filter((k) => tiene.has(k) || (k === 'escarcha' ? s.escarcha.abierta : k === sig)))
+  // Con la Escarcha eterna (beta) no se rompe: en su lugar, Deshielo automático compra sus mejoras.
+  const reinicios = $derived(['compresion_auto', 'infinito', 'escarcha', 'escarcha_mejoras'].filter((k) => tiene.has(k) ||
+    (k === 'escarcha' ? s.escarcha.abierta && !escarchaEterna(s) : k === 'escarcha_mejoras' ? escarchaEterna(s) : k === sig)))
   const POR_MEMORIA: Record<string, number> = { cascada: 2, mutaciones: 3, infinito: 4 }
-  const desbloqueo = (k: string) => (k === 'escarcha' ? a.deshielo : k in POR_MEMORIA ? a.memoria(POR_MEMORIA[k]) : a.bloqueado(CFG.autocompradores[k]))
+  const desbloqueo = (k: string) => (k === 'escarcha' ? a.deshielo : k === 'escarcha_mejoras' ? a.deshieloFuego : k in POR_MEMORIA ? a.memoria(POR_MEMORIA[k]) : a.bloqueado(CFG.autocompradores[k]))
 
   const alternar = (k: string) => (juego.s = { ...juego.s, auto: { ...juego.s.auto, [k]: !juego.s.auto[k] } })
   const automat = (cambio: Partial<Automat>) => (juego.s = { ...juego.s, automat: { ...juego.s.automat, ...cambio } })
@@ -134,6 +136,8 @@
               {/if}
             {:else if si && k === 'escarcha'}
               <small class="nota">{a.escarchaNota(txt.cristal.cuantasEsquirlas(String(esquirlasAlRomper(s))))}</small>
+            {:else if si && k === 'escarcha_mejoras'}
+              <small class="nota">{a.escarchaMejorasNota}</small>
             {:else if si && k === 'infinito'}
               {@const inf = s.automat.infinito}
               <!-- Siempre apenas llega; Romper el Infinito lo mejora: en el óptimo (C6) o al dar X Cristales. -->
@@ -160,6 +164,9 @@
               <small class="nota">{#if !infinitoRoto(s)}{a.apenas} {/if}{a.daria(txt.cristal.ganados(formato(cristalesAlInfinito(s))).replace('+', ''))}.{#if !infinitoRoto(s)} {a.mejora}{:else if inf.modo === 'multiplicar'}{' '}{a.multiplicarNota(formato(Decimal.pow10(inf.mult)))}{/if}</small>
 
               <h3 id="regla-reliquia">{a.reliquia}</h3>
+              {#if relicarioFuego(s)}
+              <small class="nota">{a.reliquiaFuego}</small>
+              {:else}
               <div class="modos" role="radiogroup" aria-label={rr.regla.titulo}>
                 {#each MODOS as m (m)}
                   <label><input type="radio" name="regla" checked={s.relicario.regla.modo === m} onchange={() => regla({ modo: m })} />{rr.regla.modos[m]}</label>
@@ -175,6 +182,7 @@
               <label><input type="checkbox" checked={s.relicario.regla.fusionar} disabled={!fusionAutomatica(s)} onchange={(e) => regla({ fusionar: e.currentTarget.checked })} />{rr.regla.fusionar}</label>
               <label><input type="checkbox" checked={s.relicario.regla.equipar} onchange={(e) => regla({ equipar: e.currentTarget.checked })} />{rr.regla.equipar}</label>
               <small class="nota">{rr.regla.nota}</small>
+              {/if}
             {/if}
           </li>
         {/each}

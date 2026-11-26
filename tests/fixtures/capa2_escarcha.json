@@ -1,0 +1,120 @@
+[
+ {
+  "nombre": "recien eterna",
+  "logX": 120.0,
+  "mejoras": {
+   "crecimiento": 8,
+   "brillo": 6,
+   "umbral": 2
+  },
+  "Btot": 9,
+  "escarcha": 0.0,
+  "relicario": 0.0,
+  "fuegos": [
+   "frio"
+  ],
+  "templado": 0,
+  "g": 0.0034106433676260304,
+  "P": 96.10000000000001,
+  "m": 16.777216000000006,
+  "esq_log": 0.12680497931716767,
+  "costos": {
+   "crecimiento": 12,
+   "brillo": 23,
+   "umbral": 4
+  },
+  "slots": 1,
+  "cBonus": 0.06,
+  "cauceX": 0.015
+ },
+ {
+  "nombre": "pasado P",
+  "logX": 400.0,
+  "mejoras": {
+   "crecimiento": 12,
+   "brillo": 9,
+   "umbral": 3
+  },
+  "Btot": 60,
+  "escarcha": 0.1,
+  "relicario": 0.0,
+  "fuegos": [
+   "frio",
+   "germen"
+  ],
+  "templado": 1,
+  "g": 0.00016141061978636135,
+  "P": 148.955,
+  "m": 68.71947673600003,
+  "esq_log": 1.205227388264437,
+  "costos": {
+   "crecimiento": 19,
+   "brillo": 35,
+   "umbral": 6
+  },
+  "slots": 1,
+  "cBonus": 0.066,
+  "cauceX": 0.0165
+ },
+ {
+  "nombre": "partida real",
+  "logX": 10195.0,
+  "mejoras": {
+   "crecimiento": 30,
+   "brillo": 20,
+   "umbral": 10
+  },
+  "Btot": 300,
+  "escarcha": 0.2,
+  "relicario": 0.1,
+  "fuegos": [
+   "engarces",
+   "frio",
+   "germen"
+  ],
+  "templado": 3,
+  "g": 0.0005672680151542778,
+  "P": 3201.672996018755,
+  "m": 12089.258196146306,
+  "esq_log": 4.065752319735699,
+  "costos": {
+   "crecimiento": 46,
+   "brillo": 77,
+   "umbral": 19
+  },
+  "slots": 1,
+  "cBonus": 0.0827676898211603,
+  "cauceX": 0.020691922455290074
+ },
+ {
+  "nombre": "tarde",
+  "logX": 25000.0,
+  "mejoras": {
+   "crecimiento": 40,
+   "brillo": 30,
+   "umbral": 14
+  },
+  "Btot": 40000,
+  "escarcha": 0.05,
+  "relicario": 0.3,
+  "fuegos": [
+   "engarces",
+   "engarces2",
+   "frio",
+   "germen"
+  ],
+  "templado": 6,
+  "g": 0.2746844866464229,
+  "P": 18480.07654347648,
+  "m": 1329227.995784918,
+  "esq_log": 4.811283704350798,
+  "costos": {
+   "crecimiento": 62,
+   "brillo": 116,
+   "umbral": 27
+  },
+  "slots": 2,
+  "cBonus": 0.18062104958417619,
+  "cauceX": 0.06773289359406606
+ }
+]

@@ -54,3 +54,7 @@ El orden cambió respecto del punto de partida para seguir la tabla de ritmo: el
 ### Fase 6 (beta)
 
 - Funcionan también **Desborde**, **Metamorfosis**, **Densidad ígnea**, **Inercia eterna** y **Magma** ([liberaciones.md](liberaciones.md)); el panel muestra su efecto con el número de config (`ARG_FUEGO` en `Red.svelte`).
+
+### Fase 7 (beta)
+
+- Funcionan también **Escarcha eterna**, **Hielo y fuego**, **Relicario de fuego**, **Deshielo automático** y **Engaste de lava** ([escarcha_reliquias.md](escarcha_reliquias.md)). `casilleros_x`, `espacios` y `niveles` en config (`engarces`, `engarces2`); el simulador lee los de Engaste.

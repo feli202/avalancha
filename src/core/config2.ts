@@ -21,7 +21,11 @@ export interface Config2 {
     compactacion: { densidad_x: number }
     inercia: { impulso_por_raiz_h: number }
     presion: { w_por_kK: number }
+    germen: { g_por_kK: number }
+    engarces: { casilleros_x: number }
+    engarces2: { espacios: number; niveles: number }
   }
+  escarcha_eterna: { M: number; esq_d: number; esq_exp: number; softcap_exp: number; paso_x: number }
   liberaciones: { rinde: number; paso_extra: number; lecho_densidad: number; lecho_umbral_x: number }
 }
 

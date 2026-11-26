@@ -77,7 +77,7 @@ describe('nivel de fuego de los nodos', () => {
     const c = comprarFuego(s, 'memoria')
     expect(c.fuego).toMatchObject({ brasas: 0, nodos: ['memoria'] })
     expect(comprarFuego(conFuego(c, { brasas: 9 }), 'memoria')).toEqual(conFuego(c, { brasas: 9 })) // ya lo tiene
-    expect(comprarFuego(conFuego(s, { brasas: 99 }), 'frio').fuego.nodos).toEqual([]) // Escarcha eterna: próximamente
+    expect(comprarFuego(conFuego(s, { brasas: 99 }), 'capilaridad').fuego.nodos).toEqual([]) // Convección: próximamente
     expect(comprarFuego(conFuego(s, { brasas: 1 }), 'eco').fuego.nodos).toEqual([]) // Resonancia cuesta 2
   })
 

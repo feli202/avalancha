@@ -1,6 +1,6 @@
 // Guardado (SPEC 8): la partida como JSON con versión. Puro: el almacenamiento entra como Almacen.
 import Decimal from 'break_infinity.js'
-import { CFG, DEFECTOS, campoInvalido, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, NODOS_FUEGO, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, toparCristales, MEJORAS_HORNO, type Pieza, type State } from '../core'
+import { CFG, DEFECTOS, campoInvalido, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, NODOS_FUEGO, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, ordenarDeFuego, relicarioFuego, toparCristales, MEJORAS_HORNO, type Pieza, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
 import type { Contadores } from '../ui/secretos'
@@ -128,7 +128,7 @@ export function deserializar(texto: string): Partida {
         vidrio: deDec(f.vidrio), horno: Object.fromEntries(MEJORAS_HORNO.map((k) => [k, ent(f.horno[k])])) as State['fuego']['horno'], vuelta: pos(f.vuelta) } // fases 4–5: completar() los pone en 0
     : estadoInicial().fuego
   const red = topada.red
-  const conRed = { ...estadoInicial(), red } // los topes de Cascada y Mutaciones dependen de la Red
+  const conRed = { ...estadoInicial(), red, fuego } // los topes de Cascada y Mutaciones dependen de la Red; los Engarces, también del Engaste de lava
   const infinitos = ent(e.infinitos)
   const relicario = leerRelicario(e.relicario, infinitos, espacios(conRed))
   // Un guardado de antes del Relicario (C1–C2) con Infinitos hechos: le queda una reliquia para elegir.
@@ -147,7 +147,8 @@ export function deserializar(texto: string): Partida {
   }
   return {
     // SPEC_CAPA1 §13: quien ya tenía el Infinito de la Capa 0 arranca la Capa 1 con ese Infinito cobrado (1 Cristal).
-    estado: deCapa0 && estado.infinitos > 0 ? infinito({ ...estado, infinitos: 0 }) : estado,
+    // Capa 2, fase 7: con el Relicario de fuego, el Relicario queda ordenado (migración de la regla y lo engarzado, sin perder poder).
+    estado: deCapa0 && estado.infinitos > 0 ? infinito({ ...estado, infinitos: 0 }) : relicarioFuego(estado) ? ordenarDeFuego(estado) : estado,
     guardadoEn: d.guardadoEn,
     vistos: d.vistos,
     record: d.record,

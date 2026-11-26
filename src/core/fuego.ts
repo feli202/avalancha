@@ -14,7 +14,7 @@ const TP = CFG2.temperatura
 /** Los 25 nodos con nivel de fuego, en el orden de config. */
 export const NODOS_FUEGO = Object.keys(CFG2.red_fuego)
 /** Los niveles de fuego que ya hacen algo; el resto dice "próximamente" y no se compra (llegan en las fases 4–10). */
-export const FUEGO_HECHO = new Set(['memoria', 'sedimentacion', 'eco', 'estratos', 'cristalografia', 'cascada_plus', 'mutacion_plus', 'compactacion', 'inercia', 'presion'])
+export const FUEGO_HECHO = new Set(['memoria', 'sedimentacion', 'eco', 'estratos', 'cristalografia', 'cascada_plus', 'mutacion_plus', 'compactacion', 'inercia', 'presion', 'frio', 'germen', 'engarces', 'deshielo', 'engarces2'])
 
 export const tieneFuego = (s: State, id: string) => s.fuego.nodos.includes(id)
 export const precioFuego = (id: string) => CFG2.red_fuego[id].precio
@@ -39,7 +39,8 @@ export function brasasAlFundir(s: State) {
 }
 
 /** Funde las Capas 0 y 1: se conservan la Automatización (interruptores, su configuración y la regla de las reliquias), las
- * estadísticas y todo el fuego. Memoria eterna: la vuelta arranca con Memoria nv4 y sus compresiones. */
+ * estadísticas y todo el fuego. Memoria eterna: la vuelta arranca con Memoria nv4 y sus compresiones. Escarcha eterna: la
+ * Escarcha (espesor, Esquirlas y mejoras) sigue entera. */
 export function fundir(s: State): State {
   if (!puedeFundir(s)) return s
   const b = brasasAlFundir(s)
@@ -47,6 +48,7 @@ export function fundir(s: State): State {
   const t: State = {
     ...i, granos: 0, // granos_iniciales es solo para la primera partida
     auto: s.auto, automat: { ...s.automat, espera: 0 }, relicario: { ...i.relicario, regla: s.relicario.regla },
+    ...(tieneFuego(s, 'frio') && { escarcha: s.escarcha }),
     tiempoTotal: s.tiempoTotal, granosTotales: s.granosTotales, mejorCorrida: s.mejorCorrida, compresionesSinAmbar: s.compresionesSinAmbar,
     fuego: { ...s.fuego, brasas: s.fuego.brasas + b, brasasTotales: s.fuego.brasasTotales + b, fundiciones: s.fuego.fundiciones + 1, vuelta: 0 },
   }

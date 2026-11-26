@@ -154,7 +154,9 @@
   },
   "engarces": {
    "nombre": "Relicario de fuego",
-   "precio": 63
+   "precio": 63,
+   "casilleros_x": 2,
+   "_engarces": "inventario x casilleros_x; cada Infinito una reliquia de cada tipo, fusion y engarce solos"
   },
   "capilaridad": {
    "nombre": "Conveccion",
@@ -191,7 +193,10 @@
   },
   "engarces2": {
    "nombre": "Engaste de lava",
-   "precio": 926
+   "precio": 926,
+   "espacios": 1,
+   "niveles": 1,
+   "_engaste": "espacios de reliquia mas; las engarzadas cuentan niveles mas"
   },
   "abismo": {
    "nombre": "Abismo ardiente",

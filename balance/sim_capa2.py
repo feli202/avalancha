@@ -87,7 +87,7 @@ class Jugador(S.Player):
         m['dAdd'] += F.dens()  # la Temperatura se suma a la Densidad
         if defect != 'vidrio':
             if F.tiene('eco'): m['eco'] += s.v('eco', 'p') * RF['eco']['res_x'] * F.Btot ** RF['eco']['res_exp']  # Resonancia
-            R = L1['relicario']; rx = F.relic_x(); eng = 1 if F.tiene('engarces2') else 0
+            R = L1['relicario']; rx = F.relic_x(); eng = RF['engarces2']['niveles'] if F.tiene('engarces2') else 0
             for t, n in s.equipped:  # Templado, sector Relicario y Engaste de lava sobre lo que ya sumo la Capa 1
                 d = rx * (n + 1 + eng) - (n + 1)
                 if t == 'cauce': m['cauceX'] += R['cauce_colores_pct_por_nivel'] * d
@@ -108,7 +108,7 @@ class Jugador(S.Player):
         if defect == 'vidrio': return x
         if 'vidrio' in s.done: x += DFX['vidrio']['cristales_log10'] * (s.F.rec_exp('vidrio') - 1)
         return x + MOT['efecto']['red'] * s.F.calor('red')
-    def slots(s): return super().slots() + (1 if s.F.tiene('engarces2') else 0)
+    def slots(s): return super().slots() + (RF['engarces2']['espacios'] if s.F.tiene('engarces2') else 0)
 
 _N308 = {}
 def costo(c0, g, s_, L):

@@ -90,8 +90,8 @@ export interface State {
 
 /** Autocompradores que compran ítems de la tienda (tienen intervalo y cantidad). */
 export const COMPRAS_AUTO = ['caudal', ...CFG.colores.map((c) => c.id), 'cascada', 'mutaciones']
-/** Todos los interruptores, en el orden del panel. */
-export const AUTOS = [...COMPRAS_AUTO, 'compresion_auto', 'infinito', 'escarcha']
+/** Todos los interruptores, en el orden del panel. `escarcha`: romperla (Deshielo); `escarcha_mejoras`: Deshielo automático (fuego). */
+export const AUTOS = [...COMPRAS_AUTO, 'compresion_auto', 'infinito', 'escarcha', 'escarcha_mejoras']
 export type MejoraEscarcha = 'crecimiento' | 'brillo' | 'umbral'
 export type MejoraHorno = keyof typeof CFG2.horno.mejoras
 

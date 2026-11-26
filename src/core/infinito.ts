@@ -5,7 +5,7 @@ import { CFG1 } from './config1'
 import { compresionesConservadas, conserva, cristalesRedLog10, efectoRed } from './red'
 import { INFINITO, enInfinito, infinitoRoto, produccion } from './formulas'
 import { conReintento, enDefecto, metaAlcanzada, puedeEntrar, type DefectoId } from './defectos'
-import { elegirSola, reliquiasPorInfinito } from './relicario'
+import { elegirSola, relicarioFuego, reliquiasDeFuego, reliquiasPorInfinito } from './relicario'
 import { redLog10Motor, vidrioAlInfinito } from './fuego'
 import { estadoInicial, type State } from './state'
 
@@ -60,7 +60,9 @@ function cerrarInfinito(s: State): State {
     ...reiniciarArena(s),
     // Bloque 8: cada Infinito trae una reliquia que espera su tipo; si quedaba una sin elegir, se elige sola antes.
     // La pila de este Infinito la pone la interfaz (conFoto).
-    relicario: { ...elegirSola(s).relicario, pendiente: s.infinitos + 1, faltan: reliquiasPorInfinito(s), foto: '' },
+    // Relicario de fuego: una de cada tipo, sin elegir; se fusionan y engarzan solas.
+    relicario: relicarioFuego(s) ? reliquiasDeFuego(s, s.infinitos + 1).relicario
+      : { ...elegirSola(s).relicario, pendiente: s.infinitos + 1, faltan: reliquiasPorInfinito(s), foto: '' },
     infinitos: s.infinitos + 1,
     fuego: vidrioAlInfinito(s), // Cristal fundido
     cristales: Decimal.min(topeCristales(s), s.cristales.add(c)),

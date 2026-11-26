@@ -5,7 +5,7 @@
   import Decimal from 'break_infinity.js'
   import {
     CFG1, MEJORAS_ESCARCHA, aporteEscarcha, autoActivo, brilloEscarcha, costoMejoraEscarcha, crecimientoEscarcha, densidad,
-    escarchaActiva, esquirlasAlRomper, factoresCrecimiento, faltaRuptura, mejorarEscarcha, puedeMejorarEscarcha, puntoRuptura,
+    escarchaActiva, escarchaEterna, esquirlasAlRomper, esquirlasPorSegundo, extraSector, factoresCrecimiento, faltaRuptura, mejorarEscarcha, puedeMejorarEscarcha, puntoRuptura,
     puedeRomperEscarcha, romperEscarcha, type MejoraEscarcha, type State,
   } from '../core'
   import { txt } from '../strings'
@@ -16,10 +16,14 @@
   import * as sonido from './sonido'
 
   const t = txt.cristal.escarcha
+  const te = t.eterna
   const M = CFG1.escarcha.mejoras
   const s = $derived(juego.s)
   const n2 = (x: number, d = 2) => x.toLocaleString(txt.locale, { maximumFractionDigits: d })
   const esq = (n: number) => txt.cristal.cuantasEsquirlas(formato(n))
+  // Capa 2 (beta), Escarcha eterna: no se rompe, da Esquirlas por segundo y sus mejoras cambian de nombre en el mismo lugar.
+  const eterna = $derived(escarchaEterna(s))
+  const nombres = () => (escarchaEterna(juego.s) ? te.mejoras : t.mejoras)
 
   // ---------- números ----------
   const logX = $derived(s.escarcha.logX)
@@ -27,22 +31,30 @@
   const vale = $derived(formato(Decimal.pow10(aporteEscarcha(s) * D)))
   const P = $derived(puntoRuptura(s))
   const pct = $derived(Math.min(100, (100 * logX) / P))
-  const factores = $derived(Object.entries(factoresCrecimiento(s)).filter(([k, x]) => k !== 'base' && Math.abs(x - 1) > 1e-9))
+  // La Templanza (freno pasado P) va en la caja de las Esquirlas/s, no entre los chips.
+  const factores = $derived(Object.entries(factoresCrecimiento(s)).filter(([k, x]) => k !== 'base' && k !== 'templanza' && Math.abs(x - 1) > 1e-9))
   const tipAporte = (): Tip => ({ titulo: t.aporte, que: t.aporteQue, hielo: true, desglose: t.aporteCuenta(n2(brilloEscarcha(juego.s)), n2(juego.s.escarcha.logX), n2(densidad(juego.s)), vale) })
-  const tipRuptura = (): Tip => ({ titulo: t.ruptura, que: t.rupturaQue, hielo: true, desglose: t.rupturaCuenta(n2(puntoRuptura(juego.s)), formatoMult(M.umbral.x_P ** juego.s.escarcha.mejoras.umbral)) })
+  const tipRuptura = (): Tip => ({
+    titulo: escarchaEterna(juego.s) ? te.ruptura : t.ruptura, que: escarchaEterna(juego.s) ? te.rupturaQue : t.rupturaQue, hielo: true,
+    desglose: t.rupturaCuenta(n2(puntoRuptura(juego.s)), formatoMult(M.umbral.x_P ** juego.s.escarcha.mejoras.umbral)),
+  })
+  const tipEsquirlas = (): Tip => ({
+    titulo: te.esquirlas, que: te.esquirlasQue, hielo: true, ahora: te.porSegundo(formato(esquirlasPorSegundo(juego.s))),
+    desglose: te.esquirlasCuenta(n2(juego.s.escarcha.logX), `×${formatoMult(extraSector(juego.s, 'escarcha'))}`),
+  })
   const tipCrece = (): Tip => ({
     titulo: t.crecimiento, que: t.crecimientoQue, hielo: true, ahora: t.porMinuto(n2(crecimientoEscarcha(juego.s) * 60, 3)),
-    desglose: [`${t.factores.base} ${n2(CFG1.escarcha.g_log10_por_s * 60, 3)}/min`, ...factores.map(([k, x]) => `${t.factores[k]} ×${formatoMult(x)}`)].join(' · '),
+    desglose: [`${t.factores.base} ${n2(CFG1.escarcha.g_log10_por_s * 60, 3)}/min`, ...Object.entries(factoresCrecimiento(juego.s)).filter(([k, x]) => k !== 'base' && Math.abs(x - 1) > 1e-9).map(([k, x]) => `${t.factores[k]} ×${formatoMult(x)}`)].join(' · '),
   })
   /** Efecto de la mejora en el nivel L, ya con su texto ("g ×1,25", "m = 1,4", "P = 65"). */
   const efectoEn = (k: MejoraEscarcha, L: number) => {
     const conL = { ...juego.s, escarcha: { ...juego.s.escarcha, mejoras: { ...juego.s.escarcha.mejoras, [k]: L } } }
-    return t.mejoras[k][2](k === 'crecimiento' ? formatoMult(M.crecimiento.x ** L) : k === 'brillo' ? n2(brilloEscarcha(conL)) : n2(puntoRuptura(conL)))
+    return nombres()[k][2](k === 'crecimiento' ? formatoMult(M.crecimiento.x ** L) : k === 'brillo' ? n2(brilloEscarcha(conL)) : n2(puntoRuptura(conL)))
   }
   const FORMULA: Record<MejoraEscarcha, string> = { crecimiento: formatoMult(M.crecimiento.x), brillo: formatoMult(M.brillo.x_m), umbral: formatoMult(M.umbral.x_P) }
   const tipMejora = (k: MejoraEscarcha) => (): Tip => {
     const L = juego.s.escarcha.mejoras[k]
-    return { titulo: t.mejoras[k][0], que: t.mejoras[k][1], hielo: true, ahora: t.ahora(efectoEn(k, L)), prox: t.siguiente(efectoEn(k, L + 1)) }
+    return { titulo: nombres()[k][0], que: nombres()[k][1], hielo: true, ahora: t.ahora(efectoEn(k, L)), prox: t.siguiente(efectoEn(k, L + 1)) }
   }
 
   function hacer(n: State) {
@@ -108,7 +120,7 @@
   {#if !s.escarcha.abierta}
     <p>{t.cerrada}</p>
   {:else}
-    <p class="total num">{escarchaActiva(s) ? t.total(n2(logX), n2(P), vale) : t.vidrio}</p>
+    <p class="total num">{!escarchaActiva(s) ? t.vidrio : eterna ? te.total(n2(logX), vale) : t.total(n2(logX), n2(P), vale)}</p>
     <div class="vista">
       <div class="escena" role="img" aria-label={t.escena}>
         <svg viewBox="-100 -100 200 200" class:quieta={quieto()} class:sacude={!!rotura && !quieto()}>
@@ -146,12 +158,21 @@
         <dl class="num">
           <div use:ayuda={tipCrece}><dt>{t.espesor}</dt><dd>{n2(logX)}</dd><small>{t.porMinuto(n2(crecimientoEscarcha(s) * 60, 3))}</small></div>
           <div use:ayuda={tipAporte}><dt>{t.aporte}</dt><dd class="hielo">×{vale}</dd><small>+{n2(aporteEscarcha(s))}</small></div>
-          <div use:ayuda={tipRuptura}><dt>{t.ruptura}</dt><dd>{n2(P)}</dd><small>{t.mejoras.umbral[0]} {t.nv(s.escarcha.mejoras.umbral)}</small></div>
+          <div use:ayuda={tipRuptura}><dt>{eterna ? te.ruptura : t.ruptura}</dt><dd>{n2(P)}</dd><small>{nombres().umbral[0]} {t.nv(s.escarcha.mejoras.umbral)}</small></div>
         </dl>
         <div class="desglose num" use:ayuda={tipCrece}>
           <span>{t.crecimiento}</span>
-          <ul>{#each factores as [k, x] (k)}<li>{t.factores[k]} <b>×{formatoMult(x)}</b></li>{/each}</ul>
+          <ul class:tres={eterna}>{#each factores as [k, x] (k)}<li>{t.factores[k]} <b>×{formatoMult(x)}</b></li>{/each}</ul>
         </div>
+        {#if eterna}
+          <!-- La Escarcha eterna no tiene barra ni Romper: en su lugar, las Esquirlas que da por segundo. -->
+          {@const frena = factoresCrecimiento(s).templanza}
+          <div class="eterna num" role="status" use:ayuda={tipEsquirlas}>
+            <span>{te.esquirlas}</span>
+            <b>{te.porSegundo(formato(esquirlasPorSegundo(s)))}</b>
+            <small>{frena < 1 ? te.frena(formatoMult(1 / frena)) : te.sigue}</small>
+          </div>
+        {:else}
         <div class="barra num" class:llena={lista} role="progressbar" aria-label={t.barra} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.floor(pct)}>
           <i style:width="{pct}%"></i>
           <span>{Math.floor(pct)} % · {escarchaActiva(s) ? (lista ? t.lista : t.rompeEn(txt.duracion(falta))) : t.vidrio}</span>
@@ -160,18 +181,19 @@
           <b>{t.romper}</b>
           <small class="num">{sola && !lista ? t.sola : t.romperDa(esq(esquirlasAlRomper(s)))}</small>
         </button>
+        {/if}
         {#each MEJORAS_ESCARCHA as k (k)}
           {@const L = s.escarcha.mejoras[k]}
           <button class="mejora gema" aria-disabled={!puedeMejorarEscarcha(s, k)} onclick={() => hacer(mejorarEscarcha(juego.s, k))} use:ayuda={tipMejora(k)}>
-            <b>{t.mejoras[k][0]}<span class="nv">{t.nv(L)}</span></b>
+            <b>{nombres()[k][0]}<span class="nv">{t.nv(L)}</span></b>
             <span class="costo num">{formato(costoMejoraEscarcha(s, k), true)}</span>
             <small class="num">{efectoEn(k, L)} → {efectoEn(k, L + 1)}</small>
-            <small class="num formula">{t.mejoras[k][3](FORMULA[k])}</small>
+            <small class="num formula">{nombres()[k][3](FORMULA[k])}</small>
           </button>
         {/each}
       </aside>
     </div>
-    <p class="que">{t.que}</p>
+    <p class="que">{eterna ? te.que : t.que}</p>
   {/if}
 </section>
 
@@ -221,6 +243,8 @@
   small { display: block; color: var(--apagado); font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .desglose { font-size: 0.75rem; color: var(--tenue); }
   .desglose ul { display: flex; flex-wrap: wrap; gap: 0.3rem; height: calc(2 * 1.45rem + 0.3rem); overflow: hidden; margin: 0.3rem 0 0; padding: 0; list-style: none; }
+  /* Escarcha eterna: una fila más (Hielo y fuego); la caja de Esquirlas/s es más baja que barra + Romper, la ficha no crece. */
+  .desglose ul.tres { height: calc(3 * 1.45rem + 2 * 0.3rem); }
   .desglose li { height: 1.45rem; padding: 0.2rem 0.45rem; white-space: nowrap; background: rgb(159 227 245 / 0.06); clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%); }
   .desglose b { font-weight: 600; color: var(--escarcha); }
 
@@ -230,6 +254,10 @@
   .barra.llena i { background: linear-gradient(90deg, #bfeaff, #f4fcff); }
   .barra span { position: relative; display: block; padding: 0 0.6rem; font-size: 0.75rem; line-height: 1.6rem; color: var(--texto, #fff); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .barra.llena span { color: #0b2233; font-weight: 600; }
+  /* Escarcha eterna: en el lugar de la barra y Romper, las Esquirlas por segundo (mismo alto, para que la ficha no salte). */
+  .eterna { display: grid; justify-items: center; gap: 0.05rem; padding: 0.35rem 0.75rem; text-align: center; background: rgb(159 227 245 / 0.08); clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
+  .eterna span { font-size: 0.75rem; color: var(--tenue); }
+  .eterna b { font-size: 1.125rem; font-weight: 600; color: var(--escarcha); }
   .romper.lista { box-shadow: 0 0 0.9rem rgb(191 234 255 / 0.55); }
   .romper { --b: 1.1rem; display: grid; gap: 0.2rem; min-height: 3.5rem; padding-block: 0.65rem; font-size: 1rem; }
   .romper small { color: var(--hielo); }

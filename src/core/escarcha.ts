@@ -3,12 +3,14 @@
 // rompe, se queda en P. Igual que Player.esc_params y el bloque "escarcha (persiste)" de play_arena en balance/sim_capa1.py.
 import { precioLog10 } from './config'
 import { CFG1 } from './config1'
+import { CFG2 } from './config2'
 import { DEFECTOS_11, completo, enVidrio } from './defectos'
 import { ESTRATOS, presion } from './estratos'
 import { efectoRed } from './red'
+import { extraSector, milesK, tieneFuego } from './fuego'
 import type { MejoraEscarcha, State } from './state'
 
-const E = CFG1.escarcha, M = E.mejoras, DF = CFG1.defectos
+const E = CFG1.escarcha, M = E.mejoras, DF = CFG1.defectos, EE = CFG2.escarcha_eterna
 export const MEJORAS_ESCARCHA: MejoraEscarcha[] = ['crecimiento', 'brillo', 'umbral']
 
 /** El hito de la 1.1: el Estrato 8 lleno teniendo los 4 primeros Defectos. Abre la Escarcha (y el anillo 3 de la Red). */
@@ -16,6 +18,9 @@ export const hitoEscarcha = (s: State) =>
   s.estratos.abiertos >= ESTRATOS && s.estratos.s[ESTRATOS - 1] >= CFG1.estratos.meta_1_1_estrato8_log10 && DEFECTOS_11.every((d) => completo(s, d))
 /** Corre (crece, suma y frena): abierta y fuera del Defecto Vidrio. */
 export const escarchaActiva = (s: State) => s.escarcha.abierta && !enVidrio(s)
+/** Capa 2 (beta), Escarcha eterna (Frío de fuego): no se rompe, sigue creciendo (más lento pasado P) y da Esquirlas por segundo.
+ * Sus mejoras pasan a Cristalización continua, Fulgor y Templanza (docs/capa2/escarcha_reliquias.md, esc_params de sim_capa2.py). */
+export const escarchaEterna = (s: State) => tieneFuego(s, 'frio')
 
 /** Los factores de g (log10 por segundo), para el desglose. Presión sin el ×0,5 de Dislocación (como last_pres del sim). */
 export const factoresCrecimiento = (s: State) => ({
@@ -25,6 +30,9 @@ export const factoresCrecimiento = (s: State) => ({
   germen: efectoRed(s, 'germen', 'escarcha_g_x', 1),
   eco2: 1 + efectoRed(s, 'eco2', 'escarcha_eco') * Math.max(0, s.cristalesTotales.log10()),
   fatiga: completo(s, 'fatiga') ? DF.fatiga.recompensa_escarcha_g_x : 1,
+  hieloYFuego: tieneFuego(s, 'germen') ? 1 + CFG2.red_fuego.germen.g_por_kK * milesK(s) : 1, // Germen de fuego
+  // Escarcha eterna: pasado el Punto de ruptura crece × (P / logX)^5,33
+  templanza: escarchaEterna(s) && s.escarcha.logX > puntoRuptura(s) ? (puntoRuptura(s) / s.escarcha.logX) ** EE.softcap_exp : 1,
 })
 /** Los factores del Punto de ruptura P. */
 export const factoresRuptura = (s: State) => ({
@@ -51,11 +59,16 @@ export function crecerEscarcha(s: State, dt: number): State['escarcha'] {
   const e = s.escarcha
   if (!e.abierta) return hitoEscarcha(s) ? { ...e, abierta: true } : e
   if (!escarchaActiva(s)) return e
+  if (escarchaEterna(s))
+    return { ...e, logX: e.logX + crecimientoEscarcha(s) * dt, esquirlas: e.esquirlas + esquirlasPorSegundo(s) * dt, reloj: e.reloj + dt }
   return { ...e, logX: Math.min(puntoRuptura(s), e.logX + crecimientoEscarcha(s) * dt), reloj: e.reloj + dt }
 }
+/** Escarcha eterna: Esquirlas/s = (logX / 103,7)² × sector Escarcha del Motor (Geoda llega con el Escalado). */
+export const esquirlasPorSegundo = (s: State) =>
+  escarchaEterna(s) && s.escarcha.logX > 0 ? EE.M * (s.escarcha.logX / EE.esq_d) ** EE.esq_exp * extraSector(s, 'escarcha') : 0
 
 // ---------- romper ----------
-export const puedeRomperEscarcha = (s: State) => escarchaActiva(s) && s.escarcha.logX >= puntoRuptura(s) - 1e-9
+export const puedeRomperEscarcha = (s: State) => escarchaActiva(s) && !escarchaEterna(s) && s.escarcha.logX >= puntoRuptura(s) - 1e-9
 /** Deshielo: la rompe sola (con el interruptor del panel de Automatización) y multiplica las Esquirlas. */
 export const deshielo = (s: State) => efectoRed(s, 'deshielo', 'auto_ruptura') > 0
 export const esquirlasAlRomper = (s: State) =>
@@ -67,12 +80,22 @@ export function romperEscarcha(s: State): State {
   return { ...s, escarcha: { ...e, logX: E.logX_tras_romper, esquirlas: e.esquirlas + esquirlasAlRomper(s), reloj: 0 } }
 }
 
-// ---------- mejoras con Esquirlas (costo 10^N, N entero) ----------
-export const costoMejoraEscarchaLog10 = (k: MejoraEscarcha, L: number) => precioLog10(M[k].c0 + M[k].paso * L)
-export const costoMejoraEscarcha = (s: State, k: MejoraEscarcha) => 10 ** costoMejoraEscarchaLog10(k, s.escarcha.mejoras[k])
+// ---------- mejoras con Esquirlas (costo 10^N, N entero; con la Escarcha eterna el paso ×3,86) ----------
+export const costoMejoraEscarchaLog10 = (k: MejoraEscarcha, L: number, eterna = false) =>
+  precioLog10(M[k].c0 + M[k].paso * (eterna ? EE.paso_x : 1) * L)
+export const costoMejoraEscarcha = (s: State, k: MejoraEscarcha) => 10 ** costoMejoraEscarchaLog10(k, s.escarcha.mejoras[k], escarchaEterna(s))
 export const puedeMejorarEscarcha = (s: State, k: MejoraEscarcha) => s.escarcha.abierta && s.escarcha.esquirlas >= costoMejoraEscarcha(s, k)
 export function mejorarEscarcha(s: State, k: MejoraEscarcha): State {
   if (!puedeMejorarEscarcha(s, k)) return s
   const e = s.escarcha
   return { ...s, escarcha: { ...e, esquirlas: e.esquirlas - costoMejoraEscarcha(s, k), mejoras: { ...e.mejoras, [k]: e.mejoras[k] + 1 } } }
+}
+/** Deshielo automático (Deshielo de fuego): compra las tres mejoras, la más barata primero, mientras alcancen las Esquirlas. */
+export function mejorarEscarchaSola(s: State): State {
+  for (;;) {
+    const k = MEJORAS_ESCARCHA.reduce((a, b) => (costoMejoraEscarcha(s, b) < costoMejoraEscarcha(s, a) ? b : a))
+    const n = mejorarEscarcha(s, k)
+    if (n === s) return s
+    s = n
+  }
 }

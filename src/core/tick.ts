@@ -2,7 +2,7 @@ import Decimal from 'break_infinity.js'
 import { CFG, MUTACIONES } from './config'
 import { CFG1 } from './config1'
 import { crecerEstratos } from './estratos'
-import { crecerEscarcha, puedeRomperEscarcha, romperEscarcha } from './escarcha'
+import { crecerEscarcha, escarchaActiva, escarchaEterna, mejorarEscarchaSola, puedeRomperEscarcha, romperEscarcha } from './escarcha'
 import { colorSinEfecto, enDefecto, metaAlcanzada } from './defectos'
 import { ganarDefecto, infinito, infinitoAutoListo } from './infinito'
 import { elegirSola } from './relicario'
@@ -29,6 +29,9 @@ export function autocomprar(s: State): State {
   if (toca('mutaciones')) s = comprarConMargen(s, MUTACIONES.map((m): ItemId => `mut_${m}`), n('mutaciones'))
   return s
 }
+
+/** Deshielo automático (fuego): las mejoras de la Escarcha, en cada tick (también con la Arena frenada en 1e308). */
+const deshieloSolo = (s: State) => (autoActivo(s, 'escarcha_mejoras') ? mejorarEscarchaSola(s) : s)
 
 const MARGEN = Decimal.pow10(CFG1.autocompradores_umbral_log10)
 export function comprarConMargen(s: State, ids: ItemId[], max: number): State {
@@ -58,7 +61,11 @@ export function tick(s: State, dt: number, autoInfinito = true): State {
   // Dentro de un Defecto el Infinito automático no corre: solo termina en la meta (ganar, con la misma regla de reliquia).
   if (autoInfinito && !enDefecto(s) && enInfinito(s) && autoActivo(s, 'infinito') && infinitoAutoListo(s)) return elegirSola(infinito(s))
   if (metaAlcanzada(s)) return autoActivo(s, 'infinito') ? elegirSola(ganarDefecto(s)) : ganarDefecto(s)
-  if (congelada(s)) return hornoEncendido(s) ? { ...s, fuego: fundirVidrio(s, dt) } : s // el Horno funde aunque la Arena espere
+  if (congelada(s)) { // el Horno funde y la Escarcha eterna crece aunque la Arena espere (también fuera de línea)
+    const eterna = escarchaEterna(s) && escarchaActiva(s)
+    if (!hornoEncendido(s) && !eterna) return s
+    return deshieloSolo({ ...s, fuego: fundirVidrio(s, dt), escarcha: eterna ? crecerEscarcha(s, dt) : s.escarcha })
+  }
   const suma = s.energia.add(produccion(s).mul(dt))
   const energia = infinitoRoto(s) ? suma : Decimal.min(INFINITO, suma) // sin Romper, se frena en 1e308
   const granos = Math.min(GRANOS_MAX, caudal(s) * dt)
@@ -83,6 +90,7 @@ export function tick(s: State, dt: number, autoInfinito = true): State {
   )
     n.coloresDesbloqueados++
   if (autoActivo(n, 'escarcha') && puedeRomperEscarcha(n)) n = romperEscarcha(n) // Deshielo
+  n = deshieloSolo(n)
   if (congelada(n)) return n
   const paso = CFG.automatizacion.intervalo_s / ritmoAuto(n) // Memoria eterna: el doble de seguido
   if (n.relojAuto >= paso) {

@@ -76,3 +76,30 @@ ruta = os.path.join(os.path.dirname(__file__), '..', 'tests', 'fixtures', 'capa2
 with open(ruta, 'w', encoding='utf8') as f: json.dump(lib, f, ensure_ascii=False, indent=1)
 print('liberaciones:', lib['lecho']['umbrales'], [round(x, 4) for x in lib['lecho']['densidad_extra']])
 for c in lib['nodos']: print(f"  Btot {c['Btot']:6d} red {c['red']} {c['horas']} h: dens {c['dens']:.4f} impulso x{c['impulso_x']:.4f} w x{c['w_x']:.4f}")
+
+# --- la Escarcha eterna y el Relicario de fuego (fase 7): g con Hielo y fuego y el freno pasado P, P, m, Esquirlas/s, costos con
+# el paso x3,86 y el efecto de las reliquias engarzadas con Templado, el sector Relicario y Engaste de lava
+ESC = [  # nombre, logX, mejoras, Brasas totales, parte de Escarcha, parte de Relicario, fuegos, Templado
+    ('recien eterna', 120.0, {'crecimiento': 8, 'brillo': 6, 'umbral': 2}, 9, 0.0, 0.0, {'frio'}, 0),
+    ('pasado P', 400.0, {'crecimiento': 12, 'brillo': 9, 'umbral': 3}, 60, 0.1, 0.0, {'frio', 'germen'}, 1),
+    ('partida real', 10195.0, {'crecimiento': 30, 'brillo': 20, 'umbral': 10}, 300, 0.2, 0.1, {'frio', 'germen', 'engarces'}, 3),
+    ('tarde', 25000.0, {'crecimiento': 40, 'brillo': 30, 'umbral': 14}, 40000, 0.05, 0.3, {'frio', 'germen', 'engarces', 'engarces2'}, 6),
+]
+ME = S1.L1['escarcha']['mejoras']; paso0 = {k: ME[k]['paso'] for k in ME}
+esc = []
+for nombre, logX, up, Btot, pe, pr, fuegos, templado in ESC:
+    F = S2.Fuego(); F.Btot = Btot; F.nF = 1; F.fuego = set(fuegos); F.horno['templado'] = templado
+    F.reparto = {'pila': 1 - pe - pr, 'escarcha': pe, 'relicario': pr}
+    J = S2.Jugador(F); J.logX = logX; J.escup = dict(up)
+    g, H, m = J.esc_params()
+    for k in ME: ME[k]['paso'] = paso0[k] * S2.EE['paso_x']
+    costos = {k: S1.precio(ME[k]['c0'] + ME[k]['paso'] * up[k]) for k in ME}
+    for k in ME: ME[k]['paso'] = paso0[k]
+    J.equipped = [('cascada', 2), ('cauce', 0)]
+    m2 = J.mods(None)  # sin Defectos completos, cBonus y cauceX son solo las reliquias
+    esc.append({'nombre': nombre, 'logX': logX, 'mejoras': up, 'Btot': Btot, 'escarcha': pe, 'relicario': pr, 'fuegos': sorted(fuegos), 'templado': templado,
+                'g': g, 'P': S2.S.Player.esc_params(J)[1], 'm': m, 'esq_log': S2.esq_log(F, J), 'costos': costos,
+                'slots': J.slots(), 'cBonus': m2['cBonus'], 'cauceX': m2['cauceX']})
+ruta = os.path.join(os.path.dirname(__file__), '..', 'tests', 'fixtures', 'capa2_escarcha.json')
+with open(ruta, 'w', encoding='utf8') as f: json.dump(esc, f, ensure_ascii=False, indent=1)
+for c in esc: print(f"{c['nombre']:14s} g {c['g']:.6g} P {c['P']:.4f} m {c['m']:.4f} log10 Esq/s {c['esq_log']:.4f} costos {c['costos']} cBonus {c['cBonus']:.4f}")

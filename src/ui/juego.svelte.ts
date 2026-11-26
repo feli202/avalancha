@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, campoInvalido, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, topeCristales, ultimaCompresion, umbralLog10, fundir, comprarFuego, puedeFundir, type Ausencia, type State } from '../core'
+import { CFG, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, campoInvalido, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, topeCristales, ultimaCompresion, umbralLog10, fundir, encenderFuego, relicarioFuego, TIPOS, puedeFundir, type Ausencia, type State } from '../core'
 import { almacenLocal, type Almacen } from '../guardado/almacen'
 import { cargar, esBeta, guardar, type MarcaBeta, type Partida } from '../guardado/guardado'
 import { entrarBeta, volverDeBeta } from '../guardado/beta'
@@ -249,6 +249,8 @@ const reglaPorDefecto = (s: State) => JSON.stringify(s.relicario.regla) === JSON
  * defecto, una nota que lo explica y lleva al panel; después va en el aviso juntado de avisoAutomatico. */
 function reliquiaAutomatica(s: State) {
   // shortcut: toma el tipo de `ultimo`; con Engarces nv4 cuenta las dos como de ese tipo aunque la regla haya elegido dos distintos.
+  // Relicario de fuego: una de cada tipo, sin regla ni nota; solo el aviso juntado (opcional en Ajustes).
+  if (relicarioFuego(s)) { for (const k of TIPOS) auto.reliquias[k] = (auto.reliquias[k] ?? 0) + 1; return }
   const t = s.relicario.ultimo
   if (!t) return
   if (!juego.vistos.reliquia_auto && reglaPorDefecto(s)) {
@@ -395,7 +397,7 @@ export function fundirYa() {
 
 /** Capa 2 (beta): el nivel de fuego de un nodo, con Brasas. */
 export function comprarFuegoYa(id: string) {
-  const s = comprarFuego(juego.s, id)
+  const s = encenderFuego(juego.s, id)
   if (!esBeta(juego) || s === juego.s) return
   previo = juego.s = s
   guardarYa()

@@ -430,7 +430,9 @@
   @keyframes gira { to { transform: rotate(360deg); } }
 
   /* El reparto: sin tarjeta. Una columna de piedra a la derecha, filas separadas por una línea fina. */
-  .reparto { display: grid; align-content: center; gap: 0.75rem; min-height: 0; }
+  /* safe: con los 5 sectores (etapa 4) no se sale hacia arriba sobre las monedas; si no entra, scrollea su caja */
+  .reparto { display: grid; align-content: safe center; gap: 0.75rem; min-height: 0; overflow-y: auto; }
+  .reparto p { margin: 0; }
   .reparto header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
   h2 { margin: 0; font-size: 1.0625rem; font-weight: 600; }
   .guardados { display: flex; gap: 0.25rem; }
@@ -471,6 +473,7 @@
   .que { font-size: 0.8125rem; line-height: 1.45; color: var(--ceniza); }
 
   @media (max-width: 1100px) { .motor { grid-template-columns: minmax(0, 1fr) 18rem; gap: 0.5rem 1.5rem; } }
+  @media (orientation: landscape) and (max-height: 800px) { li { padding-block: 0.5rem; } }
 
   /* Vertical (celular): medidor arriba, el círculo en el medio, el reparto abajo, compacto. */
   @media (orientation: portrait) and (max-width: 1100px) {
