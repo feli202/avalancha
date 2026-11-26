@@ -4,7 +4,7 @@ Historia completa hasta la 1.0: `docs/historial/progreso_hasta_1.0.md` (no leer 
 
 ## Estado (2026-11-25)
 
-**Versión 1.0.0**: Capa 0 + Capa 1 completas. Publicada en https://feli202.github.io/avalancha/ (rama `main`, build del commit "Escarcha con Punto de ruptura"). Código en `master`.
+**Versión 1.0.0**: Capa 0 + Capa 1 completas. Publicada en https://feli202.github.io/avalancha/ (rama `main`, build de 2b31992, Escarcha recalibrada). Código en `master`.
 
 ## Hecho
 
