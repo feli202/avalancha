@@ -1,6 +1,8 @@
 // SPEC.md sección 4. Cada función es una fórmula de la spec, sin estado propio.
 import Decimal from 'break_infinity.js'
 import { CFG, precioLog10, type MutId } from './config'
+import { CFG2 } from './config2'
+import { densidadFuego } from './fuego'
 import {
   baseAnillo, cascadaCExtra, cascadaX, colorSinEfecto, coloresX, densidadExtra, densidadFija, densidadX, derrumbesTope, fatigaLog10, hitoColor,
   presionX, sinMutaciones,
@@ -51,8 +53,11 @@ export const infinitoRoto = (s: State) => nivelRed(s, 'ruptura') >= 1
 /** Sin Romper, en 1e308 la economía se congela hasta el Infinito (SPEC_CAPA1 §4). */
 export const congelada = (s: State) => enInfinito(s) && !infinitoRoto(s)
 
+const N_COMP = CFG.compresion.umbrales_log10.length
+// Capa 2: las compresiones de Lecho infinito (pasadas las 17) suman lecho_densidad; la Temperatura suma (T − 300) / 1000.
 export const densidad = (s: State) => densidadFija(s) ? 1 : // Frontera (§8)
-  (1 + CFG.compresion.densidad_por_nivel * s.compresiones + densidadRed(s) + densidadExtra(s) +
+  (1 + CFG.compresion.densidad_por_nivel * Math.min(s.compresiones, N_COMP) + CFG2.liberaciones.lecho_densidad * Math.max(0, s.compresiones - N_COMP) +
+  densidadFuego(s) + densidadRed(s) + densidadExtra(s) +
   efectoRed(s, 'compactacion2', 'densidad_por_anillo') * anillos(s.granos)) * densidadX(s) // Compactación II (§6.3); Macla (§8)
 
 /** Nivel máximo de Cascada y de cada Mutación (Cascada+ y Mutación+ de la Red lo suben). */

@@ -6,6 +6,7 @@ import { crecerEscarcha, puedeRomperEscarcha, romperEscarcha } from './escarcha'
 import { colorSinEfecto, enDefecto, metaAlcanzada } from './defectos'
 import { ganarDefecto, infinito, infinitoAutoListo } from './infinito'
 import { elegirSola } from './relicario'
+import { ritmoAuto } from './fuego'
 import { autoActivo, comprimir, puedeComprimir } from './compress'
 import { GRANOS_MAX, INFINITO, caudal, congelada, enInfinito, energiaPorGrano, infinitoRoto, produccion } from './formulas'
 import { comprar, comprarMax, comprarN, costo, puedeComprar, type ItemId } from './shop'
@@ -82,7 +83,7 @@ export function tick(s: State, dt: number, autoInfinito = true): State {
     n.coloresDesbloqueados++
   if (autoActivo(n, 'escarcha') && puedeRomperEscarcha(n)) n = romperEscarcha(n) // Deshielo
   if (congelada(n)) return n
-  const paso = CFG.automatizacion.intervalo_s
+  const paso = CFG.automatizacion.intervalo_s / ritmoAuto(n) // Memoria eterna: el doble de seguido
   if (n.relojAuto >= paso) {
     n.relojAuto %= paso
     n = autocomprar({ ...n, automat: { ...n.automat, segundos: n.automat.segundos + 1 } })

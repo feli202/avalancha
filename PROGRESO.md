@@ -17,6 +17,8 @@ Historia completa hasta la 1.0: `docs/historial/progreso_hasta_1.0.md` (no leer 
 
 ## Verificación al último cambio
 
+Fase 3: `npm test` 449 en verde (`tests/fuego.test.ts`: Brasas, Temperatura y Densidad contra `balance/ref_capa2.py`, Fundición, nodos de fuego, guardado y migración desde la 1B), `test:lento` 20/20, `tsc` y `svelte-check` 0 errores, build sin errores. Mirado con la partida real de fin de Capa 1 marcada como beta en 1366×768 y 390×844: confirmación, cinemática (también con Reducir destellos), Brasas/K, llama y Encender, segunda Fundición con Memoria eterna. Los fps no se midieron (el panel del navegador estaba oculto).
+
 Fase 1B: `npm test` en verde (`tests/beta.test.ts`), `tsc` y `svelte-check` 0 errores, mirado con la partida real en 1366×768 y 390×844 (código inválido, válido, aviso, entrar con marca y respaldo, pantalla en la beta, volver desde Ajustes). Primero se hizo con Google Apps Script (0eb9ee5); no se pudo abrir Apps Script en la cuenta y se pasó a códigos sin servidor.
 
 Fase 1A: `npm test` 419 en verde (`tests/tope.test.ts` con la partida real), `test:lento` 20/20, `tsc` y `svelte-check` 0 errores, mirado en 1366×768 y 390×844 con la partida real.
@@ -39,7 +41,7 @@ Spec en `docs/capa2/`. Orden de fases:
 - [x] 1A bloquear Capa 1 (2026-11-25): tope de Cristales en 1e308 (`topeCristales`) y migración al cargar con respaldo `COPIA_TOPE`, para todos. Ver `docs/capa2/migracion.md`. Falta probar en un celular real.
 - [x] 1B puerta de la beta (2026-11-26): botón "Jugar beta" en la pantalla de la Capa 2, tarjeta con código (verificado en el juego contra hashes, sin servidor) y pedido por mail o Discord, marca `beta` en la partida con respaldo "Antes de la beta" y vuelta en Ajustes, `esBeta`, privacidad. 100 códigos en `privado/codigos_beta.txt` (fuera de git; más con `python scripts/codigos_beta.py N`). Ver `docs/capa2/beta.md`.
 - [x] 2 simulador (2026-11-26): `balance/sim_capa2.py` (importa `sim_capa1`, arranca de la partida real migrada, funde a las 0:00) y `balance/tune_capa2.py`; constantes calibradas en `balance/config_capa2.json` y en `docs/capa2/`. Tabla abajo.
-- [ ] 3 Fundición
+- [x] 3 Fundición (2026-11-26, solo en la beta): Fundición con su cinemática y confirmación, Brasas y Temperatura (sumada a la Densidad) arriba, quinto nivel de fuego en el panel de la Red (funcionan Memoria eterna, Lecho infinito y Resonancia; el resto "próximamente"), `estado.fuego` en el guardado. Ver `docs/capa2/fundicion.md`, `red_fuego.md`, `temperatura_motor.md`.
 - [ ] 4 Motor y Red de fuego
 - [ ] 5 Horno
 - [ ] 6 liberaciones
@@ -69,6 +71,7 @@ Cambios de diseño aplicados (con OK): Brasas = M_B × (log10 C / 308)^5,2 con f
 
 ## Problemas conocidos
 
+- Capa 2 (fase 3): después de fundir, la barra de capas (y la pantalla de la Capa 2) se esconde hasta el primer Infinito de la vuelta, y ese Infinito repite la cinemática del primero si no está Memoria eterna. La Temperatura de 600 Brasas es 2.584 K (el doc decía ~3.000 contando fuentes que todavía no existen).
 - Capa 2 (simulador): la fuente más pesada llega a 40,3 % y hay un hueco de 34,8 min en la primera vuelta (0:20–0:55, entre Esquirla nv1 y nv2); la calibración es sensible (redondear un parámetro corre hitos de a decenas de minutos); entre las 4:00 y la Fusión las vueltas duran 1,5–2 min (sin Fusión cada Fundición da M_B Brasas, conviene fundir seguido); las últimas cargas 5 terminan justo con la Ignición; revisando cada 60 s entran 13/20.
 
 - El fin de la capa queda ~0,9 h antes que con la Escarcha vieja (14,0 h contra 14,9) y pegado a Vidrio; tocando solo la Escarcha no se separan (ver `docs/capa1/escarcha.md`).

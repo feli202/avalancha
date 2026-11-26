@@ -53,6 +53,7 @@
   }
   /** Logro secreto Arena: granos de un solo color de la paleta en uso, elegido al azar en cada lluvia. */
   const ESQUIRLAS = 18 // cristales de la cinemática del Infinito
+  const VAPOR = 9 // nubes de vapor de la Fundición
   const GRANOS_LLUVIA = 80
   const colorLluvia = $derived.by(() => {
     if (!juego.lluvia) return ''
@@ -294,7 +295,7 @@
 
 <svelte:window onkeydown={tecla} />
 
-<div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:cristaliza={juego.cinematica === 'infinito'} class:quieto={quieto()}>
+<div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:cristaliza={juego.cinematica === 'infinito'} class:funde={juego.cinematica === 'fundicion'} class:quieto={quieto()}>
   <canvas bind:this={canvas} onpointerdown={bajar} onpointermove={mover} onpointerup={levantar} onpointercancel={levantar} aria-label={txt.pila}></canvas>
   <div class="tope" bind:clientWidth={radioMax}></div>
   {#if sinWebGL}<p class="sin-webgl" role="alert">{txt.sinWebGL}</p>{/if}
@@ -309,7 +310,7 @@
        Compresión: un marco con relleno (Galleta, Polaroid) no lo tapa. -->
   <!-- Con zoom el borde pasa el círculo nítido: afuera el marco se apaga como la pila desenfocada (lienzo.ts, u_foco).
        La rampa empieza recién cuando el marco ya se salió del foco, así encuadrado no se apaga nada. -->
-  <div class="caja-marco" class:oculto={juego.titulo || juego.cinematica === 'fin' || marcoId === 'ninguno'} aria-hidden="true" bind:clientWidth={cajaAncho} bind:clientHeight={cajaAlto}
+  <div class="caja-marco" class:oculto={juego.titulo || juego.cinematica === 'fin' || juego.cinematica === 'fundicion' || marcoId === 'ninguno'} aria-hidden="true" bind:clientWidth={cajaAncho} bind:clientHeight={cajaAlto}
     style:--foco="{foco * (1 + Math.max(0, 2.6 - (1.6 * radioMarco) / (foco || 1)))}px">
     <!-- Gira despacio alrededor de la pila con una animación CSS de `rotate` (aparte del `transform` de la implosión). -->
     <canvas class="marco" class:gira={!quieto() && juego.capa === 'arena' && marcoId !== 'ninguno' && !juego.titulo} style:--vuelta="{CFG.marco.segundos_por_vuelta}s" bind:this={lienzoMarco}></canvas>
@@ -333,6 +334,15 @@
           <g class="grieta">{#each GRIETAS as d, i}<path {d} pathLength="1" style:--i={i} />{/each}</g>
           <g class="ascua">{#each GRIETAS as d, i}<path {d} pathLength="1" style:--i={i} />{/each}</g>
         </svg>
+      </div>
+    {:else if juego.cinematica === 'fundicion'}
+      <!-- Capa 2, la Fundición (FUNDICION_MS): el hielo de la Capa 1 cubre la pila; la pila se derrite del centro hacia afuera
+           (un frente de lava que se abre), el hielo se evapora hacia arriba y queda una brasa latiendo en el medio. -->
+      <div class="cine fundir" style:--r="{Math.max(juego.radioPila, 48) + ANILLO_SEP}px">
+        <div class="helada"></div>
+        <div class="lava"></div>
+        {#each { length: VAPOR } as _, i}<i style:--x="{((i * 37) % 80) - 40}%" style:--d="{1.3 + ((i * 0.23) % 1.1)}s"></i>{/each}
+        <b class="brasa"></b>
       </div>
     {:else if juego.cinematica}
       <!-- SPEC_CAPA1 §11: el hielo sube desde abajo sobre la pila (que no se mueve), se rompe en cristales y sigue Cristalización. -->
@@ -525,6 +535,39 @@
   .quieto .cine i { display: none; }
   .cristaliza.quieto > canvas { animation: apagar 0.35s 1.8s forwards; }
   @keyframes aparecerHielo { from { opacity: 0; } }
+
+  /* Capa 2, la Fundición (6 s: FUNDICION_MS). 0–0,8 s el hielo cubre la pila; 0,8–3,4 s un frente de lava se abre del centro
+     hacia afuera y se lleva la pila; 1,2–3,6 s el hielo se evapora (sube, se desenfoca y se va); desde 3,4 s, la brasa. */
+  .fundir .helada { animation: aparecerHielo 0.8s both, evaporar 2.4s 1.2s ease-in forwards; }
+  .funde > canvas { animation: apagar 1.6s 1.8s ease-in forwards; }
+  .funde .compresion { animation: apagar 0.6s forwards; }
+  .fundir .lava {
+    position: absolute; inset: -30%; border-radius: 50%; scale: 0; opacity: 0;
+    background: radial-gradient(circle, #0b0608 0 38%, #3a1208 46%, #ff5a1f 54%, #ffc27a 57%, rgb(255 90 31 / 0.35) 61%, transparent 68%);
+    animation: derretir 2.6s 0.8s cubic-bezier(0.35, 0, 0.6, 1) forwards;
+  }
+  .fundir i {
+    position: absolute; left: calc(50% + var(--x)); top: 45%; width: 18%; height: auto; margin: 0; aspect-ratio: 1; border-radius: 50%; opacity: 0; clip-path: none;
+    background: radial-gradient(circle, rgb(234 246 255 / 0.5), transparent 70%); filter: blur(4px);
+    animation: vapor 2s var(--d) ease-out forwards;
+  }
+  .fundir .brasa {
+    position: absolute; left: 50%; top: 50%; width: 14%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; opacity: 0;
+    background: radial-gradient(circle, #fff1d6, #ffb347 35%, #ff5a1f 60%, rgb(255 90 31 / 0) 72%);
+    box-shadow: 0 0 2rem 0.5rem rgb(255 90 31 / 0.45);
+    animation: aparecerBrasa 1.2s 3.4s ease-out forwards, latirBrasa 1.6s 4.6s ease-in-out infinite alternate;
+  }
+  @keyframes evaporar { to { opacity: 0; translate: 0 -12%; filter: blur(6px); } }
+  @keyframes derretir { 0% { scale: 0; opacity: 1; } 85% { opacity: 1; } 100% { scale: 1.6; opacity: 0; } }
+  @keyframes vapor { 0% { opacity: 0; translate: 0 0; } 25% { opacity: 1; } 100% { opacity: 0; translate: 0 -160%; scale: 1.8; } }
+  @keyframes aparecerBrasa { from { opacity: 0; scale: 0.3; } to { opacity: 1; scale: 1; } }
+  @keyframes latirBrasa { to { opacity: 0.7; scale: 0.92; } }
+  /* Reducir destellos: nada se mueve; el hielo, la lava y la brasa solo aparecen y se apagan. */
+  .quieto .fundir .helada { animation: aparecerHielo 0.8s both, apagar 1s 2s forwards; }
+  .quieto .fundir .lava { scale: 1; animation: aparecer 1.2s 0.8s both, apagar 1s 2.8s forwards; }
+  .quieto .fundir i { display: none; }
+  .quieto .fundir .brasa { animation: aparecer 1.2s 3.4s both; }
+  @keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }
 
   /* C13, fin de la Capa 1 (6,4 s: FIN_CAPA_MS). 0–2,2 s el hielo sube y se queda; 2,4–3,6 s las grietas se abren desde el
      centro; desde 3,2 s el calor se enciende en ellas y queda latiendo lento. La pila no se mueve ni se rompe. */

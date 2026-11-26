@@ -1,6 +1,6 @@
 // Historial de la partida para Estadísticas: corridas, avalanchas de la pila visual y la Energía en el tiempo.
 // No es parte del núcleo (no afecta la economía): lo lleva la interfaz y va en el guardado. Puro: sin DOM ni reloj.
-import { CFG, densidad, type State } from '../core'
+import { CFG, densidad, umbralLog10, type State } from '../core'
 
 export interface Corrida {
   /** s de juego desde la Compresión anterior (o el comienzo). */
@@ -48,7 +48,7 @@ export function registrar(h: Historial, antes: State, s: State) {
     // El comienzo de cada corrida es tiempoTotal − tiempoCorrida: la resta es exacta aunque la Compresión caiga entre cuadros.
     const ini = (x: State) => x.tiempoTotal - x.tiempoCorrida
     // Nunca por debajo del umbral (M3): en una ausencia `antes` es la Energía del comienzo, no la de la Compresión.
-    h.corridas = [...h.corridas, { duracion: ini(s) - ini(antes), energia: Math.max(log10E(antes), CFG.compresion.umbrales_log10[antes.compresiones]), densidad: densidad(s) }]
+    h.corridas = [...h.corridas, { duracion: ini(s) - ini(antes), energia: Math.max(log10E(antes), umbralLog10(antes)), densidad: densidad(s) }]
       .slice(-MAX_CORRIDAS)
   }
   if (s.compresiones !== antes.compresiones) h.mayorCorrida = 0

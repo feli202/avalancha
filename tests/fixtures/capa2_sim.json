@@ -1,0 +1,58 @@
+[
+ {
+  "nombre": "primera Fundicion",
+  "Ctot": 308.2547,
+  "Btot": 0,
+  "brasas": 1,
+  "T": 300.0,
+  "dens": 0.0
+ },
+ {
+  "nombre": "una Brasa",
+  "Ctot": 308.2547,
+  "Btot": 1,
+  "brasas": 1,
+  "T": 1095.0,
+  "dens": 0.795
+ },
+ {
+  "nombre": "600 Brasas (~3.000 K)",
+  "Ctot": 308.2547,
+  "Btot": 600,
+  "brasas": 1,
+  "T": 2584.347050447326,
+  "dens": 2.284347050447326
+ },
+ {
+  "nombre": "Ignicion (1e5 Brasas)",
+  "Ctot": 308.2547,
+  "Btot": 100000,
+  "brasas": 1,
+  "T": 5613.334144670486,
+  "dens": 5.3133341446704865
+ },
+ {
+  "nombre": "pasado el tope",
+  "Ctot": 400.0,
+  "Btot": 50,
+  "brasas": 3,
+  "T": 1815.992942047481,
+  "dens": 1.515992942047481
+ },
+ {
+  "nombre": "muy pasado el tope",
+  "Ctot": 2000.0,
+  "Btot": 12345,
+  "brasas": 16783,
+  "T": 4062.3843496415134,
+  "dens": 3.7623843496415135
+ },
+ {
+  "nombre": "por debajo de 308",
+  "Ctot": 100.0,
+  "Btot": 3,
+  "brasas": 1,
+  "T": 1252.998321416219,
+  "dens": 0.952998321416219
+ }
+]

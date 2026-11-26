@@ -66,6 +66,9 @@ export interface State {
   /** SPEC_CAPA1 §9. `abierta`: llegó al hito de la 1.1 (queda para siempre). `logX`: el espesor (log10). `esquirlas`: enteras
    * y chicas (unas decenas por ruptura), así que van como número. `reloj`: segundos desde la última ruptura. */
   escarcha: { abierta: boolean; logX: number; esquirlas: number; mejoras: Record<MejoraEscarcha, number>; reloj: number }
+  /** Capa 2 (beta, core/fuego.ts): lo permanente, que la Fundición no reinicia. Brasas enteras y chicas (~1e5 en la Ignición),
+   * así que van como número. `nodos`: los que tienen su nivel de fuego. La Temperatura sale de `brasasTotales`. */
+  fuego: { brasas: number; brasasTotales: number; fundiciones: number; nodos: string[] }
   tiempoTotal: number
   /** Segundos de Arena desde el último Infinito (no se reinicia con la Compresión): el Impulso de Inercia. */
   tiempoInfinito: number
@@ -117,6 +120,7 @@ export const estadoInicial =(): State => ({
   estratos: { abiertos: 0, s: ceros(), perm: ceros(), pres: ceros() },
   defectos: { completos: [], actual: '', reintento: {} },
   escarcha: { abierta: false, logX: 0, esquirlas: 0, mejoras: { crecimiento: 0, brillo: 0, umbral: 0 }, reloj: 0 },
+  fuego: { brasas: 0, brasasTotales: 0, fundiciones: 0, nodos: [] },
   tiempoTotal: 0,
   tiempoInfinito: 0,
   granosTotales: 0,

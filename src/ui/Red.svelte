@@ -4,12 +4,14 @@
   // (el viewBox se ajusta a los nodos) y la ficha del elegido va al costado (debajo en el celular).
   import {
     ABRE_RED, ANILLO3, NIVEL_MAX_RED, NODOS, abierto, anillo, comprarRed, costoRed, escarchaAbierta, nivelRed, puedeComprarRed, requisitoRed, vecinos,
+    CFG2, FUEGO_HECHO, precioFuego, puedeComprarFuego, tieneFuego,
   } from '../core'
+  import { esBeta } from '../guardado/guardado'
   import { EMBLEMA, cara, rama, semilla } from '../render/redCaras'
   import { txt } from '../strings'
   import { ajustes, quieto } from './ajustes.svelte'
   import { formato } from './formato'
-  import { juego } from './juego.svelte'
+  import { comprarFuegoYa, juego } from './juego.svelte'
   import * as sonido from './sonido'
 
   const COLORES = ['--ambar', '--coral', '--jade', '--violeta']
@@ -34,6 +36,15 @@
   // Sorpresa: lo que da un nodo se ve recién cuando se abre. Los del hielo, además, no dicen ni su nombre.
   const oculto = (id: string) => bajoHielo(id) || (!abierto(s, id) && nivelRed(s, id) === 0)
   const titulo = (id: string) => (bajoHielo(id) ? r.bajoHielo : nombre(id, false))
+  // Capa 2 (beta): el quinto cuadro, la llama. Su ficha sale al tocarla o, con el nodo completo, sola.
+  const f = txt.fuego
+  const beta = $derived(esBeta(juego))
+  const verFuego = $derived(beta && !oculto(elegido) && (verN === 5 || (!verN && n >= NIVEL_MAX_RED)))
+  function encender() {
+    if (!puedeComprarFuego(juego.s, elegido)) return
+    comprarFuegoYa(elegido)
+    sonido.hito('ring')
+  }
   const estado = $derived(
     n >= NIVEL_MAX_RED ? r.completo : bajoHielo(elegido) ? r.hielo : !requisitoRed(s, elegido) ? r.requiere : !abierto(s, elegido) ? r.cerrado : null,
   )
@@ -336,12 +347,13 @@
           <p class="nv num">
             <span class="cuadros">{#each COLORES as c, i}<button style:--c="var({c})" class:lleno={i < n} aria-pressed={verN === i + 1} disabled={oculto(elegido)}
               aria-label={r.verNivel(i + 1, txt.colores[i])} title={r.verNivel(i + 1, txt.colores[i])}
-              onclick={() => (ver = verN === i + 1 ? null : { id: elegido, n: i + 1 })}><i></i></button>{/each}</span>
+              onclick={() => (ver = verN === i + 1 ? null : { id: elegido, n: i + 1 })}><i></i></button>{/each}{#if beta}<button class="llama" class:lleno={tieneFuego(s, elegido)}
+              aria-pressed={verN === 5} disabled={oculto(elegido)} aria-label={f.llama} title={f.llama} onclick={() => (ver = verN === 5 ? null : { id: elegido, n: 5 })}><i></i></button>{/if}</span>
             {r.nv(n, txt.colores[n - 1])}
           </p>
         </div>
       </header>
-      {#if verN}<p class="sig">{r.enNivel(verN, txt.colores[verN - 1])}</p><p class="hace">{efecto(elegido, verN)}</p>
+      {#if verN && verN <= NIVEL_MAX_RED}<p class="sig">{r.enNivel(verN, txt.colores[verN - 1])}</p><p class="hace">{efecto(elegido, verN)}</p>
       {:else}
         {#if oculto(elegido)}<p class="sig">{r.sorpresa}</p>
         {:else}
@@ -352,6 +364,18 @@
         {/if}
       {/if}
       {#if estado}<p class="estado">{estado}</p>{/if}
+      {#if verFuego}
+        <p class="hace fuego"><b>{f.conFuego}</b> {f.nombres[elegido]}{#if FUEGO_HECHO.has(elegido)}: {f.efectos[elegido](CFG2.red_fuego.memoria.autocompradores_x)}{/if}</p>
+        {#if tieneFuego(s, elegido)}<p class="estado fuego">{f.encendido}</p>
+        {:else if !FUEGO_HECHO.has(elegido)}<p class="estado fuego">{f.proximamente}</p>
+        {:else}
+          {#if n < NIVEL_MAX_RED}<p class="estado fuego">{f.pideNv4}</p>{/if}
+          <button class="compra gema" style:--c="#ff8a3d" aria-disabled={!puedeComprarFuego(s, elegido)} onclick={encender}
+            aria-label="{f.encender} {f.nombres[elegido]}. {f.precio(precioFuego(elegido))}">
+            <span>{f.encender}</span><span class="num costo">{f.precio(precioFuego(elegido))}</span>
+          </button>
+        {/if}
+      {/if}
       {#if n < NIVEL_MAX_RED && !oculto(elegido)}
         <button class="compra gema" style:--c="var({COLORES[n]})" aria-disabled={!puedeComprarRed(s, elegido)} onclick={comprar}
           aria-label="{r.comprar(n + 1)}. {r.costo(formato(costoRed(elegido, n), true))}">
@@ -439,6 +463,11 @@
   .cuadros .lleno[aria-pressed='true'] i { background: var(--c); }
   .cuadros button:not(:disabled):hover i { transform: scale(1.3); }
   .cuadros button:focus-visible { outline: 2px solid var(--hielo); outline-offset: -2px; }
+  /* Capa 2: la llama, después de Violeta. Se pule en la fase 4. */
+  .cuadros .llama i { width: 0.6rem; height: 0.8rem; margin-left: 0.15rem; background: rgb(255 138 61 / 0.4); clip-path: polygon(50% 0, 78% 32%, 100% 62%, 86% 92%, 50% 100%, 14% 92%, 0 62%, 26% 44%, 38% 22%); }
+  .cuadros .llama[aria-pressed='true'] i { background: rgb(255 138 61 / 0.6); }
+  .cuadros .llama.lleno i { background: linear-gradient(#ffe08a, #ff8a3d 55%, #ff4d1a); }
+  .fuego b, .estado.fuego { color: #ffb27a; }
   .hace { font-size: 0.9375rem; color: var(--escarcha); }
   .sig { font-size: 0.8125rem; color: var(--tenue); }
   .estado { color: var(--hielo); font-size: 0.8125rem; }

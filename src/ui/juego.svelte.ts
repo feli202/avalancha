@@ -1,7 +1,7 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, campoInvalido, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, topeCristales, type Ausencia, type State } from '../core'
+import { CFG, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, campoInvalido, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, topeCristales, ultimaCompresion, umbralLog10, fundir, comprarFuego, puedeFundir, type Ausencia, type State } from '../core'
 import { almacenLocal, type Almacen } from '../guardado/almacen'
-import { cargar, guardar, type MarcaBeta, type Partida } from '../guardado/guardado'
+import { cargar, esBeta, guardar, type MarcaBeta, type Partida } from '../guardado/guardado'
 import { entrarBeta, volverDeBeta } from '../guardado/beta'
 import { historialVacio, registrar } from '../guardado/historial'
 import { instantanea } from '../render/instantanea'
@@ -90,8 +90,8 @@ class Juego {
   capa = $state<'arena' | 'cristalizacion' | 'automatizacion' | 'capa2'>('arena')
   /** La pantalla de Cristalización que se ve (Capas.svelte; la flecha "↓ Estratos" de la Arena la cambia). */
   pantalla = $state('red')
-  /** La cinemática que corre (Pila.svelte la dibuja): la del primer Infinito o la del fin de la Capa 1. */
-  cinematica = $state<'' | 'infinito' | 'fin'>('')
+  /** La cinemática que corre (Pila.svelte la dibuja): la del primer Infinito, la del fin de la Capa 1 o la Fundición (Capa 2). */
+  cinematica = $state<'' | 'infinito' | 'fin' | 'fundicion'>('')
   /** El Infinito automático eligió una reliquia por primera vez con la regla por defecto: la nota con "Configurar" (App.svelte). */
   notaReliquia = $state.raw<{ tipo: string } | null>(null)
   /** "Configurar" de esa nota: Automatización abre en la regla de las reliquias. */
@@ -126,11 +126,10 @@ const log10E = (s: State) => (s.energia.gt(1) ? s.energia.log10() : 0)
  * Después de la última Compresión la meta es el Infinito (`final`).
  */
 export function progresoCompresion(s: State) {
-  const u = CFG.compresion.umbrales_log10
-  const final = s.compresiones >= u.length
+  const final = ultimaCompresion(s) // con Lecho infinito (Capa 2) hay más de 17
   // En un Defecto la meta final es la del Defecto (§8), no el Infinito.
-  const meta = final ? (enDefecto(s) ? metaLog10(s.defectos.actual as DefectoId) : CFG.infinito_log10) : u[s.compresiones]
-  const desde = u[s.compresiones - 1] ?? 0
+  const meta = final ? (enDefecto(s) ? metaLog10(s.defectos.actual as DefectoId) : CFG.infinito_log10) : umbralLog10(s)
+  const desde = s.compresiones > 0 ? umbralLog10({ ...s, compresiones: s.compresiones - 1 }) : 0
   // Llegó al Infinito (la misma condición que el botón): 100 %, sin depender del redondeo del log10.
   const llego = final && !enDefecto(s) && enInfinito(s)
   return { meta, final, p: llego ? 1 : Math.min(1, Math.max(0, (log10E(s) - desde) / (meta - desde))) }
@@ -377,6 +376,27 @@ function finDeCapa() {
     juego.cinematica = ''
     guardarYa()
   }, FIN_CAPA_MS)
+}
+
+/** Capa 2 (beta): la pila se derrite (Pila.svelte) y al final se funde; si se cierra la página antes, no pasó nada. */
+export const FUNDICION_MS = 6000
+export function fundirYa() {
+  if (!esBeta(juego) || !puedeFundir(juego.s) || juego.cinematica) return
+  juego.capa = 'arena'
+  juego.cinematica = 'fundicion'
+  setTimeout(() => {
+    previo = juego.s = fundir(juego.s)
+    juego.cinematica = ''
+    guardarYa()
+  }, FUNDICION_MS)
+}
+
+/** Capa 2 (beta): el nivel de fuego de un nodo, con Brasas. */
+export function comprarFuegoYa(id: string) {
+  const s = comprarFuego(juego.s, id)
+  if (!esBeta(juego) || s === juego.s) return
+  previo = juego.s = s
+  guardarYa()
 }
 
 /** La pista "Tocá la pila": hasta el primer Puñado (las partidas de antes no lo anotaban: con la tienda ya visible, tampoco). */

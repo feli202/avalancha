@@ -41,11 +41,11 @@ export function enElOptimo(s: State): boolean {
 /** Reinicia todo lo de la Arena y conserva lo de la Capa 1 (§3): el Infinito y entrar o salir de un Defecto. */
 function reiniciarArena(s: State): State {
   const { auto, automat, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red, estratos, relicario, cristales,
-    cristalesTotales, infinitos, defectos, escarcha } = s
+    cristalesTotales, infinitos, defectos, escarcha, fuego } = s
   return {
     ...estadoInicial(), granos: 0, // granos_iniciales es solo para la primera corrida
     auto, automat, tiempoTotal, granosTotales, mejorCorrida, compresionesSinAmbar, red, estratos, relicario, cristales,
-    cristalesTotales, infinitos, defectos, escarcha,
+    cristalesTotales, infinitos, defectos, escarcha, fuego,
     ...(conserva(s, 'mutaciones') ? { mutaciones: s.mutaciones } : {}), // Sedimentación nv4
     compresiones: Math.min(compresionesConservadas(s), CFG.compresion.umbrales_log10.length),
   }

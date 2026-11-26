@@ -1,11 +1,17 @@
 import Decimal from 'break_infinity.js'
 import { CFG } from './config'
-import { congelada } from './formulas'
+import { CFG2 } from './config2'
+import { congelada, infinitoRoto } from './formulas'
+import { lechoInfinito } from './fuego'
 import { conserva, efectoRed, memoria } from './red'
 import { AUTOS, estadoInicial, type State } from './state'
 
-/** log10 del umbral de la próxima Compresión (Infinity si ya no quedan). */
-export const umbralLog10 = (s: State) => CFG.compresion.umbrales_log10[s.compresiones] ?? Infinity
+const U = CFG.compresion.umbrales_log10
+/** log10 del umbral de la próxima Compresión (Infinity si ya no quedan). Con Lecho infinito, la 17 + j pide 295 × 1,25^j. */
+export const umbralLog10 = (s: State) =>
+  U[s.compresiones] ?? (lechoInfinito(s) ? U[U.length - 1] * CFG2.liberaciones.lecho_umbral_x ** (s.compresiones - U.length + 1) : Infinity)
+/** La próxima Compresión pide más de lo que la Energía puede tener (no quedan, o sin Romper pasa de 1e308): la meta es el Infinito. */
+export const ultimaCompresion = (s: State) => umbralLog10(s) === Infinity || (!infinitoRoto(s) && umbralLog10(s) > CFG.infinito_log10)
 
 // Contra la Energía y no su log10 (M4): la misma regla que las compras, sin el redondeo del logaritmo.
 export const puedeComprimir = (s: State) => !congelada(s) && umbralLog10(s) < Infinity && s.energia.gte(Decimal.pow10(umbralLog10(s)))

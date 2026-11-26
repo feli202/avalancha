@@ -1,6 +1,6 @@
 // Ayuda integrada: el tooltip global (use:ayuda) y lo que dice cada mejora y número. Los textos, en src/strings.
 import {
-  CFG, aplicar, anillos, maxCascada, maxMutacion, caudal, densidad, multAnillos, nivel, produccion, valor,
+  CFG, aplicar, anillos, maxCascada, maxMutacion, caudal, densidad, multAnillos, nivel, produccion, umbralLog10, valor,
   type ItemId, type MutId, type State,
 } from '../core'
 import Decimal from 'break_infinity.js'
@@ -121,7 +121,7 @@ export const ayudaProduccion = (s: State): Tip => ({
 })
 
 export function ayudaDensidad(s: State): Tip {
-  const prox = s.compresiones < CFG.compresion.umbrales_log10.length
+  const prox = umbralLog10(s) < Infinity
   return {
     titulo: txt.densidad,
     que: txt.guia.que.densidad,
@@ -142,7 +142,7 @@ export function ayudaAnillos(s: State): Tip {
 }
 
 export function ayudaComprimir(s: State): Tip {
-  const prox = s.compresiones < CFG.compresion.umbrales_log10.length
+  const prox = umbralLog10(s) < Infinity
   return {
     titulo: txt.comprimir,
     que: txt.guia.que.comprimir,

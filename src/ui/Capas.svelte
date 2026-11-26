@@ -18,6 +18,7 @@
   import { entregar } from './foto.svelte'
   import Comunidad from './Comunidad.svelte'
   import Beta from './Beta.svelte'
+  import { esBeta } from '../guardado/guardado'
 
   const PANTALLAS = ['relicario', 'red', 'estratos', 'defectos', 'escarcha']
   // Un ícono por sistema, dibujado con la geometría del juego: la Red un rombo de celdas, los Estratos losas apiladas,
@@ -103,7 +104,7 @@
         <div class="placa cierre">
           <h1>{txt.capas.capa2}</h1>
           <p class="lema">{txt.capas.finCapa1}</p>
-          <p>{txt.capas.proximamente}</p>
+          {#if !esBeta(juego)}<p>{txt.capas.proximamente}</p>{/if}
           <Beta />
           <!-- v1.0, bloque 6: el resumen de la partida, descargable como imagen para compartir. -->
           <div class="resumen">

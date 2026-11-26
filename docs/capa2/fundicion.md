@@ -23,3 +23,11 @@ Antes de Fusión del Infinito los Cristales se frenan en el tope, así que cada 
 - Fundición automática: más adelante (con un nivel de fuego), con las mismas reglas que el Infinito automático ("apenas llegás" o "multiplicar mis Brasas"). La carga 1 de cada Defecto (la de la Capa 1) se reinicia y se rehace en cada vuelta; las cargas 2–5 son permanentes y, con alguna hecha, el Defecto cuenta como completo desde el inicio de la vuelta.
 
 - Visual: la pila se derrite desde el centro hacia afuera, el hielo de la Capa 1 se evapora y queda una brasa en el medio. Es el momento más grande de la capa: tiene que sentirse.
+
+### Cómo quedó (fase 3, solo en la beta)
+
+- Núcleo en `src/core/fuego.ts` (constantes en `config2.ts` ← `balance/config_capa2.json`): `puedeFundir` (log10 de los Cristales totales ≥ `requisito_log10`), `brasasAlFundir` (la misma cuenta que `brasas_al_fundir` de `sim_capa2.py`; M_B = `fundicion.M_B` hasta que lleguen Crisol, cargas y Facetas), `fundir`.
+- Al fundir: estado inicial de las Capas 0 y 1 con Automatización (interruptores, intervalos, modos y la regla de las reliquias), tiempo de juego y estadísticas conservados; `fuego` suma las Brasas y la Fundición. Vuelve a arrancar en la Arena: la barra de capas reaparece con el primer Infinito de la vuelta (y ese primer Infinito repite su cinemática, salvo con Memoria eterna, que lo hace solo). La Escarcha vuelve a cerrarse hasta su hito, como en el simulador.
+- Interfaz: botón "Fundir · da N Brasas" en la pantalla de la Capa 2 (`src/ui/Fundicion.svelte`, en lugar del aviso de la beta); la primera vez pregunta con la tabla de arriba (solo lo que ya existe). Brasas y Temperatura en la columna de arriba a la izquierda (desde que se puede fundir).
+- Cinemática (`juego.cinematica = 'fundicion'`, 6 s, `Pila.svelte`): el hielo cubre la pila, un frente de lava se abre del centro hacia afuera, el hielo se evapora hacia arriba con vapor y queda una brasa latiendo; la Fundición se cobra al final (si se cierra la página antes, no pasó nada). Con "Reducir destellos" nada se mueve: hielo, lava y brasa aparecen y se apagan.
+- Tests: `tests/fuego.test.ts`; Brasas y Temperatura contra `balance/ref_capa2.py` → `tests/fixtures/capa2_sim.json`.

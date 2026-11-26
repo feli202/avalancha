@@ -3,6 +3,7 @@
 Cada una rompe un tope de la Capa 1 con un softcap fuerte: pasado el tope, cada nivel rinde la raíz cuadrada de lo que rendía (la mitad en log10) y su costo suma j(j+1)/2 órdenes al normal (j = niveles pasados el tope: el primero ×10, el segundo ×1.000, …). Cada una tiene su palabra icónica, que aparece grande al comprarla.
 
 - **Lecho**: la compresión 17 + j pide 295 × 1,25^j de Energía (log10) y suma 0,03 de Densidad (las 17 normales suman 0,12).
+  Fase 3: `umbralLog10` (`compress.ts`) y `densidad` (`formulas.ts`); `ultimaCompresion` hace que sin Romper la meta siga siendo el Infinito (la 18 pide más de 1e308). El guardado deja pasar de 17 compresiones solo con Lecho.
 - **Desborde** y **Metamorfosis**: niveles de Cascada y Mutaciones pasados el máximo, con el softcap de arriba.
 - **Inercia eterna**: el impulso de los estratos (×2 a nv4) se multiplica por 1 + √(horas de la vuelta).
 

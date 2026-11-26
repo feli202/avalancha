@@ -3,6 +3,7 @@
 import Decimal from 'break_infinity.js'
 import { CFG, precioLog10 } from './config'
 import { CFG1 } from './config1'
+import { CFG2 } from './config2'
 import { cristalesVidrioLog10, defectosCompletos, enVidrio } from './defectos'
 import type { State } from './state'
 
@@ -85,8 +86,9 @@ export const densidadRed = (s: State) => efectoRed(s, 'compactacion', 'densidad'
 export const conserva = (s: State, que: 'caudal' | 'colores' | 'cascada' | 'mutaciones') => efectoRed(s, 'sedimentacion', `conserva_${que}`) > 0
 export const cascadaExtra = (s: State) => efectoRed(s, 'cascada_plus', 'nivel_max_extra')
 export const mutacionExtra = (s: State) => efectoRed(s, 'mutacion_plus', 'nivel_max_extra')
-/** Eco: + p × log10(Cristales totales) a log10 V. */
-export const ecoLog10 = (s: State) => (enVidrio(s) ? 0 : efectoRed(s, 'eco', 'p') * Math.max(0, s.cristalesTotales.log10()))
+/** Eco: + p × log10(Cristales totales) a log10 V. Resonancia (Eco de fuego, Capa 2): también + p × 300 × Brasas totales^0,2. */
+export const ecoLog10 = (s: State) => (enVidrio(s) ? 0 : efectoRed(s, 'eco', 'p') * (Math.max(0, s.cristalesTotales.log10()) +
+  (s.fuego.nodos.includes('eco') ? CFG2.red_fuego.eco.res_x * s.fuego.brasasTotales ** CFG2.red_fuego.eco.res_exp : 0)))
 /** Multiplicador de Cristales en log10 (Ruptura, Cristalografía y Cristalografía II, que crece con los Defectos completos). */
 export const cristalesRedLog10 = (s: State) => enVidrio(s) ? 0 : // Vidrio: sin bonos de Cristales (como crys_mult del simulador)
   cristalesVidrioLog10(s) + efectoRed(s, 'ruptura', 'cristales_log10') + efectoRed(s, 'cristalografia', 'cristales_log10') +

@@ -46,3 +46,9 @@ Calor de un sector: h = parte × (T − 300) / 1000. Extra = 1 + efecto × h:
 No hay un reparto perfecto: conviene cambiarlo según qué te frena. Se pueden guardar 3 repartos y cambiar con un toque. Está en la Automatización (cambiar de reparto según la etapa de la vuelta), más adelante.
 
 Bot del simulador: hasta el primer Infinito de cada vuelta, todo a Pila. Después, Pila se lleva una parte que arranca en 0,87 y se ajusta al fundir según el desglose: si colores o cauce pasan de 35 %, ×0,85; si otra fuente pasa, /0,85 + 0,05 (tope 1). El resto se reparte Red 0,3, Estratos 0,1, Escarcha 0,05, Relicario 0,05 entre los sectores abiertos; Estratos no recibe nada mientras la Presión pase de 35 %, ni Escarcha mientras la Escarcha pase.
+
+### Cómo quedó la Temperatura (fase 3, beta)
+
+- `temperatura(s)` y `densidadFuego(s)` en `src/core/fuego.ts`: por ahora solo el término de las Brasas totales (Esquirla de fuego, Compresión térmica y Calor latente llegan con sus fases). Sin Brasas da 300 K y no cambia nada.
+- `densidad` (`formulas.ts`) suma `densidadFuego` dentro del paréntesis, antes del multiplicador de Macla y no en Frontera (como `dAdd` del simulador). Con 600 Brasas el simulador y el juego dan 2.584 K (los ~3.000 K de arriba incluyen las otras fuentes).
+- El Motor y el reparto del calor son de la fase 4.

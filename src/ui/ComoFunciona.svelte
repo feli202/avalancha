@@ -8,7 +8,7 @@
     CFG1, ESTRATOS, NODOS, NIVEL_MAX_RED, cauceRel, cascadaRel, costoAbrir, cristalesAlInfinito, cristalesRedLog10, infinitoRoto, ordenesQ, espacios,
     gammaEstrato, memoria, mutacionesRel, nivelRed, presion, separacion,
     DEFECTOS, baseAnillo, colorSX, completo, hitoColor, metaLog10,
-    puntoRuptura, aporteEscarcha, brilloEscarcha, crecimientoEscarcha, esquirlasAlRomper, efectoRed,
+    puntoRuptura, aporteEscarcha, brilloEscarcha, crecimientoEscarcha, esquirlasAlRomper, efectoRed, umbralLog10,
   } from '../core'
   import { ALTURA_DE_COLOR, COLOR_CSS } from '../render/pilaVisual'
   import { txt } from '../strings'
@@ -42,7 +42,7 @@
     const v = juego.vistos
     const C = CFG.caudal, M = CFG.mutaciones, K = CFG.K_derrumbes_por_grano, H = CFG.hito_colores, A = CFG.anillos
     const G = formato(s.granos), D = densidad(s), a = anillos(s.granos), c = cascadaC(s)
-    const meta = CFG.compresion.umbrales_log10[s.compresiones]
+    const meta = umbralLog10(s)
     const sec = (id: string, abierta: boolean, color: string, f: Formula[], texto = g.secciones[id][1]): Seccion =>
       ({ id, abierta, color, titulo: g.secciones[id][0], texto, f })
 
@@ -77,7 +77,7 @@
         { r: g.rotulo.densidad, g: `D = 1 + ${d(CFG.compresion.densidad_por_nivel)} × ${V.comp}`,
           v: `= 1 + ${d(CFG.compresion.densidad_por_nivel)} × ${s.compresiones} = ${d(D)}` },
         { r: g.rotulo.meta, g: CFG.compresion.umbrales_log10.map((u) => `1e${u}`).join(' · '),
-          v: meta === undefined ? g.sinMetas : `${txt.compresion(s.compresiones + 1)}: 1e${meta}` },
+          v: meta === Infinity ? g.sinMetas : `${txt.compresion(s.compresiones + 1)}: 1e${Math.round(meta)}` },
       ]),
       sec('cascada', !!v.cascada, '#3cc8e8', [
         { r: g.rotulo.c, g: `c = ${d(CFG.cascada.c_por_nivel)} × ${V.nivel} + (${V.nivel} ≥ 1 ? ${d(M.cascada.por_nivel)} × ${V.mut} : 0)`,

@@ -1,6 +1,7 @@
 <script lang="ts">
   // Interfaz principal (SPEC 6.4). Cada parte aparece recién cuando juego.vistos lo dice (SPEC 5).
-  import { CFG, anillos, autoDisponible, congelada, cristalesAlInfinito, densidad, enElOptimo, enInfinito, infinitoRoto, metaLog10, multAnillos, produccion, puedeComprimir, type DefectoId } from '../core'
+  import { CFG, anillos, autoDisponible, congelada, cristalesAlInfinito, densidad, enElOptimo, enInfinito, infinitoRoto, metaLog10, multAnillos, produccion, puedeComprimir, puedeFundir, lechoInfinito, temperatura, type DefectoId } from '../core'
+  import { esBeta } from '../guardado/guardado'
   import { cambios, nombre as nombreDef } from './defectos'
   import { txt } from '../strings'
   import { ajustes, quieto } from './ajustes.svelte'
@@ -129,10 +130,14 @@
     <span class="etiqueta">{txt.energia}</span>
     {#if congelada(s)}<span class="energia infinito">{txt.infinito}</span>{:else}{#key juego.primera}<span use:ayuda={ayudaEnergia} class="energia num" class:salta={juego.primera} aria-hidden="true">{formato(s.energia)}</span>{/key}<span class="sr">{hablado(formato(s.energia))}</span>{/if}
     {#if v.tienda}<span class="linea num aparece" use:ayuda={() => ayudaProduccion(juego.s)}><b class="ambar" aria-hidden="true">+{formato(produccion(s))}</b><span class="sr">{hablado(formato(produccion(s)))}</span> {txt.energiaPorSegundo}</span>{/if}
-    {#if s.compresiones > 0}
+    {#if s.compresiones > 0 || s.fuego.brasasTotales > 0}
       <span class="linea num aparece" use:ayuda={() => ayudaDensidad(juego.s)}>{txt.densidad} <b>^{formatoMult(densidad(s))}</b></span>
     {/if}
     {#if s.infinitos > 0}<span class="linea num aparece">{txt.cristal.cristales} <b class="hielo">{formato(s.cristales)}</b></span>{/if}
+    {#if esBeta(juego) && (s.fuego.fundiciones > 0 || puedeFundir(s))}
+      <!-- Capa 2 (beta): las Brasas y la Temperatura, que se suma a la Densidad. -->
+      <span class="linea num aparece">{txt.fuego.brasas} <b class="brasa">{formato(s.fuego.brasas)}</b> · <b class="brasa">{txt.fuego.kelvin(temperatura(s))}</b></span>
+    {/if}
     {#if def}
       <!-- §8: el Defecto en curso, su meta, lo que cambia y abandonar. -->
       <div class="defecto aparece">
@@ -209,7 +214,7 @@
             <button class="comprimir aparte aparece" class:encendida={puedeComprimir(s)} disabled={!puedeComprimir(s)} onclick={comprimirYa} aria-keyshortcuts="C">
               <span class="nombre">{txt.comprimir}</span>
               <span class="meta num">
-                {txt.compresionesHechas(s.compresiones, CFG.compresion.umbrales_log10.length)}
+                {txt.compresionesHechas(s.compresiones, lechoInfinito(s) ? 0 : CFG.compresion.umbrales_log10.length)}
                 {#if !comp.final}{' · '}{txt.compresion(s.compresiones + 1)} · {txt.meta(comp.meta)} · <b>{txt.progreso(comp.p)}</b>{:else}{' · '}{txt.compresionesTodas}{/if}
               </span>
             </button>
@@ -446,6 +451,7 @@
   .fin .izq { animation: irse 0.8s 2.2s ease-in forwards; }
   @keyframes irse { to { opacity: 0; visibility: hidden; } }
   .hielo { color: var(--hielo); }
+  .brasa { color: #ff8a3d; }
   /* C6: el indicador de Cristales con el Infinito roto; en el óptimo (§4) brilla. */
   .cristales-inf { display: block; transition: text-shadow 0.4s; }
   .cristales-inf.optimo { animation: brillo-optimo 1.6s ease-in-out infinite; }

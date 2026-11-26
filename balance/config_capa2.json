@@ -82,7 +82,9 @@
  "red_fuego": {
   "memoria": {
    "nombre": "Memoria eterna",
-   "precio": 1
+   "precio": 1,
+   "autocompradores_x": 2,
+   "_auto": "Memoria eterna: los autocompradores compran autocompradores_x veces mas seguido (el simulador ya compra cada segundo, no lo usa)"
   },
   "sedimentacion": {
    "nombre": "Lecho infinito",

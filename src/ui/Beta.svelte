@@ -7,6 +7,7 @@
   import { esBeta } from '../guardado/guardado'
   import { txt } from '../strings'
   import { entrarALaBeta, juego } from './juego.svelte'
+  import Fundicion from './Fundicion.svelte'
 
   let abierta = $state(false)
   let codigo = $state('')
@@ -30,7 +31,7 @@
 <svelte:window onkeydown={(e) => abierta && e.key === 'Escape' && cerrar()} />
 
 {#if esBeta(juego)}
-  <p class="activa">{txt.beta.activa}</p>
+  <Fundicion />
 {:else if !HASHES_BETA.length}
   <button class="gema" disabled>{txt.beta.cerrada}</button>
 {:else}
@@ -76,7 +77,6 @@
 {/if}
 
 <style>
-  .activa { margin: 0; font-size: 0.9375rem; color: #e8b48f; text-wrap: balance; }
   .fondo { position: fixed; inset: 0; z-index: 8; display: grid; place-items: center; padding: 1rem; background: rgb(3 5 10 / 0.72); animation: entrar 0.25s ease-out; }
   .tarjeta {
     --f: 1.25rem; --luz: radial-gradient(90% 60% at 50% 115%, rgb(255 110 40 / 0.16), transparent 70%);

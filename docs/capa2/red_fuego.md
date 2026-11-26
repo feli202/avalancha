@@ -39,3 +39,9 @@ En el orden en que los compra el bot (por precio; empate: el orden de esta tabla
 | Ruptura II | Fusión | Las Brasas escalan mejor: el exponente 5,2 ×1,387 | 1.814 | 9:48 |
 
 El orden cambió respecto del punto de partida para seguir la tabla de ritmo: el Horno va después de Lecho y Desborde (DESBORDE ~1:30, Horno 2:00–2:30), Fallas antes que la Escarcha eterna, y el Relicario de fuego después de la Fusión del Infinito (~6:30). Los precios quedaron más chicos (5.000 → 1.814 el último) porque antes de la Fusión cada Fundición da solo M_B = 1–2 Brasas. En el simulador, Memoria eterna no duplica la velocidad de los autocompradores (el bot ya compra cada segundo) y Deshielo automático no cambia nada (el bot compra las mejoras de la Escarcha igual).
+
+### Cómo quedó (fase 3, beta)
+
+- `fuego.nodos` en la partida; precios de `red_fuego` en config; `puedeComprarFuego`/`comprarFuego` en `src/core/fuego.ts` (nodo en nv4 en la vuelta, Brasas, permanente). Los 25 nombres en `src/strings`.
+- Funcionan solo **Memoria eterna** (al fundir, Memoria nv4 y sus 11 compresiones; autocompradores ×`autocompradores_x` = 2 más seguido: el paso del tick se divide), **Lecho infinito** (`umbralLog10` y `densidad`, ver [liberaciones.md](liberaciones.md)) y **Resonancia** (`ecoLog10`). El resto dice "Próximamente" y no se compra (`FUEGO_HECHO`); una partida beta que ya tenga otro nodo de fuego lo conserva.
+- Panel del nodo (`Red.svelte`): una llama después de Violeta (naranja tenue apagada, degradé encendida). Al tocarla, o sola con el nodo en nv4: "Con fuego: nombre: efecto", el precio en Brasas y Encender. La lava en la Red y el aspecto definitivo son de la fase 4.

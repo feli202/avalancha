@@ -1,6 +1,6 @@
 // Guardado (SPEC 8): la partida como JSON con versión. Puro: el almacenamiento entra como Almacen.
 import Decimal from 'break_infinity.js'
-import { CFG, DEFECTOS, campoInvalido, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, toparCristales, type Pieza, type State } from '../core'
+import { CFG, DEFECTOS, campoInvalido, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, NODOS_FUEGO, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, toparCristales, type Pieza, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
 import type { Contadores } from '../ui/secretos'
@@ -118,6 +118,13 @@ export function deserializar(texto: string): Partida {
     estratos: { abiertos: ent(e.estratos.abiertos, ESTRATOS), s: e.estratos.s.map(pos), perm: e.estratos.perm.map((n) => ent(n)), pres: e.estratos.pres.map((n) => ent(n)) },
   }
   const { estado: topada, devueltas } = toparCristales(leida)
+  // Capa 2: el fuego solo existe en la beta (una partida pública con fuego, editada a mano, juega sin él). Las de la fase 1B
+  // no lo tienen: completar() les pone el del modelo, en cero. Se guardan nodos de fuego que la versión todavía no hace.
+  const beta = leerMarca((d as any).beta)
+  const f = e.fuego
+  const fuego: State['fuego'] = beta
+    ? { brasas: ent(f.brasas), brasasTotales: ent(f.brasasTotales), fundiciones: ent(f.fundiciones), nodos: [...new Set(f.nodos.filter((id) => NODOS_FUEGO.includes(id)))] }
+    : estadoInicial().fuego
   const red = topada.red
   const conRed = { ...estadoInicial(), red } // los topes de Cascada y Mutaciones dependen de la Red
   const infinitos = ent(e.infinitos)
@@ -131,7 +138,7 @@ export function deserializar(texto: string): Partida {
       red, estratos: topada.estratos,
       escarcha: { ...e.escarcha, logX: pos(e.escarcha.logX), esquirlas: ent(e.escarcha.esquirlas), reloj: pos(e.escarcha.reloj),
         mejoras: { crecimiento: ent(e.escarcha.mejoras.crecimiento), brillo: ent(e.escarcha.mejoras.brillo), umbral: ent((e.escarcha.mejoras as { aguante?: number }).aguante ?? e.escarcha.mejoras.umbral) } }, // 'aguante' (hasta la 1.0.0) es el Umbral
-      relicario, automat: leerAutomat(e.automat), defectos: leerDefectos(e.defectos), cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
+      relicario, automat: leerAutomat(e.automat), defectos: leerDefectos(e.defectos), cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, fuego.nodos.includes('sedimentacion') ? Infinity : CFG.compresion.umbrales_log10.length), fuego, // Lecho infinito
       mutaciones: Object.fromEntries(MUTACIONES.map((m) => [m, ent(e.mutaciones[m], maxMutacion(conRed))])) as State['mutaciones'],
       coloresDesbloqueados: ent(e.coloresDesbloqueados, CFG.colores.length), infinitos,
       tiempoTotal: pos(e.tiempoTotal), tiempoCorrida: pos(e.tiempoCorrida), tiempoInfinito: pos(e.tiempoInfinito),
@@ -147,7 +154,7 @@ export function deserializar(texto: string): Partida {
     zoomMaxS: positivo((d as any).zoomMaxS),
     secretos: contadores((d as any).secretos),
     ...(topada !== leida && { tope: devueltas }),
-    ...(leerMarca((d as any).beta) && { beta: leerMarca((d as any).beta) }),
+    ...(beta && { beta }),
     // Partidas de antes del historial: no viene, y el juego arranca uno con el comienzo estimado por el tiempo de juego.
     ...((d as any).historial !== undefined && { historial: limpiarHistorial((d as any).historial, d.guardadoEn - e.tiempoTotal * 1000) }),
   }
