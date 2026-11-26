@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, campoInvalido, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, type Ausencia, type State } from '../core'
+import { CFG, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, campoInvalido, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, topeCristales, type Ausencia, type State } from '../core'
 import { almacenLocal, type Almacen } from '../guardado/almacen'
 import { cargar, guardar, type Partida } from '../guardado/guardado'
 import { historialVacio, registrar } from '../guardado/historial'
@@ -229,7 +229,8 @@ export function avisoAutomatico(antes: State, s: State) {
   const x = formato(s.cristalesTotales.sub(auto.base))
   const r = txt.cristal.relicario
   const partes = [
-    avisoActivo('auto') ? (auto.n > 1 ? txt.cristal.ganadosVarios(x, auto.n) : txt.cristal.ganados(x)) : '',
+    // En el tope de Cristales el Infinito no da ninguno: sin "+0 Cristales".
+    avisoActivo('auto') && s.cristalesTotales.gt(auto.base) ? (auto.n > 1 ? txt.cristal.ganadosVarios(x, auto.n) : txt.cristal.ganados(x)) : '',
     avisoActivo('reliquia') && Object.keys(auto.reliquias).length
       ? r.ganadas(Object.entries(auto.reliquias).map(([t, n]) => (n > 1 ? `${r.tipos[t][0]} ×${n}` : r.tipos[t][0])).join(', ')) : '',
   ].filter(Boolean)
@@ -326,7 +327,7 @@ export function infinitoYa() {
   juego.aMano++
   registrar(historial, antes, s)
   previo = s
-  avisar('infinito', txt.cristal.ganados(formato(cristalesAlInfinito(antes))))
+  if (antes.cristalesTotales.lt(topeCristales(antes))) avisar('infinito', txt.cristal.ganados(formato(cristalesAlInfinito(antes)))) // en el tope no da
   guardarYa()
 }
 
@@ -469,11 +470,13 @@ export function arrancar() {
   // pestaña oculta el navegador lo espacia solo (una vez por segundo o más): la economía sigue, a bajo ritmo, sin dibujar nada.
   let reloj: ReturnType<typeof setTimeout> | undefined
   const seguir = (ms = uiMs()) => { clearTimeout(reloj); reloj = setTimeout(cuadro, Math.max(0, ms)) }
+  let topada = false // Capa 2: el aviso del tope sale al dejar el título (en el título no se ve)
   let cerrado = false // SPEC_CAPA1 §12: el primer salto tras cargar es tiempo con el juego cerrado (no una pestaña oculta)
   try { p = cargar(almacenLocal, Date.now()) } catch (e) { console.warn(e) } // sin almacenamiento: se juega sin guardar
   if (p === 'corrupto') juego.guardadoRoto = true
   else if (p) {
     juego.s = p.estado
+    topada = !!p.tope
     // CORRECCIONES 4: un guardado de antes da por vistas las guías de lo que ya tiene (una sola vez).
     juego.vistos = p.vistos.guias ? p.vistos : yaVisto(p.estado, p.vistos)
     juego.record = p.record
@@ -509,6 +512,8 @@ export function arrancar() {
       seguir()
       return
     }
+    // (el aviso juntado del Infinito automático espera sus 30 s para no taparlo)
+    if (topada) { topada = false; auto.desde = juego.s.tiempoTotal; juego.aviso = { id: avisos++, texto: txt.cristal.topada } }
     // La interfaz (todo lo que lee juego.s) se actualiza como mucho cada uiMs(): 10 veces por segundo, 4 con ahorro. La economía
     // avanza con pasos fijos, así que da lo mismo de a dos pasos que de a uno.
     if (!document.hidden && !calculo && ahora >= vuelta && ahora - vuelta < uiMs() - 4) return seguir(uiMs() - (ahora - vuelta))

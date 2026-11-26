@@ -190,6 +190,8 @@ export const es = {
     vacia: 'Todavía no hay nada acá.',
     ganados: (x: string) => (x === '1' ? '+1 Cristal' : `+${x} Cristales`),
     ganadosVarios: (x: string, n: number) => `+${x} Cristales en ${n} Infinitos`,
+    // Capa 2, migración: la partida pasaba el tope de Cristales (docs/capa2/migracion.md).
+    topada: 'Avalancha se actualizó. Tu partida llegó al límite de la Capa 1 (1e308 Cristales): quedó en el tope, lista para la Capa 2.',
     // C6: con el Infinito roto, en la Arena; brilla en el momento óptimo (§4).
     alInfinito: (x: string, y: string) => `Cristales al hacer Infinito: ${x} (${y}/min)`,
     intro: [

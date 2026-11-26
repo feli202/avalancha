@@ -11,6 +11,9 @@ import { estadoInicial, type State } from './state'
 const C = CFG1.cristales
 /** SPEC_CAPA1 §1: el fin de la Capa 1, 1e308 Cristales totales (`infinito_log10`, como el simulador). */
 export const finCapa1 = (s: State) => s.cristalesTotales.gte(INFINITO)
+/** Capa 2: tope duro de Cristales y Cristales totales (el único lugar donde se define). El fuego de Ruptura lo va a levantar
+ * acá, según `s`. Nunca menor que el umbral de finCapa1: si no, el fin no llegaría nunca (como el Infinito trabado en 99 %). */
+export const topeCristales = (_s: State): Decimal => INFINITO
 /** Q: órdenes de Energía más allá de 1e308 por cada ×10 de Cristales; Ruptura II lo baja. */
 export const ordenesQ = (s: State) => C.Q_ordenes_por_x10 - efectoRed(s, 'ruptura2', 'Q_resta')
 /** log10 de los Cristales antes del blando: mult + base + (E − INF)/Q (lo que pasa de 1e308 solo cuenta con Romper). */
@@ -57,8 +60,8 @@ function cerrarInfinito(s: State): State {
     // La pila de este Infinito la pone la interfaz (conFoto).
     relicario: { ...elegirSola(s).relicario, pendiente: s.infinitos + 1, faltan: reliquiasPorInfinito(s), foto: '' },
     infinitos: s.infinitos + 1,
-    cristales: s.cristales.add(c),
-    cristalesTotales: s.cristalesTotales.add(c),
+    cristales: Decimal.min(topeCristales(s), s.cristales.add(c)),
+    cristalesTotales: Decimal.min(topeCristales(s), s.cristalesTotales.add(c)),
   }
 }
 
@@ -91,6 +94,7 @@ export function infinitoAutoListo(s: State): boolean {
   if (!infinitoRoto(s) || modo === 'llegar') return true
   if (modo === 'optimo') return enElOptimo(s)
   const c = cristalesAlInfinito(s).log10()
-  if (modo === 'multiplicar') return c >= Math.max(0, s.cristales.log10()) + mult - 1e-9 // con 0 Cristales cuenta como 1
+  // En el tope de Cristales ya no se multiplican: sin esto, la Arena se reiniciaría sin parar para nada.
+  if (modo === 'multiplicar') return s.cristales.lt(topeCristales(s)) && c >= Math.max(0, s.cristales.log10()) + mult - 1e-9 // con 0 Cristales cuenta como 1
   return c >= log10 - 1e-9 // 1e-9: que 10^3 alcance para 1000
 }

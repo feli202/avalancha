@@ -7,6 +7,7 @@ Código: `src/guardado/guardado.ts` (`VERSION` = 3, `CLAVE` = `avalancha.guardad
 - `localStorage` cada 10 s, al ocultar la pestaña y al cerrar (`pagehide`).
 - Cada guardado se **valida antes de escribir** (sin NaN, se puede volver a leer): no pisa el bueno.
 - **3 respaldos rotativos** `avalancha.copia.0..2`, uno por minuto como mucho; Ajustes → Partida los lista y recupera (la actual queda como "Partida anterior").
+- **Respaldo de antes del tope** `avalancha.copia.antesDelTope` (`COPIA_TOPE`): la partida original, tal cual, de quien pasaba 1e308 Cristales al cargar la versión con tope (Capa 2, `docs/capa2/migracion.md`). Se escribe una vez, nunca rota ni se pisa; sale último en la lista de respaldos.
 - Versión de guardado en el JSON con migraciones (`migrar` en `guardado.ts`; la 3 es la de la Capa 1: quien ya tenía el Infinito de la Capa 0 arranca con 1 Cristal y la primera reliquia; `migrarRelicario` pasa relicarios viejos a piezas). Campos viejos saneados (p. ej. `aguante` → `umbral`, contadores nuevos en cero).
 - Exportar/importar como texto base64; test de ida y vuelta.
 - "Reportar un problema" copia partida, versión y últimos errores (`errores.ts`).

@@ -17,7 +17,9 @@ Historia completa hasta la 1.0: `docs/historial/progreso_hasta_1.0.md` (no leer 
 
 ## Verificación al último cambio
 
-`npm test` 404 en verde, `npm run test:lento` 20/20 (pesos de log V con la Escarcha a mitad de su ciclo), `tsc` 0 errores, build sin errores. `python balance/sim.py` igual (atento 208 min, 17 compresiones); `sim_capa1.py --robustez`: fin de la capa 14,03 / 15,64 / 22,21 h (15 s / 60 s / 5 min).
+Fase 1A: `npm test` 419 en verde (`tests/tope.test.ts` con la partida real), `test:lento` 20/20, `tsc` y `svelte-check` 0 errores, mirado en 1366×768 y 390×844 con la partida real.
+
+Antes: `npm test` 404 en verde, `npm run test:lento` 20/20 (pesos de log V con la Escarcha a mitad de su ciclo), `tsc` 0 errores, build sin errores. `python balance/sim.py` igual (atento 208 min, 17 compresiones); `sim_capa1.py --robustez`: fin de la capa 14,03 / 15,64 / 22,21 h (15 s / 60 s / 5 min).
 
 ## Falta
 
@@ -32,7 +34,7 @@ Historia completa hasta la 1.0: `docs/historial/progreso_hasta_1.0.md` (no leer 
 Spec en `docs/capa2/`. Orden de fases:
 
 - [x] 0 preparación (spec partida en `docs/capa2/`, diseño original en `archivo/DISENO_CAPA2.md`, reglas en CLAUDE.md)
-- [ ] 1A bloquear Capa 1
+- [x] 1A bloquear Capa 1 (2026-11-25): tope de Cristales en 1e308 (`topeCristales`) y migración al cargar con respaldo `COPIA_TOPE`, para todos. Ver `docs/capa2/migracion.md`. Falta probar en un celular real.
 - [ ] 1B puerta de la beta
 - [ ] 2 simulador
 - [ ] 3 Fundición

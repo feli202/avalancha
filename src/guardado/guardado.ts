@@ -1,6 +1,6 @@
 // Guardado (SPEC 8): la partida como JSON con versión. Puro: el almacenamiento entra como Almacen.
 import Decimal from 'break_infinity.js'
-import { CFG, DEFECTOS, campoInvalido, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, type Pieza, type State } from '../core'
+import { CFG, DEFECTOS, campoInvalido, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, toparCristales, type Pieza, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
 import type { Contadores } from '../ui/secretos'
@@ -32,6 +32,8 @@ export interface Partida {
   zoomMaxS?: number
   /** Contadores de los logros secretos (secretos.ts): fotos sacadas y horas del reloj jugadas. Opcional: los de antes no lo tienen. */
   secretos?: Contadores
+  /** Solo al leer: la partida pasaba el tope de Cristales y se acaba de llevar a él (Capa 2, migración); lo que se devolvió. */
+  tope?: string[]
 }
 
 // Decimal como [mantisa, exponente]: dos doubles, que JSON guarda sin perder un dígito.
@@ -99,7 +101,14 @@ export function deserializar(texto: string): Partida {
   // M5: rangos posibles (un guardado editado a mano o importado no deja estados imposibles).
   const ent = (x: number, max = Infinity) => Math.min(max, Math.max(0, Math.floor(x)))
   const pos = (x: number) => Math.max(0, x)
-  const red = Object.fromEntries(Object.keys(MODELO.estado.red).map((k) => [k, ent(e.red[k], NIVEL_MAX_RED)]))
+  // Capa 2: una partida que pasó el tope de Cristales vuelve a él, con las compras que no entran devueltas (core/tope.ts).
+  const leida: State = {
+    ...estadoInicial(), cristales: deDec(e.cristales), cristalesTotales: deDec(e.cristalesTotales),
+    red: Object.fromEntries(Object.keys(MODELO.estado.red).map((k) => [k, ent(e.red[k], NIVEL_MAX_RED)])),
+    estratos: { abiertos: ent(e.estratos.abiertos, ESTRATOS), s: e.estratos.s.map(pos), perm: e.estratos.perm.map((n) => ent(n)), pres: e.estratos.pres.map((n) => ent(n)) },
+  }
+  const { estado: topada, devueltas } = toparCristales(leida)
+  const red = topada.red
   const conRed = { ...estadoInicial(), red } // los topes de Cascada y Mutaciones dependen de la Red
   const infinitos = ent(e.infinitos)
   const relicario = leerRelicario(e.relicario, infinitos, espacios(conRed))
@@ -107,9 +116,9 @@ export function deserializar(texto: string): Partida {
   if (crudo.estado.relicario === undefined && !deCapa0) relicario.pendiente = infinitos
   const estado: State = {
       ...e, energia: deDec(e.energia), maxEnergia: deDec(e.maxEnergia),
-      cristales: deDec(e.cristales), cristalesTotales: deDec(e.cristalesTotales),
+      cristales: topada.cristales, cristalesTotales: topada.cristalesTotales,
       granos: pos(e.granos), granosTotales: pos(e.granosTotales), caudal: ent(e.caudal), colores: e.colores.map((n) => ent(n)),
-      red, estratos: { abiertos: ent(e.estratos.abiertos, ESTRATOS), s: e.estratos.s.map(pos), perm: e.estratos.perm.map((n) => ent(n)), pres: e.estratos.pres.map((n) => ent(n)) },
+      red, estratos: topada.estratos,
       escarcha: { ...e.escarcha, logX: pos(e.escarcha.logX), esquirlas: ent(e.escarcha.esquirlas), reloj: pos(e.escarcha.reloj),
         mejoras: { crecimiento: ent(e.escarcha.mejoras.crecimiento), brillo: ent(e.escarcha.mejoras.brillo), umbral: ent((e.escarcha.mejoras as { aguante?: number }).aguante ?? e.escarcha.mejoras.umbral) } }, // 'aguante' (hasta la 1.0.0) es el Umbral
       relicario, automat: leerAutomat(e.automat), defectos: leerDefectos(e.defectos), cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, CFG.compresion.umbrales_log10.length),
@@ -127,6 +136,7 @@ export function deserializar(texto: string): Partida {
     zoom: positivo((d as any).zoom),
     zoomMaxS: positivo((d as any).zoomMaxS),
     secretos: contadores((d as any).secretos),
+    ...(topada !== leida && { tope: devueltas }),
     // Partidas de antes del historial: no viene, y el juego arranca uno con el comienzo estimado por el tiempo de juego.
     ...((d as any).historial !== undefined && { historial: limpiarHistorial((d as any).historial, d.guardadoEn - e.tiempoTotal * 1000) }),
   }
@@ -246,9 +256,13 @@ export function guardar(a: Almacen, p: Partida) {
   } catch (e) { console.warn(e) } // sin lugar para los respaldos: el guardado principal ya está
 }
 
-/** Los respaldos que se pueden leer, el más nuevo primero (con su clave, para recuperarlo). */
+/** Capa 2: la partida tal como estaba antes de llevarla al tope de Cristales. No rota ni se pisa: es la única copia de lo que
+ * pasaba de 1e308 (para cuando el fuego de Ruptura levante el tope). Sale al final de los respaldos. */
+export const COPIA_TOPE = 'avalancha.copia.antesDelTope'
+
+/** Los respaldos que se pueden leer, el más nuevo primero (con su clave, para recuperarlo); al final, el de antes del tope. */
 export function leerCopias(a: Almacen): { clave: string; partida: Partida }[] {
-  return COPIAS.flatMap((clave) => {
+  return [...COPIAS, COPIA_TOPE].flatMap((clave) => {
     try { const t = a.leer(clave); return t === null ? [] : [{ clave, partida: deserializar(t) }] } catch { return [] }
   })
 }
@@ -258,8 +272,9 @@ export function leerCopias(a: Almacen): { clave: string; partida: Partida }[] {
 export function cargar(a: Almacen, ahora: number): Partida | null | 'corrupto' {
   const texto = a.leer(CLAVE)
   if (texto === null) return null
+  let p: Partida
   try {
-    return deserializar(texto)
+    p = deserializar(texto)
   } catch {
     try {
       const viejo = a.leer(RESPALDO)
@@ -268,4 +283,7 @@ export function cargar(a: Almacen, ahora: number): Partida | null | 'corrupto' {
     } catch { /* sin lugar: el original sigue en CLAVE hasta que se empiece de nuevo */ }
     return 'corrupto'
   }
+  // Recién llevada al tope: el original va a su respaldo (una vez; si no hay lugar, se juega igual con la partida topada).
+  if (p.tope) try { if (a.leer(COPIA_TOPE) === null) a.escribir(COPIA_TOPE, texto) } catch (e) { console.warn(e) }
+  return p
 }

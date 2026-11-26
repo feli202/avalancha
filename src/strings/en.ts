@@ -175,6 +175,7 @@ export const en: typeof es = {
     vacia: 'Nothing here yet.',
     ganados: (x: string) => (x === '1' ? '+1 Crystal' : `+${x} Crystals`),
     ganadosVarios: (x: string, n: number) => `+${x} Crystals in ${n} Infinities`,
+    topada: 'Avalancha was updated. Your save reached the Layer 1 limit (1e308 Crystals): it stays at the cap, ready for Layer 2.',
     alInfinito: (x: string, y: string) => `Crystals from Infinity: ${x} (${y}/min)`,
     intro: [
       'The pile reached Infinity and crystallized.',
