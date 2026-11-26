@@ -46,19 +46,19 @@ Estadísticas (estilo AD): desglose de log10 V por fuente (`desglose.ts`).
 | Macla | 4,65 h | 5,75 h | 12,28 h |
 | Impureza | 5,92 h | 7,04 h | 13,54 h |
 | **Fin 1.1** | **7,39 h** | 8,50 h | 14,98 h |
-| Fatiga | 9,69 h | 11,00 h | 17,49 h |
-| Frontera | 13,14 h | 13,92 h | 20,38 h |
-| Inclusión | 13,43 h | 14,75 h | 21,07 h |
-| Vidrio | 13,88 h | 15,75 h | 21,67 h |
-| **Fin de la capa** | **14,03 h** | 16,25 h | 22,69 h |
+| Fatiga | 9,69 h | 10,81 h | 17,29 h |
+| Frontera | 13,14 h | 14,29 h | 20,83 h |
+| Inclusión | 13,43 h | 14,37 h | 20,93 h |
+| Vidrio | 13,88 h | 15,41 h | 21,99 h |
+| **Fin de la capa** | **14,03 h** | 15,64 h | 22,21 h |
 
-Las columnas de 60 s y 5 min no se volvieron a medir tras la Escarcha con Punto de ruptura (2026-11-25). Escarcha recalibrada el mismo día ([escarcha.md](escarcha.md)): 42 rupturas, hueco máximo entre compras 30,2 min (< 40); el núcleo real da 9,86 / 12,98 / 13,27 / 13,86 / 14,01 h. Ganar un Defecto cuenta como compra.
+Medida con la Escarcha con Punto de ruptura recalibrada (2026-11-25, [escarcha.md](escarcha.md)): 42 rupturas (39 a 60 s, 37 a 5 min), hueco máximo entre compras 30,2 min (< 40; el de 5 min tiene 100 min, sin test); el núcleo real da 9,86 / 12,98 / 13,27 / 13,86 / 14,01 h. Ganar un Defecto cuenta como compra.
 
 Peso de cada fuente en log10 V:
 
 | | Colores | Anillos | Cascada | Mutaciones | **Presión** | Eco | Cauce | Escarcha |
 |---|---|---|---|---|---|---|---|---|
-| Fin 1.1 | 19 % | 2 % | 4 % | 0 % | **58 %** | 12 % | 5 % | — |
+| Fin 1.1 | 19 % | 2 % | 4 % | 0 % | **58 %** | 13 % | 5 % | — |
 | Fin capa | 13 % | 1 % | 2 % | 0 % | **66 %** | 9 % | 4 % | 5 % |
 
 (La Escarcha medida en el instante del último Infinito, justo después de romperse; a mitad de su ciclo pesa mucho más, ver [escarcha.md](escarcha.md).)
@@ -67,7 +67,7 @@ La Presión es el motor a propósito. Si con jugadores "solo importan los estrat
 
 Notas que siguen vigentes:
 - El jugador de 5 min queda muy atrás porque hasta Memoria nv4 cada Infinito espera a que mire (decisión del usuario: no hay Memoria más barata).
-- Abrir un estrato multiplica la producción al instante: E1 ×1e2,3 … E8 ×1e118,8 (mínimo pedido ×100).
+- Abrir un estrato multiplica la producción al instante: E1 ×1e2,3 … E8 ×1e113,4 (mínimo pedido ×100).
 - El softcap casi no mueve la capa (frena Mutaciones y colores altos en Defectos largos, ~0,1 h cada uno).
 - La segunda corrida (~1 h) es intencional: enseña que volver a empezar ahora es rápido.
 

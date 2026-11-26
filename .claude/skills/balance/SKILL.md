@@ -15,7 +15,7 @@ En esta máquina es `python`, no `python3`. Constantes solo en `balance/config.j
 |---|---|---|
 | Capa 0 | `python balance/sim.py` (`--timeline` para la línea de tiempo) | Atento 3 h 28 min, 17 compresiones (tabla de `docs/capa0/economia.md`) |
 | Capa 0 en el núcleo | `npx vitest run tests/balance.test.ts --reporter=verbose` | rangos del test (entra en `npm test`) |
-| Capa 1 | `python balance/sim_capa1.py --robustez` (tarda minutos: correr en segundo plano) | tabla de `docs/capa1/bucle_y_balance.md` ±0,1 h (fin 1.1 7,39 h, fin de la capa 15,12 h, hueco < 40 min) |
+| Capa 1 | `python balance/sim_capa1.py --robustez` (tarda minutos: correr en segundo plano) | tabla de `docs/capa1/bucle_y_balance.md` ±0,1 h (fin 1.1 7,39 h, fin de la capa 14,03 h, hueco < 40 min) |
 | Capa 1, solo 15 s | `python balance/sim_capa1.py` | columna de 15 s |
 | Primeros Infinitos | `python balance/sim_capa1.py --primeros 12` | qué compra el bot en cada Infinito |
 | Capa 1 en el núcleo | `npm run test:lento` (~45 s, no entra en `npm test`) | 20/20, ±10 % |

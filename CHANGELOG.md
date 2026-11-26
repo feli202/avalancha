@@ -1,5 +1,19 @@
 # Avalancha — novedades
 
+## 2026-11-25 · Escarcha con Punto de ruptura
+
+**Español**
+
+- **La Escarcha crece sola hasta su Punto de ruptura** y ahí espera sin perder nada. Romperla da Esquirlas y la hace volver a empezar: crecer más rápido es romper más seguido.
+- Mejoras con Esquirlas: **Crecimiento** (más rápido), **Brillo** (aporta más) y **Umbral** (rompe más arriba). Ya no hay freno.
+- Con Deshielo se rompe sola.
+
+**English**
+
+- **Frost grows on its own up to its Breaking point** and waits there without losing anything. Breaking it gives Shards and starts it over: growing faster means breaking more often.
+- Shard upgrades: **Growth** (faster), **Shine** (gives more) and **Threshold** (breaks higher). No more brake.
+- With Thaw it breaks on its own.
+
 ## 2026-11-23 · progreso fuera de línea
 
 **Español**

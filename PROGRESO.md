@@ -13,11 +13,11 @@ Historia completa hasta la 1.0: `docs/historial/progreso_hasta_1.0.md` (no leer 
 - 1.0: guardado validado con 3 respaldos, notaciones, inglés, PWA instalable, pase de partida itch → GitHub / Safari → app, aviso de versión, comunidad, rendimiento y modo ahorro, offline débil (2 h a ×0,1, sin Infinitos).
 - 2026-11-25: Escarcha con Punto de ruptura (estilo Replicanti), recalibrada solo en sus números contra el ritmo de la vieja: Fatiga 9,86 · Frontera 12,98 · Inclusión 13,27 · Vidrio 13,86 · fin 14,01 h (núcleo real, 15 s). Ver `docs/capa1/escarcha.md`.
 - `release/` lista para itch.io, galaxy.click, Reddit y redes (`release/CHECKLIST.md`).
-- 2026-11-25: limpieza de documentación: `docs/` por sistema, SPEC y guías a `archivo/`, skills del proyecto.
+- 2026-11-25: limpieza de documentación: `docs/` por sistema, SPEC, guías y maquetas a `archivo/`, skills del proyecto; tabla de la Capa 1 medida entera con la Escarcha nueva.
 
 ## Verificación al último cambio
 
-`npm test` 404 en verde, `tsc` 0 errores, build sin errores, `python balance/sim.py` igual (atento 208 min, 17 compresiones). `npm run test:lento` 20/20 (los pesos de log V se miden con la Escarcha a mitad de su ciclo).
+`npm test` 404 en verde, `npm run test:lento` 20/20 (pesos de log V con la Escarcha a mitad de su ciclo), `tsc` 0 errores, build sin errores. `python balance/sim.py` igual (atento 208 min, 17 compresiones); `sim_capa1.py --robustez`: fin de la capa 14,03 / 15,64 / 22,21 h (15 s / 60 s / 5 min).
 
 ## Falta
 
@@ -25,13 +25,11 @@ Historia completa hasta la 1.0: `docs/historial/progreso_hasta_1.0.md` (no leer 
 - Crear la cuenta de GoatCounter y pegar el código en `src/comunidad.ts` (`GOATCOUNTER`).
 - Revisión de un nativo de `marketing/textos_en_dudas.md`.
 - Tráiler horizontal (línea de tiempo `h` escrita sin probar en `marketing/trailer/`).
-- Columnas de 60 s y 5 min de la tabla de la Capa 1 sin volver a medir tras la Escarcha nueva.
 - Capa 2 (ganchos en `docs/capa1/bucle_y_balance.md`).
 
 ## Problemas conocidos
 
 - El fin de la capa queda ~0,9 h antes que con la Escarcha vieja (14,0 h contra 14,9) y pegado a Vidrio; tocando solo la Escarcha no se separan (ver `docs/capa1/escarcha.md`).
-
 - Nunca probado en celulares reales (iPhone/Android: instalación, notch, temperatura, batería, fps).
 - itch.io real: no confirmado si su iframe deja abrir la ventana del pase (si no, sale el paso a mano).
 - Con Engarces nv4, el aviso juntado del Infinito automático cuenta las dos reliquias como del último tipo (shortcut comentado).

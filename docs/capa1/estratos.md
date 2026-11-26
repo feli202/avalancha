@@ -34,7 +34,7 @@ El término cúbico hace que se suban parejos.
 
 ## Vista: el embudo 2D
 
-- Pixel art (elegido entre maquetas en `mockups/estratos/`). Arriba el casquete de la pila principal; debajo ocho bandejas cada vez más angostas unidas por paredes en diagonal, y un noveno estrato vacío como fondo cerrado (`FONDO`/`HORNO`: en la Capa 2 será el Horno).
+- Pixel art (elegido entre maquetas en `archivo/mockups/estratos/`). Arriba el casquete de la pila principal; debajo ocho bandejas cada vez más angostas unidas por paredes en diagonal, y un noveno estrato vacío como fondo cerrado (`FONDO`/`HORNO`: en la Capa 2 será el Horno).
 - Física de arena (gravedad y deslizamiento a 45°, grilla 120×92) en un worker a 20 pasos/s que **se crea al entrar y se termina al salir**. Cada grano con su color de la paleta equipada.
 - Poros del piso que se abren con el nivel; estratos cerrados = roca con "Estrato N · costo"; el próximo alcanzable se agrieta; al abrirlo la roca salta y la bandeja se llena.
 - Llenado visual `s_k / (s_k + 6)` hasta 0,9 y chorro `log2(1 + γ/γ_base)`: solo visual.
