@@ -21,3 +21,6 @@ marketing/trailer/*.mp4
 # release/: los zip y los videos se rehacen (ver release/CHECKLIST.md)
 release/**/*.zip
 release/**/*.mp4
+
+# Códigos de beta en claro (scripts/codigos_beta.py): nunca a git
+privado/

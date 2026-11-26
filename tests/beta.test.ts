@@ -1,10 +1,10 @@
-// Capa 2, fase 1B: la marca de beta en el guardado, entrar y volver, y lo que el juego le pide al servicio (estados de la tarjeta).
+// Capa 2, fase 1B: la marca de beta en el guardado, entrar y volver, y la verificación de códigos.
 import { describe, expect, it } from 'vitest'
 import { estadoInicial, tick } from '../src/core'
 import type { Almacen } from '../src/guardado/almacen'
-import { COPIA_ANTES_BETA, entrarBeta, leerAntesDeBeta, volverDeBeta } from '../src/guardado/beta'
+import { COPIA_ANTES_BETA, codigoValido, entrarBeta, hashCodigo, leerAntesDeBeta, normalizarCodigo, volverDeBeta } from '../src/guardado/beta'
+import { HASHES_BETA } from '../src/guardado/codigosBeta'
 import { CLAVE, COPIA_BETA, cargar, deserializar, esBeta, guardar, leerCopias, serializar, type Partida } from '../src/guardado/guardado'
-import { mailValido, normalizarCodigo, pedirBeta } from '../src/ui/servicioBeta'
 import MITAD_CAPA1 from './fixtures/mitad_capa1.json?raw'
 
 const partida = (extra: Partial<Partida> = {}): Partida => ({ estado: tick(estadoInicial(), 30), guardadoEn: 1.7e12, vistos: { guias: true }, record: 5, logros: {}, ...extra })
@@ -85,38 +85,22 @@ describe('entrar y volver de la beta', () => {
   })
 })
 
-describe('lo que el juego le pide al servicio (estados de la tarjeta)', () => {
-  const responde = (cuerpo: string, pedidos: RequestInit[] = []) =>
-    (async (_u: unknown, init: RequestInit) => (pedidos.push(init), new Response(cuerpo))) as unknown as typeof fetch
-  const URL_P = 'https://script.google.com/macros/s/X/exec'
-
-  it('POST text/plain (sin preflight de CORS) con el JSON', async () => {
-    const pedidos: RequestInit[] = []
-    expect(await pedirBeta({ accion: 'verificar', codigo: 'ABCD2345' }, URL_P, responde('{"r":"ok"}', pedidos))).toBe('ok')
-    expect(pedidos[0].method).toBe('POST')
-    expect((pedidos[0].headers as Record<string, string>)['Content-Type']).toMatch(/^text\/plain/)
-    expect(JSON.parse(pedidos[0].body as string)).toEqual({ accion: 'verificar', codigo: 'ABCD2345' })
+describe('códigos de beta (sin servidor)', () => {
+  it('un código vale si su hash está en la lista; escrito en minúsculas o con guion también', async () => {
+    const lista = [await hashCodigo('ABCD2345')]
+    expect(await codigoValido('ABCD2345', lista)).toBe(true)
+    expect(await codigoValido(normalizarCodigo(' abcd-2345 '), lista)).toBe(true)
+    expect(await codigoValido('ABCD2346', lista)).toBe(false)
+    expect(await codigoValido('abcd2345', lista)).toBe(false) // sin normalizar no tiene la forma
   })
 
-  it('cada respuesta del servicio da su estado', async () => {
-    for (const r of ['ok', 'invalido', 'limite', 'error'] as const) expect(await pedirBeta({}, URL_P, responde(JSON.stringify({ r })))).toBe(r)
-    expect(await pedirBeta({}, URL_P, responde('{"r":"raro"}'))).toBe('error')
-    expect(await pedirBeta({}, URL_P, responde('<html>Google error</html>'))).toBe('error')
+  it('la lista del juego trae hashes SHA-256 y ninguno es de un código obvio', async () => {
+    expect(HASHES_BETA.length).toBeGreaterThan(0)
+    for (const h of HASHES_BETA) expect(h).toMatch(/^[0-9a-f]{64}$/)
+    expect(await codigoValido('AAAAAAAA')).toBe(false)
   })
 
-  it('sin red: sinConexion; otro fallo: error; sin URL: error sin pedir nada', async () => {
-    const sinRed = (async () => { throw new TypeError('Failed to fetch') }) as unknown as typeof fetch
-    expect(await pedirBeta({}, URL_P, sinRed)).toBe('sinConexion')
-    const corta = (async () => { throw new DOMException('timeout', 'TimeoutError') }) as unknown as typeof fetch
-    expect(await pedirBeta({}, URL_P, corta)).toBe('error')
-    const pedidos: RequestInit[] = []
-    expect(await pedirBeta({}, '', responde('{"r":"ok"}', pedidos))).toBe('error')
-    expect(pedidos).toHaveLength(0)
-  })
-
-  it('mail y código como los escribe la gente', () => {
-    expect(mailValido('ana@mail.com')).toBe(true)
-    for (const m of ['ana', 'ana@mail', 'a b@c.com', `${'x'.repeat(250)}@c.com`]) expect(mailValido(m)).toBe(false)
-    expect(normalizarCodigo(' abcd-2345 ')).toBe('ABCD2345')
+  it('el hash es el mismo que el de scripts/codigos_beta.py (sha256 de "avalancha-beta:" + código)', async () => {
+    expect(await hashCodigo('ABCD2345')).toBe('b31ffa27ba02c715219314c5155f21ea857e39d9149e24f3247de8c89466ce5e')
   })
 })

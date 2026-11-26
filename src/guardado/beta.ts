@@ -1,6 +1,20 @@
 // Capa 2, fase 1B: entrar a la beta y volver a la partida de antes. La pregunta "¿es beta?" es `esBeta` (guardado.ts).
 import type { Almacen } from './almacen'
 import { CLAVE, CODIGO_BETA, COPIA_BETA, deserializar, guardar, type Partida } from './guardado'
+import { HASHES_BETA } from './codigosBeta'
+
+/** Como lo escribe la gente: minúsculas, espacios o guiones ("abcd-2345"). */
+export const normalizarCodigo = (c: string) => c.toUpperCase().replace(/[\s-]/g, '')
+
+/** SHA-256 en hex, con la misma sal que scripts/codigos_beta.py. */
+export async function hashCodigo(c: string) {
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`avalancha-beta:${c}`)))
+  return [...h].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+/** Sin servidor: el código se compara con los hashes del juego (anda sin conexión).
+ * shortcut: un código sirve en cualquier cantidad de dispositivos; si se filtra uno, sacarlo de la lista y regenerar. */
+export const codigoValido = async (c: string, hashes: readonly string[] = HASHES_BETA) => CODIGO_BETA.test(c) && hashes.includes(await hashCodigo(c))
 
 /** La partida tal como estaba al entrar a la beta ("Antes de la beta"). Se escribe al entrar; no rota. */
 export const COPIA_ANTES_BETA = 'avalancha.copia.antesDeLaBeta'

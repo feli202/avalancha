@@ -39,7 +39,7 @@ export interface Partida {
 }
 
 export interface MarcaBeta { codigo: string; desde: number }
-/** 8 caracteres sin los que se confunden (0 O 1 I L): el mismo alfabeto que `apps-script/beta.gs`. */
+/** 8 caracteres sin los que se confunden (0 O 1 I L): el mismo alfabeto que `scripts/codigos_beta.py`. */
 export const CODIGO_BETA = /^[2-9A-HJKMNP-Z]{8}$/
 /** La única pregunta de todo el código de la Capa 2: ¿esta partida (o `juego`) está en la beta? */
 export const esBeta = (p: { beta?: MarcaBeta }) => !!p.beta
