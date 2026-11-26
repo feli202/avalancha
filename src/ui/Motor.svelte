@@ -201,6 +201,8 @@
     return `conic-gradient(${SECTORES.map((k, i) => { const a0 = acc; acc += q[i]; return `${COLOR[k]} ${a0 * 360}deg ${acc * 360}deg` }).join(', ')})`
   }
   const brasasOrbita = $derived(Math.min(18, Math.max(3, Math.round(Math.sqrt(s.fuego.brasas) * 3))))
+  // Etapa 2: gotas de vidrio en la órbita, más con más Vidrio (por órdenes de magnitud).
+  const vidrioOrbita = $derived(etapa < 2 ? 0 : Math.min(12, 2 + Math.floor(Math.max(0, s.fuego.vidrio.log10()) / 2)))
 </script>
 
 <main class="motor" class:quieto={quieto()} class:calma={ajustes.calma} style:--t={t}>
@@ -213,7 +215,10 @@
     <div class="termo" role="meter" aria-valuemin={TP.inicial} aria-valuemax={TP.ignicion} aria-valuenow={Math.floor(T)} aria-label={m.ignicion(txt.fuego.kelvin(TP.ignicion))}>
       <i style:--p={t}></i><span class="num">{m.ignicion(txt.fuego.kelvin(TP.ignicion))}</span>
     </div>
-    <div class="brasas"><span class="rot">{txt.fuego.brasas}</span><span class="num">{formato(s.fuego.brasas)}</span></div>
+    <div class="monedas">
+      {#if etapa >= 2}<div class="brasas vidrio"><span class="rot">{m.vidrio}</span><span class="num">{formato(s.fuego.vidrio)}</span></div>{/if}
+      <div class="brasas"><span class="rot">{txt.fuego.brasas}</span><span class="num">{formato(s.fuego.brasas)}</span></div>
+    </div>
   </header>
 
   <div class="escena">
@@ -288,6 +293,7 @@
       </svg>
       <div class="orbita" aria-hidden="true">
         {#each { length: brasasOrbita } as _, k}<i style:--g="{(k / brasasOrbita) * 360 + ((k * 47) % 13)}deg" style:--r={0.9 + ((k * 31) % 7) / 100} style:--z={0.6 + ((k * 13) % 5) / 10}></i>{/each}
+        {#each { length: vidrioOrbita } as _, k}<i class="gota" style:--g="{(k / vidrioOrbita) * 360 + 11 + ((k * 29) % 17)}deg" style:--r={0.86 + ((k * 23) % 5) / 100} style:--z={0.5 + ((k * 7) % 4) / 10}></i>{/each}
       </div>
     </div>
   </div>
@@ -355,7 +361,9 @@
     background: linear-gradient(to right, #6e1206, #ff5a1f 60%, #ffd08a); box-shadow: 0 0 6px #ff5a1f;
   }
   .termo span { font-size: 0.75rem; color: var(--ceniza); text-align: right; }
-  .brasas { display: grid; justify-items: end; margin-left: auto; }
+  .monedas { display: flex; gap: 1.5rem; margin-left: auto; }
+  .brasas { display: grid; justify-items: end; }
+  .vidrio .num { color: #ffd59a; }
   .brasas .num { font-size: 1.5rem; font-weight: 600; color: var(--brasa); line-height: 1; }
 
   .escena { position: relative; display: grid; place-items: center; min-height: 0; min-width: 0; container-type: size; }
@@ -417,6 +425,7 @@
     content: ''; position: absolute; left: 50%; top: 0; width: calc(var(--z) * 1.9%); aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
     background: radial-gradient(circle, #fff0c8, #ff7a2e 42%, transparent 70%);
   }
+  .orbita i.gota::after { border-radius: 50% 50% 50% 0; rotate: -45deg; background: radial-gradient(circle at 40% 40%, #fffbe8, #ffc46b 45%, rgb(255 160 60 / 0.3) 70%, transparent 72%); }
   .orbita { inset: 0; }
   @keyframes gira { to { transform: rotate(360deg); } }
 
@@ -471,6 +480,7 @@
     .dens { margin-top: 0.15rem; font-size: 0.75rem; }
     .termo { display: none; }
     .brasas .num { font-size: 1.25rem; }
+    .monedas { gap: 0.9rem; }
     .reparto { gap: 0.25rem; }
     h2 { font-size: 0.9375rem; }
     li { padding: 0.15rem 0; gap: 0 0.6rem; grid-template-columns: 1.1rem minmax(0, 1fr) auto; }

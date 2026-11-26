@@ -6,7 +6,7 @@ import { crecerEscarcha, puedeRomperEscarcha, romperEscarcha } from './escarcha'
 import { colorSinEfecto, enDefecto, metaAlcanzada } from './defectos'
 import { ganarDefecto, infinito, infinitoAutoListo } from './infinito'
 import { elegirSola } from './relicario'
-import { ritmoAuto } from './fuego'
+import { fundirVidrio, hornoEncendido, ritmoAuto } from './fuego'
 import { autoActivo, comprimir, puedeComprimir } from './compress'
 import { GRANOS_MAX, INFINITO, caudal, congelada, enInfinito, energiaPorGrano, infinitoRoto, produccion } from './formulas'
 import { comprar, comprarMax, comprarN, costo, puedeComprar, type ItemId } from './shop'
@@ -58,7 +58,7 @@ export function tick(s: State, dt: number, autoInfinito = true): State {
   // Dentro de un Defecto el Infinito automático no corre: solo termina en la meta (ganar, con la misma regla de reliquia).
   if (autoInfinito && !enDefecto(s) && enInfinito(s) && autoActivo(s, 'infinito') && infinitoAutoListo(s)) return elegirSola(infinito(s))
   if (metaAlcanzada(s)) return autoActivo(s, 'infinito') ? elegirSola(ganarDefecto(s)) : ganarDefecto(s)
-  if (congelada(s)) return s
+  if (congelada(s)) return hornoEncendido(s) ? { ...s, fuego: fundirVidrio(s, dt) } : s // el Horno funde aunque la Arena espere
   const suma = s.energia.add(produccion(s).mul(dt))
   const energia = infinitoRoto(s) ? suma : Decimal.min(INFINITO, suma) // sin Romper, se frena en 1e308
   const granos = Math.min(GRANOS_MAX, caudal(s) * dt)
@@ -72,6 +72,7 @@ export function tick(s: State, dt: number, autoInfinito = true): State {
     tiempoInfinito: s.tiempoInfinito + dt,
     maxEnergia: Decimal.max(s.maxEnergia, energia),
     estratos: crecerEstratos(s, dt, Math.log10(caudal(s))), // §7.2: por segundo de juego de Arena
+    fuego: fundirVidrio(s, dt), // Capa 2: el Horno
     escarcha: crecerEscarcha(s, dt), // §9: también fuera de línea y dentro de los Defectos (menos Vidrio)
     relojAuto: s.relojAuto + dt,
     enfriamientoPunado: Math.max(0, s.enfriamientoPunado - dt),

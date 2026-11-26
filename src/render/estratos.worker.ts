@@ -8,6 +8,8 @@ export interface Entrada {
   objetivo: number[]
   /** Granos por paso que caen de la pila (ya con tope). */
   chorro: number
+  /** Capa 2: el Horno encendido (el fondo derrite la arena en vidrio). */
+  horno: boolean
 }
 export interface Salida { celdas: Uint8Array; cuentas: number[]; poros: boolean[] }
 
@@ -25,6 +27,7 @@ self.onmessage = (m: MessageEvent<Entrada | { pesos: number[] }>) => {
   const antes = e.abiertos
   e.objetivo = d.objetivo.map((f) => Math.min(0.95, f))
   chorro = d.chorro
+  e.horno = d.horno
   if (d.abiertos !== antes) {
     e.abrir(d.abiertos)
     // Al entrar, cada bandeja ya está en su nivel; la que se acaba de abrir se llena de golpe (bloque 5).

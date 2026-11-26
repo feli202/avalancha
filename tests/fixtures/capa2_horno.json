@@ -1,0 +1,102 @@
+[
+ {
+  "nombre": "recien encendido",
+  "s8": 290.9,
+  "Btot": 1,
+  "estratos": 0.0,
+  "horno": {
+   "temperatura": 0,
+   "tiro": 0,
+   "crisol": 0,
+   "calor_latente": 0,
+   "templado": 0
+  },
+  "vidrio_log": -0.09100000000000019,
+  "T": 1095.0,
+  "MB": 1.0,
+  "flujo_x": 1.0,
+  "relic_x": 1.0,
+  "costos": {
+   "temperatura": 1,
+   "tiro": 2,
+   "crisol": 3,
+   "calor_latente": 3,
+   "templado": 4
+  }
+ },
+ {
+  "nombre": "primer nivel",
+  "s8": 300.0,
+  "Btot": 5,
+  "estratos": 0.1,
+  "horno": {
+   "temperatura": 1,
+   "tiro": 0,
+   "crisol": 0,
+   "calor_latente": 0,
+   "templado": 0
+  },
+  "vidrio_log": 0.32297978604172245,
+  "T": 1336.805230262713,
+  "MB": 1.0,
+  "flujo_x": 1.0518402615131357,
+  "relic_x": 1.0,
+  "costos": {
+   "temperatura": 2,
+   "tiro": 2,
+   "crisol": 3,
+   "calor_latente": 3,
+   "templado": 4
+  }
+ },
+ {
+  "nombre": "mitad de capa",
+  "s8": 640.0,
+  "Btot": 300,
+  "estratos": 0.25,
+  "horno": {
+   "temperatura": 6,
+   "tiro": 3,
+   "crisol": 2,
+   "calor_latente": 2,
+   "templado": 1
+  },
+  "vidrio_log": 5.309019752463977,
+  "T": 2437.4742825471394,
+  "MB": 3.0,
+  "flujo_x": 1.64733957091391,
+  "relic_x": 1.1,
+  "costos": {
+   "temperatura": 11,
+   "tiro": 7,
+   "crisol": 7,
+   "calor_latente": 7,
+   "templado": 6
+  }
+ },
+ {
+  "nombre": "tarde",
+  "s8": 1500.0,
+  "Btot": 40000,
+  "estratos": 0.6,
+  "horno": {
+   "temperatura": 12,
+   "tiro": 7,
+   "crisol": 4,
+   "calor_latente": 5,
+   "templado": 4
+  },
+  "vidrio_log": 16.00069917024408,
+  "T": 5117.799443070847,
+  "MB": 5.0,
+  "flujo_x": 4.157077715966132,
+  "relic_x": 1.4,
+  "costos": {
+   "temperatura": 42,
+   "tiro": 24,
+   "crisol": 14,
+   "calor_latente": 17,
+   "templado": 14
+  }
+ }
+]

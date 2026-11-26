@@ -1,6 +1,6 @@
 // El embudo de los Estratos (render/embudo.ts): arena que cae de verdad, sin crear ni perder granos por el camino.
 import { expect, test } from 'vitest'
-import { ALTO, ANCHO, BANDAS, Embudo, banda, capacidad } from '../src/render/embudo'
+import { ALTO, ANCHO, BANDAS, Embudo, FONDO, VIDRIO, banda, capacidad } from '../src/render/embudo'
 
 const total = (e: Embudo) => e.celdas.reduce((s, v) => s + (v ? 1 : 0), 0)
 
@@ -39,4 +39,23 @@ test('lo que cae sobre un estrato cerrado se pierde en la roca', () => {
   expect(perdidos).toBeGreaterThan(0)
   expect(BANDAS).toBe(8)
   expect(banda(7).b - banda(7).a).toBeGreaterThan(40)
+})
+
+test('Capa 2: con el Horno encendido la arena que llega al fondo se derrite en vidrio que se junta abajo, sin llenarlo', () => {
+  const e = new Embudo()
+  e.abrir(BANDAS)
+  e.objetivo = Array(BANDAS).fill(0.95)
+  for (let k = 0; k < BANDAS; k++) e.llenar(k, Math.round(0.95 * capacidad(k)), () => k % 4)
+  e.horno = true
+  const f = banda(FONDO)
+  const vidrio = () => { let n = 0; for (let y = f.y; y < f.piso; y++) for (let x = f.a; x <= f.b; x++) n += +(e.celdas[y * ANCHO + x] === VIDRIO); return n }
+  let max = 0
+  for (let p = 0; p < 3000; p++) { e.echar(3, () => p % 4); e.paso(); max = Math.max(max, vidrio()) }
+  expect(vidrio()).toBeGreaterThan(20)
+  expect(max).toBeLessThan(capacidad(FONDO) * 0.6)
+  // apagado (la Capa 1): lo que cae al fondo desaparece, como siempre
+  e.horno = false
+  for (let y = f.y; y < f.piso; y++) e.celdas.fill(0, y * ANCHO + f.a, y * ANCHO + f.b + 1)
+  for (let p = 0; p < 300; p++) { e.echar(3, () => 0); e.paso() }
+  expect(vidrio()).toBe(0)
 })

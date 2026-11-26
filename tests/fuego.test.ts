@@ -77,7 +77,7 @@ describe('nivel de fuego de los nodos', () => {
     const c = comprarFuego(s, 'memoria')
     expect(c.fuego).toMatchObject({ brasas: 0, nodos: ['memoria'] })
     expect(comprarFuego(conFuego(c, { brasas: 9 }), 'memoria')).toEqual(conFuego(c, { brasas: 9 })) // ya lo tiene
-    expect(comprarFuego(conFuego(s, { brasas: 99 }), 'estratos').fuego.nodos).toEqual([]) // El Horno: próximamente
+    expect(comprarFuego(conFuego(s, { brasas: 99 }), 'mutacion_plus').fuego.nodos).toEqual([]) // Metamorfosis: próximamente
     expect(comprarFuego(conFuego(s, { brasas: 1 }), 'eco').fuego.nodos).toEqual([]) // Resonancia cuesta 2
   })
 
@@ -136,7 +136,9 @@ describe('guardado del fuego', () => {
   })
 
   it('valores rotos se sanean: enteros no negativos, nodos que existen y sin repetir', () => {
-    const texto = serializar(partida(lleno)).replace(/"fuego":\{[^}]*\}/, '"fuego":{"brasas":-3,"brasasTotales":2.7,"fundiciones":1,"nodos":["eco","nada","eco",7]}')
+    const d = JSON.parse(serializar(partida(lleno)))
+    d.estado.fuego = { brasas: -3, brasasTotales: 2.7, fundiciones: 1, nodos: ['eco', 'nada', 'eco', 7] }
+    const texto = JSON.stringify(d)
     expect(deserializar(texto).estado.fuego).toMatchObject({ brasas: 0, brasasTotales: 2, fundiciones: 1, nodos: ['eco'] })
   })
 })

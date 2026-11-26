@@ -2,7 +2,7 @@
 // Arriba, la base de la pila principal (la pila llena de verdad, achatada); debajo, el embudo de embudo.ts, que corre en
 // estratos.worker.ts. Se crea al entrar a la pantalla y se destruye al salir: el worker solo corre con la pantalla abierta.
 // Dibuja cuando llegan celdas nuevas (20 por segundo) o hay una animación (roca que se rompe, veta); nada con la pestaña oculta.
-import { ALTO, ANCHO, BANDAS, FONDO, HORNO, PARED, PORO, ROCA, armarMuro, banda, type Banda } from './embudo'
+import { ALTO, ANCHO, BANDAS, FONDO, HORNO, PARED, PORO, ROCA, VIDRIO, armarMuro, banda, type Banda } from './embudo'
 import type { Entrada, Salida } from './estratos.worker'
 import { celdasLlena } from './miniPilas'
 
@@ -18,6 +18,8 @@ export interface Datos extends Entrada {
   sePuedeAbrir: boolean
   /** Reducir destellos: sin veta que respira, sin grietas que laten ni roca que vuela. */
   quieta: boolean
+  /** Capa 2: rótulo de la derecha del Horno (Vidrio/s); '' sin El Horno. El estrato 9 se puede elegir (foco 8). */
+  hornoTexto: string
 }
 
 const MARGEN_ARRIBA = 0.11 // del alto: lugar para la base de la pila
@@ -86,7 +88,7 @@ export class EstratosLienzo {
     this.d = d
     // Los estratos cerrados son roca también en el worker; el muro de acá es para dibujar.
     armarMuro(this.muro, d.abiertos)
-    const e: Entrada = { abiertos: d.abiertos, objetivo: d.objetivo, chorro: d.chorro }
+    const e: Entrada = { abiertos: d.abiertos, objetivo: d.objetivo, chorro: d.chorro, horno: d.horno }
     this.worker.postMessage(e)
     this.pedir()
   }
@@ -122,7 +124,7 @@ export class EstratosLienzo {
 
   private tocar = (e: PointerEvent) => {
     const r = this.canvas.getBoundingClientRect(), y = (e.clientY - r.top - this.oy) / this.cel
-    for (let k = BANDAS - 1; k >= 0; k--) if (y >= banda(k).y - 3) { this.alFoco?.(k); return }
+    for (let k = this.d?.hornoTexto ? FONDO : BANDAS - 1; k >= 0; k--) if (y >= banda(k).y - 3) { this.alFoco?.(k); return }
   }
 
   /** La roca del estrato que se abre salta en pedazos. */
@@ -148,9 +150,11 @@ export class EstratosLienzo {
     if (!d || !this.colores.length) return
     const dt = Math.min(0.05, (t - (this.ultimo || t)) / 1000); this.ultimo = t
     this.pintarMadre(ctx)
-    this.pintarGrilla(d)
+    this.pintarGrilla(d, d.quieta ? 0 : t)
     ctx.imageSmoothingEnabled = false
     ctx.drawImage(this.grilla, ox, oy, ANCHO * cel, ALTO * cel)
+    if (d.horno) this.brillo(ctx, d.quieta ? 0 : t)
+    if (d.hornoTexto) this.rotuloHorno(ctx, d)
     let animando = false
     for (let k = 0; k < BANDAS; k++) {
       const b = banda(k), x0 = ox + b.a * cel, x1 = ox + (b.b + 1) * cel, y0 = oy + b.y * cel, y1 = oy + b.piso * cel
@@ -213,8 +217,8 @@ export class EstratosLienzo {
     ctx.restore()
   }
 
-  private pintarGrilla(d: Datos) {
-    const px = this.img.data, cel = this.celdas, m = this.muro
+  private pintarGrilla(d: Datos, t: number) {
+    const px = this.img.data, cel = this.celdas, m = this.muro, f = banda(FONDO)
     // Fondo de cada bandeja abierta según lo llena que está: hielo claro → sedimento compacto, más hondo de color.
     const fondo: number[][] = [], piso: number[][] = [], espesor: number[] = []
     for (let k = 0; k < BANDAS; k++) {
@@ -230,9 +234,12 @@ export class EstratosLienzo {
       for (let x = 0; x < ANCHO; x++) {
         const i = y * ANCHO + x, o = i * 4, v = cel[i]
         let c: number[] | null = null
-        if (v && m[i] !== ROCA) { const s = this.colores[v - 1]; c = [s[0], s[1], s[2], 255] }
+        if (v === VIDRIO) c = gota(x, y, t)
+        else if (v && m[i] === HORNO) c = [...mezcla(this.colores[v - 1], ASCUA, 0.55), 255] // la arena que cae al Horno ya se calienta
+        else if (v && m[i] !== ROCA) { const s = this.colores[v - 1]; c = [s[0], s[1], s[2], 255] }
         else if (m[i] === ROCA) c = ROCAS[(Math.floor(hash(x * 7.1 + y * 131.3) * 3) + (Math.sin(y * 0.9 + Math.sin(x * 0.13) * 1.6) > 0.6 ? 1 : 0))]
-        else if (m[i] === HORNO) c = y > banda(FONDO).piso - 2 ? HORNO_BRASA : HORNO_C // el fondo vacío, con un rescoldo apenas tibio
+        else if (m[i] === HORNO && d.horno) c = [...mezcla(HORNO_C, ASCUA, 0.22 + 0.6 * ((y - f.y) / (f.piso - f.y)) ** 1.5), 255] // encendido: más caliente abajo
+        else if (m[i] === HORNO) c = y > f.piso - 2 ? HORNO_BRASA : HORNO_C // el fondo vacío, con un rescoldo apenas tibio
         else if (m[i] === PORO && this.poros[k]) c = null // poro abierto: hueco
         else if (m[i] === PARED || m[i] === PORO) c = b && y === b.piso ? piso[k] : MURO
         else if (b && k < d.abiertos && x >= b.a && x <= b.b) c = y < b.piso ? fondo[k] : piso[k] // espesor del piso
@@ -241,6 +248,32 @@ export class EstratosLienzo {
       }
     }
     this.g.putImageData(this.img, 0, 0)
+  }
+
+  /** El Horno encendido: un resplandor naranja que sube del fondo del embudo y late lento (quieto con Reducir destellos). */
+  private brillo(ctx: CanvasRenderingContext2D, t: number) {
+    const f = banda(FONDO), c = this.cel, cx = this.ox + ((f.a + f.b + 1) / 2) * c, cy = this.oy + f.piso * c
+    const r = (f.b - f.a) * c * 0.8, a = t ? 0.5 + 0.1 * Math.sin(t / 650) + 0.05 * Math.sin(t / 211) : 0.52
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r)
+    g.addColorStop(0, `rgb(255 140 50 / ${a})`); g.addColorStop(0.5, `rgb(230 80 30 / ${a * 0.4})`); g.addColorStop(1, 'rgb(200 50 20 / 0)')
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g
+    ctx.fillRect(cx - r, cy - r, 2 * r, r + c * 2); ctx.restore()
+  }
+
+  /** Rótulos del estrato 9: el número a la izquierda, el Vidrio/s a la derecha y el marco si está elegido. */
+  private rotuloHorno(ctx: CanvasRenderingContext2D, d: Datos) {
+    const b = banda(FONDO), c = this.cel, x0 = this.ox + b.a * c, x1 = this.ox + (b.b + 1) * c, y0 = this.oy + b.y * c, y1 = this.oy + b.piso * c, ym = (y0 + y1) / 2
+    ctx.font = `600 ${Math.max(11, Math.min(14, c * 3.4))}px 'Space Grotesk', system-ui, sans-serif`; ctx.textBaseline = 'middle'
+    ctx.textAlign = 'right'; ctx.fillStyle = d.foco === FONDO ? '#ffb070' : 'rgb(255 176 112 / 0.75)'
+    ctx.fillText('9', x0 - c * 2 - 6, ym)
+    if (this.angosto) {
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgb(4 6 13 / 0.85)'; ctx.lineJoin = 'round'
+      ctx.strokeText(d.hornoTexto, x1 - c * 2, ym); ctx.fillStyle = '#ffb070'; ctx.fillText(d.hornoTexto, x1 - c * 2, ym)
+    } else { ctx.textAlign = 'left'; ctx.fillStyle = '#ffb070'; ctx.fillText(d.hornoTexto, x1 + c * 2 + 6, ym) }
+    if (d.foco === FONDO) {
+      ctx.strokeStyle = 'rgb(255 160 90 / 0.85)'; ctx.lineWidth = 1
+      ctx.strokeRect(Math.round(x0 - c * 2.5) + 0.5, Math.round(y0 - c * 1.5) + 0.5, Math.round(x1 - x0 + c * 5), Math.round(y1 - y0 + c * 3))
+    }
   }
 
   /** La veta del estrato en su tope: una línea quebrada violeta que respira lento. */
@@ -274,5 +307,10 @@ export class EstratosLienzo {
 }
 
 const MURO = [58, 92, 118, 255]
-const HORNO_C = [7, 9, 15, 255], HORNO_BRASA = [26, 14, 12, 255]
+const HORNO_C = [7, 9, 15, 255], HORNO_BRASA = [26, 14, 12, 255], ASCUA = [255, 120, 40]
+/** Una gota de vidrio fundido: ámbar claro con brillos que titilan (fijos con Reducir destellos). */
+const gota = (x: number, y: number, t: number) => {
+  const h = hash(x * 3.7 + y * 17.3), brilla = hash(x * 1.3 + y * 5.1 + Math.floor(t / 180)) > 0.93
+  return brilla ? [255, 240, 205, 255] : [...mezcla([255, 150, 60], [255, 205, 130], h), 255]
+}
 const ROCAS = [[11, 14, 20, 255], [16, 20, 28, 255], [21, 26, 36, 255], [27, 33, 48, 255]]

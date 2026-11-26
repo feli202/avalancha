@@ -414,7 +414,7 @@
       {/if}
       {#if estado}<p class="estado">{estado}</p>{/if}
       {#if verFuego}
-        <p class="hace fuego"><b>{f.conFuego}</b> {f.nombres[elegido]}: {FUEGO_HECHO.has(elegido) ? f.efectos[elegido](CFG2.red_fuego.memoria.autocompradores_x) : f.descripciones[elegido]}</p>
+        <p class="hace fuego"><b>{f.conFuego}</b> {f.nombres[elegido]}: {FUEGO_HECHO.has(elegido) ? f.efectos[elegido](elegido === 'cristalografia' ? CFG2.red_fuego.cristalografia.vidrio_s_por_infinito : CFG2.red_fuego.memoria.autocompradores_x) : f.descripciones[elegido]}</p>
         {#if tieneFuego(s, elegido)}<p class="estado fuego">{f.encendido}</p>
         {:else if !FUEGO_HECHO.has(elegido)}<p class="estado fuego proximo">{f.proximamente} <span class="num">{f.precio(precioFuego(elegido))}</span></p>
         {:else}

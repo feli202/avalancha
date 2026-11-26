@@ -1,6 +1,6 @@
 // Guardado (SPEC 8): la partida como JSON con versión. Puro: el almacenamiento entra como Almacen.
 import Decimal from 'break_infinity.js'
-import { CFG, DEFECTOS, campoInvalido, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, NODOS_FUEGO, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, toparCristales, type Pieza, type State } from '../core'
+import { CFG, DEFECTOS, campoInvalido, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, NODOS_FUEGO, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, toparCristales, MEJORAS_HORNO, type Pieza, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
 import type { Contadores } from '../ui/secretos'
@@ -52,7 +52,7 @@ const plano = (p: Partida) => ({
   version: VERSION,
   ...p,
   estado: { ...p.estado, energia: dec(p.estado.energia), maxEnergia: dec(p.estado.maxEnergia),
-    cristales: dec(p.estado.cristales), cristalesTotales: dec(p.estado.cristalesTotales) },
+    cristales: dec(p.estado.cristales), cristalesTotales: dec(p.estado.cristalesTotales), fuego: { ...p.estado.fuego, vidrio: dec(p.estado.fuego.vidrio) } },
 })
 type Plano = ReturnType<typeof plano>
 
@@ -124,7 +124,8 @@ export function deserializar(texto: string): Partida {
   const f = e.fuego
   const fuego: State['fuego'] = beta
     ? { brasas: ent(f.brasas), brasasTotales: ent(f.brasasTotales), fundiciones: ent(f.fundiciones), nodos: [...new Set(f.nodos.filter((id) => NODOS_FUEGO.includes(id)))],
-        repartos: MODELO.estado.fuego.repartos.map((m: number[], k: number) => m.map((x, i) => Math.min(1, pos(f.repartos[k]?.[i] ?? x)))), reparto: ent(f.reparto, MODELO.estado.fuego.repartos.length - 1) } // fase 3: completar() los pone
+        repartos: MODELO.estado.fuego.repartos.map((m: number[], k: number) => m.map((x, i) => Math.min(1, pos(f.repartos[k]?.[i] ?? x)))), reparto: ent(f.reparto, MODELO.estado.fuego.repartos.length - 1), // fase 3: completar() los pone
+        vidrio: deDec(f.vidrio), horno: Object.fromEntries(MEJORAS_HORNO.map((k) => [k, ent(f.horno[k])])) as State['fuego']['horno'] } // fase 4: completar() los pone en 0
     : estadoInicial().fuego
   const red = topada.red
   const conRed = { ...estadoInicial(), red } // los topes de Cascada y Mutaciones dependen de la Red

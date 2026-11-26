@@ -5,6 +5,7 @@ import { precioLog10 } from './config'
 import { CFG1 } from './config1'
 import { efectoRed } from './red'
 import { enVidrio } from './defectos'
+import { templadoX } from './fuego'
 import type { Pieza, Regla, State } from './state'
 
 const R = CFG1.relicario
@@ -168,7 +169,7 @@ const POR_NIVEL: Record<string, number> = {
 }
 /** El efecto de una pieza del tipo y nivel dados. */
 export const efectoNivel = (t: string, nivel: number) => (nivel < 0 ? 0 : POR_NIVEL[t] * (nivel + 1))
-const efecto = (s: State, t: string) => enVidrio(s) ? 0 : equipadas(s).reduce((a, p) => a + (p.tipo === t ? efectoNivel(t, p.nivel) : 0), 0)
+const efecto = (s: State, t: string) => enVidrio(s) ? 0 : templadoX(s) * equipadas(s).reduce((a, p) => a + (p.tipo === t ? efectoNivel(t, p.nivel) : 0), 0) // Templado del Horno
 /** Cauce: los colores valen (log10) × (1 + esto). */
 export const cauceRel = (s: State) => efecto(s, 'cauce')
 /** Cascada: se suma al exponente c. */

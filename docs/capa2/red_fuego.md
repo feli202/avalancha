@@ -43,7 +43,7 @@ El orden cambió respecto del punto de partida para seguir la tabla de ritmo: el
 ### Cómo quedó (fase 3, beta)
 
 - `fuego.nodos` en la partida; precios de `red_fuego` en config; `puedeComprarFuego`/`comprarFuego` en `src/core/fuego.ts` (nodo en nv4 en la vuelta, Brasas, permanente). Los 25 nombres en `src/strings`.
-- Funcionan solo **Memoria eterna** (al fundir, Memoria nv4 y sus 11 compresiones; autocompradores ×`autocompradores_x` = 2 más seguido: el paso del tick se divide), **Lecho infinito** (`umbralLog10` y `densidad`, ver [liberaciones.md](liberaciones.md)) y **Resonancia** (`ecoLog10`). El resto dice "Próximamente" y no se compra (`FUEGO_HECHO`); una partida beta que ya tenga otro nodo de fuego lo conserva.
+- Funcionan **Memoria eterna** (al fundir, Memoria nv4 y sus 11 compresiones; autocompradores ×`autocompradores_x` = 2 más seguido: el paso del tick se divide), **Lecho infinito** (`umbralLog10` y `densidad`, ver [liberaciones.md](liberaciones.md)) **Resonancia** (`ecoLog10`) y, desde la fase 5, **El Horno** y **Cristal fundido** ([horno.md](horno.md)). El resto dice "Próximamente" y no se compra (`FUEGO_HECHO`); una partida beta que ya tenga otro nodo de fuego lo conserva.
 - Panel del nodo (`Red.svelte`): una llama después de Violeta (naranja tenue apagada, degradé encendida). Al tocarla, o sola con el nodo en nv4: "Con fuego: nombre: efecto", el precio en Brasas y Encender. La lava en la Red y el aspecto definitivo son de la fase 4.
 
 ### Cómo quedó el aspecto (fase 4, beta)

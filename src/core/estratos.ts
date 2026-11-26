@@ -4,6 +4,8 @@ import { precioLog10 } from './config'
 import { CFG1 } from './config1'
 import { cristalesDe, efectoRed } from './red'
 import { enVidrio } from './defectos'
+import { CFG2 } from './config2'
+import { flujoFuego } from './fuego'
 import type { State } from './state'
 
 const E = CFG1.estratos
@@ -13,8 +15,8 @@ export const hayEstratos = (s: State) => efectoRed(s, 'estratos', 'flujo_x') > 0
 
 /** Impulso de Inercia: sube lineal con el tiempo desde el último Infinito hasta impulso_x a los impulso_s segundos. */
 export const impulso = (s: State) => 1 + (efectoRed(s, 'inercia', 'impulso_x', 1) - 1) * Math.min(1, s.tiempoInfinito / E.impulso_s)
-/** flujo (log10/s) = γ × Estratos × Impulso. */
-export const flujoEstratos = (s: State) => E.gamma_log10_por_s * efectoRed(s, 'estratos', 'flujo_x') * impulso(s)
+/** flujo (log10/s) = γ × Estratos × Impulso × fuego (Tiro y sector Estratos del Motor; 1 sin fuego). */
+export const flujoEstratos = (s: State) => E.gamma_log10_por_s * efectoRed(s, 'estratos', 'flujo_x') * impulso(s) * flujoFuego(s)
 /** Separación: un estrato llega como mucho a s_(k−1) − esto (Capilaridad la achica). */
 export const separacion = (s: State) => efectoRed(s, 'capilaridad', 'separacion', E.separacion_log10)
 /** Empuje: el estrato de abajo acelera al de arriba, × (1 + empuje × s_(k+1)). El último abierto no tiene. */
@@ -31,6 +33,8 @@ export const gammaEstrato = (s: State, k: number, logCaudal: number, sk = s.estr
 /** Avanza los estratos abiertos dt segundos de Arena, de arriba a abajo (como sim_capa1.py). Un estrato nunca pasa al de
  * arriba menos la separación, ni baja. */
 export function crecerEstratos(s: State, dt: number, logCaudal: number): State['estratos'] {
+  const ll = abrirLlenos(s)
+  if (ll !== s.estratos) s = { ...s, estratos: ll }
   const e = s.estratos
   if (!e.abiertos || !flujoEstratos(s) || enVidrio(s)) return e // Vidrio: los estratos quedan quietos
   const n = [...e.s], sep = separacion(s)
@@ -40,6 +44,15 @@ export function crecerEstratos(s: State, dt: number, logCaudal: number): State['
     n[k] = Math.max(n[k], x)
   }
   return { ...e, s: n }
+}
+
+/** Capa 2 (escalado_ignicion.md): desde la primera Fundición, con el nodo Estratos nv1 se abren los 8 juntos y llenos:
+ * s_8 = 290,9 y cada uno la separación más que el de abajo (como estratos_llenos de sim_capa2.py). */
+export function abrirLlenos(s: State): State['estratos'] {
+  const e = s.estratos
+  if (!s.fuego.fundiciones || e.abiertos >= ESTRATOS || !hayEstratos(s)) return e
+  const sep = separacion(s), s8 = CFG2.escalado.estratos_llenos_s8
+  return { ...e, abiertos: ESTRATOS, s: e.s.map((x, k) => Math.max(x, s8 + (ESTRATOS - 1 - k) * sep)) }
 }
 
 /** El estrato está en su tope (s_(k−1) − separación). El primero no tiene tope: cuenta siempre como lleno (Abismo). */

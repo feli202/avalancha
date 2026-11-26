@@ -69,8 +69,9 @@ export interface State {
   escarcha: { abierta: boolean; logX: number; esquirlas: number; mejoras: Record<MejoraEscarcha, number>; reloj: number }
   /** Capa 2 (beta, core/fuego.ts): lo permanente, que la Fundición no reinicia. Brasas enteras y chicas (~1e5 en la Ignición),
    * así que van como número. `nodos`: los que tienen su nivel de fuego. La Temperatura sale de `brasasTotales`.
-   * `repartos`: los 3 repartos del calor guardados (partes por sector, en el orden de SECTORES); `reparto`: el que se usa. */
-  fuego: { brasas: number; brasasTotales: number; fundiciones: number; nodos: string[]; repartos: number[][]; reparto: number }
+   * `repartos`: los 3 repartos del calor guardados (partes por sector, en el orden de SECTORES); `reparto`: el que se usa.
+   * `vidrio`: el del Horno (fase 5); `horno`: nivel de cada mejora del Horno. */
+  fuego: { brasas: number; brasasTotales: number; fundiciones: number; nodos: string[]; repartos: number[][]; reparto: number; vidrio: Decimal; horno: Record<MejoraHorno, number> }
   tiempoTotal: number
   /** Segundos de Arena desde el último Infinito (no se reinicia con la Compresión): el Impulso de Inercia. */
   tiempoInfinito: number
@@ -91,6 +92,7 @@ export const COMPRAS_AUTO = ['caudal', ...CFG.colores.map((c) => c.id), 'cascada
 /** Todos los interruptores, en el orden del panel. */
 export const AUTOS = [...COMPRAS_AUTO, 'compresion_auto', 'infinito', 'escarcha']
 export type MejoraEscarcha = 'crecimiento' | 'brillo' | 'umbral'
+export type MejoraHorno = keyof typeof CFG2.horno.mejoras
 
 const ceros = () => Array<number>(CFG1.estratos.cantidad).fill(0)
 
@@ -122,7 +124,8 @@ export const estadoInicial =(): State => ({
   estratos: { abiertos: 0, s: ceros(), perm: ceros(), pres: ceros() },
   defectos: { completos: [], actual: '', reintento: {} },
   escarcha: { abierta: false, logX: 0, esquirlas: 0, mejoras: { crecimiento: 0, brillo: 0, umbral: 0 }, reloj: 0 },
-  fuego: { brasas: 0, brasasTotales: 0, fundiciones: 0, nodos: [], repartos: CFG2.motor.repartos_iniciales.map((r) => [...r]), reparto: 0 },
+  fuego: { brasas: 0, brasasTotales: 0, fundiciones: 0, nodos: [], repartos: CFG2.motor.repartos_iniciales.map((r) => [...r]), reparto: 0,
+    vidrio: new Decimal(0), horno: { temperatura: 0, tiro: 0, crisol: 0, calor_latente: 0, templado: 0 } },
   tiempoTotal: 0,
   tiempoInfinito: 0,
   granosTotales: 0,

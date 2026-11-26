@@ -3,9 +3,11 @@
   // física en un worker que solo vive mientras esta pantalla está abierta) y al costado la ficha del estrato elegido.
   import Decimal from 'break_infinity.js'
   import {
-    CFG1, ESTRATOS, abrirEstrato, costoAbrir, costoMejora, cristalesDe, densidad, hayEstratos, lleno, mejorarEstrato, presion,
-    presionEstrato, puedeAbrir, puedeMejorar, type MejoraEstrato,
+    CFG1, CFG2, ESTRATOS, MEJORAS_HORNO, abrirEstrato, costoAbrir, costoHorno, costoMejora, cristalesDe, densidad, hayEstratos,
+    hornoEncendido, lleno, mejorarEstrato, mejorarHorno, presion, presionEstrato, puedeAbrir, puedeMejorar, puedeMejorarHorno, tieneFuego,
+    vidrioPorSegundo, type MejoraEstrato, type MejoraHorno,
   } from '../core'
+  import { esBeta } from '../guardado/guardado'
   import { EstratosLienzo } from '../render/estratosLienzo'
   import { COLORES_DALTONISMO, PALETAS } from '../render/paletas'
   import { txt } from '../strings'
@@ -19,6 +21,19 @@
 
   const E = CFG1.estratos
   const t = txt.cristal.estratos
+  const h = txt.fuego.horno
+  const HM = CFG2.horno.mejoras
+  /** Capa 2: el estrato 9 (el Horno) se elige como uno más, debajo del 8. */
+  const FONDO = ESTRATOS
+  const conHorno = $derived(esBeta(juego) && tieneFuego(juego.s, 'estratos'))
+  /** Lo que da cada mejora del Horno en el nivel L (para "×a → ×b"). */
+  const valorHorno = (k: MejoraHorno, L: number) =>
+    k === 'temperatura' ? HM.temperatura.x ** L : k === 'tiro' ? 1 + HM.tiro.suma * L : k === 'crisol' ? CFG2.fundicion.M_B + HM.crisol.suma * L
+      : k === 'calor_latente' ? HM.calor_latente.K * L : 1 + HM.templado.suma * L
+  const efectoHorno = (k: MejoraHorno, L: number) => {
+    const f = k === 'calor_latente' ? formato : formatoMult // los K, enteros
+    return h.efectos[k](f(valorHorno(k, L)), f(valorHorno(k, L + 1)))
+  }
   const s = $derived(juego.s)
   const cuesta = (c: Decimal) => txt.cristal.red.costo(formato(c, true))
   const SUMA: Record<MejoraEstrato, number> = { perm: E.permeabilidad.suma_gamma, pres: E.presion.suma_w }
@@ -74,10 +89,12 @@
       tope: ocho.map(frenado),
       numeros: ocho.map((k) => String(k + 1)),
       derecha: ocho.map((k) => (k < n ? `×${vale(presionEstrato(s, k))}` : t.roca(k + 1, formato(cristalesDe(E.abrir_log10[k]), true)))),
+      horno: hornoEncendido(s), hornoTexto: conHorno ? h.ritmo(formatoMult(vidrioPorSegundo(s))) : '',
     })
   })
 
-  function ir(k: number) { foco = Math.max(0, Math.min(ESTRATOS - 1, k)) }
+  const ultimo = $derived(conHorno ? FONDO : ESTRATOS - 1)
+  function ir(k: number) { foco = Math.max(0, Math.min(ultimo, k)) }
   function tecla(e: KeyboardEvent) {
     const d = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0
     if (!d) return
@@ -101,10 +118,26 @@
       <aside class="ficha placa grietas" aria-live="polite">
         <header>
           <button class="paso" aria-label={t.arriba} title={t.arriba} disabled={foco === 0} onclick={() => ir(foco - 1)}>↑</button>
-          <h2>{t.estrato(foco + 1)}</h2>
-          <button class="paso" aria-label={t.abajo} title={t.abajo} disabled={foco === ESTRATOS - 1} onclick={() => ir(foco + 1)}>↓</button>
+          <h2 class:brasa={foco === FONDO}>{foco === FONDO ? h.titulo : t.estrato(foco + 1)}</h2>
+          <button class="paso" aria-label={t.abajo} title={t.abajo} disabled={foco >= ultimo} onclick={() => ir(foco + 1)}>↓</button>
         </header>
-        {#if abierto}
+        {#if foco === FONDO && conHorno}
+          <dl class="num">
+            <div><dt>{h.vidrio}</dt><dd class="brasa">{formato(s.fuego.vidrio)}</dd></div>
+            <div><dt>{h.porSegundo}</dt>
+              {#if hornoEncendido(s)}<dd>{formatoMult(vidrioPorSegundo(s))}</dd>{:else}<small>{h.apagado}</small>{/if}</div>
+          </dl>
+          <ul class="horno">
+            {#each MEJORAS_HORNO as k (k)}
+              {@const L = s.fuego.horno[k]}
+              <li><button class="compra gema hm" style:--c="#ff8a3d" aria-disabled={!puedeMejorarHorno(s, k)} onclick={() => hacer(mejorarHorno(juego.s, k))}
+                aria-label={h.mejorar(h.nombres[k], formato(costoHorno(s, k), true))}>
+                <b>{h.nombres[k]}<span class="nv">{t.nv(L)}</span></b><span class="costo num">{formato(costoHorno(s, k), true)}</span>
+                <small class="num">{efectoHorno(k, L)}</small>
+              </button></li>
+            {/each}
+          </ul>
+        {:else if abierto}
           <dl class="num">
             <div>
               <dt>{t.granos}</dt>
@@ -151,7 +184,7 @@
         {/if}
       </aside>
     </div>
-    <p class="que">{t.que}</p>
+    <p class="que">{foco === FONDO ? h.que : t.que}</p>
   {/if}
 </section>
 
@@ -239,6 +272,16 @@
   .compra[aria-disabled='true'] .num:last-child { color: var(--apagado); }
   .abrir { min-height: 3.5rem; font-size: 1.0625rem; }
   .ficha p { text-align: left; }
+
+  /* Capa 2: la ficha del Horno, en brasa. Las 5 mejoras en una lista que scrollea sola si no entra. */
+  h2.brasa, dd.brasa { color: #ffb070; }
+  ul.horno { display: grid; gap: 0.4rem; margin: 0; padding: 0; list-style: none; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .hm { --b: 0.9rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 0.6rem; width: 100%; min-height: 2.75rem; padding-block: 0.4rem; font: inherit; font-size: 0.875rem; text-align: left; }
+  .hm b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hm .nv { margin-left: 0.3rem; font-size: 0.75rem; font-weight: 400; color: var(--tenue); }
+  .hm .costo { color: #ffb070; }
+  .hm[aria-disabled='true'] .costo { color: var(--apagado); }
+  .hm small { grid-column: 1 / span 2; font-size: 0.75rem; }
 
   /* Ventanas bajas: la ficha se aprieta. */
   @media (max-height: 800px) and (min-width: 761px) {

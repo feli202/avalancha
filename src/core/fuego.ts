@@ -1,32 +1,37 @@
 // Capa 2 (beta), fase 3: la Fundición, las Brasas, la Temperatura y el quinto nivel (de fuego) de los nodos de la Red.
 // docs/capa2/fundicion.md, temperatura_motor.md y red_fuego.md; las fórmulas son las de sim_capa2.py (brasas_al_fundir, Fuego.T).
 // La marca de beta vive en la partida, no acá: sin beta `fuego` queda en cero (guardado.ts) y nada de esto cambia el juego.
-import { CFG } from './config'
+import Decimal from 'break_infinity.js'
+import { CFG, precioLog10 } from './config'
+import { CFG1 } from './config1'
 import { CFG2 } from './config2'
 import { NIVEL_MAX_RED, compresionesConservadas, nivelRed } from './red'
-import { estadoInicial, type State } from './state'
+import { estadoInicial, type MejoraHorno, type State } from './state'
 
 const FU = CFG2.fundicion
+const HO = CFG2.horno
 const TP = CFG2.temperatura
 /** Los 25 nodos con nivel de fuego, en el orden de config. */
 export const NODOS_FUEGO = Object.keys(CFG2.red_fuego)
 /** Los niveles de fuego que ya hacen algo; el resto dice "próximamente" y no se compra (llegan en las fases 4–10). */
-export const FUEGO_HECHO = new Set(['memoria', 'sedimentacion', 'eco'])
+export const FUEGO_HECHO = new Set(['memoria', 'sedimentacion', 'eco', 'estratos', 'cristalografia'])
 
 export const tieneFuego = (s: State, id: string) => s.fuego.nodos.includes(id)
 export const precioFuego = (id: string) => CFG2.red_fuego[id].precio
 
-/** Temperatura en K: 300 + 795 × Brasas totales^0,165 (Esquirla de fuego, Compresión térmica y Calor latente llegan después). */
-export const temperatura = (s: State) => TP.inicial + TP.por_brasa * s.fuego.brasasTotales ** TP.exp_brasas
+/** Temperatura en K: 300 + 795 × Brasas totales^0,165 + Calor latente (Esquirla de fuego y Compresión térmica llegan después). */
+export const temperatura = (s: State) =>
+  TP.inicial + TP.por_brasa * s.fuego.brasasTotales ** TP.exp_brasas + HO.mejoras.calor_latente.K * s.fuego.horno.calor_latente
 /** Lo que la Temperatura suma a la Densidad: (T − 300) / 1000. */
 export const densidadFuego = (s: State) => (temperatura(s) - TP.inicial) * TP.densidad_por_K
 
 /** Requisito: 1e308 Cristales totales en esta vuelta (el tope de los Cristales). */
 export const puedeFundir = (s: State) => s.cristalesTotales.log10() >= FU.requisito_log10
 
-/** Brasas = ⌊M_B × (log10 C / 308)^5,2⌋. Con los Cristales frenados en el tope da M_B (Crisol, cargas y Fusión llegan después). */
+/** Brasas = ⌊M_B × (log10 C / 308)^5,2⌋, M_B = 1 + Crisol. Con los Cristales frenados en el tope da M_B (cargas y Fusión llegan después). */
 export function brasasAlFundir(s: State) {
-  const x = Math.min(300, Math.log10(FU.M_B) + FU.brasas_exp * Math.log10(Math.max(1, s.cristalesTotales.log10() / FU.brasas_desde_log10)))
+  const mb = FU.M_B + HO.mejoras.crisol.suma * s.fuego.horno.crisol
+  const x = Math.min(300, Math.log10(mb) + FU.brasas_exp * Math.log10(Math.max(1, s.cristalesTotales.log10() / FU.brasas_desde_log10)))
   return Math.floor(10 ** x + 1e-9)
 }
 
@@ -111,3 +116,37 @@ export const ponerReparto = (s: State, rep: number[]): State =>
 /** Cambia a otro de los 3 repartos guardados. */
 export const elegirReparto = (s: State, k: number): State =>
   k >= 0 && k < s.fuego.repartos.length ? { ...s, fuego: { ...s.fuego, reparto: k } } : s
+
+// --- El Horno y el Vidrio (fase 5, horno.md; igual que vidrio_log y costo_horno de sim_capa2.py) ---
+
+export const MEJORAS_HORNO = Object.keys(HO.mejoras) as MejoraHorno[]
+/** El Horno funde con El Horno encendido y los 8 estratos abiertos (el estrato 9 es el fondo del embudo). */
+export const hornoEncendido = (s: State) => tieneFuego(s, 'estratos') && s.estratos.abiertos >= CFG1.estratos.cantidad
+/** log10 del Vidrio/s = log10 v0 + 0,01 × s_8 + Temperatura del Horno × log10 2 + log10(1 + 0,5 × calor de Estratos).
+ * Sedimento fundido, Abismo ardiente y Eco del Horno llegan con sus fuegos. −∞ con el Horno apagado. */
+export const vidrioLog10 = (s: State) => !hornoEncendido(s) ? -Infinity
+  : Math.log10(HO.v0) + HO.exp_s8 * Math.max(0, s.estratos.s[CFG1.estratos.cantidad - 1]) +
+    s.fuego.horno.temperatura * Math.log10(HO.mejoras.temperatura.x) + Math.log10(1 + CFG2.motor.efecto.estratos_vidrio * calor(s, 'estratos'))
+export const vidrioPorSegundo = (s: State) => (hornoEncendido(s) ? Decimal.pow10(vidrioLog10(s)) : new Decimal(0))
+/** El Vidrio sube todo el tiempo (también fuera de línea, con el dt que le dé offline). */
+export const fundirVidrio = (s: State, dt: number): State['fuego'] =>
+  hornoEncendido(s) ? { ...s.fuego, vidrio: s.fuego.vidrio.add(vidrioPorSegundo(s).mul(dt)) } : s.fuego
+/** Cristal fundido: cada Infinito suma 10 s de Vidrio. */
+export const vidrioAlInfinito = (s: State): State['fuego'] =>
+  tieneFuego(s, 'cristalografia') ? fundirVidrio(s, CFG2.red_fuego.cristalografia.vidrio_s_por_infinito) : s.fuego
+
+/** log10 del costo del nivel L → L+1: c0 + paso × L + cub × L³ / 6, al exponente entero. */
+export const costoHornoLog10 = (k: MejoraHorno, L: number) => {
+  const q = HO.mejoras[k]
+  return precioLog10(q.c0 + q.paso * L + (q.cub * L ** 3) / 6)
+}
+export const costoHorno = (s: State, k: MejoraHorno) => Decimal.pow10(costoHornoLog10(k, s.fuego.horno[k]))
+export const puedeMejorarHorno = (s: State, k: MejoraHorno) => tieneFuego(s, 'estratos') && s.fuego.vidrio.gte(costoHorno(s, k))
+export const mejorarHorno = (s: State, k: MejoraHorno): State =>
+  puedeMejorarHorno(s, k)
+    ? { ...s, fuego: { ...s.fuego, vidrio: s.fuego.vidrio.sub(costoHorno(s, k)), horno: { ...s.fuego.horno, [k]: s.fuego.horno[k] + 1 } } }
+    : s
+/** Lo que multiplica el flujo de los 8 estratos: Tiro (1 + 0,1 × nivel) y el sector Estratos del Motor (1 + 0,5 h). */
+export const flujoFuego = (s: State) => (1 + HO.mejoras.tiro.suma * s.fuego.horno.tiro) * extraSector(s, 'estratos')
+/** Templado: el efecto de las reliquias engarzadas × (1 + 0,1 × nivel). */
+export const templadoX = (s: State) => 1 + HO.mejoras.templado.suma * s.fuego.horno.templado

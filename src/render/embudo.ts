@@ -11,12 +11,13 @@ const ALTO_BANDA = 6 // filas de arena de cada bandeja
 const CAIDA = 4 // por banda la bandeja se angosta 2 × CAIDA columnas; la pared diagonal ocupa CAIDA filas
 const ANCHO_0 = 114
 const PASO_BANDA = ALTO_BANDA + 1 + CAIDA
-/** v1.0: debajo del estrato 8, el fondo cerrado del embudo (sin compras; en la Capa 2 va a ser el Horno). */
+/** v1.0: debajo del estrato 8, el fondo cerrado del embudo. Capa 2: el Horno (estrato 9), que derrite la arena en vidrio. */
 export const FONDO = BANDAS
 export const ALTO = ARRIBA + (BANDAS + 1) * PASO_BANDA
 
 export const VACIO = 0
-// 1..4: arena del color 0..3 de la paleta. Las celdas fijas van en `muro`.
+// 1..4: arena del color 0..3 de la paleta; VIDRIO: una gota de vidrio del Horno. Las celdas fijas van en `muro`.
+export const VIDRIO = 5
 export const PARED = 1, PORO = 2, ROCA = 3, HORNO = 4
 
 export interface Banda {
@@ -68,6 +69,8 @@ export class Embudo {
   /** Fracción de la capacidad que cada bandeja quiere tener; por encima, abre los poros. */
   objetivo = new Array<number>(BANDAS).fill(0)
   abiertos = 0
+  /** Capa 2: el Horno encendido. La arena que cae al fondo no se pierde: se derrite en gotas que se juntan abajo. */
+  horno = false
   private impar = false
 
   constructor(private azar: () => number = Math.random) { armarMuro(this.muro, 0) }
@@ -127,15 +130,35 @@ export class Embudo {
             if (nx >= 0 && nx < ANCHO && libre(i + d) && libre(i + ANCHO + d)) { dest = i + ANCHO + d; break }
           }
         }
+        if (dest < 0 && c[i] === VIDRIO) { // el vidrio es líquido: si no puede bajar, se corre de costado
+          const d = this.azar() < 0.5 ? 1 : -1
+          if (libre(i + d) && m[i + d] === HORNO) dest = i + d
+        }
         if (dest < 0) continue
-        if (m[dest] === ROCA || m[dest] === HORNO) { perdidos++; c[i] = VACIO; continue } // cae sobre un estrato cerrado: se filtra en la roca
+        if (m[dest] === ROCA || (m[dest] === HORNO && !this.horno)) { perdidos++; c[i] = VACIO; continue } // cae sobre un estrato cerrado: se filtra en la roca
         c[dest] = c[i]; c[i] = VACIO
       }
     }
     // la última fila no tiene adónde ir
     c.fill(VACIO, (ALTO - 1) * ANCHO)
+    if (this.horno) this.derretir()
     this.contar()
     return perdidos
+  }
+
+  /** En el Horno la arena se derrite de a poco en gotas de vidrio; pasado un nivel, el vidrio de abajo se escurre (así nunca se llena). */
+  private derretir() {
+    const { celdas: c, muro: m } = this, f = banda(FONDO)
+    let vidrio = 0
+    for (let y = f.y; y < f.piso; y++) for (let x = f.a; x <= f.b; x++) {
+      const i = y * ANCHO + x
+      if (m[i] !== HORNO || !c[i]) continue
+      if (c[i] !== VIDRIO && this.azar() < 0.12) c[i] = VIDRIO
+      if (c[i] === VIDRIO) vidrio++
+    }
+    if (vidrio < capacidad(FONDO) * 0.35) return
+    const fondo = (f.piso - 1) * ANCHO
+    for (let x = f.a; x <= f.b; x++) if (c[fondo + x] === VIDRIO && this.azar() < 0.15) c[fondo + x] = VACIO
   }
 
   contar() {
