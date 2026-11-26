@@ -19,18 +19,14 @@
   import Comunidad from './Comunidad.svelte'
   import Beta from './Beta.svelte'
   import { esBeta } from '../guardado/guardado'
+  import { ICONOS } from './iconos'
+  import Motor from './Motor.svelte'
+  import { etapaMotor } from '../core'
 
   const PANTALLAS = ['relicario', 'red', 'estratos', 'defectos', 'escarcha']
-  // Un ícono por sistema, dibujado con la geometría del juego: la Red un rombo de celdas, los Estratos losas apiladas,
-  // los Defectos una red con una dislocación, la Escarcha un copo de seis brazos, el Relicario una gema tallada.
-  const ICONOS: Record<string, string> = {
-    red: 'M0-7 7 0 0 7-7 0ZM-3.5-3.5 3.5 3.5M3.5-3.5-3.5 3.5',
-    estratos: 'M-7-6.5h14l-1.5 3h-11ZM-6-1h12l-1.5 3h-9ZM-5 4.5h10l-1.5 3h-7Z',
-    defectos: 'M-7-3.5h14M-7 3.5h14M-3.5-7V7M3.5-7V0M1.5 0V7', // una dislocación: la línea de la red que se corre
-    escarcha: 'M0-7V7M-6-3.5 6 3.5M-6 3.5 6-3.5M0-7-1.5-5.5M0-7 1.5-5.5M0 7-1.5 5.5M0 7 1.5 5.5',
-    relicario: 'M-6-2.5-3.5-6h7L6-2.5 0 7ZM-6-2.5H6M-3.5-6-1.5-2.5 0 7M3.5-6 1.5-2.5 0 7',
-  }
   const s = $derived(juego.s)
+  // Capa 2 (beta): el Motor de Brasas, desde la primera Fundición. Con él, la barra queda aunque la vuelta no tenga Infinitos.
+  const motor = $derived(esBeta(juego) && etapaMotor(s) > 0)
   // La presentación de tres líneas, hasta que se toca Seguir (queda en el guardado).
   const visto = () => {
     juego.vistos = { ...juego.vistos, cristales: true }
@@ -58,7 +54,7 @@
   </svg>
 {/snippet}
 
-{#if s.infinitos > 0 && !juego.titulo}
+{#if (s.infinitos > 0 || motor) && !juego.titulo}
   <div class="capa1" class:quieto={quieto()} class:calma={ajustes.calma} inert={hayCartel()}>
     {#if juego.capa === 'cristalizacion'}
       <main class="cristalizacion" class:llega={!juego.vistos.cristales} class:fija={juego.vistos.cristales}>
@@ -115,6 +111,8 @@
           <Comunidad />
         </div>
       </main>
+    {:else if juego.capa === 'motor' && motor}
+      <Motor />
     {:else if juego.capa === 'automatizacion'}
       <main class="automat">
         <Automatizacion />
@@ -146,6 +144,17 @@
             <path class="brasa" d="M-1.5-3.5 1 0-2 3.5M1 0 5.5 1.5M-2 3.5 0.5 8M-1.5-3.5-5.5-5" fill="none" stroke="#ff7a2e" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
           <span>{txt.capas.capa2}</span>
+        </button>
+      {/if}
+      {#if motor}
+        <!-- Capa 2, fase 4: el Motor de Brasas. Una brasa: carbón con el núcleo encendido y vetas oscuras. -->
+        <button class="motor" aria-current={juego.capa === 'motor' ? 'page' : undefined} onclick={() => (juego.capa = 'motor')}>
+          <svg viewBox="-12 -12 24 24" aria-hidden="true">
+            <defs><radialGradient id="capa-brasa" cx="0.45" cy="0.6" r="0.6"><stop offset="0" stop-color="#ffe2a0" /><stop offset="0.45" stop-color="#ff7a2e" /><stop offset="1" stop-color="#7a1c08" /></radialGradient></defs>
+            <path d="M-8.5 3.5-6.5-4-1-8.5 5.5-6.5 9-0.5 7 6.5 0.5 9.5-6 8Z" fill="url(#capa-brasa)" stroke="#2a110a" stroke-width="0.9" stroke-linejoin="round" />
+            <path d="M-4.5-3.5-0.5-0.5 4-2.5M-0.5-0.5-1 4.5 3.5 6.5M-1 4.5-5.5 3.5" fill="none" stroke="#3a1408" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" opacity="0.75" />
+          </svg>
+          <span>{txt.capas.motor}</span>
         </button>
       {/if}
       <!-- Bloque 10: no es una capa sino de todas; va abajo, separada por una línea. Ícono: dos engranajes de cristal. -->
@@ -182,6 +191,7 @@
   .capas .cristal { --c: var(--hielo); }
   .capas .auto { --c: var(--tinta); }
   .capas .capa2 { --c: #ff8a3d; }
+  .capas .motor { --c: #ff8a3d; }
   /* La silueta no se desatura como las otras: ya es oscura; lo que se ve es la brasa. */
   .capas .capa2 svg { filter: none; opacity: 1; }
   .capas .brasa { filter: drop-shadow(0 0 1.5px #ff5a1f); animation: brasa 4.5s ease-in-out infinite alternate; }

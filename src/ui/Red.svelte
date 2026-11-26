@@ -40,6 +40,9 @@
   const f = txt.fuego
   const beta = $derived(esBeta(juego))
   const verFuego = $derived(beta && !oculto(elegido) && (verN === 5 || (!verN && n >= NIVEL_MAX_RED)))
+  // Fase 4: los nodos con fuego cambian por completo (lava que late, nombre nuevo, conexiones de brasa), en cualquier nivel.
+  const enLlamas = $derived(new Set(beta ? s.fuego.nodos : []))
+  const conFuegoYa = $derived(enLlamas.has(elegido))
   function encender() {
     if (!puedeComprarFuego(juego.s, elegido)) return
     comprarFuegoYa(elegido)
@@ -188,6 +191,7 @@
     for (const a of vistas) if (a.n >= ABRE_RED) for (const id of vecinos(a.id)) {
       const b = por.get(id)!
       if (b.n >= ABRE_RED && anillo(b.id) < anillo(a.id)) continue
+      if (enLlamas.has(a.id) || enLlamas.has(b.id)) continue
       const L = Math.hypot(b.x - a.x, b.y - a.y), ux = (b.x - a.x) / L, uy = (b.y - a.y) / L
       rama(a.x + ux * (a.r + 3), a.y + uy * (a.r + 3), b.x - ux * (b.r + 3), b.y - uy * (b.r + 3), semilla(a.id + b.id), 1.1, 1, out)
     }
@@ -208,6 +212,19 @@
   const orden3 = [...ANILLO3]
 
   const colorDe = (v: Vista) => (v.modo === 'cristal' ? hex[v.n - 1] : null)
+  const brasas = $derived.by(() => {
+    const out: [string, number][] = []
+    for (const a of vistas) if (enLlamas.has(a.id) && a.modo !== 'hielo') for (const id of vecinos(a.id)) {
+      const b = por.get(id)!
+      if (b.modo === 'hielo' || (enLlamas.has(b.id) && b.id < a.id)) continue
+      const L = Math.hypot(b.x - a.x, b.y - a.y), ux = (b.x - a.x) / L, uy = (b.y - a.y) / L
+      rama(a.x + ux * (a.r + 4), a.y + uy * (a.r + 4), b.x - ux * (b.r + 4), b.y - uy * (b.r + 4), semilla(a.id + b.id), 1.6, 0, out)
+    }
+    return out
+  })
+  const LAVA = '#ff7a2e' // el tinte de la pila de un nodo con fuego
+  // Una llama de 10 × 12 centrada: el quinto cuadro (en la Red y en la ficha).
+  const LLAMA = 'M0-6C1.2-3.6 4.6-1.6 4.6 1.8 4.6 4.4 2.6 6 0 6-2.6 6-4.6 4.4-4.6 1.8-4.6-0.6-2.6-1.6-1.6-3.4-1-1.6-0.2-1.4 0-2.2 0.2-3.4-0.4-4.6 0-6Z' 
 
   // El derrumbe al llegar al nivel que abre a los vecinos: un fragmento de cristal sale hacia cada uno.
   let derrumbe = $state<{ id: string; k: number } | null>(null)
@@ -248,6 +265,9 @@
           <filter id="red-halo-cara" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7" /></filter>
           <clipPath id="red-c38"><circle r="38" /></clipPath>
           <clipPath id="red-c32"><circle r="32" /></clipPath>
+          <radialGradient id="red-lava" cx="0.45" cy="0.55" r="0.6">
+            <stop offset="0" stop-color="#ffe7a8" /><stop offset="0.35" stop-color="#ff9a3d" /><stop offset="0.72" stop-color="#e2461a" /><stop offset="1" stop-color="#4a0e05" />
+          </radialGradient>
         </defs>
         {#each trama as p}<circle class="punto" cx={p.x} cy={p.y} r="4" opacity={p.o} />{/each}
         <!-- Caminos bajo el hielo: de cada nodo del hielo a sus vecinos ya a la vista. -->
@@ -258,6 +278,12 @@
         </g>
         <g class="halo" filter="url(#red-halo)">{#each ramas as [d, w]}{#if w >= 1}<path {d} />{/if}{/each}</g>
         <g class="ramas">{#each ramas as [d, w]}<path {d} stroke-width={w} opacity={w >= 1 ? 0.9 : 0.55} />{/each}</g>
+        {#if brasas.length}
+          <g class="brasas-red">
+            <g class="halo-brasa" filter="url(#red-halo)">{#each brasas as [d]}<path {d} />{/each}</g>
+            {#each brasas as [d, w]}<path class="veta" {d} stroke-width={w} />{/each}
+          </g>
+        {/if}
 
         {#each vistas as v (v.id)}
           <g
@@ -273,6 +299,28 @@
                 <circle class="bloque" r={v.r} />
                 <path class="copo" d="M0-7V7M-6-3.5 6 3.5M-6 3.5 6-3.5" transform="scale({v.r / 22})" />
                 {#if v.id === elegido}<circle class="sel" r={v.r + 7} />{/if}
+              {:else if enLlamas.has(v.id)}
+                <!-- Nodo con fuego: la pila se llena de lava que late despacio; nombre nuevo y aro de brasa. -->
+                {#if v.id === elegido}<circle class="sel fuego" r={v.r + 9} />{/if}
+                <circle r={v.r + 3} fill="#ff5a1f" opacity="0.4" filter="url(#red-halo-cara)" />
+                <g clip-path="url(#red-c{v.r})">
+                  <image href={cara(v.id, LAVA)} x={-v.r} y={-v.r} width={2 * v.r} height={2 * v.r} />
+                  <circle class="lava" r={v.r} fill="url(#red-lava)" />
+                </g>
+                <circle class="aro-lava" r={v.r + 2.5} />
+                <circle r={v.r * 0.5} fill="#1c0703" opacity="0.78" />
+                <circle class="aro-lava" r={v.r * 0.5} opacity="0.7" stroke-width="0.8" />
+                {#if EMBLEMA[v.id]}
+                  <path class="emblema brasa" d={EMBLEMA[v.id]} transform="scale({v.r / 30})" stroke-width={(1.4 * 30) / v.r} />
+                {/if}
+                <text class="nom fuego" y={v.r + M.nom} font-size={M.letra}>{compacto ? f.cortos[v.id] : f.nombres[v.id]}</text>
+                <g transform="translate(0 {v.r + M.fila})">
+                  {#each COLORES as c, i}
+                    <rect x={-2.5 * M.paso + (M.paso - M.cuadro) / 2 + i * M.paso} y={-M.cuadro / 2} width={M.cuadro} height={M.cuadro}
+                      fill={i < v.n ? `var(${c})` : 'rgb(255 170 120 / 0.16)'} />
+                  {/each}
+                  <path class="llamita" d={LLAMA} transform="translate({1.5 * M.paso} 0) scale({M.cuadro / 10})" />
+                </g>
               {:else if v.modo === 'escarcha'}
                 <!-- Arena que todavía no cristalizó: la misma pila, gris y muy apagada, sin emblema. -->
                 <image href={cara(v.id, null)} x={-v.r * 0.7} y={-v.r * 0.7} width={v.r * 1.4} height={v.r * 1.4} opacity="0.28" />
@@ -335,7 +383,8 @@
       <header>
         <svg class="cara" viewBox="-40 -40 80 80" aria-hidden="true">
           <g clip-path="url(#red-c38)">
-            <image href={cara(elegido, n > 0 ? hex[n - 1] : null)} x="-38" y="-38" width="76" height="76" opacity={n > 0 ? 1 : 0.55} />
+            <image href={cara(elegido, conFuegoYa ? LAVA : n > 0 ? hex[n - 1] : null)} x="-38" y="-38" width="76" height="76" opacity={n > 0 || conFuegoYa ? 1 : 0.55} />
+            {#if conFuegoYa}<circle class="lava" r="38" fill="url(#red-lava)" />{/if}
           </g>
           <circle class="aro" r="40" opacity="0.35" />
           <circle r="19" fill="var(--noche)" opacity="0.72" />
@@ -343,12 +392,12 @@
           {#if EMBLEMA[elegido] && !oculto(elegido)}<path class="emblema" d={EMBLEMA[elegido]} transform="scale(1.25)" stroke-width="1.1" />{/if}
         </svg>
         <div>
-          <h2>{titulo(elegido)}</h2>
+          <h2 class:fuego={conFuegoYa}>{conFuegoYa ? f.nombres[elegido] : titulo(elegido)}</h2>
           <p class="nv num">
             <span class="cuadros">{#each COLORES as c, i}<button style:--c="var({c})" class:lleno={i < n} aria-pressed={verN === i + 1} disabled={oculto(elegido)}
               aria-label={r.verNivel(i + 1, txt.colores[i])} title={r.verNivel(i + 1, txt.colores[i])}
               onclick={() => (ver = verN === i + 1 ? null : { id: elegido, n: i + 1 })}><i></i></button>{/each}{#if beta}<button class="llama" class:lleno={tieneFuego(s, elegido)}
-              aria-pressed={verN === 5} disabled={oculto(elegido)} aria-label={f.llama} title={f.llama} onclick={() => (ver = verN === 5 ? null : { id: elegido, n: 5 })}><i></i></button>{/if}</span>
+              aria-pressed={verN === 5} disabled={oculto(elegido)} aria-label={f.llama} title={f.llama} onclick={() => (ver = verN === 5 ? null : { id: elegido, n: 5 })}><svg viewBox="-6 -7 12 14" aria-hidden="true"><path d={LLAMA} /></svg></button>{/if}</span>
             {r.nv(n, txt.colores[n - 1])}
           </p>
         </div>
@@ -365,9 +414,9 @@
       {/if}
       {#if estado}<p class="estado">{estado}</p>{/if}
       {#if verFuego}
-        <p class="hace fuego"><b>{f.conFuego}</b> {f.nombres[elegido]}{#if FUEGO_HECHO.has(elegido)}: {f.efectos[elegido](CFG2.red_fuego.memoria.autocompradores_x)}{/if}</p>
+        <p class="hace fuego"><b>{f.conFuego}</b> {f.nombres[elegido]}: {FUEGO_HECHO.has(elegido) ? f.efectos[elegido](CFG2.red_fuego.memoria.autocompradores_x) : f.descripciones[elegido]}</p>
         {#if tieneFuego(s, elegido)}<p class="estado fuego">{f.encendido}</p>
-        {:else if !FUEGO_HECHO.has(elegido)}<p class="estado fuego">{f.proximamente}</p>
+        {:else if !FUEGO_HECHO.has(elegido)}<p class="estado fuego proximo">{f.proximamente} <span class="num">{f.precio(precioFuego(elegido))}</span></p>
         {:else}
           {#if n < NIVEL_MAX_RED}<p class="estado fuego">{f.pideNv4}</p>{/if}
           <button class="compra gema" style:--c="#ff8a3d" aria-disabled={!puedeComprarFuego(s, elegido)} onclick={encender}
@@ -463,10 +512,28 @@
   .cuadros .lleno[aria-pressed='true'] i { background: var(--c); }
   .cuadros button:not(:disabled):hover i { transform: scale(1.3); }
   .cuadros button:focus-visible { outline: 2px solid var(--hielo); outline-offset: -2px; }
-  /* Capa 2: la llama, después de Violeta. Se pule en la fase 4. */
-  .cuadros .llama i { width: 0.6rem; height: 0.8rem; margin-left: 0.15rem; background: rgb(255 138 61 / 0.4); clip-path: polygon(50% 0, 78% 32%, 100% 62%, 86% 92%, 50% 100%, 14% 92%, 0 62%, 26% 44%, 38% 22%); }
-  .cuadros .llama[aria-pressed='true'] i { background: rgb(255 138 61 / 0.6); }
-  .cuadros .llama.lleno i { background: linear-gradient(#ffe08a, #ff8a3d 55%, #ff4d1a); }
+  /* Capa 2: el quinto cuadro, una llama después de Violeta: apagada es un contorno de brasa; encendida, llena y con brillo. */
+  .cuadros .llama svg { width: 0.7rem; height: 0.8rem; margin-left: 0.2rem; overflow: visible; transition: transform 0.15s; }
+  .cuadros .llama path { fill: rgb(255 138 61 / 0.12); stroke: rgb(255 150 90 / 0.7); stroke-width: 0.9; stroke-linejoin: round; }
+  .cuadros .llama[aria-pressed='true'] path { fill: rgb(255 138 61 / 0.45); stroke: #ffb27a; }
+  .cuadros .llama.lleno path { fill: #ff8a3d; stroke: #ffe0a8; }
+  .cuadros .llama.lleno svg { filter: drop-shadow(0 0 3px rgb(255 110 40 / 0.8)); }
+  .cuadros .llama:not(:disabled):hover svg { transform: scale(1.25); }
+  h2.fuego { color: #ffb27a; }
+  .proximo .num { color: var(--apagado); }
+  /* La Red de fuego. La lava late despacio y a saltos (steps): un repintado cada ~0,3 s, no 60 por segundo. */
+  .lava { opacity: 0.72; mix-blend-mode: hard-light; animation: late 5s steps(14) infinite alternate; } /* < 3 cambios por segundo */
+  @keyframes late { from { opacity: 0.55; } to { opacity: 0.9; } }
+  .aro-lava { fill: none; stroke: #ffb27a; stroke-width: 1; opacity: 0.9; }
+  .emblema.brasa { stroke: #ffe9c4; }
+  .nom.fuego { fill: #ffb27a; }
+  .nodo.elegido .nom.fuego { fill: #ffd2a8; }
+  .sel.fuego { stroke: #ffb27a; }
+  .llamita { fill: #ff8a3d; stroke: #ffe0a8; stroke-width: 1; }
+  .halo-brasa path { stroke: #ff5a1f; stroke-width: 4; fill: none; opacity: 0.55; stroke-linecap: round; }
+  .veta { stroke: #ffb067; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .brasas-red { animation: late 6s steps(16) infinite alternate; }
+  :global(.quieto) :is(.lava, .brasas-red) { animation: none; }
   .fuego b, .estado.fuego { color: #ffb27a; }
   .hace { font-size: 0.9375rem; color: var(--escarcha); }
   .sig { font-size: 0.8125rem; color: var(--tenue); }

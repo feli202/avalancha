@@ -87,7 +87,7 @@ class Juego {
   /** El último anillo ganado: su aviso va junto al contador de anillos (App.svelte), no sobre la pila. */
   anilloNuevo = $state.raw<{ id: number; texto: string } | null>(null)
   /** SPEC_CAPA1 §11: la capa que se ve. Cristalización aparece con el primer Infinito (Capas.svelte). */
-  capa = $state<'arena' | 'cristalizacion' | 'automatizacion' | 'capa2'>('arena')
+  capa = $state<'arena' | 'cristalizacion' | 'automatizacion' | 'capa2' | 'motor'>('arena')
   /** La pantalla de Cristalización que se ve (Capas.svelte; la flecha "↓ Estratos" de la Arena la cambia). */
   pantalla = $state('red')
   /** La cinemática que corre (Pila.svelte la dibuja): la del primer Infinito, la del fin de la Capa 1 o la Fundición (Capa 2). */

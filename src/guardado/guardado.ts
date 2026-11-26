@@ -123,7 +123,8 @@ export function deserializar(texto: string): Partida {
   const beta = leerMarca((d as any).beta)
   const f = e.fuego
   const fuego: State['fuego'] = beta
-    ? { brasas: ent(f.brasas), brasasTotales: ent(f.brasasTotales), fundiciones: ent(f.fundiciones), nodos: [...new Set(f.nodos.filter((id) => NODOS_FUEGO.includes(id)))] }
+    ? { brasas: ent(f.brasas), brasasTotales: ent(f.brasasTotales), fundiciones: ent(f.fundiciones), nodos: [...new Set(f.nodos.filter((id) => NODOS_FUEGO.includes(id)))],
+        repartos: MODELO.estado.fuego.repartos.map((m: number[], k: number) => m.map((x, i) => Math.min(1, pos(f.repartos[k]?.[i] ?? x)))), reparto: ent(f.reparto, MODELO.estado.fuego.repartos.length - 1) } // fase 3: completar() los pone
     : estadoInicial().fuego
   const red = topada.red
   const conRed = { ...estadoInicial(), red } // los topes de Cascada y Mutaciones dependen de la Red

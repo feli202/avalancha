@@ -6,6 +6,7 @@ import { compresionesConservadas, conserva, cristalesRedLog10, efectoRed } from 
 import { INFINITO, enInfinito, infinitoRoto, produccion } from './formulas'
 import { conReintento, enDefecto, metaAlcanzada, puedeEntrar, type DefectoId } from './defectos'
 import { elegirSola, reliquiasPorInfinito } from './relicario'
+import { redLog10Motor } from './fuego'
 import { estadoInicial, type State } from './state'
 
 const C = CFG1.cristales
@@ -18,7 +19,8 @@ export const topeCristales = (_s: State): Decimal => INFINITO
 export const ordenesQ = (s: State) => C.Q_ordenes_por_x10 - efectoRed(s, 'ruptura2', 'Q_resta')
 /** log10 de los Cristales antes del blando: mult + base + (E − INF)/Q (lo que pasa de 1e308 solo cuenta con Romper). */
 const lcBruto = (s: State) =>
-  cristalesRedLog10(s) + C.base_log10 + (infinitoRoto(s) ? Math.max(0, s.energia.log10() - CFG.infinito_log10) / ordenesQ(s) : 0) ** C.beta
+  cristalesRedLog10(s) + (enDefecto(s, 'vidrio') ? 0 : redLog10Motor(s)) + C.base_log10 + // sector Red del Motor (Vidrio: sin bonos)
+    (infinitoRoto(s) ? Math.max(0, s.energia.log10() - CFG.infinito_log10) / ordenesQ(s) : 0) ** C.beta
 const blando = (lc: number) => (lc > C.blando_desde_log10 ? C.blando_desde_log10 + (lc - C.blando_desde_log10) * C.blando_factor : lc)
 
 /** Cristales del próximo Infinito (SPEC_CAPA1 §4, igual que infinity_reward de sim_capa1.py): enteros por debajo de 1e6;

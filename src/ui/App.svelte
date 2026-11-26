@@ -106,7 +106,7 @@
 
 <!-- .lista: se puede comprimir; el botón y el anillo de la pila laten juntos (arrancan en el mismo cuadro). -->
 <!-- inert con un panel encima: el foco y los clics quedan en el panel. -->
-<div class="juego" style:--izq-alto="{izqAlto}px" class:con-capas={s.infinitos > 0} class:en-titulo={juego.titulo} class:entrando class:quieto={quieto()} class:lista class:fin class:alejado={juego.panel !== null} class:tapada={juego.capa !== 'arena'} inert={hayPanel()}>
+<div class="juego" style:--izq-alto="{izqAlto}px" class:con-capas={s.infinitos > 0 || (esBeta(juego) && s.fuego.fundiciones > 0)} class:en-titulo={juego.titulo} class:entrando class:quieto={quieto()} class:lista class:fin class:alejado={juego.panel !== null} class:tapada={juego.capa !== 'arena'} inert={hayPanel()}>
   <Pila />
   {#if v.compresion && !infinitoRoto(s)}
     <!-- Camino al Infinito: log10(Energía) / log10(Infinito), con una marca en cada umbral de Compresión. Se va al romperlo. -->

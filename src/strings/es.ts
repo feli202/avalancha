@@ -112,7 +112,7 @@ export const es = {
   infinito: '∞',
 
   // Capa 1: Cristalización (SPEC_CAPA1 §11)
-  capas: { barra: 'Capas', arena: 'Arena', cristalizacion: 'Crista­lización', automatizacion: 'Automati­zación', capa2: 'Capa 2', proximamente: 'Próximamente', finCapa1: 'Juntaste 1e308 Cristales. Debajo del hielo, algo arde.' }, // guion blando: en la barra angosta del móvil corta ahí
+  capas: { barra: 'Capas', arena: 'Arena', cristalizacion: 'Crista­lización', automatizacion: 'Automati­zación', capa2: 'Capa 2', motor: 'Motor', proximamente: 'Próximamente', finCapa1: 'Juntaste 1e308 Cristales. Debajo del hielo, algo arde.' }, // guion blando: en la barra angosta del móvil corta ahí
   // Correcciones Capa 1, bloque 10: el panel de Automatización
   automat: {
     titulo: 'Automatización',
@@ -1159,5 +1159,52 @@ Qué pasó: (contalo acá)`,
       sedimentacion: () => 'Las compresiones pasan de 17: cada una de más pide más Energía y suma menos Densidad',
       eco: () => 'El Eco también cuenta tus Brasas totales',
     } as Record<string, (x: number) => string>,
+    // Lo que hará cada nivel de fuego que todavía dice "Próximamente" (sin números: llegan con su fase)
+    descripciones: {
+      cascada_plus: 'Cascada sin máximo de niveles; cada nivel de más rinde menos', estratos: 'Enciende el estrato 9: el Vidrio',
+      mutacion_plus: 'Mutaciones sin máximo de niveles; cada nivel de más rinde menos', compactacion: 'La Temperatura suma más a la Densidad',
+      defectos: 'Abre las cargas 2 a 5 de los Defectos 1 a 4', frio: 'La Escarcha no se rompe y da Esquirlas por segundo',
+      inercia: 'El impulso de los Estratos crece con las horas de la vuelta', presion: 'El peso de los Estratos crece con la Temperatura',
+      cristalografia: 'Cada Infinito suma segundos de Vidrio', ruptura: 'Los Cristales pasan de 1e308',
+      germen: 'La Escarcha crece más rápido con la Temperatura', engarces: 'Inventario doble, una reliquia de cada tipo por Infinito, fusión y engarce solos',
+      capilaridad: 'El flujo de los 8 estratos crece con la Temperatura', sedimento2: 'El estrato 8 empuja más al Vidrio',
+      defectos2: 'Abre las cargas 2 a 5 de los Defectos 5 a 8', compactacion2: 'Cada compresión sube la Temperatura',
+      eco2: 'El Vidrio crece con el Eco', deshielo: 'Autocompradores para las mejoras de la Escarcha',
+      cristalografia2: 'Más Brasas por cada carga completa de los Defectos', engarces2: 'Un espacio más de reliquia; las equipadas cuentan un nivel más',
+      abismo: 'Más Vidrio por cada estrato lleno', ruptura2: 'Las Brasas escalan mejor con los Cristales',
+    } as Record<string, string>,
+    // Los nombres de fuego en la Red angosta (celular), como los cortos de los nodos
+    cortos: {
+      memoria: 'Eterna', sedimentacion: 'Lecho', cascada_plus: 'Desb.', estratos: 'Horno', mutacion_plus: 'Metam.', eco: 'Reson.',
+      compactacion: 'Ígnea', defectos: 'Fallas', frio: 'Esc. ∞', inercia: 'Iner. ∞', presion: 'Magma', cristalografia: 'Fundido',
+      ruptura: 'Fusión', germen: 'Hielo', engarces: 'Reliq.', capilaridad: 'Conv.', sedimento2: 'Sed. f.', defectos2: 'Fallas II',
+      compactacion2: 'Térm.', eco2: 'Eco H.', deshielo: 'Desh.', cristalografia2: 'Facetas', engarces2: 'Engaste', abismo: 'Abismo', ruptura2: 'Fusión II',
+    } as Record<string, string>,
+    ahora: 'Ahora:',
+    // Fase 4: el Motor de Brasas y el reparto del calor
+    motor: {
+      titulo: 'Motor de Brasas',
+      temperatura: 'Temperatura',
+      densidad: (x: string) => `+${x} a la Densidad`,
+      ignicion: (k: string) => `Ignición a ${k}`,
+      reparto: 'Reparto del calor',
+      guardado: (n: number) => `Reparto ${['I', 'II', 'III'][n] ?? n + 1}`,
+      sectores: { pila: 'Pila', red: 'Red', estratos: 'Estratos', escarcha: 'Escarcha', relicario: 'Relicario' } as Record<string, string>,
+      efecto: {
+        pila: (x: string) => `colores y cauce ^${x}`,
+        red: (x: string) => `Cristales por Infinito ${x}`,
+        estratos: (x: string) => `flujo de los estratos ${x}`,
+        escarcha: (x: string) => `Esquirlas ${x}`,
+        relicario: (x: string) => `reliquias engarzadas ${x}`,
+      } as Record<string, (x: string) => string>,
+      parte: (sector: string) => `Parte del calor para ${sector}, en porcentaje`,
+      menos: (sector: string) => `Menos calor a ${sector}`,
+      mas: (sector: string) => `Más calor a ${sector}`,
+      borde: (a: string, b: string) => `Calor entre ${a} y ${b}`,
+      abreCon: (n: string) => `El iris se abre más con ${n}.`,
+      abierto: 'El Motor está abierto del todo.',
+      que: 'El calor es la Temperatura sobre 300 K. Repartilo entre los sectores: cada uno multiplica su sistema según cuánto recibe. No hay un reparto perfecto; cambialo según qué te frena.',
+      escena: 'El Motor de Brasas: un círculo de piedra con el fuego adentro y el anillo del reparto alrededor',
+    },
   },
 }

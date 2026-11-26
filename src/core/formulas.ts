@@ -2,7 +2,7 @@
 import Decimal from 'break_infinity.js'
 import { CFG, precioLog10, type MutId } from './config'
 import { CFG2 } from './config2'
-import { densidadFuego } from './fuego'
+import { densidadFuego, extraSector } from './fuego'
 import {
   baseAnillo, cascadaCExtra, cascadaX, colorSinEfecto, coloresX, densidadExtra, densidadFija, densidadX, derrumbesTope, fatigaLog10, hitoColor,
   presionX, sinMutaciones,
@@ -103,7 +103,7 @@ export const multCascada = (s: State) =>
 export const valor = (s: State) =>
   s.colores
     .reduce((v, nivel, i) => (colorSinEfecto(s, i) ? v : v.mul(multColor(i, nivel, hitoColor(s)))), new Decimal(1))
-    .pow((1 + cauceRel(s)) * coloresX(s)) // reliquia Cauce: + colores_log10 × pct a log V; Impureza: colores a la mitad
+    .pow((1 + cauceRel(s)) * coloresX(s) * extraSector(s, 'pila')) // reliquia Cauce: + colores_log10 × pct a log V; Impureza: colores a la mitad; sector Pila del Motor
     .mul(multAnillos(s))
     .mul(multCascada(s))
     .mul(Decimal.pow(CFG.mutaciones.colores.por_nivel, sinMutaciones(s) ? 0 : s.mutaciones.colores * (1 + mutacionesRel(s)))) // Macla

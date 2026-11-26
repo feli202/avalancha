@@ -5,6 +5,7 @@ import crudo from '../../balance/config_capa2.json'
 export interface Config2 {
   fundicion: { requisito_log10: number; brasas_desde_log10: number; M_B: number; brasas_exp: number }
   temperatura: { inicial: number; ignicion: number; por_brasa: number; exp_brasas: number; densidad_por_K: number }
+  motor: { efecto: Record<'pila' | 'red' | 'estratos' | 'escarcha' | 'relicario', number>; repartos_iniciales: number[][] }
   /** El nivel de fuego de cada nodo de la Red (las claves son las de NODOS). */
   red_fuego: Record<string, { precio: number }> & {
     memoria: { autocompradores_x: number }

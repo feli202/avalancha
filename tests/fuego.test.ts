@@ -53,7 +53,7 @@ describe('Fundición', () => {
       relicario: { ...t.relicario, regla: { ...t.relicario.regla, modo: 'fijo' } }, tiempoTotal: 1234,
     }, { brasas: 3, brasasTotales: 10, fundiciones: 2, nodos: ['eco'] })
     const s = fundir(antes)
-    expect(s.fuego).toEqual({ brasas: 4, brasasTotales: 11, fundiciones: 3, nodos: ['eco'] })
+    expect(s.fuego).toMatchObject({ brasas: 4, brasasTotales: 11, fundiciones: 3, nodos: ['eco'] })
     expect(s.cristales.eq(0) && s.cristalesTotales.eq(0) && s.energia.eq(0)).toBe(true)
     expect([s.infinitos, s.compresiones, s.estratos.abiertos, s.escarcha.logX, s.defectos.completos.length]).toEqual([0, 0, 0, 0, 0])
     expect(Object.values(s.red).every((n) => n === 0)).toBe(true)
@@ -137,6 +137,6 @@ describe('guardado del fuego', () => {
 
   it('valores rotos se sanean: enteros no negativos, nodos que existen y sin repetir', () => {
     const texto = serializar(partida(lleno)).replace(/"fuego":\{[^}]*\}/, '"fuego":{"brasas":-3,"brasasTotales":2.7,"fundiciones":1,"nodos":["eco","nada","eco",7]}')
-    expect(deserializar(texto).estado.fuego).toEqual({ brasas: 0, brasasTotales: 2, fundiciones: 1, nodos: ['eco'] })
+    expect(deserializar(texto).estado.fuego).toMatchObject({ brasas: 0, brasasTotales: 2, fundiciones: 1, nodos: ['eco'] })
   })
 })

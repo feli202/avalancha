@@ -39,7 +39,13 @@
    "relicario": 0.05
   },
   "_reparto": "bot: hasta el primer Infinito de cada vuelta todo a Pila; despues Pila se lleva w_pila (arranca en reparto_bot.pila y se ajusta al fundir segun el desglose: si colores o cauce pasan bot_objetivo_fuente, x0,85; si otra fuente pasa, /0,85 + 0,05) y el resto va a los otros sectores abiertos segun reparto_bot (Estratos nada mientras la Presion pase el objetivo)",
-  "bot_objetivo_fuente": 0.35
+  "bot_objetivo_fuente": 0.35,
+  "repartos_iniciales": [
+   [1, 0, 0, 0, 0],
+   [0.5, 0.5, 0, 0, 0],
+   [0, 1, 0, 0, 0]
+  ],
+  "_repartos": "los 3 repartos guardados de una partida nueva; partes de [pila, red, estratos, escarcha, relicario], solo cuentan los sectores abiertos"
  },
  "horno": {
   "v0": 0.001,
