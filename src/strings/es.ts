@@ -1160,7 +1160,14 @@ Qué pasó: (contalo acá)`,
       eco: () => 'El Eco también cuenta tus Brasas totales',
       estratos: () => 'Enciende el estrato 9: el Horno funde en Vidrio la arena que baja, más rápido cuanto más lleno está el estrato 8',
       cristalografia: (x: number) => `Cada Infinito suma ${f(x)} s de Vidrio`,
+      cascada_plus: () => 'Cascada sin máximo: pasado el tope, cada nivel rinde la raíz cuadrada y cuesta ×10, ×1.000, … más',
+      mutacion_plus: () => 'Mutaciones sin máximo: pasado el tope, cada nivel rinde la raíz cuadrada y cuesta ×10, ×1.000, … más',
+      compactacion: (x: number) => `Lo que la Temperatura suma a la Densidad, ×${f(x)}`,
+      inercia: () => 'El impulso de los Estratos ×(1 + √(horas de la vuelta))',
+      presion: (x: number) => `El peso de los Estratos ×(1 + ${f(x)} × (T − 300) / 1000)`,
     } as Record<string, (x: number) => string>,
+    // La palabra que aparece grande al encender cada liberación (Palabra.svelte)
+    palabras: { sedimentacion: 'LECHO', cascada_plus: 'DESBORDE', mutacion_plus: 'METAMORFOSIS', inercia: 'ETERNA' } as Record<string, string>,
     // Lo que hará cada nivel de fuego que todavía dice "Próximamente" (sin números: llegan con su fase)
     descripciones: {
       cascada_plus: 'Cascada sin máximo de niveles; cada nivel de más rinde menos', estratos: 'Enciende el estrato 9: el Vidrio',

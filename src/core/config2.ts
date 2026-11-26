@@ -18,8 +18,11 @@ export interface Config2 {
     memoria: { autocompradores_x: number }
     eco: { res_x: number; res_exp: number }
     cristalografia: { vidrio_s_por_infinito: number }
+    compactacion: { densidad_x: number }
+    inercia: { impulso_por_raiz_h: number }
+    presion: { w_por_kK: number }
   }
-  liberaciones: { lecho_densidad: number; lecho_umbral_x: number }
+  liberaciones: { rinde: number; paso_extra: number; lecho_densidad: number; lecho_umbral_x: number }
 }
 
 export const CFG2: Config2 = crudo

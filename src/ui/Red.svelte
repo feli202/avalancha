@@ -38,6 +38,12 @@
   const titulo = (id: string) => (bajoHielo(id) ? r.bajoHielo : nombre(id, false))
   // Capa 2 (beta): el quinto cuadro, la llama. Su ficha sale al tocarla o, con el nodo completo, sola.
   const f = txt.fuego
+  const RF = CFG2.red_fuego
+  // El número que muestra el efecto de cada nivel de fuego ("Con fuego: …"); los que no llevan número reciben 0.
+  const ARG_FUEGO: Record<string, number> = {
+    memoria: RF.memoria.autocompradores_x, cristalografia: RF.cristalografia.vidrio_s_por_infinito,
+    compactacion: RF.compactacion.densidad_x, presion: RF.presion.w_por_kK,
+  }
   const beta = $derived(esBeta(juego))
   const verFuego = $derived(beta && !oculto(elegido) && (verN === 5 || (!verN && n >= NIVEL_MAX_RED)))
   // Fase 4: los nodos con fuego cambian por completo (lava que late, nombre nuevo, conexiones de brasa), en cualquier nivel.
@@ -414,7 +420,7 @@
       {/if}
       {#if estado}<p class="estado">{estado}</p>{/if}
       {#if verFuego}
-        <p class="hace fuego"><b>{f.conFuego}</b> {f.nombres[elegido]}: {FUEGO_HECHO.has(elegido) ? f.efectos[elegido](elegido === 'cristalografia' ? CFG2.red_fuego.cristalografia.vidrio_s_por_infinito : CFG2.red_fuego.memoria.autocompradores_x) : f.descripciones[elegido]}</p>
+        <p class="hace fuego"><b>{f.conFuego}</b> {f.nombres[elegido]}: {FUEGO_HECHO.has(elegido) ? f.efectos[elegido](ARG_FUEGO[elegido] ?? 0) : f.descripciones[elegido]}</p>
         {#if tieneFuego(s, elegido)}<p class="estado fuego">{f.encendido}</p>
         {:else if !FUEGO_HECHO.has(elegido)}<p class="estado fuego proximo">{f.proximamente} <span class="num">{f.precio(precioFuego(elegido))}</span></p>
         {:else}

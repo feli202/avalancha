@@ -3,8 +3,8 @@
   // "Para curiosos" muestra la fórmula exacta de SPEC 4 con los valores actuales; todo sale de CFG y del núcleo.
   import Decimal from 'break_infinity.js'
   import {
-    CFG, MUTACIONES, anillos, autoDisponible, caudal, cascadaC, costoCascada, costoCaudal, costoColor, costoMutacion, densidad,
-    maxMutacion, multAnillos, multCascada, multColor, produccion, valor, type State,
+    CFG, MUTACIONES, anillos, autoDisponible, caudal, cascadaC, costo, costoCaudal, costoColor, densidad,
+    limiteMutacion, multAnillos, multCascada, multColor, produccion, valor, type State,
     CFG1, ESTRATOS, NODOS, NIVEL_MAX_RED, cauceRel, cascadaRel, costoAbrir, cristalesAlInfinito, cristalesRedLog10, infinitoRoto, ordenesQ, espacios,
     gammaEstrato, memoria, mutacionesRel, nivelRed, presion, separacion,
     DEFECTOS, baseAnillo, colorSX, completo, hitoColor, metaLog10,
@@ -84,12 +84,12 @@
           v: `= ${d(c)}` },
         { r: g.rotulo.mult, g: `G^(${d(CFG.cascada.exp_G)}·c) / 10^(${d(CFG.cascada.exp_penal)}·c)`,
           v: `= ${G}^(${d(CFG.cascada.exp_G)}·${d(c)}) / 10^(${d(CFG.cascada.exp_penal)}·${d(c)}) = ×${formatoMult(multCascada(s))}` },
-        curva(CFG.cascada, s.cascada, costoCascada(s.cascada)),
+        curva(CFG.cascada, s.cascada, costo(s, 'cascada')), // con Desborde, el costo con el softcap
       ]),
       sec('mutaciones', !!v.mutaciones, '#ff7ad9', MUTACIONES.map((m) => ({
         r: txt.mutaciones[m],
         g: `10^(${d(M[m].c0)} + ${d(M[m].g)}·${V.nivel})`,
-        v: `${txt.nivel(s.mutaciones[m])} · ${efecto(s, `mut_${m}`)} · ${s.mutaciones[m] >= maxMutacion(s) ? txt.nivelMaximo : formato(costoMutacion(m, s.mutaciones[m]))}`,
+        v: `${txt.nivel(s.mutaciones[m])} · ${efecto(s, `mut_${m}`)} · ${s.mutaciones[m] >= limiteMutacion(s) ? txt.nivelMaximo : formato(costo(s, `mut_${m}`))}`,
       }))),
       sec('auto', !!v.auto_caudal, 'var(--tenue)', Object.entries(CFG.autocompradores).map(([k, n]) => ({
         r: k === 'compresion_auto' ? g.compresionAuto : nombreAuto(k),

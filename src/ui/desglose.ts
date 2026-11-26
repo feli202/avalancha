@@ -1,7 +1,7 @@
 // Estadísticas · Producción: Energía/s = F × (K × G) × V^D partida en factores, cada uno en log10 (así se suman).
 // Usa las fórmulas del núcleo; los factores con partes internas las traen en `partes`.
 import {
-  CFG, CFG1, anillos, cascadaC, cascadaRel, caudal, cauceRel, densidad, efectoRed, empuje, factorCaudal, hayEstratos, impulso, multAnillos,
+  CFG, CFG1, anillos, cascadaC, cascadaEf, mutEf, cascadaRel, caudal, cauceRel, densidad, efectoRed, empuje, factorCaudal, hayEstratos, impulso, multAnillos,
   multCascada, multColor, mutacionesRel, presion, presionEstrato, valor, ecoLog10, aporteEscarcha, type State,
 } from '../core'
 
@@ -38,12 +38,12 @@ export function desglose(s: State): Factor[] {
     ...colores,
     { id: 'anillos', log: multAnillos(s).log10(), partes: [
       { id: 'cantidad', log: nAnillos * lg(CFG.anillos.mult_por_anillo), n: nAnillos },
-      { id: 'expansion', log: multAnillos(s).log10() - nAnillos * lg(CFG.anillos.mult_por_anillo), n: s.mutaciones.expansion },
+      { id: 'expansion', log: multAnillos(s).log10() - nAnillos * lg(CFG.anillos.mult_por_anillo), n: mutEf(s, 'expansion') },
     ] },
     { id: 'cascada', log: multCascada(s).log10(), partes: [{ id: 'c', log: multCascada(s).log10(), n: cascadaC(s) }] },
-    { id: 'mutaciones', log: s.mutaciones.caudal * lg(M.caudal.por_nivel) + s.mutaciones.colores * lg(M.colores.por_nivel), partes: [
-      { id: 'mutCaudal', log: s.mutaciones.caudal * lg(M.caudal.por_nivel), n: s.mutaciones.caudal },
-      { id: 'mutColores', log: s.mutaciones.colores * lg(M.colores.por_nivel), n: s.mutaciones.colores },
+    { id: 'mutaciones', log: mutEf(s, 'caudal') * lg(M.caudal.por_nivel) + mutEf(s, 'colores') * lg(M.colores.por_nivel), partes: [
+      { id: 'mutCaudal', log: mutEf(s, 'caudal') * lg(M.caudal.por_nivel), n: mutEf(s, 'caudal') },
+      { id: 'mutColores', log: mutEf(s, 'colores') * lg(M.colores.por_nivel), n: mutEf(s, 'colores') },
     ] },
     // Presión de los Estratos (SPEC_CAPA1 §10): se suma a log10 V. Solo con estratos abiertos.
     ...(s.estratos.abiertos && hayEstratos(s)
@@ -70,7 +70,7 @@ export function valorMejora(s: State, id: string): Valor | null {
   const M = CFG.mutaciones, rel = mutacionesRel(s), D1 = densidad(s) - 1
   const conD = (partes: Parte[]) => { const l = valorDe(partes).log; return valorDe([...partes, { id: 'densidad', log: D1 * l, n: D1 + 1 }]) }
   if (id === 'caudal') {
-    const m = s.mutaciones.caudal * lg(M.caudal.por_nivel)
+    const m = mutEf(s, 'caudal') * lg(M.caudal.por_nivel)
     return valorDe([
       { id: 'base', log: lg(CFG.caudal.granos_base) }, { id: 'niveles', log: s.caudal * lg(CFG.caudal.mult_por_nivel) },
       { id: 'mutacion', log: m }, { id: 'reliquia', log: m * rel },
@@ -83,12 +83,12 @@ export function valorMejora(s: State, id: string): Valor | null {
   }
   if (id === 'cascada') {
     // multCascada = 10^(c × X): cada fuente de c aporta su parte del exponente.
-    const l = multCascada(s).log10(), c = cascadaC(s), cN = CFG.cascada.c_por_nivel * s.cascada, cR = s.cascada >= 1 ? cascadaRel(s) : 0
+    const l = multCascada(s).log10(), c = cascadaC(s), cN = CFG.cascada.c_por_nivel * cascadaEf(s), cR = s.cascada >= 1 ? cascadaRel(s) : 0
     const k = c > 0 ? l / c : 0
     return conD([{ id: 'niveles', log: cN * k }, { id: 'mutacion', log: (c - cN - cR) * k }, { id: 'reliquia', log: cR * k }])
   }
   if (id === 'mut_caudal' || id === 'mut_colores') {
-    const m = s.mutaciones[id.slice(4) as 'caudal' | 'colores'] * lg(M[id.slice(4) as 'caudal' | 'colores'].por_nivel)
+    const m = mutEf(s, id.slice(4) as 'caudal' | 'colores') * lg(M[id.slice(4) as 'caudal' | 'colores'].por_nivel)
     const p = [{ id: 'niveles', log: m }, { id: 'reliquia', log: m * rel }]
     return id === 'mut_caudal' ? valorDe(p) : conD(p)
   }
@@ -121,7 +121,7 @@ export function desgloseV(s: State): FuenteV[] {
   const colores = s0.colores.reduce((a, n, i) => a + multColor(i, n).log10(), 0)
   const casc = multCascada(s0).log10(), c = cascadaC(s0), cR = s0.cascada >= 1 ? cascadaRel(s0) : 0
   const cascRel = c > 0 ? (casc * cR) / c : 0
-  const mut = s0.mutaciones.colores * lg(CFG.mutaciones.colores.por_nivel)
+  const mut = mutEf(s0, 'colores') * lg(CFG.mutaciones.colores.por_nivel)
   const rel = [
     { id: 'cauce', log: colores * cauceRel(s0) },
     { id: 'cascada', log: cascRel },

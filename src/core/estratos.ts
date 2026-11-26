@@ -5,7 +5,7 @@ import { CFG1 } from './config1'
 import { cristalesDe, efectoRed } from './red'
 import { enVidrio } from './defectos'
 import { CFG2 } from './config2'
-import { flujoFuego } from './fuego'
+import { flujoFuego, inerciaEterna, magma } from './fuego'
 import type { State } from './state'
 
 const E = CFG1.estratos
@@ -14,7 +14,8 @@ export const ESTRATOS = E.cantidad
 export const hayEstratos = (s: State) => efectoRed(s, 'estratos', 'flujo_x') > 0
 
 /** Impulso de Inercia: sube lineal con el tiempo desde el último Infinito hasta impulso_x a los impulso_s segundos. */
-export const impulso = (s: State) => 1 + (efectoRed(s, 'inercia', 'impulso_x', 1) - 1) * Math.min(1, s.tiempoInfinito / E.impulso_s)
+export const impulso = (s: State) =>
+  1 + (efectoRed(s, 'inercia', 'impulso_x', 1) * inerciaEterna(s) - 1) * Math.min(1, s.tiempoInfinito / E.impulso_s) // Inercia eterna
 /** flujo (log10/s) = γ × Estratos × Impulso × fuego (Tiro y sector Estratos del Motor; 1 sin fuego). */
 export const flujoEstratos = (s: State) => E.gamma_log10_por_s * efectoRed(s, 'estratos', 'flujo_x') * impulso(s) * flujoFuego(s)
 /** Separación: un estrato llega como mucho a s_(k−1) − esto (Capilaridad la achica). */
@@ -60,7 +61,7 @@ export const lleno = (s: State, k: number) => k === 0 || s.estratos.s[k] >= s.es
 /** Lo que aporta el estrato k a la Presión: w_base × (k+1)^e × Presión × (1 + suma_w × nivel) × Abismo si está lleno × s_k. */
 export const presionEstrato = (s: State, k: number) =>
   k < s.estratos.abiertos && hayEstratos(s)
-    ? E.w_base_por_profundidad * (k + 1) ** efectoRed(s, 'sedimento2', 'exp_profundidad', 1) * efectoRed(s, 'presion', 'w_x', 1) *
+    ? E.w_base_por_profundidad * (k + 1) ** efectoRed(s, 'sedimento2', 'exp_profundidad', 1) * efectoRed(s, 'presion', 'w_x', 1) * magma(s) *
       (1 + E.presion.suma_w * s.estratos.pres[k]) * (lleno(s, k) ? efectoRed(s, 'abismo', 'lleno_x', 1) : 1) *
       Math.max(0, s.estratos.s[k]) ** E.exponente_presion
     : 0

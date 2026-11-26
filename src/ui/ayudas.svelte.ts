@@ -1,6 +1,6 @@
 // Ayuda integrada: el tooltip global (use:ayuda) y lo que dice cada mejora y número. Los textos, en src/strings.
 import {
-  CFG, aplicar, anillos, maxCascada, maxMutacion, caudal, densidad, multAnillos, nivel, produccion, umbralLog10, valor,
+  CFG, aplicar, anillos, caudal, densidad, limite, multAnillos, mutEf, nivel, produccion, umbralLog10, valor,
   type ItemId, type MutId, type State,
 } from '../core'
 import Decimal from 'break_infinity.js'
@@ -61,8 +61,7 @@ export function ayuda(el: HTMLElement, fn: () => Tip) {
 const mutDe = (id: ItemId) => (id.startsWith('mut_') ? (id.slice(4) as MutId) : null)
 export const colorDe = (id: ItemId) => (id.startsWith('color') ? Number(id.slice(5)) : -1)
 
-export const maximo = (s: State, id: ItemId) =>
-  id === 'cascada' ? maxCascada(s) : mutDe(id) ? maxMutacion(s) : Infinity
+export const maximo = limite // Infinity con Desborde / Metamorfosis
 
 export function nombre(id: ItemId) {
   const m = mutDe(id)
@@ -72,7 +71,7 @@ export function nombre(id: ItemId) {
 /** Bloque 7: el valor final, con reliquias, Red y Densidad (desglose.ts). Caudal en granos/s; el resto, ×Energía/s. */
 export function efecto(s: State, id: ItemId) {
   const m = mutDe(id)
-  const n = nivel(s, id)
+  const n = m ? mutEf(s, m) : nivel(s, id) // pasado el máximo, con el softcap de Metamorfosis
   if (m === 'expansion') return txt.efectoMutacion[m](formatoMult(CFG.anillos.mult_por_anillo + CFG.mutaciones[m].por_nivel * n))
   if (m === 'cascada') return txt.efectoMutacion[m](formatoMult(CFG.mutaciones[m].por_nivel * n))
   const v = formatoMult(Decimal.pow10(valorMejora(s, id)!.log))
@@ -132,7 +131,7 @@ export function ayudaDensidad(s: State): Tip {
 
 export function ayudaAnillos(s: State): Tip {
   const a = anillos(s.granos)
-  const paso = CFG.anillos.mult_por_anillo + CFG.mutaciones.expansion.por_nivel * s.mutaciones.expansion
+  const paso = CFG.anillos.mult_por_anillo + CFG.mutaciones.expansion.por_nivel * mutEf(s, 'expansion')
   return {
     titulo: txt.anillos(a),
     que: txt.guia.que.anillos,

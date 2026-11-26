@@ -125,7 +125,7 @@ export function deserializar(texto: string): Partida {
   const fuego: State['fuego'] = beta
     ? { brasas: ent(f.brasas), brasasTotales: ent(f.brasasTotales), fundiciones: ent(f.fundiciones), nodos: [...new Set(f.nodos.filter((id) => NODOS_FUEGO.includes(id)))],
         repartos: MODELO.estado.fuego.repartos.map((m: number[], k: number) => m.map((x, i) => Math.min(1, pos(f.repartos[k]?.[i] ?? x)))), reparto: ent(f.reparto, MODELO.estado.fuego.repartos.length - 1), // fase 3: completar() los pone
-        vidrio: deDec(f.vidrio), horno: Object.fromEntries(MEJORAS_HORNO.map((k) => [k, ent(f.horno[k])])) as State['fuego']['horno'] } // fase 4: completar() los pone en 0
+        vidrio: deDec(f.vidrio), horno: Object.fromEntries(MEJORAS_HORNO.map((k) => [k, ent(f.horno[k])])) as State['fuego']['horno'], vuelta: pos(f.vuelta) } // fases 4–5: completar() los pone en 0
     : estadoInicial().fuego
   const red = topada.red
   const conRed = { ...estadoInicial(), red } // los topes de Cascada y Mutaciones dependen de la Red
@@ -140,8 +140,8 @@ export function deserializar(texto: string): Partida {
       red, estratos: topada.estratos,
       escarcha: { ...e.escarcha, logX: pos(e.escarcha.logX), esquirlas: ent(e.escarcha.esquirlas), reloj: pos(e.escarcha.reloj),
         mejoras: { crecimiento: ent(e.escarcha.mejoras.crecimiento), brillo: ent(e.escarcha.mejoras.brillo), umbral: ent((e.escarcha.mejoras as { aguante?: number }).aguante ?? e.escarcha.mejoras.umbral) } }, // 'aguante' (hasta la 1.0.0) es el Umbral
-      relicario, automat: leerAutomat(e.automat), defectos: leerDefectos(e.defectos), cascada: ent(e.cascada, maxCascada(conRed)), compresiones: ent(e.compresiones, fuego.nodos.includes('sedimentacion') ? Infinity : CFG.compresion.umbrales_log10.length), fuego, // Lecho infinito
-      mutaciones: Object.fromEntries(MUTACIONES.map((m) => [m, ent(e.mutaciones[m], maxMutacion(conRed))])) as State['mutaciones'],
+      relicario, automat: leerAutomat(e.automat), defectos: leerDefectos(e.defectos), cascada: ent(e.cascada, fuego.nodos.includes('cascada_plus') ? Infinity : maxCascada(conRed)), compresiones: ent(e.compresiones, fuego.nodos.includes('sedimentacion') ? Infinity : CFG.compresion.umbrales_log10.length), fuego, // Lecho infinito
+      mutaciones: Object.fromEntries(MUTACIONES.map((m) => [m, ent(e.mutaciones[m], fuego.nodos.includes('mutacion_plus') ? Infinity : maxMutacion(conRed))])) as State['mutaciones'],
       coloresDesbloqueados: ent(e.coloresDesbloqueados, CFG.colores.length), infinitos,
       tiempoTotal: pos(e.tiempoTotal), tiempoCorrida: pos(e.tiempoCorrida), tiempoInfinito: pos(e.tiempoInfinito),
   }

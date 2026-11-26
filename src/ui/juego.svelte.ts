@@ -44,6 +44,8 @@ class Juego {
   eta = $state<number | null>(null)
   /** La avalancha más grande de la pila visual, en derrumbes. */
   record = $state(0)
+  /** Capa 2, fase 6: el nodo de fuego recién encendido cuya palabra se muestra (Palabra.svelte; '' = ninguna). */
+  palabra = $state('')
   /** Capa 2, fase 1B: la marca de beta de la partida (preguntar con `esBeta(juego)`). */
   beta = $state.raw<MarcaBeta | undefined>(undefined)
   /** C8: fracción hecha del cálculo de la ausencia (null = no hay cálculo en curso). */
@@ -397,7 +399,11 @@ export function comprarFuegoYa(id: string) {
   if (!esBeta(juego) || s === juego.s) return
   previo = juego.s = s
   guardarYa()
+  juego.palabra = id // las liberaciones tienen su palabra (txt.fuego.palabras); el resto no muestra nada
+  setTimeout(() => juego.palabra === id && (juego.palabra = ''), PALABRA_MS)
 }
+/** Lo que dura la palabra de una liberación (Palabra.svelte). */
+export const PALABRA_MS = 2800
 
 /** La pista "Tocá la pila": hasta el primer Puñado (las partidas de antes no lo anotaban: con la tienda ya visible, tampoco). */
 export const invitaTocar = () => !juego.vistos.punado && !juego.vistos.tienda

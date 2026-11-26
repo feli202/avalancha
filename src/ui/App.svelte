@@ -25,6 +25,7 @@
   import PopComunidad from './PopComunidad.svelte'
   import PaseItch from './PaseItch.svelte'
   import TraerPartida from './TraerPartida.svelte'
+  import Palabra from './Palabra.svelte'
   import { abandonarDefectoYa, caminoCapa2, caminoInfinito, comprimirYa, hayCartel, hayPanel, infinitoYa, invitaTocar, juego, ponerZoomT, progresoCompresion, zoomT } from './juego.svelte'
   import { PX_MAX } from '../render/pilaVisual'
   import { crearRefresco } from './limite'
@@ -245,6 +246,7 @@
 </div>
 
 <Capas />
+<Palabra />
 <AvisoVersion />
 <Instalar />
 <PopComunidad />

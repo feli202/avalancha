@@ -2,7 +2,7 @@
 import Decimal from 'break_infinity.js'
 import { CFG, precioLog10, type MutId } from './config'
 import { CFG2 } from './config2'
-import { densidadFuego, extraSector } from './fuego'
+import { densidadFuego, desborde, extraSector, metamorfosis, nivelLiberado } from './fuego'
 import {
   baseAnillo, cascadaCExtra, cascadaX, colorSinEfecto, coloresX, densidadExtra, densidadFija, densidadX, derrumbesTope, fatigaLog10, hitoColor,
   presionX, sinMutaciones,
@@ -63,6 +63,12 @@ export const densidad = (s: State) => densidadFija(s) ? 1 : // Frontera (§8)
 /** Nivel máximo de Cascada y de cada Mutación (Cascada+ y Mutación+ de la Red lo suben). */
 export const maxCascada = (s: State) => CFG.cascada.nivel_max + cascadaExtra(s)
 export const maxMutacion = (s: State) => CFG.mutaciones.nivel_max + mutacionExtra(s)
+/** Hasta dónde se puede comprar: el máximo, o sin límite con Desborde / Metamorfosis (Capa 2). */
+export const limiteCascada = (s: State) => (desborde(s) ? Infinity : maxCascada(s))
+export const limiteMutacion = (s: State) => (metamorfosis(s) ? Infinity : maxMutacion(s))
+/** El nivel que cuenta para el efecto: con Desborde / Metamorfosis, pasado el máximo corre el softcap de las liberaciones. */
+export const cascadaEf = (s: State) => (desborde(s) ? nivelLiberado(s.cascada, maxCascada(s)) : s.cascada)
+export const mutEf = (s: State, m: MutId) => (metamorfosis(s) ? nivelLiberado(s.mutaciones[m], maxMutacion(s)) : s.mutaciones[m])
 
 /** Tope de los granos (son `number`): con Sedimentación el Caudal no vuelve a 0 al comprimir y en la 1.2 pasa de nivel 1000
  * (2^1000 granos/s), que desborda a Infinity y deja la Arena en NaN (F y G entran como number en la producción).
@@ -73,7 +79,7 @@ export const GRANOS_MAX = 1e300
 /** F: granos por segundo (con el tope de GRANOS_MAX). */
 export const caudal = (s: State) => Math.min(GRANOS_MAX,
   CFG.caudal.granos_base * CFG.caudal.mult_por_nivel ** s.caudal *
-  CFG.mutaciones.caudal.por_nivel ** (s.mutaciones.caudal * (1 + mutacionesRel(s)))) // reliquia Mutaciones (SPEC_CAPA1 §5)
+  CFG.mutaciones.caudal.por_nivel ** (mutEf(s, 'caudal') * (1 + mutacionesRel(s)))) // reliquia Mutaciones (SPEC_CAPA1 §5)
 
 export function anillos(granos: number): number {
   const g0 = CFG.anillos.granos_primer_anillo
@@ -86,13 +92,13 @@ export const multColor = (i: number, nivel: number, hito = CFG.hito_colores.mult
 
 export const multAnillos = (s: State) =>
   Decimal.pow(
-    baseAnillo(s) + CFG.mutaciones.expansion.por_nivel * s.mutaciones.expansion, // Dislocación sube la base (§8)
+    baseAnillo(s) + CFG.mutaciones.expansion.por_nivel * mutEf(s, 'expansion'), // Dislocación sube la base (§8)
     anillos(s.granos),
   )
 
 export const cascadaC = (s: State) =>
-  (CFG.cascada.c_por_nivel * s.cascada +
-    (s.cascada >= 1 ? CFG.mutaciones.cascada.por_nivel * s.mutaciones.cascada + cascadaRel(s) + cascadaCExtra(s) : 0)) * cascadaX(s)
+  (CFG.cascada.c_por_nivel * cascadaEf(s) +
+    (s.cascada >= 1 ? CFG.mutaciones.cascada.por_nivel * mutEf(s, 'cascada') + cascadaRel(s) + cascadaCExtra(s) : 0)) * cascadaX(s)
 
 export const multCascada = (s: State) =>
   s.granos > 0
@@ -106,7 +112,7 @@ export const valor = (s: State) =>
     .pow((1 + cauceRel(s)) * coloresX(s) * extraSector(s, 'pila')) // reliquia Cauce: + colores_log10 × pct a log V; Impureza: colores a la mitad; sector Pila del Motor
     .mul(multAnillos(s))
     .mul(multCascada(s))
-    .mul(Decimal.pow(CFG.mutaciones.colores.por_nivel, sinMutaciones(s) ? 0 : s.mutaciones.colores * (1 + mutacionesRel(s)))) // Macla
+    .mul(Decimal.pow(CFG.mutaciones.colores.por_nivel, sinMutaciones(s) ? 0 : mutEf(s, 'colores') * (1 + mutacionesRel(s)))) // Macla
     .mul(Decimal.pow10(ecoLog10(s) + presion(s) * presionX(s) + aporteEscarcha(s))) // Eco (§6.3), Presión (§7.2) y Escarcha (§9)
 
 /** Energía que da un grano que cae ahora: (K × G) × V^D. */

@@ -72,7 +72,7 @@ export function tick(s: State, dt: number, autoInfinito = true): State {
     tiempoInfinito: s.tiempoInfinito + dt,
     maxEnergia: Decimal.max(s.maxEnergia, energia),
     estratos: crecerEstratos(s, dt, Math.log10(caudal(s))), // §7.2: por segundo de juego de Arena
-    fuego: fundirVidrio(s, dt), // Capa 2: el Horno
+    fuego: s.fuego.fundiciones > 0 ? { ...fundirVidrio(s, dt), vuelta: s.fuego.vuelta + dt } : s.fuego, // Capa 2: el Horno y el reloj de la vuelta (Inercia eterna)
     escarcha: crecerEscarcha(s, dt), // §9: también fuera de línea y dentro de los Defectos (menos Vidrio)
     relojAuto: s.relojAuto + dt,
     enfriamientoPunado: Math.max(0, s.enfriamientoPunado - dt),

@@ -1,0 +1,334 @@
+{
+ "softcap": [
+  {
+   "n": 3,
+   "tope": 5,
+   "efectivo": 3,
+   "extra": 0.0
+  },
+  {
+   "n": 4,
+   "tope": 5,
+   "efectivo": 4,
+   "extra": 0.0
+  },
+  {
+   "n": 5,
+   "tope": 5,
+   "efectivo": 5,
+   "extra": 1.0
+  },
+  {
+   "n": 6,
+   "tope": 5,
+   "efectivo": 5.5,
+   "extra": 3.0
+  },
+  {
+   "n": 7,
+   "tope": 5,
+   "efectivo": 6.0,
+   "extra": 6.0
+  },
+  {
+   "n": 8,
+   "tope": 5,
+   "efectivo": 6.5,
+   "extra": 10.0
+  },
+  {
+   "n": 9,
+   "tope": 5,
+   "efectivo": 7.0,
+   "extra": 15.0
+  },
+  {
+   "n": 10,
+   "tope": 5,
+   "efectivo": 7.5,
+   "extra": 21.0
+  },
+  {
+   "n": 8,
+   "tope": 10,
+   "efectivo": 8,
+   "extra": 0.0
+  },
+  {
+   "n": 9,
+   "tope": 10,
+   "efectivo": 9,
+   "extra": 0.0
+  },
+  {
+   "n": 10,
+   "tope": 10,
+   "efectivo": 10,
+   "extra": 1.0
+  },
+  {
+   "n": 11,
+   "tope": 10,
+   "efectivo": 10.5,
+   "extra": 3.0
+  },
+  {
+   "n": 12,
+   "tope": 10,
+   "efectivo": 11.0,
+   "extra": 6.0
+  },
+  {
+   "n": 13,
+   "tope": 10,
+   "efectivo": 11.5,
+   "extra": 10.0
+  },
+  {
+   "n": 14,
+   "tope": 10,
+   "efectivo": 12.0,
+   "extra": 15.0
+  },
+  {
+   "n": 15,
+   "tope": 10,
+   "efectivo": 12.5,
+   "extra": 21.0
+  }
+ ],
+ "desborde": [
+  {
+   "L": 8,
+   "tope": 10,
+   "costo": 88.0
+  },
+  {
+   "L": 9,
+   "tope": 10,
+   "costo": 94.0
+  },
+  {
+   "L": 10,
+   "tope": 10,
+   "costo": 101.0
+  },
+  {
+   "L": 11,
+   "tope": 10,
+   "costo": 109.0
+  },
+  {
+   "L": 12,
+   "tope": 10,
+   "costo": 118.0
+  },
+  {
+   "L": 13,
+   "tope": 10,
+   "costo": 128.0
+  },
+  {
+   "L": 14,
+   "tope": 10,
+   "costo": 139.0
+  },
+  {
+   "L": 15,
+   "tope": 10,
+   "costo": 151.0
+  }
+ ],
+ "metamorfosis": [
+  {
+   "mut": "caudal",
+   "L": 4,
+   "tope": 5,
+   "costo": 192.0
+  },
+  {
+   "mut": "caudal",
+   "L": 5,
+   "tope": 5,
+   "costo": 211.0
+  },
+  {
+   "mut": "caudal",
+   "L": 6,
+   "tope": 5,
+   "costo": 231.0
+  },
+  {
+   "mut": "caudal",
+   "L": 7,
+   "tope": 5,
+   "costo": 252.0
+  },
+  {
+   "mut": "caudal",
+   "L": 8,
+   "tope": 5,
+   "costo": 274.0
+  },
+  {
+   "mut": "caudal",
+   "L": 9,
+   "tope": 5,
+   "costo": 297.0
+  },
+  {
+   "mut": "colores",
+   "L": 4,
+   "tope": 5,
+   "costo": 218.0
+  },
+  {
+   "mut": "colores",
+   "L": 5,
+   "tope": 5,
+   "costo": 241.0
+  },
+  {
+   "mut": "colores",
+   "L": 6,
+   "tope": 5,
+   "costo": 265.0
+  },
+  {
+   "mut": "colores",
+   "L": 7,
+   "tope": 5,
+   "costo": 290.0
+  },
+  {
+   "mut": "colores",
+   "L": 8,
+   "tope": 5,
+   "costo": 316.0
+  },
+  {
+   "mut": "colores",
+   "L": 9,
+   "tope": 5,
+   "costo": 343.0
+  },
+  {
+   "mut": "expansion",
+   "L": 4,
+   "tope": 5,
+   "costo": 205.0
+  },
+  {
+   "mut": "expansion",
+   "L": 5,
+   "tope": 5,
+   "costo": 226.0
+  },
+  {
+   "mut": "expansion",
+   "L": 6,
+   "tope": 5,
+   "costo": 248.0
+  },
+  {
+   "mut": "expansion",
+   "L": 7,
+   "tope": 5,
+   "costo": 271.0
+  },
+  {
+   "mut": "expansion",
+   "L": 8,
+   "tope": 5,
+   "costo": 295.0
+  },
+  {
+   "mut": "expansion",
+   "L": 9,
+   "tope": 5,
+   "costo": 320.0
+  },
+  {
+   "mut": "cascada",
+   "L": 4,
+   "tope": 5,
+   "costo": 252.0
+  },
+  {
+   "mut": "cascada",
+   "L": 5,
+   "tope": 5,
+   "costo": 281.0
+  },
+  {
+   "mut": "cascada",
+   "L": 6,
+   "tope": 5,
+   "costo": 311.0
+  },
+  {
+   "mut": "cascada",
+   "L": 7,
+   "tope": 5,
+   "costo": 342.0
+  },
+  {
+   "mut": "cascada",
+   "L": 8,
+   "tope": 5,
+   "costo": 375.0
+  },
+  {
+   "mut": "cascada",
+   "L": 9,
+   "tope": 5,
+   "costo": 409.0
+  }
+ ],
+ "lecho": {
+  "umbrales": [
+   295,
+   368.75,
+   460.9375,
+   576.171875,
+   720.21484375,
+   900.2685546875,
+   1125.335693359375,
+   1406.6696166992188,
+   1758.3370208740234
+  ],
+  "densidad_extra": [
+   0.03000000000000025,
+   0.05999999999999961,
+   0.08999999999999986,
+   0.1200000000000001,
+   0.14999999999999947
+  ]
+ },
+ "nodos": [
+  {
+   "Btot": 1,
+   "red": 0,
+   "horas": 0.0,
+   "dens": 1.1925000000000001,
+   "impulso_x": 1.0,
+   "w_x": 1.159
+  },
+  {
+   "Btot": 300,
+   "red": 4,
+   "horas": 2.25,
+   "dens": 3.0562114238207094,
+   "impulso_x": 5.0,
+   "w_x": 2.9135143529745156
+  },
+  {
+   "Btot": 40000,
+   "red": 2,
+   "horas": 7.5,
+   "dens": 6.85169916460627,
+   "impulso_x": 5.234057902536162,
+   "w_x": 2.7555262396044036
+  }
+ ]
+}

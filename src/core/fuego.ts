@@ -14,7 +14,7 @@ const TP = CFG2.temperatura
 /** Los 25 nodos con nivel de fuego, en el orden de config. */
 export const NODOS_FUEGO = Object.keys(CFG2.red_fuego)
 /** Los niveles de fuego que ya hacen algo; el resto dice "próximamente" y no se compra (llegan en las fases 4–10). */
-export const FUEGO_HECHO = new Set(['memoria', 'sedimentacion', 'eco', 'estratos', 'cristalografia'])
+export const FUEGO_HECHO = new Set(['memoria', 'sedimentacion', 'eco', 'estratos', 'cristalografia', 'cascada_plus', 'mutacion_plus', 'compactacion', 'inercia', 'presion'])
 
 export const tieneFuego = (s: State, id: string) => s.fuego.nodos.includes(id)
 export const precioFuego = (id: string) => CFG2.red_fuego[id].precio
@@ -22,8 +22,11 @@ export const precioFuego = (id: string) => CFG2.red_fuego[id].precio
 /** Temperatura en K: 300 + 795 × Brasas totales^0,165 + Calor latente (Esquirla de fuego y Compresión térmica llegan después). */
 export const temperatura = (s: State) =>
   TP.inicial + TP.por_brasa * s.fuego.brasasTotales ** TP.exp_brasas + HO.mejoras.calor_latente.K * s.fuego.horno.calor_latente
-/** Lo que la Temperatura suma a la Densidad: (T − 300) / 1000. */
-export const densidadFuego = (s: State) => (temperatura(s) - TP.inicial) * TP.densidad_por_K
+/** El calor en miles de K: (T − 300) / 1000 (lo que reparte el Motor y lo que leen Magma y los demás "por kK"). */
+export const milesK = (s: State) => (temperatura(s) - TP.inicial) / 1000
+/** Lo que la Temperatura suma a la Densidad: (T − 300) × 0,001; Densidad ígnea (Compactación de fuego) ×1,5. */
+export const densidadFuego = (s: State) =>
+  (temperatura(s) - TP.inicial) * TP.densidad_por_K * (tieneFuego(s, 'compactacion') ? CFG2.red_fuego.compactacion.densidad_x : 1)
 
 /** Requisito: 1e308 Cristales totales en esta vuelta (el tope de los Cristales). */
 export const puedeFundir = (s: State) => s.cristalesTotales.log10() >= FU.requisito_log10
@@ -45,7 +48,7 @@ export function fundir(s: State): State {
     ...i, granos: 0, // granos_iniciales es solo para la primera partida
     auto: s.auto, automat: { ...s.automat, espera: 0 }, relicario: { ...i.relicario, regla: s.relicario.regla },
     tiempoTotal: s.tiempoTotal, granosTotales: s.granosTotales, mejorCorrida: s.mejorCorrida, compresionesSinAmbar: s.compresionesSinAmbar,
-    fuego: { ...s.fuego, brasas: s.fuego.brasas + b, brasasTotales: s.fuego.brasasTotales + b, fundiciones: s.fuego.fundiciones + 1 },
+    fuego: { ...s.fuego, brasas: s.fuego.brasas + b, brasasTotales: s.fuego.brasasTotales + b, fundiciones: s.fuego.fundiciones + 1, vuelta: 0 },
   }
   if (!tieneFuego(t, 'memoria')) return t
   const m = { ...t, red: { ...t.red, memoria: NIVEL_MAX_RED } }
@@ -61,6 +64,25 @@ export const comprarFuego = (s: State, id: string): State =>
 
 /** Lecho infinito (Sedimentación de fuego): compresiones sin el tope de 17. */
 export const lechoInfinito = (s: State) => tieneFuego(s, 'sedimentacion')
+/** Desborde (Cascada+ de fuego) y Metamorfosis (Mutación+ de fuego): Cascada y Mutaciones sin nivel máximo. */
+export const desborde = (s: State) => tieneFuego(s, 'cascada_plus')
+export const metamorfosis = (s: State) => tieneFuego(s, 'mutacion_plus')
+/** Inercia eterna: el impulso de los estratos × (1 + √(horas de la vuelta)). */
+export const inerciaEterna = (s: State) =>
+  tieneFuego(s, 'inercia') ? 1 + CFG2.red_fuego.inercia.impulso_por_raiz_h * Math.sqrt(s.fuego.vuelta / 3600) : 1
+/** Magma (Presión de fuego): el peso de los Estratos × (1 + 0,2 × (T − 300) / 1000). */
+export const magma = (s: State) => (tieneFuego(s, 'presion') ? 1 + CFG2.red_fuego.presion.w_por_kK * milesK(s) : 1)
+
+// --- El softcap fuerte de las liberaciones (liberaciones.md; efectivo y extra de sim_capa2.py) ---
+const LIB = CFG2.liberaciones
+/** Nivel que cuenta para el efecto: pasado el tope, cada nivel rinde × 0,5 en log10 (la raíz cuadrada del multiplicador). */
+export const nivelLiberado = (n: number, tope: number) => (n <= tope ? n : tope + (n - tope) * LIB.rinde)
+/** Órdenes que se suman al costo del nivel n → n+1: j(j+1)/2 con j = niveles pasados el tope contando este (×10, ×1.000, …). */
+export function extraLiberado(n: number, tope: number) {
+  const j = n - tope + 1
+  return j > 0 ? (LIB.paso_extra * j * (j + 1)) / 2 : 0
+}
+
 /** Memoria eterna: los autocompradores, el doble de rápido. */
 export const ritmoAuto = (s: State) => (tieneFuego(s, 'memoria') ? CFG2.red_fuego.memoria.autocompradores_x : 1)
 
@@ -86,7 +108,7 @@ export function partes(rep: number[], ab: boolean[]): number[] {
 export const repartoActivo = (s: State) => partes(s.fuego.repartos[s.fuego.reparto], abiertos(s))
 
 /** Calor de un sector: h = parte × (T − 300) / 1000. */
-export const calor = (s: State, k: Sector) => repartoActivo(s)[SECTORES.indexOf(k)] * densidadFuego(s)
+export const calor = (s: State, k: Sector) => repartoActivo(s)[SECTORES.indexOf(k)] * milesK(s)
 /** Extra del sector: 1 + efecto × h (Pila: multiplica colores y cauce en log10 V). */
 export const extraSector = (s: State, k: Sector) => 1 + CFG2.motor.efecto[k] * calor(s, k)
 /** Sector Red: Cristales por Infinito ×10^h (en log10). */

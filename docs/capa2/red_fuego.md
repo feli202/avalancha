@@ -50,3 +50,7 @@ El orden cambió respecto del punto de partida para seguir la tabla de ritmo: el
 
 - En la Red, un nodo con fuego cambia en cualquier nivel de la vuelta: su pila teñida de lava bajo un degradé que late despacio y a saltos (`steps(14)` en 5 s: menos de 3 cambios por segundo, quieto con Reducir movimiento o ahorro), aro de brasa, nombre de fuego (en el celular, el corto de `fuego.cortos`) y una llamita después de sus 4 cuadros. Sus conexiones con los vecinos son vetas de brasa (sin ramitas de escarcha) con un halo naranja.
 - Panel del nodo: la llama es un SVG (contorno de brasa apagada, llena y con brillo encendida). Con fuego el título pasa al nombre de fuego y la cara a lava. "Ahora:" el efecto del nivel, "Con fuego:" el nombre y lo que hace (los que todavía no funcionan, con la descripción de `fuego.descripciones`) y el precio en Brasas, también en los "Próximamente".
+
+### Fase 6 (beta)
+
+- Funcionan también **Desborde**, **Metamorfosis**, **Densidad ígnea**, **Inercia eterna** y **Magma** ([liberaciones.md](liberaciones.md)); el panel muestra su efecto con el número de config (`ARG_FUEGO` en `Red.svelte`).
