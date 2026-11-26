@@ -38,7 +38,7 @@ Leé solo el archivo del sistema que vas a tocar. Lo vigente HOY (versión 1.0 +
 - [capa2/liberaciones.md](capa2/liberaciones.md) — Lecho, Desborde, Metamorfosis, Inercia eterna.
 - [capa2/defectos_cargas.md](capa2/defectos_cargas.md) — Defectos con 5 cargas.
 - [capa2/escalado_ignicion.md](capa2/escalado_ignicion.md) — escalado tras la 1.ª Fundición e Ignición (5.778 K).
-- [capa2/ritmo_balance.md](capa2/ritmo_balance.md) — resumen, ritmo objetivo, reglas de balance, plan de implementación.
+- [capa2/ritmo_balance.md](capa2/ritmo_balance.md) — resumen, ritmo objetivo, tabla calibrada con `balance/sim_capa2.py`, reglas de balance, plan de implementación.
 
 ## No leer salvo pedido
 - `historial/` — PROGRESO viejo completo hasta la 1.0.

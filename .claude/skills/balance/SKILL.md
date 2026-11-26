@@ -5,7 +5,7 @@ description: Correr y cambiar el balance de Avalancha (simuladores sim.py y sim_
 
 # Balance
 
-En esta máquina es `python`, no `python3`. Constantes solo en `balance/config.json` (Capa 0) y `balance/config_capa1.json` (Capa 1).
+En esta máquina es `python`, no `python3`. Constantes solo en `balance/config.json` (Capa 0), `balance/config_capa1.json` (Capa 1) y `balance/config_capa2.json` (Capa 2).
 
 **Orden obligatorio si un cambio toca el balance**: simulador → doc del sistema en `docs/` (y la tabla de `docs/capa1/bucle_y_balance.md` o `docs/capa0/economia.md`) → config y código → tests. Nunca al revés. Todo efecto que escale con Cristales va primero al simulador.
 
@@ -19,6 +19,7 @@ En esta máquina es `python`, no `python3`. Constantes solo en `balance/config.j
 | Capa 1, solo 15 s | `python balance/sim_capa1.py` | columna de 15 s |
 | Primeros Infinitos | `python balance/sim_capa1.py --primeros 12` | qué compra el bot en cada Infinito |
 | Capa 1 en el núcleo | `npm run test:lento` (~45 s, no entra en `npm test`) | 20/20, ±10 % |
+| Capa 2 | `python balance/sim_capa2.py` (`--rapido` solo 15 s; ajustar con `python balance/tune_capa2.py '{...}'`) | tabla de `docs/capa2/ritmo_balance.md` (20/20, ±30 min) |
 
 ## Metas de Defectos
 

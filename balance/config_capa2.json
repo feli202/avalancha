@@ -1,0 +1,402 @@
+{
+ "_doc": "Constantes de la Capa 2 (Fuego). Valores grandes en log10. Formulas en docs/capa2/ y balance/sim_capa2.py.",
+ "fundicion": {
+  "requisito_log10": 308.25,
+  "brasas_desde_log10": 308,
+  "M_B": 1,
+  "_brasas": "Brasas = floor(M_B * (log10 C / 308)^brasas_exp); M_B = (1 + Crisol) * x_carga^cargas * (1 + Facetas * cargas)",
+  "espera_fuego_max_min": 30,
+  "_espera": "bot: en el tope espera hasta espera_fuego_max_min a que el proximo nodo de fuego que puede pagar llegue a nv4; con Fusion del Infinito funde cuando la Fundicion suma bot_multiplicar_x a las Brasas totales (Fundicion automatica 'multiplicar mis Brasas'), como mucho espera_fuego_max_min despues de llegar al tope",
+  "brasas_exp": 5.2,
+  "cristales_soft_exp": 0.757,
+  "_soft": "con Fusion del Infinito, los Cristales de un Infinito pasado el tope (log10 1,8e308) cuentan tope + (lc - tope)^cristales_soft_exp",
+  "bot_multiplicar_x": 0.223,
+  "bot_espera_fusion_min": 5
+ },
+ "temperatura": {
+  "inicial": 300,
+  "ignicion": 5778,
+  "por_brasa": 795,
+  "exp_brasas": 0.165,
+  "_T": "T = 300 + por_brasa * Brasas_totales^exp_brasas * Esquirla_de_fuego + Compresion termica + Calor latente",
+  "densidad_por_K": 0.001
+ },
+ "motor": {
+  "_efecto": "calor del sector h = parte * (T - 300) / 1000; extra = 1 + efecto * h (Red: + efecto * h en log10 de Cristales)",
+  "efecto": {
+   "pila": 1.2,
+   "red": 1.0,
+   "estratos": 0.5,
+   "estratos_vidrio": 0.5,
+   "escarcha": 0.5,
+   "relicario": 0.3
+  },
+  "reparto_bot": {
+   "pila": 0.866,
+   "red": 0.3,
+   "estratos": 0.1,
+   "escarcha": 0.05,
+   "relicario": 0.05
+  },
+  "_reparto": "bot: hasta el primer Infinito de cada vuelta todo a Pila; despues Pila se lleva w_pila (arranca en reparto_bot.pila y se ajusta al fundir segun el desglose: si colores o cauce pasan bot_objetivo_fuente, x0,85; si otra fuente pasa, /0,85 + 0,05) y el resto va a los otros sectores abiertos segun reparto_bot (Estratos nada mientras la Presion pase el objetivo)",
+  "bot_objetivo_fuente": 0.35
+ },
+ "horno": {
+  "v0": 0.001,
+  "exp_s8": 0.01,
+  "_vidrio": "log10(Vidrio/s) = log10(v0) + exp_s8 * s8 * Sedimento fundido + Temperatura del Horno + sector Estratos + Abismo + Eco del Horno",
+  "mejoras": {
+   "temperatura": {
+    "c0": 1,
+    "paso": 1,
+    "cub": 0.1,
+    "x": 2
+   },
+   "tiro": {
+    "c0": 2,
+    "paso": 1.5,
+    "cub": 0.2,
+    "suma": 0.1
+   },
+   "crisol": {
+    "c0": 3,
+    "paso": 2,
+    "cub": 0.3,
+    "suma": 1
+   },
+   "calor_latente": {
+    "c0": 3,
+    "paso": 2,
+    "cub": 0.2,
+    "K": 50
+   },
+   "templado": {
+    "c0": 4,
+    "paso": 2,
+    "cub": 0.2,
+    "suma": 0.1
+   }
+  },
+  "_costo": "costo (log10 de Vidrio) del nivel L = c0 + paso * L + cub * L^3 / 6"
+ },
+ "red_fuego": {
+  "memoria": {
+   "nombre": "Memoria eterna",
+   "precio": 1
+  },
+  "sedimentacion": {
+   "nombre": "Lecho infinito",
+   "precio": 1
+  },
+  "cascada_plus": {
+   "nombre": "Desborde",
+   "precio": 1
+  },
+  "estratos": {
+   "nombre": "El Horno",
+   "precio": 1
+  },
+  "mutacion_plus": {
+   "nombre": "Metamorfosis",
+   "precio": 1
+  },
+  "eco": {
+   "nombre": "Resonancia",
+   "precio": 2,
+   "res_x": 300,
+   "res_exp": 0.2,
+   "_res": "Eco += p * res_x * Brasas_totales^res_exp"
+  },
+  "compactacion": {
+   "nombre": "Densidad ignea",
+   "precio": 3,
+   "densidad_x": 1.5
+  },
+  "defectos": {
+   "nombre": "Fallas",
+   "precio": 5
+  },
+  "frio": {
+   "nombre": "Escarcha eterna",
+   "precio": 9
+  },
+  "inercia": {
+   "nombre": "Inercia eterna",
+   "precio": 15,
+   "impulso_por_raiz_h": 1
+  },
+  "presion": {
+   "nombre": "Magma",
+   "precio": 26,
+   "w_por_kK": 0.2
+  },
+  "ruptura": {
+   "nombre": "Fusion del Infinito",
+   "precio": 43
+  },
+  "cristalografia": {
+   "nombre": "Cristal fundido",
+   "precio": 32,
+   "vidrio_s_por_infinito": 10
+  },
+  "germen": {
+   "nombre": "Hielo y fuego",
+   "precio": 45,
+   "g_por_kK": 0.5
+  },
+  "engarces": {
+   "nombre": "Relicario de fuego",
+   "precio": 63
+  },
+  "capilaridad": {
+   "nombre": "Conveccion",
+   "precio": 88,
+   "flujo_por_kK": 0.5
+  },
+  "sedimento2": {
+   "nombre": "Sedimento fundido",
+   "precio": 122,
+   "exp_s8_x": 1.5
+  },
+  "defectos2": {
+   "nombre": "Fallas profundas",
+   "precio": 123
+  },
+  "compactacion2": {
+   "nombre": "Compresion termica",
+   "precio": 241,
+   "K_por_compresion": 0.05
+  },
+  "eco2": {
+   "nombre": "Eco del Horno",
+   "precio": 337,
+   "vidrio_log_por_eco": 0.001
+  },
+  "deshielo": {
+   "nombre": "Deshielo automatico",
+   "precio": 472
+  },
+  "cristalografia2": {
+   "nombre": "Facetas de fuego",
+   "precio": 661,
+   "MB_por_carga": 0.05
+  },
+  "engarces2": {
+   "nombre": "Engaste de lava",
+   "precio": 926
+  },
+  "abismo": {
+   "nombre": "Abismo ardiente",
+   "precio": 1296,
+   "lleno_x": 2
+  },
+  "ruptura2": {
+   "nombre": "Fusion",
+   "precio": 1814,
+   "brasas_exp_x": 1.387
+  }
+ },
+ "liberaciones": {
+  "rinde": 0.5,
+  "paso_extra": 1,
+  "_softcap": "pasado el tope cada nivel rinde x rinde (la raiz cuadrada del multiplicador) y su costo suma paso_extra * j(j+1)/2 ordenes (j = niveles pasados el tope)",
+  "lecho_densidad": 0.03,
+  "lecho_umbral_x": 1.25,
+  "_lecho": "compresion 17+j pide 295 * lecho_umbral_x^j de Energia (log10) y suma lecho_densidad"
+ },
+ "escarcha_eterna": {
+  "M": 1,
+  "_esq": "Esquirlas/s = M * (logX / esq_d)^esq_exp * Geoda * sector Escarcha",
+  "softcap_exp": 5.33,
+  "paso_x": 3.86,
+  "_paso_x": "con la Escarcha eterna, el paso de costo de Cristalizacion continua, Fulgor y Templanza es el de la Capa 1 por paso_x",
+  "_softcap": "pasado el Punto de ruptura P (Templanza = Umbral) crece g * (P / logX)^softcap_exp",
+  "esq_d": 103.7,
+  "esq_exp": 2
+ },
+ "esquirlas_fuego": {
+  "esquirla_fuego": {
+   "c0": 1,
+   "paso": 1,
+   "x": 1.01
+  },
+  "geoda": {
+   "c0": 1,
+   "paso": 1,
+   "x": 2
+  },
+  "_costo": "10^(c0 + paso * nivel) Esquirlas"
+ },
+ "defectos": {
+  "_carga": "carga n: regla mas fuerte (Vacancia: n colores sin efecto; Dislocacion presion_x^n; Macla densidad_x^n; Impureza colores_x^n; Fatiga decada_s / n; Frontera, Inclusion y Vidrio igual) y meta_n = meta_1 + k * (n - 1)",
+  "k": {
+   "vacancia": 181000,
+   "dislocacion": 152000,
+   "macla": 143000,
+   "impureza": 309000,
+   "fatiga": 292000,
+   "frontera": 14000,
+   "inclusion": 104000,
+   "vidrio": 181000
+  },
+  "recompensa_exp_carga5": 2.5,
+  "brasas_por_carga": [
+   0,
+   0,
+   2,
+   3,
+   7,
+   14
+  ],
+  "MB_x_por_carga": 1.002,
+  "abandono_revisar_min": 2,
+  "abandono_ventana_min": 1,
+  "abandono_meta_max_min": 5,
+  "reintento_T_x": 1.05,
+  "bot_cargas_por_vuelta": 2,
+  "abandono_min": 10,
+  "_bot": "bot: como mucho bot_cargas_por_vuelta intentos de carga por vuelta, en el tope antes de fundir; abandona como en la Capa 1 pero con estos minutos; reintenta cuando la Temperatura subio reintento_T_x"
+ },
+ "escalado": {
+  "estratos_por_fundicion": 0.3,
+  "softcap_fundiciones": 20,
+  "estratos_llenos_s8": 290.9,
+  "_llenos": "desde la primera Fundicion los 8 estratos se abren juntos con el nodo Estratos nv1, llenos: s8 = estratos_llenos_s8 y cada uno separacion mas que el de abajo",
+  "_estratos": "cada nivel de Permeabilidad rinde x(1 + estratos_por_fundicion * F) (softcap: pasadas softcap_fundiciones cuenta la raiz); la Presion no escala"
+ },
+ "objetivos": [
+  [
+   "Primera Fundicion",
+   0,
+   0,
+   "Fundicion 1"
+  ],
+  [
+   "Memoria eterna (primera vuelta)",
+   0,
+   1,
+   "fuego memoria"
+  ],
+  [
+   "Fin de la primera vuelta (2.a Fundicion)",
+   1,
+   1,
+   "Fundicion 2"
+  ],
+  [
+   "El Horno",
+   1,
+   2,
+   "fuego estratos"
+  ],
+  [
+   "Lecho infinito (LECHO)",
+   1,
+   2,
+   "fuego sedimentacion"
+  ],
+  [
+   "DESBORDE",
+   1.5,
+   1.5,
+   "fuego cascada_plus"
+  ],
+  [
+   "METAMORFOSIS",
+   2.5,
+   2.5,
+   "fuego mutacion_plus"
+  ],
+  [
+   "Motor etapa 2 (Horno)",
+   2.5,
+   2.5,
+   "fuego estratos"
+  ],
+  [
+   "Fallas (cargas 2-5 de los Defectos 1-4)",
+   3.5,
+   3.5,
+   "fuego defectos"
+  ],
+  [
+   "Escarcha eterna (Motor etapa 3)",
+   4,
+   4,
+   "fuego frio"
+  ],
+  [
+   "INERCIA ETERNA",
+   4,
+   4,
+   "fuego inercia"
+  ],
+  [
+   "Fusion del Infinito",
+   5,
+   5,
+   "fuego ruptura"
+  ],
+  [
+   "Relicario de fuego (Motor etapa 4)",
+   6.5,
+   6.5,
+   "fuego engarces"
+  ],
+  [
+   "Fallas profundas",
+   8,
+   8,
+   "fuego defectos2"
+  ],
+  [
+   "3.000 K",
+   8,
+   8,
+   "3000 K"
+  ],
+  [
+   "Vueltas de 3-5 min",
+   9,
+   11,
+   "vuelta <= 5 min"
+  ],
+  [
+   "Cargas 5 de todos los Defectos",
+   9,
+   11,
+   "cargas 5 completas"
+  ],
+  [
+   "Abismo ardiente",
+   9,
+   11,
+   "fuego abismo"
+  ],
+  [
+   "Fusion (Ruptura II)",
+   9,
+   11,
+   "fuego ruptura2"
+  ],
+  [
+   "Ignicion 5.778 K",
+   10,
+   12,
+   "Ignicion"
+  ]
+ ],
+ "_objetivos": "[hito, desde h, hasta h, evento]; entra si cae en [desde - 0,5 h, hasta + 0,5 h] (docs/capa2/ritmo_balance.md)",
+ "tolerancia_h": 0.5,
+ "fuente_max": 0.4,
+ "hueco_max_min": 30,
+ "vuelta_max_min_desde_la_6": 20,
+ "bot_infinito_s": 60,
+ "_bot_infinito": "bot: el Infinito se hace al llegar al tope (sin Fusion) o, pasados bot_infinito_s de corrida, si ya multiplica x10 los Cristales",
+ "primeras_vueltas_min": [
+  20,
+  30
+ ],
+ "dt_compresion_s": 0.1,
+ "_dt_compresion": "simulador: paso de tiempo despues de una compresion (con Lecho infinito hay decenas por Infinito y en el juego son instantaneas)"
+}

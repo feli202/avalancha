@@ -246,6 +246,8 @@ class Arena:
 GRANOS_MAX_LOG10 = 300  # GRANOS_MAX de formulas.ts: con Sedimentacion el Caudal no vuelve a 0 y pasaria de 1e308
 CURVA = None      # probe.py: lista donde anotar (t, logE) de la corrida
 ABANDONA = True   # probe.py lo apaga para medir la curva entera
+FIN_INF = None    # sim_capa2.py: regla extra para hacer el Infinito, fin(t, lc) -> bool
+LC_F = None       # sim_capa2.py: softcap de los Cristales pasado el tope (Fusion del Infinito)
 
 def play_arena(P, defect, check, t_now, stats):
     """Una corrida de la Arena (de Infinito a Infinito). Devuelve (duracion_s, logE_final, cumplio_meta)."""
@@ -259,7 +261,7 @@ def play_arena(P, defect, check, t_now, stats):
     gam0 = est['gamma_log10_por_s'] * P.v('estratos', 'flujo_x', 0)
     imp = P.v('inercia', 'impulso_x', 1); sep = P.sep(); emp = est['empuje_por_estrato_inferior']
     while True:
-        dt = 0.5 if A.rt < 30 else 1.0 if A.rt < 300 else 2.0
+        dt = A.__dict__.pop('dt_comp', None) or (0.5 if A.rt < 30 else 1.0 if A.rt < 300 else 2.0)  # dt_comp: sim_capa2, paso corto tras comprimir
         r = A.lograte()
         if r > NEG: A.E = addlog(A.E, r + l10(dt))
         A.lG = min(GRANOS_MAX_LOG10, addlog(A.lG, A.lF() + l10(dt))); A.rt += dt; t += dt
@@ -311,7 +313,9 @@ def play_arena(P, defect, check, t_now, stats):
         else:
             if A.E >= INF:
                 lc = soft(P.crys_mult(defect) + L1['cristales']['base_log10'] + ((A.E - INF) / P.Q()) ** L1['cristales']['beta'])
+                if LC_F: lc = LC_F(lc)
                 rate = lc - l10(t)
+                if (human or mem >= 4) and FIN_INF and FIN_INF(t, lc): return t, A, False
                 if rate > best_rate: best_rate, best_t = rate, t
                 elif (human or mem >= 4) and rate < best_rate - 0.01 and t - best_t > 5:
                     return t, A, False

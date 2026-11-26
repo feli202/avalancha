@@ -62,6 +62,7 @@ npx svelte-check       # tipos de los .svelte
 npm run build          # dist/
 python balance/sim.py              # Capa 0: atento 3 h 28 min
 python balance/sim_capa1.py --robustez   # Capa 1: tarda minutos
+python balance/sim_capa2.py              # Capa 2: tabla de hitos, fuentes y huecos (~30 s; --rapido ~15 s)
 ```
 
 ## Skills del proyecto (`.claude/skills/`)

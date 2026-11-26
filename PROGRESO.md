@@ -2,7 +2,7 @@
 
 Historia completa hasta la 1.0: `docs/historial/progreso_hasta_1.0.md` (no leer salvo pedido).
 
-## Estado (2026-11-25)
+## Estado (2026-11-26)
 
 **Versión 1.0.0**: Capa 0 + Capa 1 completas. Publicada en https://feli202.github.io/avalancha/ (rama `main`, build de 2b31992, Escarcha recalibrada). Código en `master`.
 
@@ -38,7 +38,7 @@ Spec en `docs/capa2/`. Orden de fases:
 - [x] 0 preparación (spec partida en `docs/capa2/`, diseño original en `archivo/DISENO_CAPA2.md`, reglas en CLAUDE.md)
 - [x] 1A bloquear Capa 1 (2026-11-25): tope de Cristales en 1e308 (`topeCristales`) y migración al cargar con respaldo `COPIA_TOPE`, para todos. Ver `docs/capa2/migracion.md`. Falta probar en un celular real.
 - [x] 1B puerta de la beta (2026-11-26): botón "Jugar beta" en la pantalla de la Capa 2, tarjeta con código (verificado en el juego contra hashes, sin servidor) y pedido por mail o Discord, marca `beta` en la partida con respaldo "Antes de la beta" y vuelta en Ajustes, `esBeta`, privacidad. 100 códigos en `privado/codigos_beta.txt` (fuera de git; más con `python scripts/codigos_beta.py N`). Ver `docs/capa2/beta.md`.
-- [ ] 2 simulador
+- [x] 2 simulador (2026-11-26): `balance/sim_capa2.py` (importa `sim_capa1`, arranca de la partida real migrada, funde a las 0:00) y `balance/tune_capa2.py`; constantes calibradas en `balance/config_capa2.json` y en `docs/capa2/`. Tabla abajo.
 - [ ] 3 Fundición
 - [ ] 4 Motor y Red de fuego
 - [ ] 5 Horno
@@ -49,7 +49,27 @@ Spec en `docs/capa2/`. Orden de fases:
 - [ ] 10 Ignición
 - [ ] 11 auditoría y publicación
 
+### Fase 2: tabla calibrada (`python balance/sim_capa2.py`, revisando cada 15 s; ~30 s con la columna de 60 s, `--rapido` ~15 s)
+
+| Hito | Objetivo | Sim |
+|---|---|---|
+| Primera Fundición / Memoria eterna | 0:00 / 0:00–1:00 | 0:00 / 0:13 |
+| Fin de la primera vuelta | ~1:00 | 1:10 |
+| Lecho / DESBORDE | 1:00–2:00 / ~1:30 | 1:11 / 1:45 |
+| El Horno (Motor etapa 2) / METAMORFOSIS | 2:00–2:30 / ~2:30 | 2:14 / 2:39 |
+| Fallas / Escarcha eterna / INERCIA ETERNA | ~3:30 / ~4:00 / ~4:00 | 3:22 / 3:52 / 4:11 |
+| Fusión del Infinito / Relicario de fuego | ~5:00 / ~6:30 | 5:26 / 6:30 |
+| Fallas profundas / 3.000 K | ~8:00 | 8:05 / 8:28 |
+| Vueltas ≤ 5 min / Abismo / Fusión / cargas 5 | 9:00–11:00 | 9:33 / 9:43 / 9:48 / 9:56 |
+| **Ignición** | 10–12 h | **9:56** |
+
+20/20 hitos en rango (±30 min). Fuente más pesada 40,3 % (Presión, ~3:58) y hueco máximo 34,8 min (primera vuelta): las dos reglas quedan apenas fuera. Revisando cada 60 s: 13/20.
+
+Cambios de diseño aplicados (con OK): Brasas = M_B × (log10 C / 308)^5,2 con freno de Cristales pasado el tope (^0,757); Esquirlas eternas (logX/103,7)²; escalado solo sobre Permeabilidad. Además: Templanza = Umbral (no hay Aguante en la 1.0), carga 1 se rehace en cada vuelta, estratos llenos con s_8 = 291, orden de nodos según la tabla. Ver `docs/capa2/ritmo_balance.md`.
+
 ## Problemas conocidos
+
+- Capa 2 (simulador): la fuente más pesada llega a 40,3 % y hay un hueco de 34,8 min en la primera vuelta (0:20–0:55, entre Esquirla nv1 y nv2); la calibración es sensible (redondear un parámetro corre hitos de a decenas de minutos); entre las 4:00 y la Fusión las vueltas duran 1,5–2 min (sin Fusión cada Fundición da M_B Brasas, conviene fundir seguido); las últimas cargas 5 terminan justo con la Ignición; revisando cada 60 s entran 13/20.
 
 - El fin de la capa queda ~0,9 h antes que con la Escarcha vieja (14,0 h contra 14,9) y pegado a Vidrio; tocando solo la Escarcha no se separan (ver `docs/capa1/escarcha.md`).
 - Nunca probado en celulares reales (iPhone/Android: instalación, notch, temperatura, batería, fps).
