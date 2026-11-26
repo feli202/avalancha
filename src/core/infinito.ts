@@ -4,7 +4,8 @@ import { CFG } from './config'
 import { CFG1 } from './config1'
 import { compresionesConservadas, conserva, cristalesRedLog10, efectoRed } from './red'
 import { INFINITO, enInfinito, infinitoRoto, produccion } from './formulas'
-import { conReintento, enDefecto, metaAlcanzada, puedeEntrar, type DefectoId } from './defectos'
+import { CFG2 } from './config2'
+import { DEFECTOS, cargaActual, conReintento, enDefecto, metaAlcanzada, puedeEntrar, type DefectoId } from './defectos'
 import { elegirSola, relicarioFuego, reliquiasDeFuego, reliquiasPorInfinito } from './relicario'
 import { redLog10Motor, vidrioAlInfinito } from './fuego'
 import { estadoInicial, type State } from './state'
@@ -81,15 +82,21 @@ export const entrarDefecto = (s: State, id: DefectoId): State =>
 /** §8: abandona sin castigo (y sin Cristales); anota con cuántos Cristales totales conviene volver (~×30). */
 export const abandonarDefecto = (s: State): State =>
   enDefecto(s)
-    ? { ...reiniciarArena(s), defectos: { ...s.defectos, actual: '', reintento: conReintento(s, s.defectos.actual as DefectoId) } }
+    ? { ...reiniciarArena(s), defectos: { ...s.defectos, actual: '', reintento: cargaActual(s) > 1 ? s.defectos.reintento : conReintento(s, s.defectos.actual as DefectoId) } }
     : s
 
 /** §8: llegó a la meta. Queda completo (la recompensa es permanente y Cristalografía II ya lo cuenta) y se cierra como un
  * Infinito: Cristales normales y una reliquia. Si no llegó, devuelve el mismo estado. */
 export function ganarDefecto(s: State): State {
   if (!metaAlcanzada(s)) return s
-  const { [s.defectos.actual]: _, ...reintento } = s.defectos.reintento
-  return cerrarInfinito({ ...s, defectos: { completos: [...s.defectos.completos, s.defectos.actual], actual: '', reintento } })
+  const id = s.defectos.actual as DefectoId, n = cargaActual(s)
+  const { [id]: _, ...reintento } = s.defectos.reintento
+  if (n > 1) { // Capa 2: carga n completa para siempre; da sus Brasas una sola vez
+    const b = CFG2.defectos.brasas_por_carga[n]
+    const fuego = { ...s.fuego, brasas: s.fuego.brasas + b, brasasTotales: s.fuego.brasasTotales + b, cargas: s.fuego.cargas.map((c, i) => (DEFECTOS[i] === id ? n : c)) }
+    return cerrarInfinito({ ...s, fuego, defectos: { ...s.defectos, actual: '', reintento } })
+  }
+  return cerrarInfinito({ ...s, defectos: { completos: [...s.defectos.completos, id], actual: '', reintento } })
 }
 
 /** Bloque 10 y C6: el Infinito automático ya puede hacerse. Sin Romper, apenas llega; con el Infinito roto, al llegar a X

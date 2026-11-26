@@ -4,7 +4,7 @@
 import { precioLog10 } from './config'
 import { CFG1 } from './config1'
 import { CFG2 } from './config2'
-import { DEFECTOS_11, completo, enVidrio } from './defectos'
+import { DEFECTOS_11, completo, enVidrio, recExp } from './defectos'
 import { ESTRATOS, presion } from './estratos'
 import { efectoRed } from './red'
 import { extraSector, milesK, tieneFuego } from './fuego'
@@ -29,7 +29,7 @@ export const factoresCrecimiento = (s: State) => ({
   crecimiento: M.crecimiento.x ** s.escarcha.mejoras.crecimiento,
   germen: efectoRed(s, 'germen', 'escarcha_g_x', 1),
   eco2: 1 + efectoRed(s, 'eco2', 'escarcha_eco') * Math.max(0, s.cristalesTotales.log10()),
-  fatiga: completo(s, 'fatiga') ? DF.fatiga.recompensa_escarcha_g_x : 1,
+  fatiga: completo(s, 'fatiga') ? DF.fatiga.recompensa_escarcha_g_x ** recExp(s, 'fatiga') : 1,
   hieloYFuego: tieneFuego(s, 'germen') ? 1 + CFG2.red_fuego.germen.g_por_kK * milesK(s) : 1, // Germen de fuego
   // Escarcha eterna: pasado el Punto de ruptura crece × (P / logX)^5,33
   templanza: escarchaEterna(s) && s.escarcha.logX > puntoRuptura(s) ? (puntoRuptura(s) / s.escarcha.logX) ** EE.softcap_exp : 1,
@@ -39,7 +39,7 @@ export const factoresRuptura = (s: State) => ({
   base: E.punto_ruptura,
   umbral: M.umbral.x_P ** s.escarcha.mejoras.umbral,
   frio: efectoRed(s, 'frio', 'escarcha_P_x', 1),
-  inclusion: completo(s, 'inclusion') ? DF.inclusion.recompensa_escarcha_P_x : 1,
+  inclusion: completo(s, 'inclusion') ? DF.inclusion.recompensa_escarcha_P_x ** recExp(s, 'inclusion') : 1,
 })
 const producto = (o: Record<string, number>) => Object.values(o).reduce((a, b) => a * b, 1)
 /** g: cuánto crece logX por segundo. */

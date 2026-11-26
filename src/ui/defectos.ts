@@ -2,7 +2,7 @@
 // cambia el Defecto en curso (con y sin la regla), calculados con el núcleo.
 import Decimal from 'break_infinity.js'
 import {
-  CFG, CFG1, DEFECTOS, aporteEscarcha, densidad, ecoLog10, fatigaLog10, multCascada, multColor, presion, valor, hitoColor, type DefectoId,
+  CARGAS, CFG, CFG1, CFG2, DEFECTOS, cargaActual, cargaHecha, cargasAbiertas, enDefecto, aporteEscarcha, densidad, presionX, ecoLog10, fatigaLog10, multCascada, multColor, presion, valor, hitoColor, type DefectoId,
   type State,
 } from '../core'
 import { txt } from '../strings'
@@ -11,13 +11,16 @@ import { formato, formatoMult } from './formato'
 const D = CFG1.defectos
 const td = () => txt.cristal.defectos
 
-export const regla = (id: DefectoId) =>
+/** La regla de la carga n (Capa 2: más fuerte en Vacancia, Dislocación, Macla, Impureza y Fatiga). */
+export const regla = (id: DefectoId, n = 1) =>
   td().regla[id]({
-    vacancia: 0, dislocacion: D.dislocacion.presion_x, macla: D.macla.densidad_x, impureza: D.impureza.derrumbes_tope_log10,
-    fatiga: D.fatiga.decada_s, frontera: 0, inclusion: 0, vidrio: 0,
-  }[id])
+    vacancia: n, dislocacion: D.dislocacion.presion_x ** n, macla: D.macla.densidad_x ** n, impureza: D.impureza.derrumbes_tope_log10,
+    fatiga: D.fatiga.decada_s / n, frontera: 0, inclusion: 0, vidrio: 0,
+  }[id], D.impureza.colores_x ** n)
 
-export function recompensa(id: DefectoId) {
+/** La recompensa con la carga n hecha: la de la Capa 1 elevada a 1 + 0,375 × (n − 1) (las que suman, multiplicadas). */
+export function recompensa(id: DefectoId, n = 1) {
+  const e = 1 + ((CFG2.defectos.recompensa_exp_carga5 - 1) * (n - 1)) / (CARGAS - 1)
   const [a, b] = {
     vacancia: [CFG.hito_colores.mult, D.vacancia.recompensa_hito_mult],
     dislocacion: [CFG.anillos.mult_por_anillo, D.dislocacion.recompensa_anillo_mult],
@@ -28,8 +31,16 @@ export function recompensa(id: DefectoId) {
     inclusion: [1, D.inclusion.recompensa_escarcha_P_x],
     vidrio: [0, D.vidrio.cristales_log10],
   }[id]
-  return td().recompensa[id](a, b)
+  const suma = id === 'impureza' || id === 'frontera' || id === 'vidrio'
+  return td().recompensa[id](a, suma ? b * e : b ** e)
 }
+
+/** La carga que muestra la ficha: la del Defecto en curso o la siguiente que se puede hacer (la última hecha si no hay más). */
+export const cargaVista = (s: State, id: DefectoId) =>
+  enDefecto(s, id) ? cargaActual(s) : Math.min(CARGAS, cargaHecha(s, id) + (cargaHecha(s, id) === 0 || cargasAbiertas(s, id) ? 1 : 0))
+/** Estado de la marca k (1–5): hecha, disponible (abierta y la siguiente) o bloqueada. */
+export const marca = (s: State, id: DefectoId, k: number) =>
+  k <= cargaHecha(s, id) ? 'hecha' : k === cargaHecha(s, id) + 1 && (k === 1 || cargasAbiertas(s, id)) ? 'disponible' : 'bloqueada'
 
 export const requisito = (id: DefectoId) => {
   const rq = D.requisitos[id]
@@ -55,7 +66,7 @@ export function cambios(s: State): Cambio[] {
     vacancia: [{ id: 'violeta', dentro: '×1', fuera: x(multColor(3, s.colores[3], hitoColor(s))) }],
     dislocacion: [
       { id: 'cascada', dentro: x(multCascada(s)), fuera: x(multCascada(f)) },
-      { id: 'presion', dentro: pres(s, D.dislocacion.presion_x), fuera: pres(f, 1) },
+      { id: 'presion', dentro: pres(s, presionX(s)), fuera: pres(f, 1) },
     ],
     macla: [
       { id: 'densidad', dentro: `^${formatoMult(densidad(s))}`, fuera: `^${formatoMult(densidad(f))}` },
@@ -67,7 +78,7 @@ export function cambios(s: State): Cambio[] {
     ],
     fatiga: [ // una carrera: cuánto se perdió y cuánto falta para el próximo ÷10
       { id: 'fatiga', dentro: `×10^−${formatoMult(fatigaLog10(s))}`, fuera: '×1' },
-      { id: 'reloj', dentro: reloj(D.fatiga.decada_s - (s.tiempoCorrida % D.fatiga.decada_s)), fuera: '' },
+      { id: 'reloj', dentro: reloj(D.fatiga.decada_s / cargaActual(s) - (s.tiempoCorrida % (D.fatiga.decada_s / cargaActual(s)))), fuera: '' },
     ],
     frontera: [{ id: 'densidad', dentro: '^1', fuera: `^${formatoMult(densidad(f))}` }],
     inclusion: [ // sin la Presión se ve lo que aportan la Escarcha y el Eco

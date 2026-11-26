@@ -24,7 +24,9 @@ export interface Config2 {
     germen: { g_por_kK: number }
     engarces: { casilleros_x: number }
     engarces2: { espacios: number; niveles: number }
+    cristalografia2: { MB_por_carga: number }
   }
+  defectos: { k: Record<string, number>; recompensa_exp_carga5: number; brasas_por_carga: number[]; MB_x_por_carga: number }
   escarcha_eterna: { M: number; esq_d: number; esq_exp: number; softcap_exp: number; paso_x: number }
   liberaciones: { rinde: number; paso_extra: number; lecho_densidad: number; lecho_umbral_x: number }
 }

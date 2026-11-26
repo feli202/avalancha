@@ -5,6 +5,7 @@ import Decimal from 'break_infinity.js'
 import { CFG, precioLog10 } from './config'
 import { CFG1 } from './config1'
 import { CFG2 } from './config2'
+import { DEFECTOS, cargasCompletas } from './defectos'
 import { NIVEL_MAX_RED, compresionesConservadas, nivelRed } from './red'
 import { estadoInicial, type MejoraHorno, type State } from './state'
 
@@ -14,7 +15,7 @@ const TP = CFG2.temperatura
 /** Los 25 nodos con nivel de fuego, en el orden de config. */
 export const NODOS_FUEGO = Object.keys(CFG2.red_fuego)
 /** Los niveles de fuego que ya hacen algo; el resto dice "próximamente" y no se compra (llegan en las fases 4–10). */
-export const FUEGO_HECHO = new Set(['memoria', 'sedimentacion', 'eco', 'estratos', 'cristalografia', 'cascada_plus', 'mutacion_plus', 'compactacion', 'inercia', 'presion', 'frio', 'germen', 'engarces', 'deshielo', 'engarces2'])
+export const FUEGO_HECHO = new Set(['memoria', 'sedimentacion', 'eco', 'estratos', 'cristalografia', 'cascada_plus', 'mutacion_plus', 'compactacion', 'inercia', 'presion', 'frio', 'germen', 'engarces', 'deshielo', 'engarces2', 'defectos', 'defectos2', 'cristalografia2'])
 
 export const tieneFuego = (s: State, id: string) => s.fuego.nodos.includes(id)
 export const precioFuego = (id: string) => CFG2.red_fuego[id].precio
@@ -31,9 +32,15 @@ export const densidadFuego = (s: State) =>
 /** Requisito: 1e308 Cristales totales en esta vuelta (el tope de los Cristales). */
 export const puedeFundir = (s: State) => s.cristalesTotales.log10() >= FU.requisito_log10
 
-/** Brasas = ⌊M_B × (log10 C / 308)^5,2⌋, M_B = 1 + Crisol. Con los Cristales frenados en el tope da M_B (cargas y Fusión llegan después). */
+/** M_B = (1 + Crisol) × 1,002^cargas × (1 + 0,05 × cargas con Facetas de fuego), con las cargas 2–5 completas. */
+export function multBrasas(s: State) {
+  const c = cargasCompletas(s)
+  const m = (FU.M_B + HO.mejoras.crisol.suma * s.fuego.horno.crisol) * CFG2.defectos.MB_x_por_carga ** c
+  return tieneFuego(s, 'cristalografia2') ? m * (1 + CFG2.red_fuego.cristalografia2.MB_por_carga * c) : m
+}
+/** Brasas = ⌊M_B × (log10 C / 308)^5,2⌋. Con los Cristales frenados en el tope da M_B (la Fusión llega después). */
 export function brasasAlFundir(s: State) {
-  const mb = FU.M_B + HO.mejoras.crisol.suma * s.fuego.horno.crisol
+  const mb = multBrasas(s)
   const x = Math.min(300, Math.log10(mb) + FU.brasas_exp * Math.log10(Math.max(1, s.cristalesTotales.log10() / FU.brasas_desde_log10)))
   return Math.floor(10 ** x + 1e-9)
 }
@@ -50,6 +57,7 @@ export function fundir(s: State): State {
     auto: s.auto, automat: { ...s.automat, espera: 0 }, relicario: { ...i.relicario, regla: s.relicario.regla },
     ...(tieneFuego(s, 'frio') && { escarcha: s.escarcha }),
     tiempoTotal: s.tiempoTotal, granosTotales: s.granosTotales, mejorCorrida: s.mejorCorrida, compresionesSinAmbar: s.compresionesSinAmbar,
+    defectos: { ...i.defectos, completos: DEFECTOS.filter((_, k) => s.fuego.cargas[k] > 1) }, // con una carga 2–5 hecha, completo desde el inicio
     fuego: { ...s.fuego, brasas: s.fuego.brasas + b, brasasTotales: s.fuego.brasasTotales + b, fundiciones: s.fuego.fundiciones + 1, vuelta: 0 },
   }
   if (!tieneFuego(t, 'memoria')) return t

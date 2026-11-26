@@ -286,15 +286,15 @@ export const es = {
       /** Qué defecto de un cristal es cada uno (una línea, debajo del nombre). */
       cristal: { vacancia: 'Falta un átomo en la red', dislocacion: 'Media red se corrió', macla: 'La red se refleja en un plano', impureza: 'Un átomo que no es de acá', fatiga: 'La red se cansa de tanto cargar', frontera: 'Dos granos que no encajan', inclusion: 'Una burbuja atrapada adentro', vidrio: 'Sin red: átomos sin orden' } as Record<string, string>,
       regla: {
-        vacancia: (_x: number) => 'Violeta se compra, pero no multiplica.',
+        vacancia: (x: number) => (x <= 1 ? 'Violeta se compra, pero no multiplica.' : x >= 4 ? 'Los colores se compran, pero ninguno multiplica.' : `Los ${x} colores más caros se compran, pero no multiplican.`),
         dislocacion: (x: number) => `La Cascada no funciona y la Presión vale ×${f(x)}.`,
         macla: (x: number) => `No hay Mutaciones y la Densidad vale ×${f(x)}.`,
-        impureza: (x: number) => `Los derrumbes por grano tienen tope 1e${x} y los colores valen a la mitad (^0,5).`,
+        impureza: (x: number, y = 0.5) => `Los derrumbes por grano tienen tope 1e${x} y los colores valen ${y === 0.5 ? 'a la mitad (^0,5)' : `^${f4(y)}`}.`,
         fatiga: (x: number) => `La producción se divide por 10 cada ${f(x / 60)} min de corrida. Comprimir reinicia el reloj.`,
         frontera: (_x: number) => 'La Densidad vale 1.',
         inclusion: (_x: number) => 'La Presión de los Estratos no cuenta. Para avanzar quedan la Escarcha y el Eco.',
         vidrio: (_x: number) => 'Sin Relicario, sin Eco, sin Escarcha, los estratos quietos y sin bonos de Cristales. Solo queda la Red.',
-      } as Record<string, (x: number) => string>,
+      } as Record<string, (x: number, y?: number) => string>,
       recompensa: {
         vacancia: (a: number, b: number) => `El hito de cada color ×${f(a)} → ×${f(b)}`,
         dislocacion: (a: number, b: number) => `Cada anillo ×${f(a)} → ×${f(b)}`,
@@ -337,6 +337,11 @@ export const es = {
       emblema: (n: string, estado: string) => `${n}: ${estado}`,
       lista: 'Los cuatro Defectos, en orden',
       grupos: ['Defectos', 'Defectos II'],
+      // Capa 2: las 5 cargas de cada Defecto
+      carga: (n: number, de: number) => `Carga ${n} de ${de}`,
+      cargas: (hechas: number, de: number) => `${hechas} de ${de} cargas superadas`,
+      porCarga: (b: number, mb: number) => `Una vez: +${b} Brasas y M_B ×${f4(mb)} para siempre`,
+      cargaGanada: (n: string, k: number, b: number) => `${n}: carga ${k} superada · +${b} Brasas`,
     },
     // SPEC_CAPA1 §7 y correcciones, bloque 11 (el embudo en 2D)
     estratos: {

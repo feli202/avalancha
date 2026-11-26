@@ -3,15 +3,18 @@
   // (un átomo que falta, media red corrida, la red reflejada, un átomo ajeno) unidos por escarcha; a la derecha, la ficha del
   // elegido con regla, meta, requisito y recompensa, y el botón para entrar o abandonar.
   import Decimal from 'break_infinity.js'
-  import { CFG1, DEFECTOS, completo, enDefecto, falta, metaLog10, puedeEntrar, volverCon, type DefectoId } from '../core'
+  import { CARGAS, CFG1, CFG2, DEFECTOS, cargaHecha, completo, enDefecto, falta, metaLog10, puedeEntrar, volverCon, type DefectoId } from '../core'
+  import { esBeta } from '../guardado/guardado'
   import { txt } from '../strings'
-  import { cambios, grupo, nombre, recompensa, regla, requisito } from './defectos'
+  import { cambios, cargaVista, grupo, marca, nombre, recompensa, regla, requisito } from './defectos'
   import { formato } from './formato'
   import { abandonarDefectoYa, entrarDefectoYa, juego, progresoCompresion } from './juego.svelte'
   import * as sonido from './sonido'
 
   const t = txt.cristal.defectos
   const s = $derived(juego.s)
+  /** Capa 2: las 5 cargas se ven en la beta, desde la primera Fundición. */
+  const conCargas = $derived(esBeta(juego) && s.fuego.fundiciones > 0)
   /** El color de nivel de cada uno (el mismo que pinta su red cuando está superado). */
   const COLOR: Record<DefectoId, string> = {
     vacancia: 'var(--violeta)', dislocacion: 'var(--coral)', macla: 'var(--jade)', impureza: 'var(--ambar)',
@@ -19,6 +22,7 @@
   }
   const primero = () => (juego.s.defectos.actual as DefectoId) || DEFECTOS.find((d) => !completo(juego.s, d)) || DEFECTOS[0]
   let foco = $state<DefectoId>(primero())
+  const nf = $derived(conCargas ? cargaVista(s, foco) : 1)
   /** Defectos II se ve desde que se abre la Escarcha (la 1.2). */
   const conGrupo2 = $derived(s.escarcha.abierta)
   const visibles = $derived(DEFECTOS.slice(grupo(foco) * 4, grupo(foco) * 4 + 4))
@@ -41,7 +45,7 @@
     return p
   }
   const estado = (id: DefectoId) =>
-    enDefecto(s, id) ? t.enCurso : completo(s, id) ? t.superado : puedeEntrar(s, id) ? '' : t.cerrado
+    enDefecto(s, id) ? t.enCurso : puedeEntrar(s, id) ? '' : completo(s, id) ? t.superado : t.cerrado
 
   function textoFalta(id: DefectoId) {
     const f = falta(s, id)
@@ -62,6 +66,12 @@
   }
   const prog = $derived(progresoCompresion(s))
 </script>
+
+{#snippet marcas(id: DefectoId)}
+  <span class="marcas" style:--c={COLOR[id]} role="img" aria-label={t.cargas(cargaHecha(s, id), CARGAS)}>
+    {#each { length: CARGAS } as _, k}<i class={marca(s, id, k + 1)}></i>{/each}
+  </span>
+{/snippet}
 
 {#snippet cristal(id: DefectoId, r: number)}
   <svg class="red" viewBox="-30 -30 60 60" aria-hidden="true" style:--c={COLOR[id]}>
@@ -89,7 +99,8 @@
             aria-pressed={foco === id} aria-label={t.emblema(nombre(id), estado(id) || t.entrar)} onclick={() => (foco = id)}>
             {@render cristal(id, 3)}
             <span class="nombre">{nombre(id)}</span>
-            <small>{estado(id) || t.meta(metaLog10(id))}</small>
+            <small>{estado(id) || t.meta(metaLog10(id, conCargas ? cargaVista(s, id) : 1))}</small>
+            {#if conCargas}{@render marcas(id)}{/if}
           </button>
         </li>
       {/each}
@@ -101,15 +112,15 @@
         {@render cristal(foco, 3.4)}
         <div>
           <h2>{nombre(foco)}</h2>
-          <p class="sub">{t.cristal[foco]}</p>
+          <p class="sub">{conCargas ? t.carga(nf, CARGAS) : t.cristal[foco]}</p>
         </div>
         {#if estado(foco)}<span class="sello" class:hecho={completo(s, foco)}>{estado(foco)}</span>{/if}
       </header>
       <dl>
-        <div><dt>{t.rotulos.regla}</dt><dd>{regla(foco)}</dd></div>
-        <div><dt>{t.rotulos.meta}</dt><dd class="num">{t.meta(metaLog10(foco))}</dd></div>
+        <div><dt>{t.rotulos.regla}</dt><dd>{regla(foco, nf)}</dd></div>
+        <div><dt>{t.rotulos.meta}</dt><dd class="num">{t.meta(metaLog10(foco, nf))}</dd></div>
         <div><dt>{t.rotulos.requisito}</dt><dd>{requisito(foco)}</dd></div>
-        <div><dt>{t.rotulos.recompensa}</dt><dd class="premio num">{recompensa(foco)}</dd></div>
+        <div><dt>{t.rotulos.recompensa}</dt><dd class="premio num">{recompensa(foco, nf)}{#if nf > 1}<br /><small>{t.porCarga(CFG2.defectos.brasas_por_carga[nf], CFG2.defectos.MB_x_por_carga)}</small>{/if}</dd></div>
       </dl>
 
       <div class="pie">
@@ -119,11 +130,11 @@
             <ul>{#each cambios(s) as c}<li>{t.mult[c.id]} <b>{c.dentro}</b>{#if c.fuera}<s>{c.fuera}</s>{/if}</li>{/each}</ul>
           </div>
           <div class="barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.floor(prog.p * 100)}
-            aria-label="{t.meta(metaLog10(foco))} · {txt.progreso(prog.final ? prog.p : 0)}">
+            aria-label="{t.meta(metaLog10(foco, nf))} · {txt.progreso(prog.final ? prog.p : 0)}">
             <i style:width="{(prog.final ? prog.p : 0) * 100}%"></i>
           </div>
           <button class="gema abandonar" onclick={abandonarDefectoYa}><b>{t.abandonar}</b><small>{t.abandonarQue}</small></button>
-        {:else if completo(s, foco)}
+        {:else if falta(s, foco) === 'hecho'}
           <p class="nota">{t.falta.hecho}</p>
         {:else}
           {@const v = volverCon(s, foco)}
@@ -159,7 +170,7 @@
     position: relative; display: grid; grid-template-columns: 4.5rem 1fr; grid-template-rows: auto auto; align-items: center; column-gap: 0.75rem;
     width: 100%; min-height: 4.5rem; padding: 0; border: 0; background: none; color: var(--apagado); font: inherit; text-align: left; cursor: pointer;
   }
-  .emblema .red { grid-row: 1 / span 2; width: 4.5rem; height: 4.5rem; background: var(--fondo); }
+  .emblema .red { grid-row: 1 / span 3; width: 4.5rem; height: 4.5rem; background: var(--fondo); }
   .emblema .nombre { align-self: end; font-size: 1.0625rem; font-weight: 600; transition: color 0.3s; }
   .emblema small { align-self: start; font-size: 0.8125rem; color: var(--apagado); }
   .emblema.abierto, .emblema.hecho, .emblema.actual { color: var(--tenue); }
@@ -209,6 +220,12 @@
   .cambia li { padding: 0.2rem 0.45rem; white-space: nowrap; background: rgb(159 227 245 / 0.06); clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%); }
   .cambia b { font-weight: 600; color: var(--escarcha); }
   .cambia s { margin-left: 0.3rem; color: var(--apagado); }
+  /* Capa 2: las 5 cargas, rombos chicos: hecha llena de su color, disponible con borde, bloqueada apagada. */
+  .marcas { grid-column: 2; display: flex; gap: 0.3rem; padding-top: 0.15rem; }
+  .marcas i { width: 7px; height: 7px; rotate: 45deg; border: 1.5px solid rgb(159 227 245 / 0.25); }
+  .marcas .hecha { background: var(--c, var(--hielo)); border-color: var(--c, var(--hielo)); }
+  .marcas .disponible { border-color: var(--hielo); }
+  .premio small { color: var(--tenue); font-size: 0.75rem; }
   .barra { height: 3px; background: rgb(159 227 245 / 0.12); }
   .barra i { display: block; height: 100%; background: var(--hielo); transition: width 0.3s; }
 
@@ -229,6 +246,8 @@
     .emblema .red { grid-row: auto; width: 3.5rem; height: 3.5rem; }
     .emblema .nombre { font-size: 0.8125rem; }
     .emblema small { display: none; }
+    .marcas { grid-column: auto; justify-content: center; gap: 0.2rem; }
+    .marcas i { width: 5px; height: 5px; }
     .emblema[aria-pressed='true']::after { left: 50%; top: auto; bottom: -0.45rem; margin: 0 0 0 -3.5px; }
     .ficha { height: 100%; padding: 0.6rem 0.9rem 0.9rem; gap: 0.5rem; }
     h2 { font-size: 1.25rem; }

@@ -1,6 +1,6 @@
 <script lang="ts">
   // Interfaz principal (SPEC 6.4). Cada parte aparece recién cuando juego.vistos lo dice (SPEC 5).
-  import { CFG, anillos, autoDisponible, congelada, cristalesAlInfinito, densidad, enElOptimo, enInfinito, infinitoRoto, metaLog10, multAnillos, produccion, puedeComprimir, puedeFundir, lechoInfinito, temperatura, type DefectoId } from '../core'
+  import { CFG, cargaActual, anillos, autoDisponible, congelada, cristalesAlInfinito, densidad, enElOptimo, enInfinito, infinitoRoto, metaLog10, multAnillos, produccion, puedeComprimir, puedeFundir, lechoInfinito, temperatura, type DefectoId } from '../core'
   import { esBeta } from '../guardado/guardado'
   import { cambios, nombre as nombreDef } from './defectos'
   import { txt } from '../strings'
@@ -50,7 +50,7 @@
   const separada = $derived(infinitoRoto(s) && (comp.final || alInf))
   const lista = $derived(separada ? infinitoListo : puedeComprimir(s) || infinitoListo)
   const accion = () => (infinitoListo ? infinitoYa() : comprimirYa())
-  const metaInf = $derived(def ? metaLog10(def) : CFG.infinito_log10)
+  const metaInf = $derived(def ? metaLog10(def, cargaActual(s)) : CFG.infinito_log10)
   const fin = $derived(juego.cinematica)
   const alternarAutoComp = () =>
     (juego.s = { ...juego.s, auto: { ...juego.s.auto, compresion_auto: !juego.s.auto.compresion_auto } })
@@ -142,7 +142,7 @@
     {#if def}
       <!-- §8: el Defecto en curso, su meta, lo que cambia y abandonar. -->
       <div class="defecto aparece">
-        <span class="linea"><b>{txt.cristal.defectos.enArena(nombreDef(def))}</b> <span class="num">{txt.cristal.defectos.meta(metaLog10(def))}</span></span>
+        <span class="linea"><b>{txt.cristal.defectos.enArena(nombreDef(def))}</b> <span class="num">{txt.cristal.defectos.meta(metaLog10(def, cargaActual(s)))}</span></span>
         <ul class="num">{#each cambios(s) as c}<li>{txt.cristal.defectos.mult[c.id]} <b>{c.dentro}</b></li>{/each}</ul>
         <button class="abandonar" onclick={abandonarDefectoYa}>{txt.cristal.defectos.abandonar}</button>
       </div>

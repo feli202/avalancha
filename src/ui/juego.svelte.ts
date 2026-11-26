@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, campoInvalido, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, topeCristales, ultimaCompresion, umbralLog10, fundir, encenderFuego, relicarioFuego, TIPOS, puedeFundir, type Ausencia, type State } from '../core'
+import { CFG, CFG2, DEFECTOS, cargaActual, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, campoInvalido, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, topeCristales, ultimaCompresion, umbralLog10, fundir, encenderFuego, relicarioFuego, TIPOS, puedeFundir, type Ausencia, type State } from '../core'
 import { almacenLocal, type Almacen } from '../guardado/almacen'
 import { cargar, esBeta, guardar, type MarcaBeta, type Partida } from '../guardado/guardado'
 import { entrarBeta, volverDeBeta } from '../guardado/beta'
@@ -130,7 +130,7 @@ const log10E = (s: State) => (s.energia.gt(1) ? s.energia.log10() : 0)
 export function progresoCompresion(s: State) {
   const final = ultimaCompresion(s) // con Lecho infinito (Capa 2) hay más de 17
   // En un Defecto la meta final es la del Defecto (§8), no el Infinito.
-  const meta = final ? (enDefecto(s) ? metaLog10(s.defectos.actual as DefectoId) : CFG.infinito_log10) : umbralLog10(s)
+  const meta = final ? (enDefecto(s) ? metaLog10(s.defectos.actual as DefectoId, cargaActual(s)) : CFG.infinito_log10) : umbralLog10(s)
   const desde = s.compresiones > 0 ? umbralLog10({ ...s, compresiones: s.compresiones - 1 }) : 0
   // Llegó al Infinito (la misma condición que el botón): 100 %, sin depender del redondeo del log10.
   const llego = final && !enDefecto(s) && enInfinito(s)
@@ -604,7 +604,9 @@ export function arrancar() {
     // Defecto superado (§8): su aviso; si no, el Infinito automático (Memoria nv4) tiene el mismo aviso que el botón.
     const nuevoDef = s.defectos.completos.length > previo.defectos.completos.length ? s.defectos.completos.at(-1)! : ''
     if (nuevoDef) vigia.defectoGanado(nuevoDef)
-    if (nuevoDef) avisar('defectos', txt.cristal.defectos.ganado(txt.cristal.defectos.nombres[nuevoDef], txt.cristal.ganados(formato(s.cristalesTotales.sub(previo.cristalesTotales)))))
+    const k = s.fuego.cargas.findIndex((c, i) => c > previo.fuego.cargas[i]) // Capa 2: carga 2–5 superada
+    if (k >= 0) avisar('defectos', txt.cristal.defectos.cargaGanada(txt.cristal.defectos.nombres[DEFECTOS[k]], s.fuego.cargas[k], CFG2.defectos.brasas_por_carga[s.fuego.cargas[k]]))
+    else if (nuevoDef) avisar('defectos', txt.cristal.defectos.ganado(txt.cristal.defectos.nombres[nuevoDef], txt.cristal.ganados(formato(s.cristalesTotales.sub(previo.cristalesTotales)))))
     else if (s.infinitos > previo.infinitos) avisoAutomatico(previo, s)
     if (s.infinitos > previo.infinitos && !s.relicario.pendiente) reliquiaAutomatica(s)
     previo = s

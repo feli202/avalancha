@@ -10,3 +10,12 @@
 
 - Muy difíciles: la carga 5 de cada Defecto tiene que costar intentos y una buena configuración del reparto del calor. Las cargas completas se conservan siempre (no se resetean con la Fundición); con alguna hecha, el Defecto cuenta como completo desde el inicio de cada vuelta. La carga 1 sí se rehace en cada vuelta.
 - Bot del simulador: hasta 2 intentos por vuelta, en el tope antes de fundir, la carga más baja primero; abandona como en la Capa 1 pero a los 2 min (ventana de 1 min, meta a más de 5 min, tope 10 min) y reintenta cuando la Temperatura subió ×1,05. En el simulador las cargas 2 empiezan a las ~4:30, las 5 de los Defectos 1–4 llegan entre 9:30 y 9:56 y las de los 5–8 entre 9:42 y 9:56 (justo antes de la Ignición).
+
+#### En el juego (fase 8, 2026-11-26, solo en la beta)
+
+- `fuego.cargas` (guardado; sin el campo arranca en 0): la carga más alta hecha de cada Defecto, en el orden de `DEFECTOS` (0 o 2–5). La carga 1 sigue siendo `defectos.completos` de la vuelta; `fundir` pone en `completos` los Defectos con carga 2+.
+- Se entra desde la misma ficha: con el Defecto superado y su nodo de Fallas, "Entrar" va a la carga siguiente (`cargaActual`); para las cargas 2–5 no se vuelven a pedir los requisitos de la Red de la carga 1. Abandonar una carga no deja la sugerencia de Cristales (es de la carga 1).
+- Reglas (`core/defectos.ts`): Vacancia, sin efecto los colores con índice > 3 − n; Dislocación, Presión ×0,5^n; Macla, Densidad ×0,85^n; Impureza, colores ×0,5^n; Fatiga, n·t/600. Meta: `metaLog10(id, n)`.
+- Recompensa (`recExp`): elevada a 1 + 0,375 (n − 1), o multiplicada por eso en las que suman, con n la carga más alta hecha. Las Brasas de la carga se dan al ganarla (`brasas_por_carga[n]`, a Brasas y a Brasas totales). M_B = (1 + Crisol) × 1,002^c × (1 + 0,05 c con Facetas de fuego), con c = cargas 2–5 completas (`multBrasas`).
+- Pantalla: 5 rombos por Defecto (hecha: lleno; disponible: con borde; bloqueada: apagado). La ficha muestra "Carga n de 5" con la regla, la meta y la recompensa de la siguiente y lo que da una sola vez. Aviso "carga n superada · +b Brasas".
+- Simulador (`--rapido`, 15 s): Fallas 3:22, Fallas profundas 8:05. Cargas 2–5 (h:mm): Vacancia 5:32 7:30 9:01 9:33 · Dislocación 3:34 6:30 8:52 9:37 · Macla 5:32 7:11 9:01 9:47 · Impureza 6:21 9:08 9:51 9:56 · Fatiga 8:11 8:28 9:17 9:42 · Frontera 8:11 8:34 9:17 9:48 · Inclusión 8:18 8:35 9:26 9:49 · Vidrio 8:19 8:41 9:32 9:56.

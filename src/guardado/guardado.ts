@@ -1,6 +1,6 @@
 // Guardado (SPEC 8): la partida como JSON con versión. Puro: el almacenamiento entra como Almacen.
 import Decimal from 'break_infinity.js'
-import { CFG, DEFECTOS, campoInvalido, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, NODOS_FUEGO, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, ordenarDeFuego, relicarioFuego, toparCristales, MEJORAS_HORNO, type Pieza, type State } from '../core'
+import { CARGAS, CFG, DEFECTOS, campoInvalido, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, NODOS_FUEGO, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, ordenarDeFuego, relicarioFuego, toparCristales, MEJORAS_HORNO, type Pieza, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
 import type { Contadores } from '../ui/secretos'
@@ -125,7 +125,8 @@ export function deserializar(texto: string): Partida {
   const fuego: State['fuego'] = beta
     ? { brasas: ent(f.brasas), brasasTotales: ent(f.brasasTotales), fundiciones: ent(f.fundiciones), nodos: [...new Set(f.nodos.filter((id) => NODOS_FUEGO.includes(id)))],
         repartos: MODELO.estado.fuego.repartos.map((m: number[], k: number) => m.map((x, i) => Math.min(1, pos(f.repartos[k]?.[i] ?? x)))), reparto: ent(f.reparto, MODELO.estado.fuego.repartos.length - 1), // fase 3: completar() los pone
-        vidrio: deDec(f.vidrio), horno: Object.fromEntries(MEJORAS_HORNO.map((k) => [k, ent(f.horno[k])])) as State['fuego']['horno'], vuelta: pos(f.vuelta) } // fases 4–5: completar() los pone en 0
+        vidrio: deDec(f.vidrio), horno: Object.fromEntries(MEJORAS_HORNO.map((k) => [k, ent(f.horno[k])])) as State['fuego']['horno'], vuelta: pos(f.vuelta), // fases 4–5: completar() los pone en 0
+        cargas: DEFECTOS.map((_, i) => ent(f.cargas[i] ?? 0, CARGAS)) } // fase 8
     : estadoInicial().fuego
   const red = topada.red
   const conRed = { ...estadoInicial(), red, fuego } // los topes de Cascada y Mutaciones dependen de la Red; los Engarces, también del Engaste de lava
