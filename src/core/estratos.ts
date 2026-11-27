@@ -27,9 +27,15 @@ export const empuje = (s: State, k: number, sk = s.estratos.s) =>
 /** f1: más Caudal, más rápido se llena el primero. */
 export const factorCaudal = (logCaudal: number) => Math.min(E.factor_caudal.max, Math.max(E.factor_caudal.min, logCaudal / E.factor_caudal.div))
 
+/** Capa 2, escalado (escalado_ignicion.md): cada nivel de Permeabilidad rinde ×(1 + 0,3 × Fundiciones); pasadas 20, cuenta la
+ * raíz de las de más (escalado de sim_capa2.py). La Presión no escala. */
+export function escaladoPermeabilidad(s: State) {
+  const { estratos_por_fundicion: x, softcap_fundiciones: c } = CFG2.escalado, f = s.fuego.fundiciones
+  return 1 + x * (f <= c ? f : c + Math.sqrt(f - c))
+}
 /** γ_k (log10/s) del estrato k (0..7); `logCaudal` = log10 del Caudal de la Arena; `sk`: los s_k con los que se empuja. */
 export const gammaEstrato = (s: State, k: number, logCaudal: number, sk = s.estratos.s) =>
-  flujoEstratos(s) * (1 + E.permeabilidad.suma_gamma * s.estratos.perm[k]) * (k === 0 ? factorCaudal(logCaudal) : 1) * empuje(s, k, sk)
+  flujoEstratos(s) * (1 + E.permeabilidad.suma_gamma * escaladoPermeabilidad(s) * s.estratos.perm[k]) * (k === 0 ? factorCaudal(logCaudal) : 1) * empuje(s, k, sk)
 
 /** Avanza los estratos abiertos dt segundos de Arena, de arriba a abajo (como sim_capa1.py). Un estrato nunca pasa al de
  * arriba menos la separación, ni baja. */

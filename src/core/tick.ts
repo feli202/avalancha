@@ -6,7 +6,7 @@ import { crecerEscarcha, escarchaActiva, escarchaEterna, mejorarEscarchaSola, pu
 import { colorSinEfecto, enDefecto, metaAlcanzada } from './defectos'
 import { ganarDefecto, infinito, infinitoAutoListo } from './infinito'
 import { elegirSola } from './relicario'
-import { fundirVidrio, hornoEncendido, ritmoAuto } from './fuego'
+import { fundicionAutoLista, fundir, fundirVidrio, hornoEncendido, ritmoAuto } from './fuego'
 import { autoActivo, comprimir, puedeComprimir } from './compress'
 import { GRANOS_MAX, INFINITO, caudal, congelada, enInfinito, energiaPorGrano, infinitoRoto, produccion } from './formulas'
 import { comprar, comprarMax, comprarN, costo, puedeComprar, type ItemId } from './shop'
@@ -60,6 +60,8 @@ export function tick(s: State, dt: number, autoInfinito = true): State {
   // con la regla (SPEC_CAPA1 §5). Sin Romper, la economía queda congelada en 1e308 hasta el Infinito.
   // Dentro de un Defecto el Infinito automático no corre: solo termina en la meta (ganar, con la misma regla de reliquia).
   if (autoInfinito && !enDefecto(s) && enInfinito(s) && autoActivo(s, 'infinito') && infinitoAutoListo(s)) return elegirSola(infinito(s))
+  // Capa 2: la Fundición automática, con las mismas reglas (fuera de línea no funde; dentro de un Defecto, tampoco).
+  if (autoInfinito && !enDefecto(s) && autoActivo(s, 'fundicion') && fundicionAutoLista(s)) return fundir(s)
   if (metaAlcanzada(s)) return autoActivo(s, 'infinito') ? elegirSola(ganarDefecto(s)) : ganarDefecto(s)
   if (congelada(s)) { // el Horno funde y la Escarcha eterna crece aunque la Arena espere (también fuera de línea)
     const eterna = escarchaEterna(s) && escarchaActiva(s)

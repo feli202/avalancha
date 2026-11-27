@@ -7,15 +7,15 @@ import { INFINITO, enInfinito, infinitoRoto, produccion } from './formulas'
 import { CFG2 } from './config2'
 import { DEFECTOS, cargaActual, conReintento, enDefecto, metaAlcanzada, puedeEntrar, type DefectoId } from './defectos'
 import { elegirSola, relicarioFuego, reliquiasDeFuego, reliquiasPorInfinito } from './relicario'
-import { redLog10Motor, vidrioAlInfinito } from './fuego'
+import { frenoCristales, fusionInfinito, redLog10Motor, vidrioAlInfinito } from './fuego'
 import { estadoInicial, type State } from './state'
 
 const C = CFG1.cristales
 /** SPEC_CAPA1 §1: el fin de la Capa 1, 1e308 Cristales totales (`infinito_log10`, como el simulador). */
 export const finCapa1 = (s: State) => s.cristalesTotales.gte(INFINITO)
-/** Capa 2: tope duro de Cristales y Cristales totales (el único lugar donde se define). El fuego de Ruptura lo va a levantar
- * acá, según `s`. Nunca menor que el umbral de finCapa1: si no, el fin no llegaría nunca (como el Infinito trabado en 99 %). */
-export const topeCristales = (_s: State): Decimal => INFINITO
+/** Capa 2: tope duro de Cristales y Cristales totales (el único lugar donde se define). Fusión del Infinito (Ruptura de fuego)
+ * lo levanta (fase 9). Nunca menor que el umbral de finCapa1: si no, el fin no llegaría nunca (como el Infinito trabado en 99 %). */
+export const topeCristales = (s: State): Decimal => (fusionInfinito(s) ? Decimal.MAX_VALUE : INFINITO)
 /** Q: órdenes de Energía más allá de 1e308 por cada ×10 de Cristales; Ruptura II lo baja. */
 export const ordenesQ = (s: State) => C.Q_ordenes_por_x10 - efectoRed(s, 'ruptura2', 'Q_resta')
 /** log10 de los Cristales antes del blando: mult + base + (E − INF)/Q (lo que pasa de 1e308 solo cuenta con Romper). */
@@ -25,10 +25,10 @@ const lcBruto = (s: State) =>
 const blando = (lc: number) => (lc > C.blando_desde_log10 ? C.blando_desde_log10 + (lc - C.blando_desde_log10) * C.blando_factor : lc)
 
 /** Cristales del próximo Infinito (SPEC_CAPA1 §4, igual que infinity_reward de sim_capa1.py): enteros por debajo de 1e6;
- * el primero da primer_infinito. */
+ * el primero da primer_infinito. Con Fusión del Infinito, pasado el tope se frenan (^0,757, como sim_capa2.py). */
 export function cristalesAlInfinito(s: State): Decimal {
   if (s.infinitos === 0) return new Decimal(C.primer_infinito)
-  const lc = blando(lcBruto(s))
+  const lc = fusionInfinito(s) ? frenoCristales(blando(lcBruto(s))) : blando(lcBruto(s))
   return lc < 6 ? new Decimal(Math.floor(10 ** lc + 1e-9)) : Decimal.pow10(lc) // 1e-9: que 10^log10(197) dé 197
 }
 

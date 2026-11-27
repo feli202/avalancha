@@ -49,7 +49,7 @@ Bot del simulador: hasta el primer Infinito de cada vuelta, todo a Pila. Despué
 
 ### Cómo quedó la Temperatura (fase 3, beta)
 
-- `temperatura(s)` y `densidadFuego(s)` en `src/core/fuego.ts`: por ahora solo el término de las Brasas totales (Esquirla de fuego, Compresión térmica y Calor latente llegan con sus fases). Sin Brasas da 300 K y no cambia nada.
+- `temperatura(s)` y `densidadFuego(s)` en `src/core/fuego.ts`: la fórmula entera desde la fase 9 (Esquirla de fuego en `fuego.compras`, Compresión térmica en `fuego.compresiones`). Sin Brasas da 300 K y no cambia nada.
 - `densidad` (`formulas.ts`) suma `densidadFuego` dentro del paréntesis, antes del multiplicador de Macla y no en Frontera (como `dAdd` del simulador). Con 600 Brasas el simulador y el juego dan 2.584 K (los ~3.000 K de arriba incluyen las otras fuentes).
 
 ### Cómo quedó el Motor (fase 4, beta)

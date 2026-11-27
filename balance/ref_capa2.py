@@ -103,3 +103,44 @@ for nombre, logX, up, Btot, pe, pr, fuegos, templado in ESC:
 ruta = os.path.join(os.path.dirname(__file__), '..', 'tests', 'fixtures', 'capa2_escarcha.json')
 with open(ruta, 'w', encoding='utf8') as f: json.dump(esc, f, ensure_ascii=False, indent=1)
 for c in esc: print(f"{c['nombre']:14s} g {c['g']:.6g} P {c['P']:.4f} m {c['m']:.4f} log10 Esq/s {c['esq_log']:.4f} costos {c['costos']} cBonus {c['cBonus']:.4f}")
+
+# --- Fusion del Infinito y escalado (fase 9): freno de los Cristales, Brasas con Fusion, Temperatura con Esquirla de fuego y
+# Compresion termica, Esquirlas/s con Geoda, costos de Esquirla de fuego y Geoda, Permeabilidad x(1 + 0,3 F) con softcap y los
+# nodos Conveccion, Sedimento fundido, Abismo ardiente y Eco del Horno
+esc9 = {'freno': [{'lc': lc, 'freno': S2.soft_cristales(lc)} for lc in (100.0, S2.INF, S2.INF + 0.5, S2.INF + 1.5, 400.0, 1000.0, 1e5, 1e6)]}
+esc9['brasas'] = []
+for Ctot, crisol, cargas, fuegos in ((S2.INF, 0, 0, set()), (450.0, 1, 0, set()), (700.0, 2, 6, {'cristalografia2'}), (700.0, 2, 6, {'cristalografia2', 'ruptura2'}),
+                                     (1000.0, 4, 28, {'cristalografia2', 'ruptura2'}), (1e5, 4, 28, {'ruptura2'}), (1e6, 4, 32, {'cristalografia2', 'ruptura2'})):
+    F = S2.Fuego(); F.horno['crisol'] = crisol; F.fuego = set(fuegos)
+    for d in list(F.cargas)[:cargas // 4]: F.cargas[d] = 5
+    esc9['brasas'].append({'Ctot': Ctot, 'crisol': crisol, 'cargas': F.cargas_hechas(), 'fuegos': sorted(fuegos), 'brasas': S2.brasas_al_fundir(F, P(Ctot))})
+esc9['T'] = []
+for Btot, esqf, comps, cl in ((1, 0, 0, 0), (300, 4, 0, 1), (5000, 20, 1200, 3), (100000, 60, 40000, 6)):
+    F = S2.Fuego(); F.Btot = Btot; F.esqf['esquirla_fuego'] = esqf; F.horno['calor_latente'] = cl
+    for _ in range(comps): F.Tcomp += S2.RF['compactacion2']['K_por_compresion']  # como reset_run con Compresion termica
+    esc9['T'].append({'Btot': Btot, 'esquirla_fuego': esqf, 'compresiones': comps, 'calor_latente': cl, 'T': F.T()})
+esc9['esquirlas'] = []
+for logX, geoda in ((120.0, 0), (400.0, 3), (10195.0, 12)):
+    F = S2.Fuego(); F.nF = 1; F.fuego = {'frio'}; F.esqf['geoda'] = geoda; J = S2.Jugador(F); J.logX = logX
+    esc9['esquirlas'].append({'logX': logX, 'geoda': geoda, 'esq_log': S2.esq_log(F, J)})
+esc9['costos'] = {k: [S2.costo_esqf(k, L) for L in range(6)] for k in ('esquirla_fuego', 'geoda')}
+perm = S1.L1['estratos']['permeabilidad']; g0 = perm['suma_gamma']; base = (g0, S1.L1['estratos']['presion']['suma_w'], {})
+esc9['escalado'] = []
+for nF in (0, 1, 2, 5, 20, 21, 24, 45, 100):
+    F = S2.Fuego(); F.nF = nF; S2.escalado(F, base); esc9['escalado'].append({'F': nF, 'x': perm['suma_gamma'] / g0})
+perm['suma_gamma'] = g0
+esc9['vidrio'] = []
+for nombre, s8, llenos_, eco, Ctot, Btot, fuegos in (('Sedimento fundido', 640.0, 8, 0, 400.0, 300, {'estratos', 'sedimento2'}),
+                                                     ('Abismo, 5 llenos', 900.0, 5, 0, 500.0, 2000, {'estratos', 'abismo'}),
+                                                     ('Eco del Horno', 900.0, 8, 4, 700.0, 4000, {'estratos', 'eco2'}),
+                                                     ('los tres', 1500.0, 6, 4, 1000.0, 40000, {'estratos', 'sedimento2', 'abismo', 'eco2', 'capilaridad'})):
+    F = S2.Fuego(); F.Btot = Btot; F.nF = 1; F.fuego = set(fuegos); F.reparto = {'pila': 1.0}
+    J = S2.Jugador(F); J.red['eco'] = eco; J.est_open = 8; J.Ctot = Ctot
+    sep = J.sep(); J.s = [s8 + (7 - k) * sep for k in range(8)]
+    for k in range(llenos_, 8): J.s[k] -= 3 * sep  # los de abajo, a medio llenar (los primeros `llenos_` quedan en su tope)
+    esc9['vidrio'].append({'nombre': nombre, 's': J.s, 'eco': eco, 'Ctot': Ctot, 'Btot': Btot, 'fuegos': sorted(fuegos), 'llenos': S2.llenos(J),
+                           'vidrio_log': S2.vidrio_log(F, J), 'flujo_x': F.flujo_x()})
+ruta = os.path.join(os.path.dirname(__file__), '..', 'tests', 'fixtures', 'capa2_escalado.json')
+with open(ruta, 'w', encoding='utf8') as f: json.dump(esc9, f, ensure_ascii=False, indent=1)
+print('escalado:', [round(c['x'], 4) for c in esc9['escalado']], 'brasas:', [c['brasas'] for c in esc9['brasas']])
+for c in esc9['vidrio']: print(f"  {c['nombre']:18s} llenos {c['llenos']} log10 Vidrio/s {c['vidrio_log']:.4f} flujo x{c['flujo_x']:.4f}")

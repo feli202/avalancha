@@ -71,13 +71,13 @@ describe('Fundición', () => {
 })
 
 describe('nivel de fuego de los nodos', () => {
-  it('se compra con Brasas, con el nodo en nv4, y solo los que ya funcionan', () => {
+  it('se compra con Brasas, con el nodo en nv4 (desde la fase 9 funcionan los 25)', () => {
     const s = conFuego(enTope(), { brasas: 1 })
     expect(comprarFuego(conRed(s, { memoria: 3 }), 'memoria').fuego.nodos).toEqual([])
     const c = comprarFuego(s, 'memoria')
     expect(c.fuego).toMatchObject({ brasas: 0, nodos: ['memoria'] })
     expect(comprarFuego(conFuego(c, { brasas: 9 }), 'memoria')).toEqual(conFuego(c, { brasas: 9 })) // ya lo tiene
-    expect(comprarFuego(conFuego(s, { brasas: 99 }), 'capilaridad').fuego.nodos).toEqual([]) // Convección: próximamente
+    expect(comprarFuego(conFuego(s, { brasas: 99 }), 'capilaridad').fuego.nodos).toEqual(['capilaridad']) // Convección (fase 9)
     expect(comprarFuego(conFuego(s, { brasas: 1 }), 'eco').fuego.nodos).toEqual([]) // Resonancia cuesta 2
   })
 

@@ -20,7 +20,7 @@ Antes de Fusión del Infinito los Cristales se frenan en el tope, así que cada 
 | Se conserva | La Automatización y su configuración |
 | Permanente (es de fuego) | Brasas, Vidrio, Temperatura, niveles de fuego de los nodos, el Horno y sus mejoras, Escarcha eterna y sus mejoras, inventario doble, liberaciones, cargas de Defectos, el reparto del calor |
 
-- Fundición automática: más adelante (con un nivel de fuego), con las mismas reglas que el Infinito automático ("apenas llegás" o "multiplicar mis Brasas"). La carga 1 de cada Defecto (la de la Capa 1) se reinicia y se rehace en cada vuelta; las cargas 2–5 son permanentes y, con alguna hecha, el Defecto cuenta como completo desde el inicio de la vuelta.
+- Fundición automática (fase 9, con Memoria eterna; ver [escalado_ignicion.md](escalado_ignicion.md)): con las mismas reglas que el Infinito automático ("apenas llegás" o "multiplicar mis Brasas"). La carga 1 de cada Defecto (la de la Capa 1) se reinicia y se rehace en cada vuelta; las cargas 2–5 son permanentes y, con alguna hecha, el Defecto cuenta como completo desde el inicio de la vuelta.
 
 - Visual: la pila se derrite desde el centro hacia afuera, el hielo de la Capa 1 se evapora y queda una brasa en el medio. Es el momento más grande de la capa: tiene que sentirse.
 

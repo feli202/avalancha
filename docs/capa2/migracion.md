@@ -16,7 +16,7 @@ Lo primero que se programa, antes que cualquier cosa de fuego: los Cristales pas
 
 ### Cómo quedó (fase 1A, para todos, sin la marca de beta)
 
-- El tope es `topeCristales(s)` en `src/core/infinito.ts`, el único lugar: hoy es `INFINITO` (1,797e308, el mismo umbral de `finCapa1`; nunca menor, si no el fin no llega). El fuego de Ruptura lo va a levantar ahí.
+- El tope es `topeCristales(s)` en `src/core/infinito.ts`, el único lugar: hoy es `INFINITO` (1,797e308, el mismo umbral de `finCapa1`; nunca menor, si no el fin no llega). Fase 9: Fusión del Infinito (Ruptura de fuego) lo levanta ahí (`Decimal.MAX_VALUE`); al cargar, el fuego se lee antes de `toparCristales`, así que una partida beta con Fusión pasada de 1e308 no se topa.
 - El cierre del Infinito deja Cristales y Cristales totales en el tope.
 - `toparCristales` (`src/core/tope.ts`) corre en `deserializar` cuando Cristales o totales pasan el tope: los baja al tope, saca todo nivel que solo ya cuesta más que el tope y después baja de a un nivel el más caro (Red, abrir Estratos, Permeabilidad, Presión) hasta que `gastado` entre. Una partida justo en el tope no se toca, así que no migra dos veces.
 - `cargar` guarda la original en `COPIA_TOPE` (ver `docs/general/guardado.md`) y el aviso sale al dejar el título.

@@ -7,7 +7,7 @@ import { CFG2 } from './config2'
 import { DEFECTOS_11, completo, enVidrio, recExp } from './defectos'
 import { ESTRATOS, presion } from './estratos'
 import { efectoRed } from './red'
-import { extraSector, milesK, tieneFuego } from './fuego'
+import { extraSector, geodaX, milesK, tieneFuego } from './fuego'
 import type { MejoraEscarcha, State } from './state'
 
 const E = CFG1.escarcha, M = E.mejoras, DF = CFG1.defectos, EE = CFG2.escarcha_eterna
@@ -63,9 +63,9 @@ export function crecerEscarcha(s: State, dt: number): State['escarcha'] {
     return { ...e, logX: e.logX + crecimientoEscarcha(s) * dt, esquirlas: e.esquirlas + esquirlasPorSegundo(s) * dt, reloj: e.reloj + dt }
   return { ...e, logX: Math.min(puntoRuptura(s), e.logX + crecimientoEscarcha(s) * dt), reloj: e.reloj + dt }
 }
-/** Escarcha eterna: Esquirlas/s = (logX / 103,7)² × sector Escarcha del Motor (Geoda llega con el Escalado). */
+/** Escarcha eterna: Esquirlas/s = (logX / 103,7)² × Geoda (×2 por nivel) × sector Escarcha del Motor. */
 export const esquirlasPorSegundo = (s: State) =>
-  escarchaEterna(s) && s.escarcha.logX > 0 ? EE.M * (s.escarcha.logX / EE.esq_d) ** EE.esq_exp * extraSector(s, 'escarcha') : 0
+  escarchaEterna(s) && s.escarcha.logX > 0 ? EE.M * (s.escarcha.logX / EE.esq_d) ** EE.esq_exp * geodaX(s) * extraSector(s, 'escarcha') : 0
 
 // ---------- romper ----------
 export const puedeRomperEscarcha = (s: State) => escarchaActiva(s) && !escarchaEterna(s) && s.escarcha.logX >= puntoRuptura(s) - 1e-9

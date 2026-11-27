@@ -58,3 +58,7 @@ El orden cambió respecto del punto de partida para seguir la tabla de ritmo: el
 ### Fase 7 (beta)
 
 - Funcionan también **Escarcha eterna**, **Hielo y fuego**, **Relicario de fuego**, **Deshielo automático** y **Engaste de lava** ([escarcha_reliquias.md](escarcha_reliquias.md)). `casilleros_x`, `espacios` y `niveles` en config (`engarces`, `engarces2`); el simulador lee los de Engaste.
+
+### Fase 9 (beta)
+
+- Funcionan los 25: también **Fusión del Infinito** y **Fusión** ([escalado_ignicion.md](escalado_ignicion.md)), **Convección** (`flujoFuego`), **Sedimento fundido**, **Abismo ardiente** y **Eco del Horno** (`vidrioLog10`) y **Compresión térmica** (`comprimir` suma 1 a `fuego.compresiones`; `temperatura` suma 0,05 K por cada una). `FUEGO_HECHO` y el "Próximamente" del panel se borraron; el panel muestra `fuego.efectos` con el número de config o, si no tiene, `fuego.descripciones` (Fallas, Fallas profundas). Antes, Fallas, Fallas profundas y Facetas de fuego estaban encendibles pero sin texto en `efectos`: el panel tiraba un error al ver su llama.

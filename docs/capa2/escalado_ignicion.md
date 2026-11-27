@@ -12,6 +12,15 @@ La primera vuelta es larga y despareja a propósito; desde la segunda, las compr
 
 - Regla: ninguna vuelta después de la quinta debería durar más de 20 minutos activos; las últimas, 3–5 minutos. En el simulador: vueltas 2.ª a 4.ª de 33, 29 y 25 min; entre las 4:00 y la Fusión (5:26) duran 1,5–2 min (sin Fusión cada Fundición da lo mismo, así que conviene fundir seguido); después, 6–8 min, y desde las 9:33 todas ≤ 5 min.
 
+### Cómo quedó el Escalado (fase 9, solo en la beta)
+
+- **Fusión del Infinito** (`src/core/infinito.ts`): `topeCristales(s)` da `Decimal.MAX_VALUE` con el fuego de Ruptura (el mismo lugar y el mismo número de la fase 1A sin él). `cristalesAlInfinito` aplica `frenoCristales` (`fuego.ts`, = `soft_cristales` del simulador) después del blando de la Capa 1. Las Brasas ya escalan solas (`brasasAlFundir` lee log10 de los Cristales totales); **Fusión** (Ruptura II) multiplica el exponente 5,2 × 1,387. Ojo: con la partida real, un Infinito con 1e5000 de Energía da 1e44 Cristales (el blando); para pasar de 1e308 hace falta Energía del orden de 1e10^6.
+- **Más de 1e308**: Cristales, Cristales totales y Energía son `Decimal` en todo el núcleo y la interfaz los lee con `log10()`/`formato` (mantisa y exponente); no hay `toNumber()` sobre ellos. `tests/escalado.test.ts` corre la partida real con 1e309, 1e1000, 1e100000 y 1e1000000 (ticks, Infinito, Fundición, desgloses, las 12 notaciones, guardar/cargar, topar sin Fusión) sin Infinity ni NaN.
+- **Permeabilidad**: `escaladoPermeabilidad(s)` en `estratos.ts` (×(1 + 0,3 F), raíz pasadas 20), solo en el término de la Permeabilidad de `gammaEstrato`. Estratos llenos: desde la fase 5 (`abrirLlenos`).
+- **Esquirla de fuego y Geoda** (`fuego.compras` en la partida): `comprarEsquirla` / `costoEsquirla` (10^(1 + L) Esquirlas) en `fuego.ts`, visibles desde la primera Fundición en la pantalla de la Escarcha, de a dos debajo de sus mejoras. Esquirla de fuego multiplica el término de las Brasas de `temperatura`; Geoda, `esquirlasPorSegundo`. Se compran a mano (Deshielo automático compra solo las tres mejoras de la Escarcha).
+- **Fundición automática**: interruptor `fundicion` (en `AUTOS`, arranca apagado: fundir reinicia dos capas) y `automat.fundicion` (`modo` 'llegar' | 'multiplicar', `x` el factor de las Brasas totales, 1,223 por defecto = 1 + `bot_multiplicar_x`). Aparece en Reinicios desde la primera Fundición y se activa con Memoria eterna. `fundicionAutoLista` en `fuego.ts`; `tick` funde sin cinemática (no fuera de línea ni dentro de un Defecto) y la interfaz avisa "Fundición automática: +N Brasas" y guarda. Sin Fusión, "multiplicar" funde apenas llega (como el Infinito sin Romper). La espera del bot (30 min por un nodo pagable, 5 min como mucho) no está en el juego.
+- Tests contra el simulador: `balance/ref_capa2.py` → `tests/fixtures/capa2_escalado.json` (freno, Brasas, Temperatura, Esquirlas/s, costos, escalado, Vidrio/s y flujo).
+
 ### Ignición (5.778 K, el fin de la Capa 2)
 
 - Al llegar a 5.778 K (la temperatura de la superficie del Sol) la pila deja de ser arena fundida: se vuelve plasma. En el simulador, a las 9:56, con 107 Fundiciones y ~10^5 Brasas totales.

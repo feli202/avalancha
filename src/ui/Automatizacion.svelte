@@ -6,7 +6,7 @@
   // Aparecen los que el jugador tiene, más el siguiente como silueta. Pantalla fija: solo scrollea cada lista.
   import { flip } from 'svelte/animate'
   import {
-    AUTOS, CFG, COMPRAS_AUTO, MODOS, autoDisponible, esquirlasAlRomper, cristalesAlInfinito, encenderTodo, escarchaEterna, fusionAutomatica, infinitoRoto, relicarioFuego,
+    AUTOS, CFG, COMPRAS_AUTO, MODOS, autoDisponible, brasasAlFundir, esquirlasAlRomper, cristalesAlInfinito, encenderTodo, escarchaEterna, fusionAutomatica, fusionInfinito, infinitoRoto, relicarioFuego,
     type Automat, type Cantidad, type Regla,
   } from '../core'
   import { txt } from '../strings'
@@ -24,6 +24,7 @@
   const COLOR: Record<string, string> = {
     caudal: 'var(--tinta)', ambar: 'var(--ambar)', coral: 'var(--coral)', jade: 'var(--jade)', violeta: 'var(--violeta)',
     cascada: 'var(--ambar)', mutaciones: 'var(--ambar)', compresion_auto: 'var(--tinta)', infinito: 'var(--hielo)', escarcha: 'var(--hielo)', escarcha_mejoras: 'var(--hielo)',
+    fundicion: '#ff8a3d', // la brasa de la llama de la Red
   }
 
   /** Lo que se ve: lo que tiene y el primero que todavía no (silueta). */
@@ -32,10 +33,11 @@
   const compras = $derived(COMPRAS_AUTO.filter((k) => tiene.has(k) || k === sig))
   // Romper la Escarcha (SPEC_CAPA1 §9): se ve desde que se abre la Escarcha; se activa con Deshielo.
   // Con la Escarcha eterna (beta) no se rompe: en su lugar, Deshielo automático compra sus mejoras.
-  const reinicios = $derived(['compresion_auto', 'infinito', 'escarcha', 'escarcha_mejoras'].filter((k) => tiene.has(k) ||
-    (k === 'escarcha' ? s.escarcha.abierta && !escarchaEterna(s) : k === 'escarcha_mejoras' ? escarchaEterna(s) : k === sig)))
+  // Capa 2 (beta): la Fundición automática se ve desde la primera Fundición; se activa con Memoria eterna.
+  const reinicios = $derived(['compresion_auto', 'infinito', 'escarcha', 'escarcha_mejoras', 'fundicion'].filter((k) => tiene.has(k) ||
+    (k === 'escarcha' ? s.escarcha.abierta && !escarchaEterna(s) : k === 'escarcha_mejoras' ? escarchaEterna(s) : k === 'fundicion' ? s.fuego.fundiciones > 0 : k === sig)))
   const POR_MEMORIA: Record<string, number> = { cascada: 2, mutaciones: 3, infinito: 4 }
-  const desbloqueo = (k: string) => (k === 'escarcha' ? a.deshielo : k === 'escarcha_mejoras' ? a.deshieloFuego : k in POR_MEMORIA ? a.memoria(POR_MEMORIA[k]) : a.bloqueado(CFG.autocompradores[k]))
+  const desbloqueo = (k: string) => (k === 'fundicion' ? a.memoriaEterna : k === 'escarcha' ? a.deshielo : k === 'escarcha_mejoras' ? a.deshieloFuego : k in POR_MEMORIA ? a.memoria(POR_MEMORIA[k]) : a.bloqueado(CFG.autocompradores[k]))
 
   const alternar = (k: string) => (juego.s = { ...juego.s, auto: { ...juego.s.auto, [k]: !juego.s.auto[k] } })
   const automat = (cambio: Partial<Automat>) => (juego.s = { ...juego.s, automat: { ...juego.s.automat, ...cambio } })
@@ -44,6 +46,9 @@
   /** Un número de un campo: entero entre min y MAX_S; vacío o inválido, el mínimo. */
   const num = (e: Event, min: number) => Math.min(MAX_S, Math.max(min, Math.floor(Number((e.currentTarget as HTMLInputElement).value)) || min))
   const nombreTipo = (t: string) => rr.tipos[t]?.[0] ?? t
+  /** El ×N de la Fundición: con coma o punto; vacío, inválido o menos de 1, ×1. */
+  const factor = (e: Event) => Math.max(1, Number((e.currentTarget as HTMLInputElement).value.replace(',', '.')) || 1)
+  const verFactor = (x: number) => x.toLocaleString(txt.locale, { maximumFractionDigits: 3, useGrouping: false })
   // Celular: una lista a la vez, con pestañas (en escritorio van las dos columnas y esto no se usa).
   /** Lo que se está escribiendo en los campos del Infinito (sin escribir: undefined, se muestra el valor guardado). */
   let textos = $state<Record<string, string | undefined>>({})
@@ -138,6 +143,23 @@
               <small class="nota">{a.escarchaNota(txt.cristal.cuantasEsquirlas(String(esquirlasAlRomper(s))))}</small>
             {:else if si && k === 'escarcha_mejoras'}
               <small class="nota">{a.escarchaMejorasNota}</small>
+            {:else if si && k === 'fundicion'}
+              {@const fu = s.automat.fundicion}
+              <!-- Como el Infinito: siempre apenas llega; Fusión del Infinito lo mejora (multiplicar las Brasas totales ×N). -->
+              {#if fusionInfinito(s)}
+                <div class="modos" role="radiogroup" aria-label="{a.condicion} · {nombreAuto(k)}">
+                  {#each Object.keys(a.fundicion) as m (m)}
+                    <label><input type="radio" name="fund" checked={fu.modo === m} onchange={() => automat({ fundicion: { ...juego.s.automat.fundicion, modo: m as Automat['fundicion']['modo'] } })} />{a.fundicion[m]}</label>
+                  {/each}
+                </div>
+                {#if fu.modo === 'multiplicar'}
+                  <label class="campo">{a.brasasX}
+                    <input type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" value={verFactor(fu.x)}
+                      onchange={(e) => { automat({ fundicion: { ...juego.s.automat.fundicion, x: factor(e) } }); e.currentTarget.value = verFactor(juego.s.automat.fundicion.x) }} />
+                  </label>
+                {/if}
+              {/if}
+              <small class="nota">{#if !fusionInfinito(s)}{a.fundicionApenas} {/if}{a.fundicionDaria(txt.fuego.precio(brasasAlFundir(s)))}.{#if !fusionInfinito(s)} {a.fundicionMejora}{:else if fu.modo === 'multiplicar'}{' '}{a.fundicionNota(verFactor(fu.x))}{/if}</small>
             {:else if si && k === 'infinito'}
               {@const inf = s.automat.infinito}
               <!-- Siempre apenas llega; Romper el Infinito lo mejora: en el óptimo (C6) o al dar X Cristales. -->

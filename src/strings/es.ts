@@ -120,7 +120,7 @@ export const es = {
     apagar: 'Apagar todo',
     compras: 'Compras',
     reinicios: 'Reinicios',
-    nombres: { caudal: 'Caudal', cascada: 'Cascada', mutaciones: 'Mutaciones', compresion_auto: 'Compresión', infinito: 'Infinito', escarcha: 'Romper la Escarcha', escarcha_mejoras: 'Mejoras de la Escarcha' } as Record<string, string>,
+    nombres: { caudal: 'Caudal', cascada: 'Cascada', mutaciones: 'Mutaciones', compresion_auto: 'Compresión', infinito: 'Infinito', escarcha: 'Romper la Escarcha', escarcha_mejoras: 'Mejoras de la Escarcha', fundicion: 'Fundición' } as Record<string, string>,
     que: { cascada: 'Lo más barato primero, dejando Energía para los colores', mutaciones: 'Las cuatro, lo más barato primero' } as Record<string, string>,
     interruptor: (n: string) => `Autocomprador de ${n}`,
     cada: 'Cada',
@@ -149,6 +149,14 @@ export const es = {
     deshieloFuego: 'Con Deshielo automático (fuego)',
     escarchaMejorasNota: 'Compra Cristalización continua, Fulgor y Templanza, la más barata primero.',
     reliquiaFuego: 'Relicario de fuego: cada Infinito trae una reliquia de cada tipo; se fusionan y se engarzan solas.',
+    // Capa 2 (beta, fase 9): la Fundición automática
+    memoriaEterna: 'Con Memoria eterna (fuego)',
+    fundicion: { llegar: 'Apenas llegás', multiplicar: 'Multiplicar mis Brasas' } as Record<string, string>,
+    brasasX: 'Brasas ×',
+    fundicionDaria: (x: string) => `Hoy la Fundición da ${x}`,
+    fundicionApenas: 'Funde apenas llegás a 1e308 Cristales totales (fuera de un Defecto).',
+    fundicionMejora: 'Con Fusión del Infinito puede esperar a multiplicar tus Brasas totales.',
+    fundicionNota: (x: string) => `Funde cuando tus Brasas totales quedarían ×${x}.`,
   },
   cristal: {
     cristales: 'Cristales',
@@ -204,6 +212,11 @@ export const es = {
         } as Record<string, [string, string, (a: string) => string, (x: string) => string]>,
         que: 'La Escarcha eterna no se rompe: crece siempre (más lento pasada la Templanza), multiplica la producción y da Esquirlas por segundo. Sus mejoras son permanentes.',
       },
+      // Capa 2 (beta, fase 9): compras con Esquirlas, permanentes, desde la primera Fundición
+      fuego: {
+        esquirla_fuego: ['Esquirla de fuego', 'La Temperatura de las Brasas ×1,01 por nivel. Es para siempre.', (a: string) => `T de las Brasas ×${a}`],
+        geoda: ['Geoda', 'Las Esquirlas por segundo de la Escarcha eterna ×2 por nivel. Es para siempre.', (a: string) => `Esquirlas/s ×${a}`],
+      } as Record<string, [string, string, (a: string) => string]>,
     },
     totales: 'Cristales totales',
     sistemas: 'Sistemas de Cristalización',
@@ -1175,7 +1188,6 @@ Qué pasó: (contalo acá)`,
     encender: 'Encender',
     precio: (n: number) => (n === 1 ? '1 Brasa' : `${n.toLocaleString('es-AR')} Brasas`),
     pideNv4: 'Se enciende con el nodo en nivel 4 en esta vuelta.',
-    proximamente: 'Próximamente.',
     nombres: {
       memoria: 'Memoria eterna', sedimentacion: 'Lecho infinito', cascada_plus: 'Desborde', estratos: 'El Horno', mutacion_plus: 'Metamorfosis',
       eco: 'Resonancia', compactacion: 'Densidad ígnea', defectos: 'Fallas', frio: 'Escarcha eterna', inercia: 'Inercia eterna', presion: 'Magma',
@@ -1183,6 +1195,8 @@ Qué pasó: (contalo acá)`,
       sedimento2: 'Sedimento fundido', defectos2: 'Fallas profundas', compactacion2: 'Compresión térmica', eco2: 'Eco del Horno', deshielo: 'Deshielo automático',
       cristalografia2: 'Facetas de fuego', engarces2: 'Engaste de lava', abismo: 'Abismo ardiente', ruptura2: 'Fusión',
     } as Record<string, string>,
+    // Fase 9: la Fundición automática (aviso) y las compras con Esquirlas (pantalla de la Escarcha)
+    fundidaSola: (b: string) => `Fundición automática: ${b === '1' ? '+1 Brasa' : `+${b} Brasas`}`,
     efectos: {
       memoria: (x: number) => `Cada vuelta arranca con Memoria al máximo y los autocompradores compran ×${f(x)} más seguido`,
       sedimentacion: () => 'Las compresiones pasan de 17: cada una de más pide más Energía y suma menos Densidad',
@@ -1199,10 +1213,18 @@ Qué pasó: (contalo acá)`,
       engarces: (x: number) => `Inventario ×${f(x)}; cada Infinito trae una reliquia de cada tipo, que se fusionan y se engarzan solas`,
       deshielo: () => 'Autocompradores para Cristalización continua, Fulgor y Templanza',
       engarces2: () => 'Un espacio más de reliquia; las engarzadas cuentan un nivel más',
+      ruptura: () => 'Los Cristales pasan de 1e308 (pasado el tope crecen más lento) y las Brasas de cada Fundición crecen con ellos',
+      capilaridad: (x: number) => `El flujo de los 8 estratos ×(1 + ${f(x)} × (T − 300) / 1000)`,
+      sedimento2: (x: number) => `Lo que el estrato 8 suma al exponente del Vidrio, ×${f(x)}`,
+      compactacion2: (x: number) => `Cada compresión suma ${f(x)} K a la Temperatura, para siempre`,
+      eco2: (x: number) => `Vidrio/s ×10^(p del Eco × log₁₀ Cristales totales / ${f(1 / x)})`,
+      abismo: (x: number) => `Vidrio/s ×${f(x)} por cada estrato lleno`,
+      ruptura2: (x: number) => `Las Brasas escalan mejor con los Cristales: su exponente ×${x.toLocaleString('es-AR', { maximumFractionDigits: 3 })}`,
+      cristalografia2: (x: number) => `Brasas al fundir ×(1 + ${f(x)} × cargas completas de los Defectos)`,
     } as Record<string, (x: number) => string>,
     // La palabra que aparece grande al encender cada liberación (Palabra.svelte)
     palabras: { sedimentacion: 'LECHO', cascada_plus: 'DESBORDE', mutacion_plus: 'METAMORFOSIS', inercia: 'ETERNA' } as Record<string, string>,
-    // Lo que hará cada nivel de fuego que todavía dice "Próximamente" (sin números: llegan con su fase)
+    // Lo que hace cada nivel de fuego, corto (el panel usa `efectos` cuando lo tiene)
     descripciones: {
       cascada_plus: 'Cascada sin máximo de niveles; cada nivel de más rinde menos', estratos: 'Enciende el estrato 9: el Vidrio',
       mutacion_plus: 'Mutaciones sin máximo de niveles; cada nivel de más rinde menos', compactacion: 'La Temperatura suma más a la Densidad',

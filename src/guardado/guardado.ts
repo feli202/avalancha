@@ -1,6 +1,6 @@
 // Guardado (SPEC 8): la partida como JSON con versión. Puro: el almacenamiento entra como Almacen.
 import Decimal from 'break_infinity.js'
-import { CARGAS, CFG, DEFECTOS, campoInvalido, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, NODOS_FUEGO, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, ordenarDeFuego, relicarioFuego, toparCristales, MEJORAS_HORNO, type Pieza, type State } from '../core'
+import { CARGAS, CFG, DEFECTOS, campoInvalido, ESTRATOS, MODOS, MUTACIONES, NIVEL_MAX_RED, NODOS_FUEGO, TIPOS, espacios, estadoInicial, infinito, maxCascada, maxMutacion, migrarRelicario, ordenarDeFuego, relicarioFuego, toparCristales, MEJORAS_HORNO, COMPRAS_ESQUIRLAS, type Pieza, type State } from '../core'
 import type { Almacen } from './almacen'
 import { limpiarHistorial, type Historial } from './historial'
 import type { Contadores } from '../ui/secretos'
@@ -111,13 +111,6 @@ export function deserializar(texto: string): Partida {
   // M5: rangos posibles (un guardado editado a mano o importado no deja estados imposibles).
   const ent = (x: number, max = Infinity) => Math.min(max, Math.max(0, Math.floor(x)))
   const pos = (x: number) => Math.max(0, x)
-  // Capa 2: una partida que pasó el tope de Cristales vuelve a él, con las compras que no entran devueltas (core/tope.ts).
-  const leida: State = {
-    ...estadoInicial(), cristales: deDec(e.cristales), cristalesTotales: deDec(e.cristalesTotales),
-    red: Object.fromEntries(Object.keys(MODELO.estado.red).map((k) => [k, ent(e.red[k], NIVEL_MAX_RED)])),
-    estratos: { abiertos: ent(e.estratos.abiertos, ESTRATOS), s: e.estratos.s.map(pos), perm: e.estratos.perm.map((n) => ent(n)), pres: e.estratos.pres.map((n) => ent(n)) },
-  }
-  const { estado: topada, devueltas } = toparCristales(leida)
   // Capa 2: el fuego solo existe en la beta (una partida pública con fuego, editada a mano, juega sin él). Las de la fase 1B
   // no lo tienen: completar() les pone el del modelo, en cero. Se guardan nodos de fuego que la versión todavía no hace.
   const beta = leerMarca((d as any).beta)
@@ -126,8 +119,17 @@ export function deserializar(texto: string): Partida {
     ? { brasas: ent(f.brasas), brasasTotales: ent(f.brasasTotales), fundiciones: ent(f.fundiciones), nodos: [...new Set(f.nodos.filter((id) => NODOS_FUEGO.includes(id)))],
         repartos: MODELO.estado.fuego.repartos.map((m: number[], k: number) => m.map((x, i) => Math.min(1, pos(f.repartos[k]?.[i] ?? x)))), reparto: ent(f.reparto, MODELO.estado.fuego.repartos.length - 1), // fase 3: completar() los pone
         vidrio: deDec(f.vidrio), horno: Object.fromEntries(MEJORAS_HORNO.map((k) => [k, ent(f.horno[k])])) as State['fuego']['horno'], vuelta: pos(f.vuelta), // fases 4–5: completar() los pone en 0
-        cargas: DEFECTOS.map((_, i) => ent(f.cargas[i] ?? 0, CARGAS)) } // fase 8
+        cargas: DEFECTOS.map((_, i) => ent(f.cargas[i] ?? 0, CARGAS)), // fase 8
+        compras: Object.fromEntries(COMPRAS_ESQUIRLAS.map((k) => [k, ent(f.compras[k])])) as State['fuego']['compras'], compresiones: ent(f.compresiones) } // fase 9: completar() los pone en 0
     : estadoInicial().fuego
+  // Capa 2: una partida que pasó el tope de Cristales vuelve a él, con las compras que no entran devueltas (core/tope.ts).
+  // Con el fuego ya leído: Fusión del Infinito levanta el tope.
+  const leida: State = {
+    ...estadoInicial(), fuego, cristales: deDec(e.cristales), cristalesTotales: deDec(e.cristalesTotales),
+    red: Object.fromEntries(Object.keys(MODELO.estado.red).map((k) => [k, ent(e.red[k], NIVEL_MAX_RED)])),
+    estratos: { abiertos: ent(e.estratos.abiertos, ESTRATOS), s: e.estratos.s.map(pos), perm: e.estratos.perm.map((n) => ent(n)), pres: e.estratos.pres.map((n) => ent(n)) },
+  }
+  const { estado: topada, devueltas } = toparCristales(leida)
   const red = topada.red
   const conRed = { ...estadoInicial(), red, fuego } // los topes de Cascada y Mutaciones dependen de la Red; los Engarces, también del Engaste de lava
   const infinitos = ent(e.infinitos)
@@ -184,6 +186,7 @@ function leerAutomat(x: State['automat']): State['automat'] {
     compresion: { modo: de(x.compresion.modo, ['umbral', 'esperar'], 'umbral'), segundos: pos(x.compresion.segundos) },
     // v1.0: 'optimo' ya no está en la interfaz; el que lo tenía pasa a "Apenas llegás" (con ×10 en la 1.1 casi no habría Infinitos).
     infinito: { modo: de(x.infinito.modo, ['llegar', 'multiplicar', 'cristales'], 'llegar'), log10: pos(x.infinito.log10), mult: pos(x.infinito.mult) },
+    fundicion: { modo: de(x.fundicion.modo, ['llegar', 'multiplicar'], 'llegar'), x: Math.max(1, x.fundicion.x) }, // fase 9: completar() la pone
     segundos: Math.floor(pos(x.segundos)),
     espera: pos(x.espera),
   }

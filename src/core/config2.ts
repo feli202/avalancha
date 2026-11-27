@@ -3,7 +3,7 @@
 import crudo from '../../balance/config_capa2.json'
 
 export interface Config2 {
-  fundicion: { requisito_log10: number; brasas_desde_log10: number; M_B: number; brasas_exp: number }
+  fundicion: { requisito_log10: number; brasas_desde_log10: number; M_B: number; brasas_exp: number; cristales_soft_exp: number; bot_multiplicar_x: number }
   temperatura: { inicial: number; ignicion: number; por_brasa: number; exp_brasas: number; densidad_por_K: number }
   motor: { efecto: Record<'pila' | 'red' | 'estratos' | 'escarcha' | 'relicario' | 'estratos_vidrio', number>; repartos_iniciales: number[][] }
   horno: {
@@ -12,7 +12,9 @@ export interface Config2 {
       temperatura: { x: number }; tiro: { suma: number }; crisol: { suma: number }; calor_latente: { K: number }; templado: { suma: number }
     }
   }
-  escalado: { estratos_llenos_s8: number }
+  escalado: { estratos_llenos_s8: number; estratos_por_fundicion: number; softcap_fundiciones: number }
+  /** Esquirla de fuego y Geoda: el nivel L cuesta 10^(c0 + paso × L) Esquirlas; cada nivel multiplica ×x. */
+  esquirlas_fuego: Record<'esquirla_fuego' | 'geoda', { c0: number; paso: number; x: number }>
   /** El nivel de fuego de cada nodo de la Red (las claves son las de NODOS). */
   red_fuego: Record<string, { precio: number }> & {
     memoria: { autocompradores_x: number }
@@ -25,6 +27,12 @@ export interface Config2 {
     engarces: { casilleros_x: number }
     engarces2: { espacios: number; niveles: number }
     cristalografia2: { MB_por_carga: number }
+    capilaridad: { flujo_por_kK: number }
+    sedimento2: { exp_s8_x: number }
+    compactacion2: { K_por_compresion: number }
+    eco2: { vidrio_log_por_eco: number }
+    abismo: { lleno_x: number }
+    ruptura2: { brasas_exp_x: number }
   }
   defectos: { k: Record<string, number>; recompensa_exp_carga5: number; brasas_por_carga: number[]; MB_x_por_carga: number }
   escarcha_eterna: { M: number; esq_d: number; esq_exp: number; softcap_exp: number; paso_x: number }

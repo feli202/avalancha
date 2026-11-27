@@ -609,10 +609,13 @@ export function arrancar() {
     else if (nuevoDef) avisar('defectos', txt.cristal.defectos.ganado(txt.cristal.defectos.nombres[nuevoDef], txt.cristal.ganados(formato(s.cristalesTotales.sub(previo.cristalesTotales)))))
     else if (s.infinitos > previo.infinitos) avisoAutomatico(previo, s)
     if (s.infinitos > previo.infinitos && !s.relicario.pendiente) reliquiaAutomatica(s)
+    const fundio = s.fuego.fundiciones > previo.fuego.fundiciones // Capa 2: la Fundición automática (la de a mano pasa por fundirYa)
+    if (fundio) avisar('auto', txt.fuego.fundidaSola(formato(s.fuego.brasasTotales - previo.fuego.brasasTotales)))
     previo = s
     if (Math.floor(s.tiempoTotal) !== Math.floor(juego.s.tiempoTotal)) juego.verHistorial++
     juego.s = s
     simuladoHasta = ahora
+    if (fundio) guardarYa()
     revelar(s)
     revisarLogros(s)
     vigia.cuadro(ahora, s, !hayPanel(), new Date(ahora).getHours())

@@ -7,6 +7,7 @@
     CFG1, MEJORAS_ESCARCHA, aporteEscarcha, autoActivo, brilloEscarcha, costoMejoraEscarcha, crecimientoEscarcha, densidad,
     escarchaActiva, escarchaEterna, esquirlasAlRomper, esquirlasPorSegundo, extraSector, factoresCrecimiento, faltaRuptura, mejorarEscarcha, puedeMejorarEscarcha, puntoRuptura,
     puedeRomperEscarcha, romperEscarcha, type MejoraEscarcha, type State,
+    CFG2, COMPRAS_ESQUIRLAS, comprarEsquirla, costoEsquirla, hayComprasEsquirlas, puedeComprarEsquirla, type CompraEsquirla,
   } from '../core'
   import { txt } from '../strings'
   import { quieto } from './ajustes.svelte'
@@ -55,6 +56,13 @@
   const tipMejora = (k: MejoraEscarcha) => (): Tip => {
     const L = juego.s.escarcha.mejoras[k]
     return { titulo: nombres()[k][0], que: nombres()[k][1], hielo: true, ahora: t.ahora(efectoEn(k, L)), prox: t.siguiente(efectoEn(k, L + 1)) }
+  }
+
+  // Capa 2 (beta, fase 9): Esquirla de fuego y Geoda, compras permanentes con Esquirlas.
+  const efectoCompra = (k: CompraEsquirla, L: number) => t.fuego[k][2](formatoMult(CFG2.esquirlas_fuego[k].x ** L))
+  const tipCompra = (k: CompraEsquirla) => (): Tip => {
+    const L = juego.s.fuego.compras[k]
+    return { titulo: t.fuego[k][0], que: t.fuego[k][1], hielo: true, ahora: t.ahora(efectoCompra(k, L)), prox: t.siguiente(efectoCompra(k, L + 1)) }
   }
 
   function hacer(n: State) {
@@ -150,7 +158,7 @@
           {/if}
         </svg>
       </div>
-      <aside class="ficha placa grietas" aria-live="polite">
+      <aside class="ficha placa grietas" class:compacta={hayComprasEsquirlas(s)} aria-live="polite">
         <header>
           <h2>{txt.cristal.pantallas.escarcha}</h2>
           <span class="esq num">{esq(s.escarcha.esquirlas)}</span>
@@ -191,6 +199,17 @@
             <small class="num formula">{nombres()[k][3](FORMULA[k])}</small>
           </button>
         {/each}
+        {#if hayComprasEsquirlas(s)}
+          <div class="fuego">
+            {#each COMPRAS_ESQUIRLAS as k (k)}
+              {@const L = s.fuego.compras[k]}
+              <button class="mejora gema" aria-disabled={!puedeComprarEsquirla(s, k)} onclick={() => hacer(comprarEsquirla(juego.s, k))} use:ayuda={tipCompra(k)}>
+                <b>{t.fuego[k][0]}</b>
+                <span class="nv">{t.nv(L)}</span><span class="costo num">{formato(costoEsquirla(s, k), true)}</span>
+              </button>
+            {/each}
+          </div>
+        {/if}
       </aside>
     </div>
     <p class="que">{eterna ? te.que : t.que}</p>
@@ -269,6 +288,12 @@
   .mejora .costo { font-weight: 600; color: var(--hielo); white-space: nowrap; }
   .mejora small { grid-column: 1 / span 2; }
   .mejora[aria-disabled='true'] .costo { color: var(--apagado); }
+  /* Esquirla de fuego y Geoda (Capa 2): de a dos, en dos líneas, con el costo en brasa; el efecto va en su ayuda. */
+  .fuego { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .fuego .mejora { padding: 0.4rem 0.9rem; font-size: 0.8125rem; }
+  .fuego .mejora b { grid-column: 1 / span 2; }
+  .fuego .mejora .nv { margin-left: 0; }
+  .fuego .costo { color: #ff8a3d; }
 
   @media (max-height: 800px) and (min-width: 761px) {
     .escarcha { gap: 0.5rem; padding-top: 0.75rem; }
@@ -278,6 +303,7 @@
     .mejora { padding-block: 0.5rem; }
     .romper { min-height: 3.25rem; padding-block: 0.55rem; }
     .formula { display: none; } /* la fórmula está en "Cómo funciona" */
+    .compacta .desglose { display: none; } /* con Esquirla de fuego y Geoda; los factores están en la ayuda del Espesor, como en el móvil */
   }
   /* Móvil: la placa arriba, chica; la ficha debajo, sin las fórmulas (están en el tooltip y en "Cómo funciona"). */
   @media (max-width: 760px) {

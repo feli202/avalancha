@@ -57,7 +57,7 @@ describe('Automatización: interruptores', () => {
     expect(off.auto.mutaciones).toBe(true) // Memoria nv2: Mutaciones todavía no está
     expect(off.auto.infinito).toBe(true)
     const on = encenderTodo(off, true)
-    expect(AUTOS.every((k) => on.auto[k])).toBe(true)
+    expect(AUTOS.every((k) => on.auto[k] === (k !== 'fundicion'))).toBe(true) // la Fundición automática arranca apagada y sin Memoria eterna no está
   })
 })
 

@@ -6,23 +6,25 @@ import { CFG, precioLog10 } from './config'
 import { CFG1 } from './config1'
 import { CFG2 } from './config2'
 import { DEFECTOS, cargasCompletas } from './defectos'
-import { NIVEL_MAX_RED, compresionesConservadas, nivelRed } from './red'
-import { estadoInicial, type MejoraHorno, type State } from './state'
+import { NIVEL_MAX_RED, compresionesConservadas, efectoRed, nivelRed } from './red'
+import { lleno } from './estratos'
+import { estadoInicial, type CompraEsquirla, type MejoraHorno, type State } from './state'
 
 const FU = CFG2.fundicion
 const HO = CFG2.horno
 const TP = CFG2.temperatura
-/** Los 25 nodos con nivel de fuego, en el orden de config. */
-export const NODOS_FUEGO = Object.keys(CFG2.red_fuego)
-/** Los niveles de fuego que ya hacen algo; el resto dice "próximamente" y no se compra (llegan en las fases 4–10). */
-export const FUEGO_HECHO = new Set(['memoria', 'sedimentacion', 'eco', 'estratos', 'cristalografia', 'cascada_plus', 'mutacion_plus', 'compactacion', 'inercia', 'presion', 'frio', 'germen', 'engarces', 'deshielo', 'engarces2', 'defectos', 'defectos2', 'cristalografia2'])
+const ESQ = CFG2.esquirlas_fuego
+const RF = CFG2.red_fuego
+/** Los 25 nodos con nivel de fuego, en el orden de config (desde la fase 9 funcionan todos). */
+export const NODOS_FUEGO = Object.keys(RF)
 
 export const tieneFuego = (s: State, id: string) => s.fuego.nodos.includes(id)
 export const precioFuego = (id: string) => CFG2.red_fuego[id].precio
 
-/** Temperatura en K: 300 + 795 × Brasas totales^0,165 + Calor latente (Esquirla de fuego y Compresión térmica llegan después). */
+/** Temperatura en K: 300 + 795 × Brasas totales^0,165 × Esquirla de fuego + Compresión térmica + Calor latente (Fuego.T de sim_capa2.py). */
 export const temperatura = (s: State) =>
-  TP.inicial + TP.por_brasa * s.fuego.brasasTotales ** TP.exp_brasas + HO.mejoras.calor_latente.K * s.fuego.horno.calor_latente
+  TP.inicial + TP.por_brasa * s.fuego.brasasTotales ** TP.exp_brasas * ESQ.esquirla_fuego.x ** s.fuego.compras.esquirla_fuego +
+  RF.compactacion2.K_por_compresion * s.fuego.compresiones + HO.mejoras.calor_latente.K * s.fuego.horno.calor_latente
 /** El calor en miles de K: (T − 300) / 1000 (lo que reparte el Motor y lo que leen Magma y los demás "por kK"). */
 export const milesK = (s: State) => (temperatura(s) - TP.inicial) / 1000
 /** Lo que la Temperatura suma a la Densidad: (T − 300) × 0,001; Densidad ígnea (Compactación de fuego) ×1,5. */
@@ -38,10 +40,11 @@ export function multBrasas(s: State) {
   const m = (FU.M_B + HO.mejoras.crisol.suma * s.fuego.horno.crisol) * CFG2.defectos.MB_x_por_carga ** c
   return tieneFuego(s, 'cristalografia2') ? m * (1 + CFG2.red_fuego.cristalografia2.MB_por_carga * c) : m
 }
-/** Brasas = ⌊M_B × (log10 C / 308)^5,2⌋. Con los Cristales frenados en el tope da M_B (la Fusión llega después). */
+/** Brasas = ⌊M_B × (log10 C / 308)^q⌋, q = 5,2 (×1,387 con Fusión, Ruptura II de fuego). Con los Cristales frenados en el tope
+ * da M_B; con Fusión del Infinito los Cristales pasan de 1e308 y las Brasas escalan. */
 export function brasasAlFundir(s: State) {
-  const mb = multBrasas(s)
-  const x = Math.min(300, Math.log10(mb) + FU.brasas_exp * Math.log10(Math.max(1, s.cristalesTotales.log10() / FU.brasas_desde_log10)))
+  const mb = multBrasas(s), q = FU.brasas_exp * (tieneFuego(s, 'ruptura2') ? RF.ruptura2.brasas_exp_x : 1)
+  const x = Math.min(300, Math.log10(mb) + q * Math.log10(Math.max(1, s.cristalesTotales.log10() / FU.brasas_desde_log10)))
   return Math.floor(10 ** x + 1e-9)
 }
 
@@ -67,7 +70,7 @@ export function fundir(s: State): State {
 
 /** El nivel de fuego se compra con Brasas, con el nodo en nv4 en esta vuelta; es permanente. */
 export const puedeComprarFuego = (s: State, id: string) =>
-  FUEGO_HECHO.has(id) && !tieneFuego(s, id) && nivelRed(s, id) >= NIVEL_MAX_RED && s.fuego.brasas >= precioFuego(id)
+  id in RF && !tieneFuego(s, id) && nivelRed(s, id) >= NIVEL_MAX_RED && s.fuego.brasas >= precioFuego(id)
 
 export const comprarFuego = (s: State, id: string): State =>
   puedeComprarFuego(s, id) ? { ...s, fuego: { ...s.fuego, brasas: s.fuego.brasas - precioFuego(id), nodos: [...s.fuego.nodos, id] } } : s
@@ -154,11 +157,14 @@ export const elegirReparto = (s: State, k: number): State =>
 export const MEJORAS_HORNO = Object.keys(HO.mejoras) as MejoraHorno[]
 /** El Horno funde con El Horno encendido y los 8 estratos abiertos (el estrato 9 es el fondo del embudo). */
 export const hornoEncendido = (s: State) => tieneFuego(s, 'estratos') && s.estratos.abiertos >= CFG1.estratos.cantidad
-/** log10 del Vidrio/s = log10 v0 + 0,01 × s_8 + Temperatura del Horno × log10 2 + log10(1 + 0,5 × calor de Estratos).
- * Sedimento fundido, Abismo ardiente y Eco del Horno llegan con sus fuegos. −∞ con el Horno apagado. */
+/** log10 del Vidrio/s = log10 v0 + 0,01 × s_8 (×1,5 con Sedimento fundido) + Temperatura del Horno × log10 2
+ * + log10(1 + 0,5 × calor de Estratos) + Abismo ardiente (×2 por estrato lleno) + Eco del Horno (0,001 × p × log10 C).
+ * −∞ con el Horno apagado. */
 export const vidrioLog10 = (s: State) => !hornoEncendido(s) ? -Infinity
-  : Math.log10(HO.v0) + HO.exp_s8 * Math.max(0, s.estratos.s[CFG1.estratos.cantidad - 1]) +
-    s.fuego.horno.temperatura * Math.log10(HO.mejoras.temperatura.x) + Math.log10(1 + CFG2.motor.efecto.estratos_vidrio * calor(s, 'estratos'))
+  : Math.log10(HO.v0) + HO.exp_s8 * Math.max(0, s.estratos.s[CFG1.estratos.cantidad - 1]) * (tieneFuego(s, 'sedimento2') ? RF.sedimento2.exp_s8_x : 1) +
+    s.fuego.horno.temperatura * Math.log10(HO.mejoras.temperatura.x) + Math.log10(1 + CFG2.motor.efecto.estratos_vidrio * calor(s, 'estratos')) +
+    (tieneFuego(s, 'abismo') ? s.estratos.s.filter((_, k) => k < s.estratos.abiertos && lleno(s, k)).length * Math.log10(RF.abismo.lleno_x) : 0) +
+    (tieneFuego(s, 'eco2') ? RF.eco2.vidrio_log_por_eco * efectoRed(s, 'eco', 'p') * Math.max(0, s.cristalesTotales.log10()) : 0)
 export const vidrioPorSegundo = (s: State) => (hornoEncendido(s) ? Decimal.pow10(vidrioLog10(s)) : new Decimal(0))
 /** El Vidrio sube todo el tiempo (también fuera de línea, con el dt que le dé offline). */
 export const fundirVidrio = (s: State, dt: number): State['fuego'] =>
@@ -178,7 +184,38 @@ export const mejorarHorno = (s: State, k: MejoraHorno): State =>
   puedeMejorarHorno(s, k)
     ? { ...s, fuego: { ...s.fuego, vidrio: s.fuego.vidrio.sub(costoHorno(s, k)), horno: { ...s.fuego.horno, [k]: s.fuego.horno[k] + 1 } } }
     : s
-/** Lo que multiplica el flujo de los 8 estratos: Tiro (1 + 0,1 × nivel) y el sector Estratos del Motor (1 + 0,5 h). */
-export const flujoFuego = (s: State) => (1 + HO.mejoras.tiro.suma * s.fuego.horno.tiro) * extraSector(s, 'estratos')
+/** Lo que multiplica el flujo de los 8 estratos: Tiro (1 + 0,1 × nivel), el sector Estratos del Motor (1 + 0,5 h) y
+ * Convección (Capilaridad de fuego: 1 + 0,5 × (T − 300) / 1000). */
+export const flujoFuego = (s: State) => (1 + HO.mejoras.tiro.suma * s.fuego.horno.tiro) * extraSector(s, 'estratos') *
+  (tieneFuego(s, 'capilaridad') ? 1 + RF.capilaridad.flujo_por_kK * milesK(s) : 1)
 /** Templado: el efecto de las reliquias engarzadas × (1 + 0,1 × nivel). */
 export const templadoX = (s: State) => 1 + HO.mejoras.templado.suma * s.fuego.horno.templado
+
+// --- Fase 9: Fusión del Infinito, compras con Esquirlas y la Fundición automática (escalado_ignicion.md) ---
+
+/** Fusión del Infinito (Ruptura de fuego): los Cristales pasan de 1e308. */
+export const fusionInfinito = (s: State) => tieneFuego(s, 'ruptura')
+/** El freno de los Cristales de un Infinito pasado el tope: tope + (lc − tope)^0,757 (soft_cristales de sim_capa2.py). */
+export const frenoCristales = (lc: number) =>
+  lc > CFG.infinito_log10 + 1 ? CFG.infinito_log10 + (lc - CFG.infinito_log10) ** FU.cristales_soft_exp : lc
+
+export const COMPRAS_ESQUIRLAS = Object.keys(ESQ).filter((k) => !k.startsWith('_')) as CompraEsquirla[]
+/** Esquirla de fuego y Geoda: aparecen con la primera Fundición; el nivel L cuesta 10^(1 + L) Esquirlas, sin tope. */
+export const hayComprasEsquirlas = (s: State) => s.fuego.fundiciones > 0
+export const costoEsquirlaLog10 = (k: CompraEsquirla, L: number) => precioLog10(ESQ[k].c0 + ESQ[k].paso * L)
+export const costoEsquirla = (s: State, k: CompraEsquirla) => 10 ** costoEsquirlaLog10(k, s.fuego.compras[k])
+export const puedeComprarEsquirla = (s: State, k: CompraEsquirla) => hayComprasEsquirlas(s) && s.escarcha.esquirlas >= costoEsquirla(s, k)
+export const comprarEsquirla = (s: State, k: CompraEsquirla): State =>
+  puedeComprarEsquirla(s, k)
+    ? { ...s, escarcha: { ...s.escarcha, esquirlas: s.escarcha.esquirlas - costoEsquirla(s, k) }, fuego: { ...s.fuego, compras: { ...s.fuego.compras, [k]: s.fuego.compras[k] + 1 } } }
+    : s
+/** Geoda: Esquirlas/s ×2 por nivel. */
+export const geodaX = (s: State) => ESQ.geoda.x ** s.fuego.compras.geoda
+
+/** Fundición automática: apenas llega o, con Fusión del Infinito, cuando las Brasas totales quedarían ×x (sin Fusión cada
+ * Fundición da M_B, así que "multiplicar" no tiene sentido y funde apenas llega, como el Infinito automático sin Romper). */
+export function fundicionAutoLista(s: State) {
+  if (!puedeFundir(s)) return false
+  const { modo, x } = s.automat.fundicion
+  return modo === 'llegar' || !fusionInfinito(s) || s.fuego.brasasTotales + brasasAlFundir(s) >= x * s.fuego.brasasTotales - 1e-9
+}

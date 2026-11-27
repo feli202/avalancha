@@ -23,6 +23,9 @@ export interface Automat {
   /** v1.0: 'multiplicar' = cuando daría 10^mult veces los Cristales actuales; 'optimo' ya no está en la interfaz (lo usa el
    * bot del test de balance, como sim_capa1.py). log10 y mult van en log10. */
   infinito: { modo: 'llegar' | 'multiplicar' | 'cristales' | 'optimo'; log10: number; mult: number }
+  /** Capa 2 (beta, fase 9): la Fundición automática, apenas llega o, con Fusión del Infinito, cuando las Brasas totales
+   * quedarían ×`x` (un factor, no log10: las Brasas son chicas). */
+  fundicion: { modo: 'llegar' | 'multiplicar'; x: number }
   segundos: number
   espera: number
 }
@@ -73,8 +76,9 @@ export interface State {
    * `repartos`: los 3 repartos del calor guardados (partes por sector, en el orden de SECTORES); `reparto`: el que se usa.
    * `vidrio`: el del Horno (fase 5); `horno`: nivel de cada mejora del Horno. `vuelta`: segundos de juego desde la última
    * Fundición (Inercia eterna, fase 6). `cargas`: la carga más alta hecha de cada Defecto, en el orden de DEFECTOS (0 o 2–5;
-   * fase 8, defectos_cargas.md). */
-  fuego: { brasas: number; brasasTotales: number; fundiciones: number; nodos: string[]; repartos: number[][]; reparto: number; vidrio: Decimal; horno: Record<MejoraHorno, number>; vuelta: number; cargas: number[] }
+   * fase 8, defectos_cargas.md). `compras`: niveles de Esquirla de fuego y Geoda (se pagan con Esquirlas, fase 9).
+   * `compresiones`: las hechas con Compresión térmica (cada una suma K a la Temperatura, fase 9). */
+  fuego: { brasas: number; brasasTotales: number; fundiciones: number; nodos: string[]; repartos: number[][]; reparto: number; vidrio: Decimal; horno: Record<MejoraHorno, number>; vuelta: number; cargas: number[]; compras: Record<CompraEsquirla, number>; compresiones: number }
   tiempoTotal: number
   /** Segundos de Arena desde el último Infinito (no se reinicia con la Compresión): el Impulso de Inercia. */
   tiempoInfinito: number
@@ -92,10 +96,12 @@ export interface State {
 
 /** Autocompradores que compran ítems de la tienda (tienen intervalo y cantidad). */
 export const COMPRAS_AUTO = ['caudal', ...CFG.colores.map((c) => c.id), 'cascada', 'mutaciones']
-/** Todos los interruptores, en el orden del panel. `escarcha`: romperla (Deshielo); `escarcha_mejoras`: Deshielo automático (fuego). */
-export const AUTOS = [...COMPRAS_AUTO, 'compresion_auto', 'infinito', 'escarcha', 'escarcha_mejoras']
+/** Todos los interruptores, en el orden del panel. `escarcha`: romperla (Deshielo); `escarcha_mejoras`: Deshielo automático (fuego);
+ * `fundicion`: la Fundición automática (Memoria eterna). */
+export const AUTOS = [...COMPRAS_AUTO, 'compresion_auto', 'infinito', 'escarcha', 'escarcha_mejoras', 'fundicion']
 export type MejoraEscarcha = 'crecimiento' | 'brillo' | 'umbral'
 export type MejoraHorno = keyof typeof CFG2.horno.mejoras
+export type CompraEsquirla = 'esquirla_fuego' | 'geoda'
 
 const ceros = () => Array<number>(CFG1.estratos.cantidad).fill(0)
 
@@ -110,12 +116,13 @@ export const estadoInicial =(): State => ({
   mutaciones: { caudal: 0, colores: 0, expansion: 0, cascada: 0 },
   maxEnergia: new Decimal(0),
   coloresDesbloqueados: CFG.colores.filter((c) => c.desbloqueo_log10 <= 0).length,
-  auto: Object.fromEntries(AUTOS.map((k) => [k, true])),
+  auto: Object.fromEntries(AUTOS.map((k) => [k, k !== 'fundicion'])), // fundir reinicia dos capas: solo si el jugador la prende
   automat: {
     intervalo: Object.fromEntries(COMPRAS_AUTO.map((k) => [k, CFG.automatizacion.intervalo_s])),
     cantidad: Object.fromEntries(COMPRAS_AUTO.map((k): [string, Cantidad] => [k, 0])),
     compresion: { modo: 'umbral', segundos: 0 },
     infinito: { modo: 'llegar', log10: 0, mult: Math.log10(CFG1.infinito_auto.multiplicar_x) },
+    fundicion: { modo: 'llegar', x: 1 + CFG2.fundicion.bot_multiplicar_x },
     segundos: 0,
     espera: 0,
   },
@@ -128,7 +135,8 @@ export const estadoInicial =(): State => ({
   defectos: { completos: [], actual: '', reintento: {} },
   escarcha: { abierta: false, logX: 0, esquirlas: 0, mejoras: { crecimiento: 0, brillo: 0, umbral: 0 }, reloj: 0 },
   fuego: { brasas: 0, brasasTotales: 0, fundiciones: 0, nodos: [], repartos: CFG2.motor.repartos_iniciales.map((r) => [...r]), reparto: 0,
-    vidrio: new Decimal(0), horno: { temperatura: 0, tiro: 0, crisol: 0, calor_latente: 0, templado: 0 }, vuelta: 0, cargas: DEFECTOS.map(() => 0) },
+    vidrio: new Decimal(0), horno: { temperatura: 0, tiro: 0, crisol: 0, calor_latente: 0, templado: 0 }, vuelta: 0, cargas: DEFECTOS.map(() => 0),
+    compras: { esquirla_fuego: 0, geoda: 0 }, compresiones: 0 },
   tiempoTotal: 0,
   tiempoInfinito: 0,
   granosTotales: 0,

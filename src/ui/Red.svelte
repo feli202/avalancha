@@ -4,7 +4,7 @@
   // (el viewBox se ajusta a los nodos) y la ficha del elegido va al costado (debajo en el celular).
   import {
     ABRE_RED, ANILLO3, NIVEL_MAX_RED, NODOS, abierto, anillo, comprarRed, costoRed, escarchaAbierta, nivelRed, puedeComprarRed, requisitoRed, vecinos,
-    CFG2, FUEGO_HECHO, precioFuego, puedeComprarFuego, tieneFuego,
+    CFG2, precioFuego, puedeComprarFuego, tieneFuego,
   } from '../core'
   import { esBeta } from '../guardado/guardado'
   import { EMBLEMA, cara, rama, semilla } from '../render/redCaras'
@@ -43,6 +43,8 @@
   const ARG_FUEGO: Record<string, number> = {
     memoria: RF.memoria.autocompradores_x, cristalografia: RF.cristalografia.vidrio_s_por_infinito,
     compactacion: RF.compactacion.densidad_x, presion: RF.presion.w_por_kK, germen: RF.germen.g_por_kK, engarces: RF.engarces.casilleros_x,
+    capilaridad: RF.capilaridad.flujo_por_kK, sedimento2: RF.sedimento2.exp_s8_x, compactacion2: RF.compactacion2.K_por_compresion,
+    eco2: RF.eco2.vidrio_log_por_eco, abismo: RF.abismo.lleno_x, ruptura2: RF.ruptura2.brasas_exp_x, cristalografia2: RF.cristalografia2.MB_por_carga,
   }
   const beta = $derived(esBeta(juego))
   const verFuego = $derived(beta && !oculto(elegido) && (verN === 5 || (!verN && n >= NIVEL_MAX_RED)))
@@ -420,9 +422,8 @@
       {/if}
       {#if estado}<p class="estado">{estado}</p>{/if}
       {#if verFuego}
-        <p class="hace fuego"><b>{f.conFuego}</b> {f.nombres[elegido]}: {FUEGO_HECHO.has(elegido) ? f.efectos[elegido](ARG_FUEGO[elegido] ?? 0) : f.descripciones[elegido]}</p>
+        <p class="hace fuego"><b>{f.conFuego}</b> {f.nombres[elegido]}: {f.efectos[elegido]?.(ARG_FUEGO[elegido] ?? 0) ?? f.descripciones[elegido]}</p>
         {#if tieneFuego(s, elegido)}<p class="estado fuego">{f.encendido}</p>
-        {:else if !FUEGO_HECHO.has(elegido)}<p class="estado fuego proximo">{f.proximamente} <span class="num">{f.precio(precioFuego(elegido))}</span></p>
         {:else}
           {#if n < NIVEL_MAX_RED}<p class="estado fuego">{f.pideNv4}</p>{/if}
           <button class="compra gema" style:--c="#ff8a3d" aria-disabled={!puedeComprarFuego(s, elegido)} onclick={encender}
@@ -526,7 +527,6 @@
   .cuadros .llama.lleno svg { filter: drop-shadow(0 0 3px rgb(255 110 40 / 0.8)); }
   .cuadros .llama:not(:disabled):hover svg { transform: scale(1.25); }
   h2.fuego { color: #ffb27a; }
-  .proximo .num { color: var(--apagado); }
   /* La Red de fuego. La lava late despacio y a saltos (steps): un repintado cada ~0,3 s, no 60 por segundo. */
   .lava { opacity: 0.72; mix-blend-mode: hard-light; animation: late 5s steps(14) infinite alternate; } /* < 3 cambios por segundo */
   @keyframes late { from { opacity: 0.55; } to { opacity: 0.9; } }

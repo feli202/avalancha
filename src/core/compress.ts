@@ -29,6 +29,7 @@ export function comprimir(s: State): State {
     mejorCorrida: s.mejorCorrida > 0 ? Math.min(s.mejorCorrida, s.tiempoCorrida) : s.tiempoCorrida,
     compresionesSinAmbar: s.compresionesSinAmbar + (s.colores[0] === 0 ? 1 : 0),
     automat: { ...s.automat, espera: 0 },
+    ...(tieneFuego(s, 'compactacion2') && { fuego: { ...s.fuego, compresiones: s.fuego.compresiones + 1 } }), // Compresión térmica
   }
 }
 
@@ -40,6 +41,7 @@ const POR_MEMORIA: Record<string, number> = { cascada: 2, mutaciones: 3, infinit
 export const autoDisponible = (s: State, clave: string) =>
   clave === 'escarcha' ? efectoRed(s, 'deshielo', 'auto_ruptura') > 0 && !tieneFuego(s, 'frio') : // Romper la Escarcha: con Deshielo (§9); la eterna no se rompe
   clave === 'escarcha_mejoras' ? tieneFuego(s, 'deshielo') && tieneFuego(s, 'frio') : // Deshielo automático (fuego)
+  clave === 'fundicion' ? tieneFuego(s, 'memoria') : // Fundición automática (Capa 2): con Memoria eterna
   clave in POR_MEMORIA ? memoria(s) >= POR_MEMORIA[clave] : memoria(s) >= 1 || s.compresiones >= CFG.autocompradores[clave]
 /** Lo tiene y está prendido: compra solo. */
 export const autoActivo = (s: State, clave: string) => autoDisponible(s, clave) && s.auto[clave]
