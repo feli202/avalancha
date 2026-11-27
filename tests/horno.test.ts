@@ -3,7 +3,7 @@ import Decimal from 'break_infinity.js'
 import { describe, expect, it } from 'vitest'
 import {
   CFG1, CFG2, INFINITO, MEJORAS_HORNO, brasasAlFundir, cascadaRel, costoHornoLog10, flujoFuego, fundir, hornoEncendido, infinito, mejorarHorno,
-  puedeMejorarHorno, temperatura, tick, vidrioLog10, vidrioPorSegundo, estadoInicial, etapaMotor, type State,
+  puedeAbrir, puedeMejorarHorno, temperatura, tick, vidrioLog10, vidrioPorSegundo, estadoInicial, etapaMotor, type State,
 } from '../src/core'
 import { deserializar, serializar, type Partida } from '../src/guardado/guardado'
 import REF from './fixtures/capa2_horno.json'
@@ -85,6 +85,12 @@ describe('estratos llenos (desde la primera Fundición)', () => {
     expect(e.abiertos).toBe(8)
     expect(e.s[7]).toBeGreaterThanOrEqual(CFG2.escalado.estratos_llenos_s8)
     expect(e.s[0]).toBeGreaterThanOrEqual(CFG2.escalado.estratos_llenos_s8 + 7 * sep)
+  })
+  it('después de fundir no se abren de a uno (aunque alcancen los Cristales): los llena el tick', () => {
+    const i = estadoInicial()
+    const s: State = { ...i, red: { ...i.red, estratos: 1 }, cristales: new Decimal('1e300'), fuego: { ...i.fuego, fundiciones: 1 } }
+    expect(puedeAbrir(s)).toBe(false)
+    expect(puedeAbrir({ ...s, fuego: { ...s.fuego, fundiciones: 0 } })).toBe(true)
   })
   it('sin Fundición (Capa 1) no', () => {
     const i = estadoInicial()

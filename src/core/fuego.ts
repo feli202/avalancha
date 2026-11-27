@@ -25,6 +25,8 @@ export const precioFuego = (id: string) => CFG2.red_fuego[id].precio
 export const temperatura = (s: State) =>
   TP.inicial + TP.por_brasa * s.fuego.brasasTotales ** TP.exp_brasas * ESQ.esquirla_fuego.x ** s.fuego.compras.esquirla_fuego +
   RF.compactacion2.K_por_compresion * s.fuego.compresiones + HO.mejoras.calor_latente.K * s.fuego.horno.calor_latente
+/** Ignición (escalado_ignicion.md): 5.778 K, el fin de la Capa 2. La Temperatura nunca baja, así que una vez llegada queda. */
+export const ignicion = (s: State) => temperatura(s) >= TP.ignicion
 /** El calor en miles de K: (T − 300) / 1000 (lo que reparte el Motor y lo que leen Magma y los demás "por kK"). */
 export const milesK = (s: State) => (temperatura(s) - TP.inicial) / 1000
 /** Lo que la Temperatura suma a la Densidad: (T − 300) × 0,001; Densidad ígnea (Compactación de fuego) ×1,5. */

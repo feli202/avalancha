@@ -54,6 +54,7 @@
   /** Logro secreto Arena: granos de un solo color de la paleta en uso, elegido al azar en cada lluvia. */
   const ESQUIRLAS = 18 // cristales de la cinemática del Infinito
   const VAPOR = 9 // nubes de vapor de la Fundición
+  const GRANOS_RAYO = 4 // granos por dirección en la Ignición (4 en cruz, 4 en diagonal)
   const GRANOS_LLUVIA = 80
   const colorLluvia = $derived.by(() => {
     if (!juego.lluvia) return ''
@@ -232,7 +233,7 @@
       }
       compAntes = s.compresiones
       // SPEC_CAPA1 §11: el primer Infinito es la cinemática (CSS de abajo); los siguientes, los Cristales sobre la pila.
-      if (juego.cinematica && !cineAntes) juego.cinematica === 'fin' ? sonido.infinito(2.4, 1) : sonido.infinito(1.8, 0.6)
+      if (juego.cinematica && !cineAntes) juego.cinematica === 'fin' || juego.cinematica === 'ignicion' ? sonido.infinito(2.4, 1) : sonido.infinito(1.8, 0.6)
       cineAntes = !!juego.cinematica
       // Solo el Infinito a mano: el automático llega cada pocos segundos y su aviso va juntado (avisoAutomatico).
       if (s.infinitos > infAntes && infAntes > 0 && aMano && ajustes.aviso_infinito) {
@@ -295,7 +296,7 @@
 
 <svelte:window onkeydown={tecla} />
 
-<div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:cristaliza={juego.cinematica === 'infinito'} class:funde={juego.cinematica === 'fundicion'} class:quieto={quieto()}>
+<div class="pila" style:--rp="{juego.radioPila}px" class:implota={implotando} class:cristaliza={juego.cinematica === 'infinito'} class:funde={juego.cinematica === 'fundicion'} class:plasma={juego.cinematica === 'ignicion'} class:quieto={quieto()}>
   <canvas bind:this={canvas} onpointerdown={bajar} onpointermove={mover} onpointerup={levantar} onpointercancel={levantar} aria-label={txt.pila}></canvas>
   <div class="tope" bind:clientWidth={radioMax}></div>
   {#if sinWebGL}<p class="sin-webgl" role="alert">{txt.sinWebGL}</p>{/if}
@@ -310,7 +311,7 @@
        Compresión: un marco con relleno (Galleta, Polaroid) no lo tapa. -->
   <!-- Con zoom el borde pasa el círculo nítido: afuera el marco se apaga como la pila desenfocada (lienzo.ts, u_foco).
        La rampa empieza recién cuando el marco ya se salió del foco, así encuadrado no se apaga nada. -->
-  <div class="caja-marco" class:oculto={juego.titulo || juego.cinematica === 'fin' || juego.cinematica === 'fundicion' || marcoId === 'ninguno'} aria-hidden="true" bind:clientWidth={cajaAncho} bind:clientHeight={cajaAlto}
+  <div class="caja-marco" class:oculto={juego.titulo || juego.cinematica === 'fin' || juego.cinematica === 'fundicion' || juego.cinematica === 'ignicion' || marcoId === 'ninguno'} aria-hidden="true" bind:clientWidth={cajaAncho} bind:clientHeight={cajaAlto}
     style:--foco="{foco * (1 + Math.max(0, 2.6 - (1.6 * radioMarco) / (foco || 1)))}px">
     <!-- Gira despacio alrededor de la pila con una animación CSS de `rotate` (aparte del `transform` de la implosión). -->
     <canvas class="marco" class:gira={!quieto() && juego.capa === 'arena' && marcoId !== 'ninguno' && !juego.titulo} style:--vuelta="{CFG.marco.segundos_por_vuelta}s" bind:this={lienzoMarco}></canvas>
@@ -343,6 +344,19 @@
         <div class="lava"></div>
         {#each { length: VAPOR } as _, i}<i style:--x="{((i * 37) % 80) - 40}%" style:--d="{1.3 + ((i * 0.23) % 1.1)}s"></i>{/each}
         <b class="brasa"></b>
+      </div>
+    {:else if juego.cinematica === 'ignicion'}
+      <!-- Capa 2, la Ignición (IGNICION_MS; el corte a negro va en App.svelte): el Horno se pone blanco abajo, la pila se ilumina desde
+           adentro, los granos se derrumban en cruz y por un instante también en diagonal, el borde (un rombo) se curva en círculo y
+           aparece π, apenas un segundo. -->
+      <!-- Sin transform en el contenedor: si no, el Horno (fixed) quedaría dentro de él y la luz no se sumaría a la pila (screen). -->
+      <!-- La Ignición llega casi siempre al fundir, con la pila vacía: el plasma toma al menos un quinto de la pantalla. -->
+      <div class="ign" style:--r="max({juego.radioPila + ANILLO_SEP}px, 20vmin)">
+        <div class="horno"><i></i></div>
+        <div class="luz"></div>
+        {#each { length: 8 } as _, a}{#each { length: GRANOS_RAYO } as _, k}<i class="grano" class:diag={a % 2 === 1} style:--a="{a * 45}deg" style:--k={k}></i>{/each}{/each}
+        <div class="borde"></div>
+        <b class="pi">π</b>
       </div>
     {:else if juego.cinematica}
       <!-- SPEC_CAPA1 §11: el hielo sube desde abajo sobre la pila (que no se mueve), se rompe en cristales y sigue Cristalización. -->
@@ -568,6 +582,50 @@
   .quieto .fundir i { display: none; }
   .quieto .fundir .brasa { animation: aparecer 1.2s 3.4s both; }
   @keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Capa 2, la Ignición (10 s: IGNICION_MS; 6,6 s acá y el corte a negro en App.svelte). 0–1,6 s el Horno (abajo) pasa de
+     naranja a blanco; 1–3 s la pila se ilumina desde adentro; 2,4–4,8 s los granos salen en cruz, y entre 3,4 y 4,3 s también en
+     diagonal; 4,4–5,6 s el borde, un rombo, se curva hasta ser un círculo; 5,5–6,6 s π, apenas un segundo. */
+  .ign { position: absolute; left: 0; top: 0; }
+  .plasma .compresion { animation: apagar 0.6s forwards; }
+  .ign .horno { position: fixed; left: 0; right: 0; bottom: 0; height: 50vh; opacity: 0;
+    background: radial-gradient(60% 90% at 50% 100%, rgb(255 110 40 / 0.55), transparent 70%); animation: aparecer 0.8s both; }
+  .ign .horno i { position: absolute; inset: 0; opacity: 0;
+    background: radial-gradient(55% 85% at 50% 100%, rgb(255 255 255 / 0.85), rgb(255 236 200 / 0.35) 40%, transparent 70%); animation: aparecer 0.9s 0.7s both; }
+  .ign .luz {
+    position: absolute; width: calc(2.4 * var(--r)); aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; opacity: 0; mix-blend-mode: screen;
+    background: radial-gradient(circle, #fff 0, rgb(255 246 222 / 0.8) 12%, rgb(255 196 120 / 0.35) 32%, rgb(170 140 255 / 0.12) 48%, transparent 62%);
+    animation: iluminar 2s 1s ease-out forwards; will-change: transform, opacity;
+  }
+  .ign .grano {
+    position: absolute; width: 7px; height: 7px; margin: -3.5px; background: #ffc56b; box-shadow: 0 0 8px 1px #ff8a3d; opacity: 0;
+    animation: derrumbe 0.8s calc(2.4s + var(--k) * 0.2s) linear 3; will-change: transform, opacity;
+  }
+  .ign .grano.diag { background: #cbb8ff; box-shadow: 0 0 8px 1px #8a5cff; animation: derrumbe 0.8s calc(3.4s + var(--k) * 0.2s) linear 1; }
+  .ign .borde {
+    position: absolute; width: calc(var(--r) * 1.414); aspect-ratio: 1; translate: -50% -50%; opacity: 0;
+    border: 2px solid rgb(255 250 240 / 0.9); box-shadow: 0 0 1rem rgb(255 230 190 / 0.7), inset 0 0 1rem rgb(255 230 190 / 0.5);
+    rotate: 45deg; animation: curvar 1.2s 4.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .ign .pi {
+    position: absolute; translate: -50% -55%; opacity: 0; font-size: calc(var(--r) * 0.7); font-weight: 300; line-height: 1;
+    color: #fff; text-shadow: 0 0 0.25em #ffd38a, 0 0 0.6em #b9a4ff; animation: pi 1.1s 5.5s ease-in-out forwards;
+  }
+  @keyframes iluminar { from { opacity: 0; scale: 0.2; } to { opacity: 1; scale: 1; } }
+  @keyframes derrumbe {
+    from { transform: rotate(var(--a)) translateY(0); opacity: 1; }
+    to { transform: rotate(var(--a)) translateY(calc(var(--r) * -1.8)); opacity: 0; }
+  }
+  @keyframes curvar { 0% { opacity: 0; border-radius: 0; scale: 1; } 20% { opacity: 1; border-radius: 0; scale: 1; } 100% { opacity: 1; border-radius: 50%; scale: 1.414; } }
+  @keyframes pi { 0% { opacity: 0; } 20%, 80% { opacity: 1; } 100% { opacity: 0; } }
+  /* Reducir destellos: nada sale disparado ni se enciende de golpe; el Horno y la luz suben despacio y más tenues, los granos no
+     salen, el borde aparece ya redondo y π aparece y se va. */
+  .quieto .ign .horno { animation: aparecer 2s both; }
+  .quieto .ign .horno i { animation: aparecerTenue 2s 1s both; }
+  .quieto .ign .luz { scale: 1; animation: aparecerTenue 2.5s 1s ease-in-out forwards; }
+  .quieto .ign .grano { display: none; }
+  .quieto .ign .borde { border-radius: 50%; scale: 1.414; animation: aparecer 1.2s 4.4s both; }
+  @keyframes aparecerTenue { from { opacity: 0; } to { opacity: 0.55; } }
 
   /* C13, fin de la Capa 1 (6,4 s: FIN_CAPA_MS). 0–2,2 s el hielo sube y se queda; 2,4–3,6 s las grietas se abren desde el
      centro; desde 3,2 s el calor se enciende en ellas y queda latiendo lento. La pila no se mueve ni se rompe. */

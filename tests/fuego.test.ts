@@ -3,7 +3,7 @@
 import Decimal from 'break_infinity.js'
 import { describe, expect, it } from 'vitest'
 import {
-  CFG, CFG1, CFG2, INFINITO, NODOS, brasasAlFundir, comprarFuego, comprimir, densidad, ecoLog10, estadoInicial, fundir, infinito,
+  CFG, CFG1, CFG2, INFINITO, NODOS, brasasAlFundir, cristalesAlInfinito, comprarFuego, comprimir, densidad, ecoLog10, estadoInicial, fundir, infinito,
   puedeFundir, temperatura, tick, umbralLog10, type State,
 } from '../src/core'
 import { deserializar, serializar, type Partida } from '../src/guardado/guardado'
@@ -62,6 +62,14 @@ describe('Fundición', () => {
     expect(s.automat.intervalo.caudal).toBe(7)
     expect(s.relicario.regla.modo).toBe('fijo')
     expect(s.tiempoTotal).toBe(1234)
+  })
+
+  it('el primer Infinito de la partida da primer_infinito; el primero de cada vuelta después de fundir, los normales (como sim_capa2.py)', () => {
+    const i = estadoInicial()
+    expect(cristalesAlInfinito({ ...i, energia: INFINITO }).toNumber()).toBe(CFG1.cristales.primer_infinito)
+    const s = fundir(enTope())
+    expect(s.infinitos).toBe(0)
+    expect(cristalesAlInfinito({ ...s, energia: INFINITO }).toNumber()).toBe(Math.floor(10 ** CFG1.cristales.base_log10))
   })
 
   it('el Infinito no toca el fuego', () => {

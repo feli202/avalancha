@@ -9,6 +9,7 @@
     "zip": "vite build && python scripts/zip.py",
     "test": "vitest run",
     "test:lento": "vitest run tests/balance_capa1.test.ts --mode lento",
+    "test:capa2": "vitest run tests/balance_capa2.test.ts --mode lento",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

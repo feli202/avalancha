@@ -25,9 +25,11 @@ const lcBruto = (s: State) =>
 const blando = (lc: number) => (lc > C.blando_desde_log10 ? C.blando_desde_log10 + (lc - C.blando_desde_log10) * C.blando_factor : lc)
 
 /** Cristales del próximo Infinito (SPEC_CAPA1 §4, igual que infinity_reward de sim_capa1.py): enteros por debajo de 1e6;
- * el primero da primer_infinito. Con Fusión del Infinito, pasado el tope se frenan (^0,757, como sim_capa2.py). */
+ * el primero de la partida da primer_infinito. Con Fusión del Infinito, pasado el tope se frenan (^0,757, como sim_capa2.py).
+ * Capa 2: el primero de cada vuelta (al fundir los Infinitos vuelven a 0) da los normales, como en sim_capa2.py, que está
+ * calibrado así: con primer_infinito el nodo Estratos llegaba un Infinito más tarde en cada vuelta y la capa se atrasaba ~1 h. */
 export function cristalesAlInfinito(s: State): Decimal {
-  if (s.infinitos === 0) return new Decimal(C.primer_infinito)
+  if (s.infinitos === 0 && !s.fuego.fundiciones) return new Decimal(C.primer_infinito)
   const lc = fusionInfinito(s) ? frenoCristales(blando(lcBruto(s))) : blando(lcBruto(s))
   return lc < 6 ? new Decimal(Math.floor(10 ** lc + 1e-9)) : Decimal.pow10(lc) // 1e-9: que 10^log10(197) dé 197
 }

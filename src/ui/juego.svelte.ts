@@ -1,5 +1,5 @@
 // Bucle del juego: lo único que conoce el tiempo real. La economía vive en src/core.
-import { CFG, CFG2, DEFECTOS, cargaActual, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, campoInvalido, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, topeCristales, ultimaCompresion, umbralLog10, fundir, encenderFuego, relicarioFuego, TIPOS, puedeFundir, type Ausencia, type State } from '../core'
+import { CFG, CFG2, DEFECTOS, cargaActual, abandonarDefecto, anillos, enDefecto, entrarDefecto, metaLog10, type DefectoId, autoDisponible, comprimir, conFoto, cristalesAlInfinito, campoInvalido, enInfinito, estadoInicial, infinitoRoto, fueraDeLineaPasos, finCapa1, hayEstratos, infinito, mutacionesDisponibles, reliquiasPorInfinito, tick, topeCristales, ultimaCompresion, umbralLog10, fundir, encenderFuego, relicarioFuego, TIPOS, puedeFundir, ignicion, type Ausencia, type State } from '../core'
 import { almacenLocal, type Almacen } from '../guardado/almacen'
 import { cargar, esBeta, guardar, type MarcaBeta, type Partida } from '../guardado/guardado'
 import { entrarBeta, volverDeBeta } from '../guardado/beta'
@@ -89,11 +89,11 @@ class Juego {
   /** El último anillo ganado: su aviso va junto al contador de anillos (App.svelte), no sobre la pila. */
   anilloNuevo = $state.raw<{ id: number; texto: string } | null>(null)
   /** SPEC_CAPA1 §11: la capa que se ve. Cristalización aparece con el primer Infinito (Capas.svelte). */
-  capa = $state<'arena' | 'cristalizacion' | 'automatizacion' | 'capa2' | 'motor'>('arena')
+  capa = $state<'arena' | 'cristalizacion' | 'automatizacion' | 'capa2' | 'motor' | 'capa3'>('arena')
   /** La pantalla de Cristalización que se ve (Capas.svelte; la flecha "↓ Estratos" de la Arena la cambia). */
   pantalla = $state('red')
-  /** La cinemática que corre (Pila.svelte la dibuja): la del primer Infinito, la del fin de la Capa 1 o la Fundición (Capa 2). */
-  cinematica = $state<'' | 'infinito' | 'fin' | 'fundicion'>('')
+  /** La cinemática que corre (Pila.svelte la dibuja): la del primer Infinito, la del fin de la Capa 1, la Fundición o la Ignición (Capa 2). */
+  cinematica = $state<'' | 'infinito' | 'fin' | 'fundicion' | 'ignicion'>('')
   /** El Infinito automático eligió una reliquia por primera vez con la regla por defecto: la nota con "Configurar" (App.svelte). */
   notaReliquia = $state.raw<{ tipo: string } | null>(null)
   /** "Configurar" de esa nota: Automatización abre en la regla de las reliquias. */
@@ -310,6 +310,8 @@ function revisarLogros(s: State) {
 const fotoPila = () => { const t = camara.foto?.(); return (t && instantanea(t.alturas)) || fotoActual }
 // La última instantánea buena: si la pila de ahora es casi nada (recién reiniciada), queda la anterior.
 let fotoActual = '', fotoEn = 0
+/** Capa 2, fase 10: la última instantánea buena, para la foto del resumen (la Ignición llega al fundir, con la pila vacía). */
+export const ultimaFoto = () => fotoActual
 
 /** El último estado que vio el bucle (el historial compara contra este). */
 let previo = juego.s
@@ -393,6 +395,20 @@ export function fundirYa() {
     juego.cinematica = ''
     guardarYa()
   }, FUNDICION_MS)
+}
+
+/** Capa 2 (beta), fase 10: a 5.778 K la pila se vuelve plasma (Pila.svelte), corte a negro con "Capa 3 próximamente" (App.svelte)
+ * y la pantalla del resumen. Se anota en `vistos.capa3`: una vez por partida; si se cierra antes, se repite. */
+export const IGNICION_MS = 10_000
+function ignicionYa() {
+  juego.capa = 'arena'
+  juego.cinematica = 'ignicion'
+  setTimeout(() => {
+    juego.vistos = { ...juego.vistos, capa3: true }
+    juego.capa = 'capa3'
+    juego.cinematica = ''
+    guardarYa()
+  }, IGNICION_MS)
 }
 
 /** Capa 2 (beta): el nivel de fuego de un nodo, con Brasas. */
@@ -623,6 +639,7 @@ export function arrancar() {
     mirarStats(juego.s)
     if (s.infinitos === 0 && enInfinito(s) && !juego.cinematica && !hayPanel()) primerInfinito()
     if (finCapa1(s) && !juego.vistos.capa2 && !juego.cinematica && !hayCartel()) finDeCapa()
+    if (esBeta(juego) && ignicion(s) && !juego.vistos.capa3 && !juego.cinematica && !hayCartel()) ignicionYa()
     seguir()
   }
   seguir()

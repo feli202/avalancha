@@ -2,7 +2,7 @@
 
 Historia completa hasta la 1.0: `docs/historial/progreso_hasta_1.0.md` (no leer salvo pedido).
 
-## Estado (2026-11-26)
+## Estado (2026-11-27)
 
 **Versión 1.0.0**: Capa 0 + Capa 1 completas. Publicada en https://feli202.github.io/avalancha/ (rama `main`, build de 2b31992, Escarcha recalibrada). Código en `master`.
 
@@ -16,6 +16,8 @@ Historia completa hasta la 1.0: `docs/historial/progreso_hasta_1.0.md` (no leer 
 - 2026-11-25: limpieza de documentación: `docs/` por sistema, SPEC, guías y maquetas a `archivo/`, skills del proyecto; tabla de la Capa 1 medida entera con la Escarcha nueva.
 
 ## Verificación al último cambio
+
+Fase 10: `npm test` 569 en verde con `--maxWorkers=4` (nuevos: después de fundir los estratos no se abren de a uno, `tests/horno.test.ts`; el primer Infinito de cada vuelta da los Cristales normales, `tests/fuego.test.ts`). `npm run test:capa2` (nuevo, `tests/balance_capa2.test.ts`, ~1,5 min): 20/20 hitos, Ignición 9:55, fuente más pesada 39,5 %; falla solo el hueco (34,4 min, el mismo que el simulador). Tabla de la fase 10 abajo. `test:lento` 20/20, `tsc` y `svelte-check` 0 errores, build sin errores; `sim_capa2.py --rapido` igual (20/20, Ignición 9:56; el simulador no se tocó). Mirado en 1366×768 y 390×844 con la partida beta del panel (1,5 millones de Brasas totales, ya pasada de 5.778 K): la Ignición se dispara al salir del título y del aviso de ausencia, el corte a negro, la pantalla de la Capa 3 sin scroll en los dos tamaños, la barra de 6 botones en el celular, la imagen descargable con la pila en plasma, y la cinemática con Reducir destellos. El panel del navegador estaba oculto (sin cuadros): la cinemática se miró congelándola cuadro por cuadro con la API de animaciones, no en movimiento; los fps no se midieron.
 
 Fase 9: `npm test` 567 en verde con `--maxWorkers=4` (`tests/escalado.test.ts` contra `tests/fixtures/capa2_escalado.json` de `balance/ref_capa2.py`: freno ^0,757, Brasas con Fusión, Temperatura con Esquirla de fuego y Compresión térmica, Geoda, costos, escalado de Permeabilidad, Vidrio/s y flujo con los 4 nodos nuevos; la partida real con Cristales y Energía en 1e309, 1e1000, 1e100000 y 1e1000000 sin Infinity ni NaN; los 25 nodos se encienden y cambian algo; Fundición automática; guardado y migración desde la fase 8). `test:lento` 20/20, `tsc` y `svelte-check` 0 errores, build sin errores; `sim_capa2.py --rapido` igual (20/20, Ignición 9:56). Mirado en 1366×768 y 390×844 con la partida real marcada como beta y fuego avanzado (23 nodos, 1e452 Cristales; conserva la Energía de 1e795575 de la 1.0, que en el juego la primera Fundición reinicia: por eso los números de esa prueba son enormes): Red (Fallas, Convección, Fusión: encender), Escarcha sin scroll con Esquirla de fuego y Geoda (Geoda ×2 las Esquirlas/s), Automatización con la fila de Fundición (multiplicar ×1,223: fundió sola con su aviso), consola sin errores. Los fps no se midieron (panel del navegador sin WebGL2).
 
@@ -60,7 +62,7 @@ Spec en `docs/capa2/`. Orden de fases:
 - [x] 7 Escarcha eterna y Relicario (2026-11-26, solo en la beta): la Escarcha no se rompe, sigue creciendo (más lento pasada la Templanza, también en la Arena frenada y offline al 10 %) y da Esquirlas/s; sus mejoras pasan a Cristalización continua, Fulgor y Templanza (permanentes, paso ×3,86); Hielo y fuego; Deshielo automático (interruptor "Mejoras de la Escarcha"); Relicario de fuego (inventario ×2, una de cada tipo por Infinito, fusión y engarce solos, sin pop-up, migración al encenderlo y al cargar); Engaste de lava; Motor etapas 3 y 4 con los sectores Escarcha y Relicario. Ver `docs/capa2/escarcha_reliquias.md`.
 - [x] 8 Defectos con 5 cargas (2026-11-26, solo en la beta): cargas 2–5 de los 8 Defectos con regla más fuerte y meta + k (n − 1), Fallas / Fallas profundas las abren, Brasas una sola vez y M_B ×1,002 por carga, recompensa ^(1 + 0,375 (n − 1)), Facetas de fuego, 5 rombos por Defecto en la pantalla, `fuego.cargas` en el guardado. Ver `docs/capa2/defectos_cargas.md`.
 - [x] 9 Fusión y escalado (2026-11-26, solo en la beta): Fusión del Infinito levanta el tope en `topeCristales` (freno ^0,757, las Brasas escalan) y Fusión ×1,387 el exponente; auditoría de Cristales y Energía pasados 1e308 (todo Decimal/log10; al cargar, el fuego se lee antes de topar); Permeabilidad ×(1 + 0,3 F) con softcap; Esquirla de fuego y Geoda con Esquirlas (pantalla de la Escarcha); Convección, Sedimento fundido, Abismo ardiente, Eco del Horno y Compresión térmica: funcionan los 25, sin "próximamente"; Fundición automática en Automatización (con Memoria eterna, arranca apagada; "apenas llegás" o "multiplicar mis Brasas ×N" con Fusión). Ver `docs/capa2/escalado_ignicion.md`.
-- [ ] 10 Ignición
+- [x] 10 Ignición (2026-11-27, solo en la beta): a 5.778 K (`ignicion` en `fuego.ts`) la cinemática de plasma (`Pila.svelte`: el Horno blanco, la pila iluminada desde adentro, granos en cruz y un instante en diagonal, el rombo que se curva en círculo, π un segundo), corte a negro "Capa 3 · Próximamente" (`App.svelte`), una vez por partida (`vistos.capa3`); pantalla del resumen como la de la Capa 1 (tiempo, Fundiciones, Temperatura máxima, Vidrio, imagen descargable con la pila en plasma, Discord e itch.io) y la silueta de la Capa 3 (un círculo) en la barra de capas. `tests/balance_capa2.test.ts` (`npm run test:capa2`): el bot de `sim_capa2.py` en el núcleo real. Arreglos: después de fundir, los estratos ya no se pueden abrir de a uno (`puedeAbrir`), los abre llenos el tick; el primer Infinito de cada vuelta da los Cristales normales (`primer_infinito` solo para el primero de la partida). Ver `docs/capa2/escalado_ignicion.md`.
 - [ ] 11 auditoría y publicación
 
 ### Fase 2: tabla calibrada (`python balance/sim_capa2.py`, revisando cada 15 s; ~30 s con la columna de 60 s, `--rapido` ~15 s)
@@ -81,9 +83,44 @@ Spec en `docs/capa2/`. Orden de fases:
 
 Cambios de diseño aplicados (con OK): Brasas = M_B × (log10 C / 308)^5,2 con freno de Cristales pasado el tope (^0,757); Esquirlas eternas (logX/103,7)²; escalado solo sobre Permeabilidad. Además: Templanza = Umbral (no hay Aguante en la 1.0), carga 1 se rehace en cada vuelta, estratos llenos con s_8 = 291, orden de nodos según la tabla. Ver `docs/capa2/ritmo_balance.md`.
 
+### Fase 10: test de balance de punta a punta (tabla final)
+
+`npm run test:capa2` (`tests/balance_capa2.test.ts`, ~1,5 min): el bot de `sim_capa2.py` (mismas decisiones: cargas, reparto del Motor, compras de fuego, cuándo fundir) jugando con el núcleo real desde la partida real de fin de Capa 1, revisando cada 15 s.
+
+| Hito | Objetivo | Sim | Núcleo |
+|---|---|---|---|
+| Primera Fundición | 0:00 | 0:00 | 0:00 |
+| Memoria eterna | 0:00–1:00 | 0:13 | 0:11 |
+| Fin de la primera vuelta | ~1:00 | 1:10 | 1:01 |
+| Lecho infinito | 1:00–2:00 | 1:11 | 1:02 |
+| DESBORDE | ~1:30 | 1:45 | 1:38 |
+| El Horno (Motor etapa 2) | 1:00–2:00 / ~2:30 | 2:14 | 2:08 |
+| METAMORFOSIS | ~2:30 | 2:39 | 2:35 |
+| Fallas | ~3:30 | 3:22 | 3:26 |
+| Escarcha eterna | ~4:00 | 3:52 | 4:03 |
+| INERCIA ETERNA | ~4:00 | 4:11 | 4:23 |
+| Fusión del Infinito | ~5:00 | 5:26 | 5:27 |
+| Relicario de fuego | ~6:30 | 6:30 | 6:25 |
+| Fallas profundas | ~8:00 | 8:05 | 8:05 |
+| 3.000 K | ~8:00 | 8:28 | 8:29 |
+| Vueltas ≤ 5 min | 9:00–11:00 | 9:33 | 9:34 |
+| Abismo ardiente | 9:00–11:00 | 9:43 | 9:43 |
+| Fusión (Ruptura II) | 9:00–11:00 | 9:48 | 9:46 |
+| Cargas 5 de los 8 Defectos | 9:00–11:00 | 9:56 | 9:51 |
+| **Ignición** | 10–12 h | **9:56** | **9:55** |
+| En rango (±30 min) | | 20/20 | 20/20 |
+| Fuente más pesada (≤ 40 %) | | Presión 40,3 % | Presión 39,5 % (vuelta 91) |
+| Hueco máximo (< 30 min) | | **34,8 min** (0:20) | **34,4 min** (1:02) |
+
+Vueltas 2.ª a 4.ª en el núcleo: 36, 30, 27 min; ninguna de más de 20 min después de la 5.ª; 111 Fundiciones. Falla solo el hueco (en negrita), en el simulador y en el núcleo: es de números y no se tocó. En el núcleo cae en la 2.ª vuelta: Lecho infinito a la 1:02 y la Fundición siguiente.
+
+- Diferencias que había con el simulador (de lógica, no de números), las dos arregladas en el núcleo: (1) **estratos llenos**: solo se llenan si no están los 8 abiertos; el bot compraba el nodo Estratos y las 8 aperturas en la misma pasada, antes del tick, y quedaban sin llenar toda la vuelta (vueltas de 40–80 min). Ahora desde la primera Fundición `puedeAbrir` es falso (para un humano no cambia nada: el tick los llenaba antes de que pudiera tocar "Abrir"). (2) **primer Infinito de cada vuelta**: al fundir los Infinitos vuelven a 0 y el juego daba `primer_infinito` = 1 Cristal; el simulador, con el que está calibrada la capa, da los normales (2). Con 1, el nodo Estratos llegaba un Infinito más tarde en cada vuelta: 14/20 e Ignición a las 11:03. Ahora `primer_infinito` es solo el primer Infinito de la partida (sin Fundiciones).
+
 ## Problemas conocidos
 
-- Capa 2 (fase 9): la Fundición automática no tiene la espera del bot (30 min por un nodo pagable, 5 min como mucho con Fusión): funde por su regla y listo. Esquirla de fuego y Geoda no tienen autocomprador. Con la Ignición sin hacer (fase 10), una partida que pasa 5.778 K no muestra nada. En la pantalla de la Escarcha en escritorio bajo (≤ 800 px), con las compras de fuego se oculta la caja de factores del Crecimiento (queda en la ayuda del Espesor, como en el celular).
+- Capa 2 (fase 10): `test:capa2` falla solo el hueco máximo (34,4 min en la 2.ª vuelta; el simulador, 34,8 en la 1.ª): es de números, igual que antes. La foto del resumen: si la pila está vacía usa la última instantánea buena (32×32); recargando la página justo en esa pantalla, antes de que haya una, sale la pila vacía.
+
+- Capa 2 (fase 9): la Fundición automática no tiene la espera del bot (30 min por un nodo pagable, 5 min como mucho con Fusión): funde por su regla y listo. Esquirla de fuego y Geoda no tienen autocomprador. En la pantalla de la Escarcha en escritorio bajo (≤ 800 px), con las compras de fuego se oculta la caja de factores del Crecimiento (queda en la ayuda del Espesor, como en el celular).
 
 - Capa 2 (fase 8): en el simulador la carga 2 de Vacancia y Macla llega 2:10 h después de Fallas y la de Impureza 3:00 h después (Dislocación +0:12; los Defectos 5–8, entre +0:06 y +0:13 de Fallas profundas). Con k lineal no se puede adelantar la carga 2 sin abaratar también la 5. En la ficha de una carga 2–5 el requisito sigue mostrando el de la carga 1.
 

@@ -112,7 +112,8 @@ export const es = {
   infinito: '∞',
 
   // Capa 1: Cristalización (SPEC_CAPA1 §11)
-  capas: { barra: 'Capas', arena: 'Arena', cristalizacion: 'Crista­lización', automatizacion: 'Automati­zación', capa2: 'Capa 2', motor: 'Motor', proximamente: 'Próximamente', finCapa1: 'Juntaste 1e308 Cristales. Debajo del hielo, algo arde.' }, // guion blando: en la barra angosta del móvil corta ahí
+  capas: { barra: 'Capas', arena: 'Arena', cristalizacion: 'Crista­lización', automatizacion: 'Automati­zación', capa2: 'Capa 2', motor: 'Motor', capa3: 'Capa 3', proximamente: 'Próximamente', finCapa1: 'Juntaste 1e308 Cristales. Debajo del hielo, algo arde.',
+    finCapa2: (k: string) => `Llegaste a ${k}. La arena se volvió plasma, y su borde, un círculo.` }, // guion blando: en la barra angosta del móvil corta ahí
   // Correcciones Capa 1, bloque 10: el panel de Automatización
   automat: {
     titulo: 'Automatización',
@@ -442,6 +443,8 @@ export const es = {
     subtitulo: 'Capa 1 completa',
     tiempo: 'Tiempo jugado', infinitos: 'Infinitos', defectos: 'Defectos', avalancha: 'Mayor avalancha', reliquia: 'Reliquia más alta',
     descargar: 'Descargar imagen', archivo: 'avalancha-capa1.png', alt: 'Resumen de tu partida con la foto de tu pila',
+    // Capa 2, fase 10: el resumen de la Ignición.
+    capa2: { subtitulo: 'Capa 2 completa', fundiciones: 'Fundiciones', temperatura: 'Temperatura máxima', vidrio: 'Vidrio', archivo: 'avalancha-capa2.png', alt: 'Resumen de la Capa 2 con la foto de tu pila en plasma' },
   },
   // v1.0, bloque 7.
   comunidad: {

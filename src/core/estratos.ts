@@ -87,7 +87,9 @@ export function costoMejoraLog10(que: MejoraEstrato, k: number, L: number) {
 export const costoAbrir = (s: State) => cristalesDe(costoAbrirLog10(s))
 export const costoMejora = (s: State, que: MejoraEstrato, k: number) => cristalesDe(costoMejoraLog10(que, k, s.estratos[que][k]))
 
-export const puedeAbrir = (s: State) => hayEstratos(s) && s.estratos.abiertos < ESTRATOS && s.cristales.gte(costoAbrir(s))
+/** Desde la primera Fundición no se abren de a uno: los abre abrirLlenos, juntos y llenos (si no, comprando el nodo y las 8 aperturas
+ * en la misma pasada, antes del tick, quedaban abiertos sin llenar para toda la vuelta). */
+export const puedeAbrir = (s: State) => hayEstratos(s) && !s.fuego.fundiciones && s.estratos.abiertos < ESTRATOS && s.cristales.gte(costoAbrir(s))
 export const puedeMejorar = (s: State, que: MejoraEstrato, k: number) =>
   hayEstratos(s) && k >= 0 && k < s.estratos.abiertos && s.cristales.gte(costoMejora(s, que, k))
 

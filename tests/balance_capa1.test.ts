@@ -2,47 +2,16 @@
 // Lento (unos segundos acá, pero recorre horas de juego): no corre con `npm test`; correrlo con `npm run test:lento` al cerrar cada hito.
 import { beforeAll, describe, expect, it } from 'vitest'
 import {
-  CFG1, DEFECTOS, finCapa1, MEJORAS_ESCARCHA, costoMejoraEscarchaLog10, costoPulidoLog10, equipadas, mejorarEscarcha, puedeMejorarEscarcha,
-  puedePulir, puedeRomperEscarcha, puntoRuptura, pulir, romperEscarcha, INFINITO, NODOS, abandonarDefecto, abrirEstrato, colorSinEfecto, comprarConMargen, comprarRed, comprarTodo,
-  comprimir, completo, costoAbrirLog10, costoMejoraLog10, costoRedLog10, disponibles, elegirSola, enDefecto, enInfinito,
-  entrarDefecto, equiparMejores, estadoInicial, fueraDeLinea, fusionAutomatica, fusionarTodo, infinito, inventarioLleno, memoria, metaLog10,
-  mejorarEstrato, puedeAbrir, puedeComprarRed, puedeComprimir, puedeEntrar, puedeMejorar, tick, MUTACIONES,
-  type DefectoId, type ItemId, type MejoraEstrato, type State,
+  CFG1, DEFECTOS, finCapa1, puedeRomperEscarcha, puntoRuptura, romperEscarcha, INFINITO, abandonarDefecto, colorSinEfecto, comprarConMargen, comprarTodo,
+  comprimir, completo, disponibles, elegirSola, enDefecto, enInfinito, entrarDefecto, equiparMejores, estadoInicial, fueraDeLinea, fusionAutomatica,
+  fusionarTodo, infinito, inventarioLleno, memoria, metaLog10, puedeComprimir, puedeEntrar, tick, MUTACIONES,
+  type DefectoId, type ItemId, type State,
 } from '../src/core'
 import { desgloseV } from '../src/ui/desglose'
+import { esquirlas, tienda } from './bot'
 
 const lento = import.meta.env.MODE !== 'lento'
 const H = 3600
-
-/** do_shop de sim_capa1.py: lo más barato primero (en log10 de Cristales), con la prioridad del bot para algunos nodos. */
-function tienda(s: State, t: number, compras: number[]): State {
-  const pr = CFG1.red.prioridad_bot
-  for (;;) {
-    const op: { c: number; hacer: (s: State) => State }[] = []
-    for (const id of Object.keys(NODOS))
-      if (puedeComprarRed(s, id)) op.push({ c: costoRedLog10(id, s.red[id]) - (pr[id] ?? 0), hacer: (x) => comprarRed(x, id) })
-    if (puedeAbrir(s)) op.push({ c: costoAbrirLog10(s), hacer: abrirEstrato })
-    for (let k = 0; k < s.estratos.abiertos; k++)
-      for (const q of ['perm', 'pres'] as MejoraEstrato[])
-        if (puedeMejorar(s, q, k)) op.push({ c: costoMejoraLog10(q, k, s.estratos[q][k]), hacer: (x) => mejorarEstrato(x, q, k) })
-    if (!op.length) return s
-    s = op.reduce((a, b) => (b.c < a.c ? b : a)).hacer(s)
-    compras.push(t)
-  }
-}
-
-/** La segunda mitad de do_shop: con Esquirlas, lo más barato primero entre las mejoras de la Escarcha y pulir una pieza engarzada. */
-function esquirlas(s: State, t: number, compras: number[]): State {
-  for (;;) {
-    const op: { c: number; hacer: (s: State) => State }[] = []
-    for (const k of MEJORAS_ESCARCHA)
-      if (puedeMejorarEscarcha(s, k)) op.push({ c: costoMejoraEscarchaLog10(k, s.escarcha.mejoras[k]), hacer: (x) => mejorarEscarcha(x, k) })
-    for (const p of equipadas(s)) if (puedePulir(s, p.id)) op.push({ c: costoPulidoLog10(s, p.nivel), hacer: (x) => pulir(x, p.id) })
-    if (!op.length) return s
-    s = op.reduce((a, b) => (b.c < a.c ? b : a)).hacer(s)
-    compras.push(t)
-  }
-}
 
 export interface Partida1 { eventos: Record<string, number>; hueco: number; t: number; s: State; final: State | null }
 

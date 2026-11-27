@@ -247,6 +247,10 @@
 
 <Capas />
 <Palabra />
+<!-- Capa 2, fase 10: el corte a negro de la Ignición, después del plasma (Pila.svelte); IGNICION_MS lleva a la pantalla del resumen. -->
+{#if juego.cinematica === 'ignicion'}
+  <div class="negro" class:quieto={quieto()} role="status"><p>{txt.capas.capa3}</p><p class="chico">{txt.capas.proximamente}</p></div>
+{/if}
 <AvisoVersion />
 <Instalar />
 <PopComunidad />
@@ -538,4 +542,10 @@
     .der:not(.alta) .contenido { flex: none; max-height: calc(45dvh - 3.75rem); }
   }
   @media (prefers-reduced-motion: reduce) { .der { transition: none; } }
+  /* El corte es seco (6,6 s); con Reducir destellos, un fundido de 1 s. Las letras aparecen después, sobre el negro. */
+  .negro { position: fixed; inset: 0; z-index: 65; display: grid; place-content: center; gap: 0.75rem; text-align: center; background: #000; opacity: 0; pointer-events: none; animation: cortar 0.01s 6.6s forwards; }
+  .negro p { margin: 0; font-size: clamp(2.5rem, 7vw, 4.5rem); font-weight: 300; letter-spacing: -0.02em; color: #f4f1ff; opacity: 0; animation: cortar 1.2s 7.3s ease-out forwards; }
+  .negro .chico { font-size: 1.125rem; letter-spacing: 0.08em; color: var(--tenue); animation-delay: 7.9s; }
+  .negro.quieto { animation: cortar 1s 6s ease-in forwards; }
+  @keyframes cortar { to { opacity: 1; } }
 </style>

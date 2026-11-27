@@ -57,6 +57,7 @@ Juego incremental web sobre una pila de arena abeliana. Versión 1.0: Capa 0 (Ar
 npm run dev            # juego + panel de debug, http://localhost:5173 (preview_start "avalancha")
 npm test               # tests unitarios + balance de la Capa 0
 npm run test:lento     # balance completo de la Capa 1 (~45 s)
+npm run test:capa2     # balance de la Capa 2 de punta a punta en el núcleo (~1,5 min)
 npm run typecheck      # tsc
 npx svelte-check       # tipos de los .svelte
 npm run build          # dist/

@@ -21,7 +21,7 @@
   import { esBeta } from '../guardado/guardado'
   import { ICONOS } from './iconos'
   import Motor from './Motor.svelte'
-  import { etapaMotor } from '../core'
+  import { CFG2, etapaMotor } from '../core'
 
   const PANTALLAS = ['relicario', 'red', 'estratos', 'defectos', 'escarcha']
   const s = $derived(juego.s)
@@ -33,14 +33,28 @@
     if (hayOferta) juego.pantalla = 'relicario' // la primera oferta, al llegar
   }
   const hayOferta = $derived(s.relicario.pendiente > 0)
-  // v1.0, bloque 6: la imagen del resumen, armada al entrar a la pantalla de la Capa 2.
-  let resumen = $state<{ blob: Blob; url: string } | null>(null)
+  // v1.0, bloque 6: la imagen del resumen, armada al entrar a la pantalla de la Capa 2 (fin de la Capa 1) o a la de la Capa 3
+  // (fin de la Capa 2, fase 10).
+  let resumenes = $state<Record<string, { blob: Blob; url: string }>>({})
+  const capaFin = $derived(juego.capa === 'capa3' ? 2 : 1)
   $effect(() => {
-    if (juego.capa !== 'capa2' || resumen) return
-    imagenResumen().then((b) => b && (resumen = { blob: b, url: URL.createObjectURL(b) })).catch((e) => console.warn(e))
+    const c = juego.capa
+    if ((c !== 'capa2' && c !== 'capa3') || resumenes[c]) return
+    imagenResumen(c === 'capa3' ? 2 : 1).then((b) => b && (resumenes = { ...resumenes, [c]: { blob: b, url: URL.createObjectURL(b) } })).catch((e) => console.warn(e))
   })
-  const descargar = () => resumen && entregar(new File([resumen.blob], txt.resumen.archivo, { type: 'image/png' }))
+  const resumen = $derived(resumenes[juego.capa] ?? null)
+  const descargar = () => resumen && entregar(new File([resumen.blob], capaFin === 2 ? txt.resumen.capa2.archivo : txt.resumen.archivo, { type: 'image/png' }))
 </script>
+
+<!-- v1.0, bloque 6: el resumen de la partida, descargable como imagen para compartir; abajo, Discord e itch.io. -->
+{#snippet cierre()}
+  <div class="resumen">
+    {#if resumen}<img src={resumen.url} alt={capaFin === 2 ? txt.resumen.capa2.alt : txt.resumen.alt} />{/if}
+    <dl class="num">{#each filasResumen(s, juego.record, capaFin) as [rot, val]}<div><dt>{rot}</dt><dd>{val}</dd></div>{/each}</dl>
+  </div>
+  <button class="gema" disabled={!resumen} onclick={descargar}>{txt.resumen.descargar}</button>
+  <Comunidad />
+{/snippet}
 
 <!-- Un cristal de hielo: prisma hexagonal con caras de distinta luz y un destello frío. -->
 {#snippet cristal(clase: string)}
@@ -102,13 +116,18 @@
           <p class="lema">{txt.capas.finCapa1}</p>
           {#if !esBeta(juego)}<p>{txt.capas.proximamente}</p>{/if}
           <Beta />
-          <!-- v1.0, bloque 6: el resumen de la partida, descargable como imagen para compartir. -->
-          <div class="resumen">
-            {#if resumen}<img src={resumen.url} alt={txt.resumen.alt} />{/if}
-            <dl class="num">{#each filasResumen(s, juego.record) as [rot, val]}<div><dt>{rot}</dt><dd>{val}</dd></div>{/each}</dl>
-          </div>
-          <button class="gema" disabled={!resumen} onclick={descargar}>{txt.resumen.descargar}</button>
-          <Comunidad />
+          {@render cierre()}
+        </div>
+      </main>
+    {:else if juego.capa === 'capa3' && esBeta(juego)}
+      <!-- Capa 2, fase 10: después de la Ignición. La Capa 3 todavía no existe: solo un círculo de plasma detrás de la placa. -->
+      <main class="proxima plasma">
+        <div class="circulo" aria-hidden="true"></div>
+        <div class="placa cierre">
+          <h1>{txt.capas.capa3}</h1>
+          <p class="lema">{txt.capas.finCapa2(txt.fuego.kelvin(CFG2.temperatura.ignicion))}</p>
+          <p>{txt.capas.proximamente}</p>
+          {@render cierre()}
         </div>
       </main>
     {:else if juego.capa === 'motor' && motor}
@@ -157,6 +176,16 @@
           <span>{txt.capas.motor}</span>
         </button>
       {/if}
+      {#if juego.vistos.capa3 && esBeta(juego)}
+        <!-- Capa 2, fase 10: la Capa 3 como silueta, un círculo oscuro con el borde apenas encendido de plasma. -->
+        <button class="capa3" aria-current={juego.capa === 'capa3' ? 'page' : undefined} onclick={() => (juego.capa = 'capa3')}>
+          <svg viewBox="-12 -12 24 24" aria-hidden="true">
+            <circle r="9.5" fill="#0d0c14" stroke="#26232f" stroke-width="0.8" />
+            <circle class="plasma-borde" r="9.5" fill="none" stroke="#e8e0ff" stroke-width="0.9" />
+          </svg>
+          <span>{txt.capas.capa3}</span>
+        </button>
+      {/if}
       <!-- Bloque 10: no es una capa sino de todas; va abajo, separada por una línea. Ícono: dos engranajes de cristal. -->
       <button class="auto" data-guia="c1_automat" aria-current={juego.capa === 'automatizacion' ? 'page' : undefined} onclick={() => (juego.capa = 'automatizacion')}>
         <svg viewBox="-12 -12 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round">
@@ -192,11 +221,15 @@
   .capas .auto { --c: var(--tinta); }
   .capas .capa2 { --c: #ff8a3d; }
   .capas .motor { --c: #ff8a3d; }
+  .capas .capa3 { --c: #d8ccff; }
   /* La silueta no se desatura como las otras: ya es oscura; lo que se ve es la brasa. */
   .capas .capa2 svg { filter: none; opacity: 1; }
   .capas .brasa { filter: drop-shadow(0 0 1.5px #ff5a1f); animation: brasa 4.5s ease-in-out infinite alternate; }
   @keyframes brasa { from { opacity: 0.35; } to { opacity: 0.95; } }
   .quieto .capas .brasa { animation: none; opacity: 0.7; }
+  .capas .capa3 svg { filter: none; opacity: 1; }
+  .capas .plasma-borde { filter: drop-shadow(0 0 1.5px #b9a4ff); animation: brasa 5.5s ease-in-out infinite alternate; }
+  .quieto .capas .plasma-borde { animation: none; opacity: 0.7; }
   .capas .auto { margin-top: 0.5rem; }
   .capas .auto::before { content: ''; position: absolute; top: -0.375rem; left: 50%; width: 1.5rem; height: 1px; translate: -50%; background: var(--borde); }
   /* Automatización: de todo el juego, neutra como esta barra (fondo de la página, líneas de 1 px); sin escarcha. */
@@ -257,6 +290,16 @@
   .resumen dt { color: var(--tenue); }
   .resumen dt, .resumen dd { font-size: 0.875rem; line-height: 1.3; }
   .resumen dd { margin: 0; color: var(--escarcha); font-weight: 600; text-align: right; }
+  /* Capa 3 próximamente: casi negro, con un círculo de plasma (blanco caliente que pasa a violeta) detrás de la placa. */
+  .plasma { background: radial-gradient(70% 55% at 50% 45%, rgb(120 90 220 / 0.16), transparent 70%), radial-gradient(120% 80% at 50% 0%, #120f1f, #05040a 70%); }
+  .plasma h1 { color: #f4f1ff; text-shadow: 0 0.2em 1.2em rgb(185 164 255 / 0.35); }
+  .plasma p { color: #d8ccff; }
+  .plasma .resumen dd { color: #f4f1ff; white-space: nowrap; }
+  .plasma .cierre { --luz: radial-gradient(90% 60% at 50% 115%, rgb(185 164 255 / 0.18), transparent 70%); }
+  .circulo {
+    position: absolute; left: 50%; top: 50%; width: min(80vmin, 44rem); aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, transparent 66%, rgb(255 246 222 / 0.22) 69%, rgb(185 164 255 / 0.28) 70.5%, rgb(90 44 160 / 0.12) 73%, transparent 76%);
+  }
   .grietas { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: #ff7a2e; stroke-width: 0.25; opacity: 0.12; filter: drop-shadow(0 0 2px #ff5a1f); }
   .chispas { position: absolute; inset: 0; pointer-events: none; }
   .chispas i {

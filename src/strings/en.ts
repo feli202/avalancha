@@ -100,7 +100,8 @@ export const en: typeof es = {
   infinito: '∞',
 
   // Layer 1: Crystallization
-  capas: { barra: 'Layers', arena: 'Sand', cristalizacion: 'Crystal­lization', automatizacion: 'Auto­mation', capa2: 'Layer 2', motor: 'Engine', proximamente: 'Coming soon', finCapa1: 'You gathered 1e308 Crystals. Beneath the ice, something burns.' },
+  capas: { barra: 'Layers', arena: 'Sand', cristalizacion: 'Crystal­lization', automatizacion: 'Auto­mation', capa2: 'Layer 2', motor: 'Engine', capa3: 'Layer 3', proximamente: 'Coming soon', finCapa1: 'You gathered 1e308 Crystals. Beneath the ice, something burns.',
+    finCapa2: (k: string) => `You reached ${k}. The sand became plasma, and its edge, a circle.` },
   automat: {
     titulo: 'Automation',
     encender: 'Turn all on',
@@ -409,6 +410,7 @@ export const en: typeof es = {
     subtitulo: 'Layer 1 complete',
     tiempo: 'Time played', infinitos: 'Infinities', defectos: 'Defects', avalancha: 'Biggest avalanche', reliquia: 'Best relic',
     descargar: 'Download image', archivo: 'avalancha-layer1.png', alt: 'Summary of your run with a snapshot of your pile',
+    capa2: { subtitulo: 'Layer 2 complete', fundiciones: 'Smeltings', temperatura: 'Peak temperature', vidrio: 'Glass', archivo: 'avalancha-layer2.png', alt: 'Summary of Layer 2 with a snapshot of your pile as plasma' },
   },
   comunidad: {
     discord: 'Discord', itch: 'itch.io',
